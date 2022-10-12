@@ -33,7 +33,7 @@ AgglomerationHandler<dim, spacedim>::AgglomerationHandler(
 
   // All cells are initially marked with -1, meaning that they're master cells.
   master_slave_relationships.resize(triangulation.n_active_cells(), -1);
-  bboxes.reserve(tria->n_active_cells());
+  bboxes.resize(tria->n_active_cells());
   euler_dh.distribute_dofs(*euler_fe);
   euler_vector.reinit(euler_dh.n_dofs());
 }

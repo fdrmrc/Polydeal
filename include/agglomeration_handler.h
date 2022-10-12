@@ -199,6 +199,13 @@ public:
   }
 
 
+  std::vector<BoundingBox<spacedim>>
+  get_bboxes() const
+  {
+    return bboxes;
+  }
+
+
 private:
   std::vector<long int> master_slave_relationships;
 
