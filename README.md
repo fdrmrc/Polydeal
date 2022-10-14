@@ -1,3 +1,3 @@
 # Agglomeration_Suite
 
-![Screenshot](logo.png)
+![Screenshot](logo.gif)
