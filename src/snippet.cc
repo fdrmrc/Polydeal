@@ -2,7 +2,7 @@
 
 #include <algorithm>
 
-#include "agglomeration_handler.h"
+#include "../include/agglomeration_handler.h"
 
 
 int
@@ -13,7 +13,7 @@ main()
   tria.refine_global(2);
   AgglomerationHandler<2> ah(tria);
   // agglomerate cells 3,6,9,12. First, store iterators to them into an array
-  std::vector<unsigned int> idxs_to_be_agglomerated = {1, 3, 6, 9, 12, 13};
+  std::vector<unsigned int> idxs_to_be_agglomerated = {3, 6, 9, 12, 13};
   std::vector<typename Triangulation<2>::active_cell_iterator>
     cells_to_be_agglomerated;
   for (const auto &cell : tria.active_cell_iterators())
@@ -44,7 +44,7 @@ main()
   // // Let's agglomerate the cells just stored
   // ah.agglomerate_cells(cells_to_be_agglomerated2);
 
-  ah.print_agglomeration(std::cout);
+  print_agglomeration(std::cout, ah);
 
 
   // Print the cells agglomerated with the third one

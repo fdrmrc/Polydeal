@@ -2,9 +2,6 @@
 # CMake script for the step-1 tutorial program:
 # #
 
-# Set the name of the project and target:
-SET(DEAL_II_DIR "/Users/marcofeder/build_deal_GAL_master/")
-
 # Declare all source files the target consists of. Here, this is only
 # the one step-X.cc file, but as you expand your project you may wish
 # to add other source files as well. If your project becomes much larger,
@@ -43,5 +40,6 @@ ENABLE_TESTING()
 INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/include)
 
 ADD_SUBDIRECTORY(src)
-ADD_SUBDIRECTORY(tests/agglomeration)
+ADD_SUBDIRECTORY(test/agglomeration)
+
 # ADD_SUBDIRECTORY(tests/step)

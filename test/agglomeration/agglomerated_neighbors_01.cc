@@ -15,12 +15,14 @@
  */
 
 
-// Select some cells of a tria, agglomerated them together and check the
-// bounding box of the resulting agglomeration.
+// Select some cells of a tria, agglomerated them together and check that the
+// vector describing the agglomeration has the right information, i.e.
+// v[idx] = -1 if cell is master, otherwise index of the master of idx-th cell.
 
 #include <deal.II/grid/grid_generator.h>
+#include <deal.II/grid/grid_out.h>
 
-#include "agglomeration_handler.h"
+#include "../tests.h"
 
 int
 main()
@@ -30,21 +32,19 @@ main()
   tria.refine_global(2);
   AgglomerationHandler<2> ah(tria);
 
-  std::vector<unsigned int> idxs_to_be_agglomerated = {3, 6, 9, 12, 13};
+  std::vector<unsigned int> idxs_to_be_agglomerated = {
+    3, 6, 9, 12, 13}; //{8, 9, 10, 11};
   std::vector<typename Triangulation<2>::active_cell_iterator>
     cells_to_be_agglomerated;
-  for (const auto &cell : tria.active_cell_iterators())
-    {
-      if (std::find(idxs_to_be_agglomerated.begin(),
-                    idxs_to_be_agglomerated.end(),
-                    cell->active_cell_index()) != idxs_to_be_agglomerated.end())
-        {
-          cells_to_be_agglomerated.push_back(cell);
-        }
-    }
+  Tests::collect_cells_for_agglomeration(tria,
+                                         idxs_to_be_agglomerated,
+                                         cells_to_be_agglomerated);
 
+  // Agglomerate the cells just stored
   ah.agglomerate_cells(cells_to_be_agglomerated);
-  const auto bbox_agglomeration_pts = ah.get_bboxes()[3].get_boundary_points();
-  std::cout << "p0: =" << bbox_agglomeration_pts.first << std::endl;
-  std::cout << "p1: =" << bbox_agglomeration_pts.second << std::endl;
+  ah.setup_neighbors_of_agglomeration(cells_to_be_agglomerated);
+
+  GridOut       go;
+  std::ofstream out("temp.vtk");
+  go.write_vtk(tria, out);
 }
