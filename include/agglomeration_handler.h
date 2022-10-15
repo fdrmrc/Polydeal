@@ -200,11 +200,10 @@ public:
         "The connectivity should not be empty after the execution of this function."));
   }
 
+
+
   /**
    * The argument here should be a vector storing the agglomerated cells.
-   *
-   *
-   *
    */
   void
   setup_neighbors_of_agglomeration(
@@ -222,8 +221,6 @@ public:
             if (neighboring_cell.state() == IteratorState::valid &&
                 !are_cells_agglomerated(cell, neighboring_cell))
               {
-                std::cout << "Cell idx: " << cell->active_cell_index()
-                          << " Face index: " << f << std::endl;
                 neighbor_connectivity[cell].insert({neighboring_cell, f});
               }
           }

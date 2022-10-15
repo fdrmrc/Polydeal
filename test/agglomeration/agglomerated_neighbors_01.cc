@@ -29,22 +29,62 @@ main()
 {
   Triangulation<2> tria;
   GridGenerator::hyper_cube(tria, -1, 1);
-  tria.refine_global(2);
+  tria.refine_global(3);
   AgglomerationHandler<2> ah(tria);
 
   std::vector<unsigned int> idxs_to_be_agglomerated = {
     3, 6, 9, 12, 13}; //{8, 9, 10, 11};
+
   std::vector<typename Triangulation<2>::active_cell_iterator>
     cells_to_be_agglomerated;
   Tests::collect_cells_for_agglomeration(tria,
                                          idxs_to_be_agglomerated,
                                          cells_to_be_agglomerated);
 
+  std::vector<unsigned int> idxs_to_be_agglomerated2 = {15, 36, 37};
+
+  std::vector<typename Triangulation<2>::active_cell_iterator>
+    cells_to_be_agglomerated2;
+  Tests::collect_cells_for_agglomeration(tria,
+                                         idxs_to_be_agglomerated2,
+                                         cells_to_be_agglomerated2);
+
+
+  std::vector<unsigned int> idxs_to_be_agglomerated3 = {57, 60, 54};
+
+  std::vector<typename Triangulation<2>::active_cell_iterator>
+    cells_to_be_agglomerated3;
+  Tests::collect_cells_for_agglomeration(tria,
+                                         idxs_to_be_agglomerated3,
+                                         cells_to_be_agglomerated3);
+
+  std::vector<unsigned int> idxs_to_be_agglomerated4 = {25, 19, 22};
+
+  std::vector<typename Triangulation<2>::active_cell_iterator>
+    cells_to_be_agglomerated4;
+  Tests::collect_cells_for_agglomeration(tria,
+                                         idxs_to_be_agglomerated4,
+                                         cells_to_be_agglomerated4);
+
   // Agglomerate the cells just stored
   ah.agglomerate_cells(cells_to_be_agglomerated);
+  ah.agglomerate_cells(cells_to_be_agglomerated2);
+  ah.agglomerate_cells(cells_to_be_agglomerated3);
+  ah.agglomerate_cells(cells_to_be_agglomerated4);
   ah.setup_neighbors_of_agglomeration(cells_to_be_agglomerated);
+  ah.setup_neighbors_of_agglomeration(cells_to_be_agglomerated2);
+  ah.setup_neighbors_of_agglomeration(cells_to_be_agglomerated3);
+  ah.setup_neighbors_of_agglomeration(cells_to_be_agglomerated4);
 
-  GridOut       go;
-  std::ofstream out("temp.vtk");
-  go.write_vtk(tria, out);
+
+  for (const auto &value : get_agglomerated_connectivity(ah))
+    { // value is a set now
+      for (const auto &x : value.second)
+        {
+          std::cout << "Cell with idx: " << (value.first)->active_cell_index()
+                    << " has neighbor with idx: "
+                    << (x.first)->active_cell_index()
+                    << " and local face numbering: " << x.second << std::endl;
+        }
+    }
 }
