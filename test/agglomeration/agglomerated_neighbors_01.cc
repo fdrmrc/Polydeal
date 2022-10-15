@@ -30,7 +30,8 @@ main()
   Triangulation<2> tria;
   GridGenerator::hyper_cube(tria, -1, 1);
   tria.refine_global(3);
-  AgglomerationHandler<2> ah(tria);
+  std::unique_ptr<GridTools::Cache<2>> cached_tria( new GridTools::Cache<2>(tria,MappingQ<2>(1)));
+  AgglomerationHandler<2> ah(cached_tria);
 
   std::vector<unsigned int> idxs_to_be_agglomerated = {
     3, 6, 9, 12, 13}; //{8, 9, 10, 11};

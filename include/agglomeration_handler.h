@@ -19,6 +19,7 @@
 #include <deal.II/base/quadrature.h>
 #include <deal.II/base/subscriptor.h>
 
+#include <deal.II/grid/grid_tools_cache.h>
 #include <deal.II/dofs/dof_handler.h>
 
 #include <deal.II/fe/fe_dgq.h>
@@ -63,8 +64,7 @@ class AgglomerationHandler : public Subscriptor
 public:
   static inline unsigned int n_agglomerated_cells = 0; // only C++17 feature
 
-  explicit AgglomerationHandler(const Triangulation<dim, spacedim> &tria,
-                                unsigned int mapping_degree = 0);
+  explicit AgglomerationHandler(const std::unique_ptr<GridTools::Cache<dim,spacedim>>& cached_tria);
 
   ~AgglomerationHandler()
   {
@@ -311,7 +311,9 @@ private:
    */
   mutable std::unique_ptr<ScratchData> agglomerated_scratch;
 
-  boost::signals2::connection initialize_listener;
+  std::unique_ptr<GridTools::Cache<dim,spacedim>> cached_tria;
+
+  boost::signals2::connection initialize_listener;  
 
   /**
    * Make sure we throw unless initialize() is called again.
