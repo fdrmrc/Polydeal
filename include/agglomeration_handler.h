@@ -28,6 +28,7 @@
 #include <deal.II/fe/mapping_fe_field.h>
 #include <deal.II/fe/mapping_q.h>
 
+#include <deal.II/grid/grid_tools_cache.h>
 #include <deal.II/grid/tria.h>
 
 #include <deal.II/lac/vector.h>
@@ -63,8 +64,8 @@ class AgglomerationHandler : public Subscriptor
 public:
   static inline unsigned int n_agglomerated_cells = 0; // only C++17 feature
 
-  explicit AgglomerationHandler(const Triangulation<dim, spacedim> &tria,
-                                unsigned int mapping_degree = 0);
+  explicit AgglomerationHandler(
+    const std::unique_ptr<GridTools::Cache<dim, spacedim>> &cached_tria);
 
   ~AgglomerationHandler()
   {
@@ -274,6 +275,8 @@ private:
 
   SmartPointer<const Triangulation<dim, spacedim>> tria;
 
+  SmartPointer<const Mapping<dim,spacedim>> mapping;
+
   std::unique_ptr<FESystem<dim, spacedim>> euler_fe;
 
   std::map<const typename Triangulation<dim, spacedim>::active_cell_iterator,
@@ -310,6 +313,8 @@ private:
    * scratch.reinit(cell);
    */
   mutable std::unique_ptr<ScratchData> agglomerated_scratch;
+
+  std::unique_ptr<GridTools::Cache<dim, spacedim>> cached_tria;
 
   boost::signals2::connection initialize_listener;
 
