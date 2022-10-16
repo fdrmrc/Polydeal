@@ -21,7 +21,7 @@
 
 template <int dim, int spacedim>
 AgglomerationHandler<dim, spacedim>::AgglomerationHandler(
-    const std::unique_ptr<GridTools::Cache<dim,spacedim>>& cached_tria)
+  const std::unique_ptr<GridTools::Cache<dim, spacedim>> &cached_tria)
   : euler_fe(std::make_unique<FESystem<dim, spacedim>>(FE_DGQ<spacedim>(1), 2))
   , euler_dh(cached_tria->get_triangulation())
 {
@@ -29,8 +29,10 @@ AgglomerationHandler<dim, spacedim>::AgglomerationHandler(
          ExcMessage(
            "The triangulation must not be empty upon calling this function."));
   tria = &cached_tria->get_triangulation();
-  // All cells are initially marked with -2, while -1 is reserved for master cells.
-  master_slave_relationships.resize(cached_tria->get_triangulation().n_active_cells(), -2);
+  // All cells are initially marked with -2, while -1 is reserved for master
+  // cells.
+  master_slave_relationships.resize(
+    cached_tria->get_triangulation().n_active_cells(), -2);
   bboxes.resize(tria->n_active_cells());
   euler_dh.distribute_dofs(*euler_fe);
   euler_vector.reinit(euler_dh.n_dofs());
