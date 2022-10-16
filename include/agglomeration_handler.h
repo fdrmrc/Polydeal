@@ -275,6 +275,8 @@ private:
 
   SmartPointer<const Triangulation<dim, spacedim>> tria;
 
+  SmartPointer<const Mapping<dim,spacedim>> mapping;
+
   std::unique_ptr<FESystem<dim, spacedim>> euler_fe;
 
   std::map<const typename Triangulation<dim, spacedim>::active_cell_iterator,

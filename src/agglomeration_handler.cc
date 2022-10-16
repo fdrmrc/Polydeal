@@ -29,6 +29,7 @@ AgglomerationHandler<dim, spacedim>::AgglomerationHandler(
          ExcMessage(
            "The triangulation must not be empty upon calling this function."));
   tria = &cached_tria->get_triangulation();
+  mapping = &cached_tria->get_mapping();
   // All cells are initially marked with -2, while -1 is reserved for master
   // cells.
   master_slave_relationships.resize(
