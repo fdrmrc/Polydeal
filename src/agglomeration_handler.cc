@@ -22,14 +22,18 @@
 template <int dim, int spacedim>
 AgglomerationHandler<dim, spacedim>::AgglomerationHandler(
   const std::unique_ptr<GridTools::Cache<dim, spacedim>> &cached_tria)
-  : euler_fe(std::make_unique<FESystem<dim, spacedim>>(FE_DGQ<spacedim>(1), 2))
+  : agglo_dh(cached_tria->get_triangulation())
+  , euler_fe(
+      std::make_unique<FESystem<dim, spacedim>>(FE_DGQ<spacedim>(1), spacedim))
   , euler_dh(cached_tria->get_triangulation())
 {
   Assert(cached_tria->get_triangulation().n_active_cells() > 0,
          ExcMessage(
            "The triangulation must not be empty upon calling this function."));
-  tria = &cached_tria->get_triangulation();
+  tria    = &cached_tria->get_triangulation();
   mapping = &cached_tria->get_mapping();
+  fe_collection.push_back(FE_DGQ<dim, spacedim>(1));
+  fe_collection.push_back(FE_Nothing<dim, spacedim>());
   // All cells are initially marked with -2, while -1 is reserved for master
   // cells.
   master_slave_relationships.resize(
@@ -66,7 +70,7 @@ AgglomerationHandler<dim, spacedim>::agglomerate_cells(
     master_slave_relationships[idx] = master_idx; // mark each slave
   master_slave_relationships[master_idx] = -1;
 
-  ++n_agglomerated_cells; // agglomeration has been performed
+  ++n_agglomerations; // agglomeration has been performed
   create_bounding_box(vec_of_cells, master_idx); // fill the vector of bboxes
 }
 
@@ -106,7 +110,7 @@ template <int dim, int spacedim>
 Quadrature<dim>
 AgglomerationHandler<dim, spacedim>::agglomerated_quadrature(
   const std::vector<typename Triangulation<dim, spacedim>::active_cell_iterator>
-                        &cells,
+    &                    cells,
   const Quadrature<dim> &quadrature_type) const
 {
   Assert(quadrature_type.size() > 0,
@@ -152,13 +156,22 @@ AgglomerationHandler<dim, spacedim>::agglomerated_quadrature(
 
 template <int dim, int spacedim>
 void
-AgglomerationHandler<dim, spacedim>::initialize_hp_structure(
-  DoFHandler<dim, spacedim> &dh)
+AgglomerationHandler<dim, spacedim>::initialize_hp_structure()
 {
-  // initialize_listener = dh.get_triangulation().signals.any_change.connect(
-  //   [this]() { this->invalidate_data(); });
+  Assert(n_agglomerations > 0,
+         ExcMessage("No agglomeration has been performed."));
+  Assert(agglo_dh.get_triangulation().n_cells() > 0,
+         ExcMessage(
+           "Triangulation must not be empty upon calling this function."));
+  for (const auto &cell : agglo_dh.active_cell_iterators())
+    if (is_master_cell(cell))
+      cell->set_active_fe_index(AggloIndex::master);
+    else
+      cell->set_active_fe_index(AggloIndex::slave);
+
+  agglo_dh.distribute_dofs(fe_collection);
 }
 
-template class AgglomerationHandler<1>;
+// template class AgglomerationHandler<1>;
 template class AgglomerationHandler<2>;
-template class AgglomerationHandler<3>;
+// template class AgglomerationHandler<3>;
