@@ -16,6 +16,7 @@
 #ifndef agglomeration_handler_h
 #define agglomeration_handler_h
 
+#include <deal.II/base/bounding_box_data_out.h>
 #include <deal.II/base/quadrature.h>
 #include <deal.II/base/subscriptor.h>
 
@@ -40,6 +41,9 @@
 
 #include <deal.II/non_matching/immersed_surface_quadrature.h>
 
+#include <deal.II/numerics/data_out.h>
+
+#include <fstream>
 #include <utility>
 
 using namespace dealii;
@@ -283,6 +287,20 @@ public:
     master = 0,
     slave  = 1
   };
+
+
+
+  void
+  test_setup_euler_mapping()
+  {
+    euler_mapping =
+      std::make_unique<MappingFEField<dim, spacedim>>(euler_dh, euler_vector);
+
+    std::ofstream           ofile("boxes.vtu");
+    BoundingBoxDataOut<dim> data_out;
+    data_out.build_patches(bboxes);
+    data_out.write_vtu(ofile);
+  }
 
 private:
   std::vector<long int> master_slave_relationships;
