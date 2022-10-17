@@ -16,7 +16,8 @@
 
 
 // Create a 4x4 rectangular grid with 4 master cells like in the following
-// (marked with M): x - x - x - x - x
+// (marked with M):
+// x - x - x - x - x
 // |   |   |   |   |
 // x - x - x - x - x
 // | M |   | M |   |
