@@ -28,8 +28,11 @@
 #include <deal.II/fe/mapping_fe_field.h>
 #include <deal.II/fe/mapping_q.h>
 
+#include <deal.II/grid/filtered_iterator.h>
 #include <deal.II/grid/grid_tools_cache.h>
 #include <deal.II/grid/tria.h>
+
+#include <deal.II/hp/fe_collection.h>
 
 #include <deal.II/lac/vector.h>
 
@@ -62,7 +65,13 @@ class AgglomerationHandler : public Subscriptor
               unsigned int>>;
 
 public:
-  static inline unsigned int n_agglomerated_cells = 0; // only C++17 feature
+  static inline unsigned int n_agglomerations = 0; // only C++17 feature
+
+  /**
+   * DoFHandler for the agglomerated space
+   *
+   */
+  DoFHandler<dim, spacedim> agglo_dh;
 
   explicit AgglomerationHandler(
     const std::unique_ptr<GridTools::Cache<dim, spacedim>> &cached_tria);
@@ -78,7 +87,7 @@ public:
    * to initialize a hp::FEValues.
    */
   void
-  initialize_hp_structure(DoFHandler<dim, spacedim> &dh /*, ...*/);
+  initialize_hp_structure();
 
   /**
    * Store internally that the given cells are agglomerated. The convenction we
@@ -99,7 +108,7 @@ public:
   agglomerate_cells(
     const std::vector<
       typename Triangulation<dim, spacedim>::active_cell_iterator>
-                      &vec_of_cells,
+      &                vec_of_cells,
     const unsigned int local_master_idx);
 
   /**
@@ -127,7 +136,7 @@ public:
    * with which master.
    */
   friend void
-  print_agglomeration(std::ostream                              &os,
+  print_agglomeration(std::ostream &                             os,
                       const AgglomerationHandler<dim, spacedim> &ah)
   {
     for (const auto &cell : ah.euler_dh.active_cell_iterators())
@@ -262,22 +271,30 @@ public:
     unsigned int agglomerated_face_number) const;
 
 
+  enum AggloIndex
+  {
+    master = 0,
+    slave  = 1
+  };
 
 private:
   std::vector<long int> master_slave_relationships;
+
 
   /**
    * bboxes[idx] = BBOx associated to the agglomeration with master cell indexed
    * by idx. Othwerwise ddefault BBox
    *
    */
-  std::vector<BoundingBox<spacedim>> bboxes;
+  std::vector<BoundingBox<spacedim>> bboxes; //@todo: use map also for BBOxes
 
   SmartPointer<const Triangulation<dim, spacedim>> tria;
 
-  SmartPointer<const Mapping<dim,spacedim>> mapping;
+  SmartPointer<const Mapping<dim, spacedim>> mapping;
 
   std::unique_ptr<FESystem<dim, spacedim>> euler_fe;
+
+  hp::FECollection<dim, spacedim> fe_collection;
 
   std::map<const typename Triangulation<dim, spacedim>::active_cell_iterator,
            NeighborsInfos>
@@ -290,6 +307,8 @@ private:
    *
    */
   DoFHandler<dim, spacedim> euler_dh;
+
+
 
   /**
    * Eulerian vector describing the new cells obtained by the bounding boxes
@@ -351,7 +370,8 @@ private:
 
   /**
    * Find (if any) the cells that have the given master index. Note that idx is
-   * signed as it can be equal to -1, meaning that the cell is a master one.
+   * signed as it can be equal to -1 (meaning that the cell is a master one) or
+   * -2.
    */
   std::vector<typename Triangulation<dim, spacedim>::active_cell_iterator>
   get_slaves_of_idx(const int idx) const;
@@ -365,10 +385,10 @@ private:
   create_bounding_box(
     const std::vector<
       typename Triangulation<dim, spacedim>::active_cell_iterator>
-                      &vec_of_cells,
+      &                vec_of_cells,
     const unsigned int master_idx)
   {
-    Assert(n_agglomerated_cells > 0,
+    Assert(n_agglomerations > 0,
            ExcMessage("No agglomeration has been performed."));
     Assert(dim == 2 && spacedim == 2,
            ExcNotImplemented()); //@todo #3 Not working in 3D
