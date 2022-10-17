@@ -125,7 +125,6 @@ AgglomerationHandler<dim, spacedim>::agglomerated_quadrature(
                                     quadrature_type,
                                     update_quadrature_points |
                                       update_JxW_values); // only for quadrature
-
   std::vector<Point<dim>> vec_pts;
   std::vector<double>     vec_JxWs;
   for (const auto &dummy_cell : cells)
@@ -139,6 +138,7 @@ AgglomerationHandler<dim, spacedim>::agglomerated_quadrature(
       mapping_generic.transform_points_real_to_unit_cell(cell,
                                                          q_points,
                                                          q_points);
+
       std::transform(q_points.begin(),
                      q_points.end(),
                      std::back_inserter(vec_pts),

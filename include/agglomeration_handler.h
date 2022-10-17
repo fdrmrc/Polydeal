@@ -192,17 +192,24 @@ public:
     const unsigned int agglomerated_face_number) const;
 
   /**
-   * Set the up neighbors info object
+   * Set the up neighbors info object. This function takes a vector of
+   * agglomerations. Each agglomeration is described by a vector of cells.
+   * @todo Document better
    */
   void
-  setup_neighbors_info()
+  setup_neighbors_info(
+    const std::vector<
+      std::vector<typename Triangulation<dim, spacedim>::active_cell_iterator>>
+      &agglomerations)
   {
     Assert(
-      neighbor_connectivity.size() > 0,
+      agglomerations.size() > 0,
       ExcInternalError(
         "This method is supposed to be called after the setup of the agglomeration."));
 
 
+    for (const auto &agglo : agglomerations)
+      setup_neighbors_of_agglomeration(agglo);
 
     Assert(
       neighbor_connectivity.size() > 0,

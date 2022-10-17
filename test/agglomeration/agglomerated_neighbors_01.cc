@@ -74,11 +74,13 @@ main()
   ah.agglomerate_cells(cells_to_be_agglomerated2);
   ah.agglomerate_cells(cells_to_be_agglomerated3);
   ah.agglomerate_cells(cells_to_be_agglomerated4);
-  ah.setup_neighbors_of_agglomeration(cells_to_be_agglomerated);
-  ah.setup_neighbors_of_agglomeration(cells_to_be_agglomerated2);
-  ah.setup_neighbors_of_agglomeration(cells_to_be_agglomerated3);
-  ah.setup_neighbors_of_agglomeration(cells_to_be_agglomerated4);
 
+  std::vector<std::vector<typename Triangulation<2>::active_cell_iterator>>
+    agglomerations{cells_to_be_agglomerated,
+                   cells_to_be_agglomerated2,
+                   cells_to_be_agglomerated3,
+                   cells_to_be_agglomerated4};
+  ah.setup_neighbors_info(agglomerations);
 
   for (const auto &value : get_agglomerated_connectivity(ah))
     { // value is a set now
