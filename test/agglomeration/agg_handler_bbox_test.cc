@@ -42,65 +42,7 @@ main()
 
 
   ah.agglomerate_cells(cells_to_be_agglomerated);
-  const auto bbox_agglomeration_pts = get_bboxes(ah)[3].get_boundary_points();
+  const auto bbox_agglomeration_pts = get_bboxes(ah)[13].get_boundary_points();
   std::cout << "p0: =" << bbox_agglomeration_pts.first << std::endl;
   std::cout << "p1: =" << bbox_agglomeration_pts.second << std::endl;
-
-  // {
-  //   Triangulation<2> tria;
-  //   GridGenerator::hyper_cube(tria, -1, 1);
-  //   MappingQ<2> mapping(1);
-  //   tria.refine_global(3);
-  //   std::unique_ptr<GridTools::Cache<2>> cached_tria(
-  //     new GridTools::Cache<2>(tria, mapping));
-  //   AgglomerationHandler<2> ah(cached_tria);
-
-  //   std::vector<unsigned int> idxs_to_be_agglomerated = {
-  //     3, 6, 9, 12, 13}; //{8, 9, 10, 11};
-
-  //   std::vector<typename Triangulation<2>::active_cell_iterator>
-  //     cells_to_be_agglomerated;
-  //   Tests::collect_cells_for_agglomeration(tria,
-  //                                          idxs_to_be_agglomerated,
-  //                                          cells_to_be_agglomerated);
-
-  //   std::vector<unsigned int> idxs_to_be_agglomerated2 = {15, 36, 37};
-
-  //   std::vector<typename Triangulation<2>::active_cell_iterator>
-  //     cells_to_be_agglomerated2;
-  //   Tests::collect_cells_for_agglomeration(tria,
-  //                                          idxs_to_be_agglomerated2,
-  //                                          cells_to_be_agglomerated2);
-
-
-  //   std::vector<unsigned int> idxs_to_be_agglomerated3 = {57, 60, 54};
-
-  //   std::vector<typename Triangulation<2>::active_cell_iterator>
-  //     cells_to_be_agglomerated3;
-  //   Tests::collect_cells_for_agglomeration(tria,
-  //                                          idxs_to_be_agglomerated3,
-  //                                          cells_to_be_agglomerated3);
-
-  //   std::vector<unsigned int> idxs_to_be_agglomerated4 = {25, 19, 22};
-
-  //   std::vector<typename Triangulation<2>::active_cell_iterator>
-  //     cells_to_be_agglomerated4;
-  //   Tests::collect_cells_for_agglomeration(tria,
-  //                                          idxs_to_be_agglomerated4,
-  //                                          cells_to_be_agglomerated4);
-
-  //   // Agglomerate the cells just stored
-  //   ah.agglomerate_cells(cells_to_be_agglomerated);
-  //   ah.agglomerate_cells(cells_to_be_agglomerated2);
-  //   ah.agglomerate_cells(cells_to_be_agglomerated3);
-  //   ah.agglomerate_cells(cells_to_be_agglomerated4);
-
-  //   std::vector<std::vector<typename Triangulation<2>::active_cell_iterator>>
-  //     agglomerations{cells_to_be_agglomerated,
-  //                    cells_to_be_agglomerated2,
-  //                    cells_to_be_agglomerated3,
-  //                    cells_to_be_agglomerated4};
-  //   ah.setup_neighbors_info(agglomerations);
-  //   ah.test_setup_euler_mapping();
-  // }
 }
