@@ -164,7 +164,7 @@ AgglomerationHandler<dim, spacedim>::initialize_hp_structure()
          ExcMessage(
            "Triangulation must not be empty upon calling this function."));
   for (const auto &cell : agglo_dh.active_cell_iterators())
-    if (is_master_cell(cell))
+    if (!is_slave_cell(cell))
       cell->set_active_fe_index(AggloIndex::master);
     else
       cell->set_active_fe_index(AggloIndex::slave);

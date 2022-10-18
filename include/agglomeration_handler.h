@@ -104,7 +104,6 @@ public:
   agglomerate_cells(const std::vector<
                     typename Triangulation<dim, spacedim>::active_cell_iterator>
                       &vec_of_cells);
-
   /**
    * Same as above, but deciding which index is the master one
    */
@@ -295,6 +294,30 @@ public:
   {
     euler_mapping =
       std::make_unique<MappingFEField<dim, spacedim>>(euler_dh, euler_vector);
+    FE_DGQ<dim, spacedim> fe(1);
+    ScratchData           scratch(*euler_mapping,
+                        euler_dh.get_fe(),
+                        QGauss<dim>(3),
+                        update_values | update_JxW_values |
+                          update_quadrature_points);
+
+    for (const auto &cell :
+         euler_dh.active_cell_iterators() |
+           IteratorFilters::ActiveFEIndexEqualTo(AggloIndex::master))
+      {
+        if (euler_mapping->get_bounding_box(cell).volume() > 1e-10)
+          {
+            std::cout << "Cell " << cell->active_cell_index()
+                      << " is a master large enough" << std::endl;
+            const auto &fev = scratch.reinit(cell);
+            double      sum = 0.;
+            for (const auto &q : fev.get_JxW_values())
+              {
+                sum += q;
+              }
+            std::cout << "Sum is: " << sum << std::endl;
+          }
+      }
 
     std::ofstream           ofile("boxes.vtu");
     BoundingBoxDataOut<dim> data_out;
@@ -381,6 +404,20 @@ private:
     return master_slave_relationships[cell->active_cell_index()] == -1;
   }
 
+
+
+  /**
+   * Helper function to determine if the given cell is a standard deal.II cell,
+   * that is: not master, nor slave.
+   *
+   */
+  inline bool
+  is_standard_cell(
+    const typename Triangulation<dim, spacedim>::active_cell_iterator &cell)
+  {
+    return master_slave_relationships[cell->active_cell_index()] == -2;
+  }
+
   /**
    * Helper function to determine whether or not a cell is a slave cell.
    * Instead of returning a boolean, it gives the index of the master cell. If
@@ -390,7 +427,20 @@ private:
   is_slave_cell_of(
     const typename Triangulation<dim, spacedim>::active_cell_iterator &cell)
   {
-    return master_slave_relationships[cell->active_cell_index()] != -1;
+    return master_slave_relationships[cell->active_cell_index()];
+  }
+
+
+
+  /**
+   * Helper function to determine whether or not a cell is a slave cell,
+   without any information about his parents.
+   */
+  inline bool
+  is_slave_cell(
+    const typename Triangulation<dim, spacedim>::active_cell_iterator &cell)
+  {
+    return master_slave_relationships[cell->active_cell_index()] >= 0;
   }
 
   /**
