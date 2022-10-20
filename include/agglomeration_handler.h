@@ -50,13 +50,13 @@ using namespace dealii;
 
 /**
  *
- * Assumption: each cell may have only one master cell, that means it's not
- * possible that a cell has two masters cells.
+ * Assumption: each cell may have only one master cell
  */
 template <int dim, int spacedim = dim>
 class AgglomerationHandler : public Subscriptor
 {
   using ScratchData = MeshWorker::ScratchData<dim, spacedim>;
+
 
   // Internal type used to associate agglomerated cells with neighbors. In
   // particular, we store for each cell the index of the neighboring cell (hence
@@ -69,6 +69,12 @@ class AgglomerationHandler : public Subscriptor
               unsigned int>>;
 
 public:
+  enum AggloIndex
+  {
+    master = 0,
+    slave  = 1
+  };
+
   static inline unsigned int n_agglomerations = 0; // only C++17 feature
 
   /**
@@ -95,8 +101,9 @@ public:
 
   /**
    * Store internally that the given cells are agglomerated. The convenction we
-   * take is the following: -2: default value, standard deal.II cell -1: a cell
-   * is a master cell
+   * take is the following:
+   * -2: default value, standard deal.II cell
+   * -1: cell is a master cell
    *
    * @note Cells are assumed to be adjacent one to each other, and no check about this is done. @todo
    */
@@ -104,16 +111,6 @@ public:
   agglomerate_cells(const std::vector<
                     typename Triangulation<dim, spacedim>::active_cell_iterator>
                       &vec_of_cells);
-
-  /**
-   * Same as above, but deciding which index is the master one
-   */
-  void
-  agglomerate_cells(
-    const std::vector<
-      typename Triangulation<dim, spacedim>::active_cell_iterator>
-      &                vec_of_cells,
-    const unsigned int local_master_idx);
 
   /**
    * Get cells agglomerated with the given cell iterator. Return an empty vector
@@ -238,7 +235,9 @@ public:
         for (const auto &f : cell->face_indices())
           {
             const auto &neighboring_cell = cell->neighbor(f);
-
+            // Check if cell is not on the boundary and if it's not agglomerated
+            // with the neighbor If so, it's a neighbor of the present
+            // agglomeration
             if (neighboring_cell.state() == IteratorState::valid &&
                 !are_cells_agglomerated(cell, neighboring_cell))
               {
@@ -251,7 +250,7 @@ public:
   /**
    * Where the magic happens!
    */
-  const FEValuesBase<dim, spacedim> &
+  const FEValues<dim, spacedim> &
   reinit(
     const typename DoFHandler<dim, spacedim>::active_cell_iterator &cell) const;
 
@@ -265,7 +264,9 @@ public:
          const unsigned int agglomeration_face_number) const;
 
   /**
-   * Return the agglomerated quadrature for the given agglomeration.
+   * Return the agglomerated quadrature for the given agglomeration. This
+   * amounts to loop over all cells in an agglomeration and collecting together
+   * all the rules.
    */
   Quadrature<dim>
   agglomerated_quadrature(
@@ -282,19 +283,34 @@ public:
     unsigned int agglomerated_face_number) const;
 
 
-  enum AggloIndex
-  {
-    master = 0,
-    slave  = 1
-  };
-
-
 
   void
   test_setup_euler_mapping()
   {
     euler_mapping =
       std::make_unique<MappingFEField<dim, spacedim>>(euler_dh, euler_vector);
+    ScratchData scratch(*euler_mapping,
+                        agglo_dh.get_fe(),
+                        QGauss<dim>(3),
+                        update_values | update_JxW_values |
+                          update_quadrature_points);
+
+    for (const auto &cell :
+         agglo_dh.active_cell_iterators() |
+           IteratorFilters::ActiveFEIndexEqualTo(AggloIndex::master))
+      {
+        std::cout << agglo_dh.get_fe().dofs_per_cell << std::endl;
+        std::cout << "BBox has measure: "
+                  << euler_mapping->get_bounding_box(cell).volume()
+                  << std::endl;
+        const auto &fev = scratch.reinit(cell);
+        double      sum = 0.;
+        for (const auto &q : fev.get_JxW_values())
+          {
+            sum += q;
+          }
+        std::cout << "Sum is: " << sum << std::endl;
+      }
 
     std::ofstream           ofile("boxes.vtu");
     BoundingBoxDataOut<dim> data_out;
@@ -304,7 +320,6 @@ public:
 
 private:
   std::vector<long int> master_slave_relationships;
-
 
   /**
    * bboxes[idx] = BBOx associated to the agglomeration with master cell indexed
@@ -381,6 +396,20 @@ private:
     return master_slave_relationships[cell->active_cell_index()] == -1;
   }
 
+
+
+  /**
+   * Helper function to determine if the given cell is a standard deal.II cell,
+   * that is: not master, nor slave.
+   *
+   */
+  inline bool
+  is_standard_cell(
+    const typename Triangulation<dim, spacedim>::active_cell_iterator &cell)
+  {
+    return master_slave_relationships[cell->active_cell_index()] == -2;
+  }
+
   /**
    * Helper function to determine whether or not a cell is a slave cell.
    * Instead of returning a boolean, it gives the index of the master cell. If
@@ -390,7 +419,20 @@ private:
   is_slave_cell_of(
     const typename Triangulation<dim, spacedim>::active_cell_iterator &cell)
   {
-    return master_slave_relationships[cell->active_cell_index()] != -1;
+    return master_slave_relationships[cell->active_cell_index()];
+  }
+
+
+
+  /**
+   * Helper function to determine whether or not a cell is a slave cell,
+   without any information about his parents.
+   */
+  inline bool
+  is_slave_cell(
+    const typename Triangulation<dim, spacedim>::active_cell_iterator &cell)
+  {
+    return master_slave_relationships[cell->active_cell_index()] >= 0;
   }
 
   /**

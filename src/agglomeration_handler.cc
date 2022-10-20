@@ -15,7 +15,7 @@
  */
 
 
-#include "agglomeration_handler.h"
+#include <agglomeration_handler.h>
 
 
 
@@ -27,6 +27,8 @@ AgglomerationHandler<dim, spacedim>::AgglomerationHandler(
       std::make_unique<FESystem<dim, spacedim>>(FE_DGQ<spacedim>(1), spacedim))
   , euler_dh(cached_tria->get_triangulation())
 {
+  Assert(dim == spacedim, ExcMessage("Not tested with different dimensions"));
+  Assert(dim == 2 || dim == 3, ExcMessage("Not available in 1D."));
   Assert(cached_tria->get_triangulation().n_active_cells() > 0,
          ExcMessage(
            "The triangulation must not be empty upon calling this function."));
@@ -62,15 +64,15 @@ AgglomerationHandler<dim, spacedim>::agglomerate_cells(
   for (const auto &cell : vec_of_cells)
     global_indices.push_back(cell->active_cell_index());
 
-  // Minimum index drives the selection of the master cell
+  // Maximum index drives the selection of the master cell
   unsigned int master_idx =
-    *std::min(global_indices.begin(), global_indices.end());
+    *std::max_element(global_indices.begin(), global_indices.end());
 
   for (const unsigned int idx : global_indices)
     master_slave_relationships[idx] = master_idx; // mark each slave
   master_slave_relationships[master_idx] = -1;
 
-  ++n_agglomerations; // agglomeration has been performed
+  ++n_agglomerations; // agglomeration has been performed, record it
   create_bounding_box(vec_of_cells, master_idx); // fill the vector of bboxes
 }
 
@@ -130,8 +132,8 @@ AgglomerationHandler<dim, spacedim>::agglomerated_quadrature(
   for (const auto &dummy_cell : cells)
     {
       no_values.reinit(dummy_cell);
-      auto       q_points = no_values.get_quadrature_points();
-      const auto JxWs     = no_values.get_JxW_values();
+      auto        q_points = no_values.get_quadrature_points();
+      const auto &JxWs     = no_values.get_JxW_values();
 
       typename DoFHandler<dim, spacedim>::cell_iterator cell(*dummy_cell,
                                                              &euler_dh);
@@ -170,8 +172,50 @@ AgglomerationHandler<dim, spacedim>::initialize_hp_structure()
       cell->set_active_fe_index(AggloIndex::slave);
 
   agglo_dh.distribute_dofs(fe_collection);
+  euler_mapping =
+    std::make_unique<MappingFEField<dim, spacedim>>(euler_dh, euler_vector);
 }
 
-// template class AgglomerationHandler<1>;
+
+
+template <int dim, int spacedim>
+const FEValues<dim, spacedim> &
+AgglomerationHandler<dim, spacedim>::reinit(
+  const typename DoFHandler<dim, spacedim>::active_cell_iterator &cell) const
+{
+  Assert(
+    euler_mapping,
+    ExcMessage(
+      "The mapping describing the physical element stemming from agglomeration has not been set up."));
+  Assert(master_slave_relationships[cell->active_cell_index()] == -1,
+         ExcInternalError("The present cell must be a master cell."));
+
+  std::vector<typename Triangulation<dim, spacedim>::active_cell_iterator>
+    agglo_cells;
+  // Push back that master and slaves
+  agglo_cells.push_back(cell);
+  const auto &slaves = get_slaves_of_idx(cell->active_cell_index());
+  std::transform(
+    slaves.begin(),
+    slaves.end(),
+    std::back_inserter(agglo_cells),
+    [&](const typename Triangulation<dim, spacedim>::active_cell_iterator &c) {
+      return c;
+    });
+
+  Quadrature<dim> agglo_quad =
+    agglomerated_quadrature(agglo_cells,
+                            QGauss<dim>(2 * agglo_dh.get_fe().degree + 1));
+
+  agglomerated_scratch =
+    std::make_unique<ScratchData>(*euler_mapping,
+                                  agglo_dh.get_fe(),
+                                  agglo_quad,
+                                  update_values | update_quadrature_points);
+  //@todo Give flags in proper way, without hardcoding
+  return agglomerated_scratch->reinit(cell);
+}
+
+template class AgglomerationHandler<1>;
 template class AgglomerationHandler<2>;
-// template class AgglomerationHandler<3>;
+template class AgglomerationHandler<3>;
