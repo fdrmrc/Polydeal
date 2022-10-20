@@ -108,11 +108,7 @@ Quadrature<dim> AgglomerationHandler<dim, spacedim>::agglomerated_quadrature(
   FEValues<dim, spacedim> no_values(
       mapping_generic, dummy_fe, quadrature_type,
       update_quadrature_points | update_JxW_values);  // only for quadrature
-
-  // @todo Avoid an FEValues to generate quadrature rule.
-
   std::vector<Point<dim>> vec_pts;
-
   std::vector<double> vec_JxWs;
   for (const auto &dummy_cell : cells) {
     no_values.reinit(dummy_cell);
@@ -142,7 +138,7 @@ void AgglomerationHandler<dim, spacedim>::initialize_hp_structure() {
          ExcMessage(
              "Triangulation must not be empty upon calling this function."));
   for (const auto &cell : agglo_dh.active_cell_iterators())
-    if (!is_slave_cell(cell))
+    if (is_master_cell(cell))
       cell->set_active_fe_index(AggloIndex::master);
     else
       cell->set_active_fe_index(AggloIndex::slave);
