@@ -112,7 +112,6 @@ Quadrature<dim> AgglomerationHandler<dim, spacedim>::agglomerated_quadrature(
   // @todo Avoid an FEValues to generate quadrature rule.
 
   std::vector<Point<dim>> vec_pts;
-
   std::vector<double> vec_JxWs;
   for (const auto &dummy_cell : cells) {
     no_values.reinit(dummy_cell);
