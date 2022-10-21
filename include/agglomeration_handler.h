@@ -70,11 +70,11 @@ class AgglomerationHandler : public Subscriptor {
   DoFHandler<dim, spacedim> agglo_dh;
 
   explicit AgglomerationHandler(
-      const std::unique_ptr<GridTools::Cache<dim, spacedim>> &cached_tria);
+      const GridTools::Cache<dim, spacedim> &cached_tria);
 
   ~AgglomerationHandler() {
     // disconnect the signal
-    // initialize_listener.disconnect();
+    tria_listener.disconnect();
   }
 
   /**
@@ -199,13 +199,26 @@ class AgglomerationHandler : public Subscriptor {
           typename Triangulation<dim, spacedim>::active_cell_iterator>
           &vec_of_cells) {
     Assert(vec_of_cells.size() > 0, ExcMessage("The given vector is empty."));
+    const bool all_valid_cells = std::all_of(
+        vec_of_cells.begin(), vec_of_cells.end(),
+        [&](const typename Triangulation<dim, spacedim>::active_cell_iterator
+                &cell) { return !cell->has_children(); });
+    Assert(
+        all_valid_cells,
+        ExcMessage(
+            "Some iterators are not valid. You probably called this function "
+            "with iterators to a Triangulation that has been refined without "
+            "updating them."));
+
     for (const auto &cell : vec_of_cells) {
       for (const auto &f : cell->face_indices()) {
         const auto &neighboring_cell = cell->neighbor(f);
         // Check if cell is not on the boundary and if it's not agglomerated
         // with the neighbor If so, it's a neighbor of the present
         // agglomeration
-        if (neighboring_cell.state() == IteratorState::valid &&
+        if (neighboring_cell.state() ==
+                IteratorState::valid &&  // @todo Handle the case where the cell
+                                         // is on the boundary
             !are_cells_agglomerated(cell, neighboring_cell)) {
           neighbor_connectivity[cell].insert({neighboring_cell, f});
         }
@@ -330,13 +343,49 @@ class AgglomerationHandler : public Subscriptor {
 
   std::unique_ptr<GridTools::Cache<dim, spacedim>> cached_tria;
 
-  boost::signals2::connection initialize_listener;
+  boost::signals2::connection tria_listener;
 
   /**
-   * Make sure we throw unless initialize() is called again.
+   * Initialize connectivity informations
    */
-  void invalidate_data() {
-    // initialize_listener.disconnect();
+  void initialize_agglomeration_data(
+      const std::unique_ptr<GridTools::Cache<dim, spacedim>> &cache_tria) {
+    tria = &cache_tria->get_triangulation();
+    mapping = &cache_tria->get_mapping();
+
+    agglo_dh.reinit(*tria);
+    euler_fe = std::make_unique<FESystem<dim, spacedim>>(FE_DGQ<spacedim>(1),
+                                                         spacedim);
+    euler_dh.reinit(*tria);
+    euler_dh.distribute_dofs(*euler_fe);
+    euler_vector.reinit(euler_dh.n_dofs());
+
+    master_slave_relationships.resize(tria->n_active_cells(), -2);
+    if (n_agglomerations > 0)
+      std::fill(master_slave_relationships.begin(),
+                master_slave_relationships.end(),
+                -2);  // identify all the tria with standard deal.II cells.
+
+    neighbor_connectivity.clear();
+    bboxes.resize(tria->n_active_cells());
+    // n_agglomerations = 0;
+
+    // First, update the pointer
+    cached_tria = std::make_unique<GridTools::Cache<dim, spacedim>>(
+        cache_tria->get_triangulation(), cache_tria->get_mapping());
+
+    connect_to_tria_signals();
+    n_agglomerations = 0;
+  }
+
+  /**
+   * Reinitialize the agglomeration data.
+   */
+  void connect_to_tria_signals() {
+    // First disconnect existing connections
+    tria_listener.disconnect();
+    tria_listener = tria->signals.any_change.connect(
+        [&]() { this->initialize_agglomeration_data(this->cached_tria); });
   }
 
   /**

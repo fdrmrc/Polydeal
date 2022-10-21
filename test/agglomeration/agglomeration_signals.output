@@ -1,0 +1,17 @@
+Cell with idx: 1 has neighbor with idx: 4 and local face numbering: 1
+Cell with idx: 2 has neighbor with idx: 8 and local face numbering: 3
+Cell with idx: 3 has neighbor with idx: 6 and local face numbering: 1
+Cell with idx: 3 has neighbor with idx: 9 and local face numbering: 3
+Cell with idx: 4 has neighbor with idx: 1 and local face numbering: 0
+Cell with idx: 6 has neighbor with idx: 3 and local face numbering: 0
+Cell with idx: 6 has neighbor with idx: 12 and local face numbering: 3
+Cell with idx: 7 has neighbor with idx: 13 and local face numbering: 3
+Cell with idx: 8 has neighbor with idx: 2 and local face numbering: 2
+Cell with idx: 9 has neighbor with idx: 3 and local face numbering: 2
+Cell with idx: 9 has neighbor with idx: 12 and local face numbering: 1
+Cell with idx: 11 has neighbor with idx: 14 and local face numbering: 1
+Cell with idx: 12 has neighbor with idx: 6 and local face numbering: 2
+Cell with idx: 12 has neighbor with idx: 9 and local face numbering: 0
+Cell with idx: 13 has neighbor with idx: 7 and local face numbering: 2
+Cell with idx: 14 has neighbor with idx: 11 and local face numbering: 0
+OK
