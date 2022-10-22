@@ -19,7 +19,6 @@
 
 #include <deal.II/grid/grid_generator.h>
 #include <deal.II/grid/grid_out.h>
-
 #include <deal.II/numerics/data_out.h>
 
 #include "../tests.h"
@@ -29,8 +28,7 @@ int main() {
   GridGenerator::hyper_cube(tria, -1, 1);
   tria.refine_global(2);
   MappingQ<2> mapping(1);
-  std::unique_ptr<GridTools::Cache<2>> cached_tria(
-      new GridTools::Cache<2>(tria, mapping));
+  GridTools::Cache<2> cached_tria(tria, mapping);
   AgglomerationHandler<2> ah(cached_tria);
 
   std::vector<unsigned int> idxs_to_be_agglomerated = {3, 6, 9, 12, 13};

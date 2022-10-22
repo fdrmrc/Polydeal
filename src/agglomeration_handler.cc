@@ -18,28 +18,26 @@
 
 template <int dim, int spacedim>
 AgglomerationHandler<dim, spacedim>::AgglomerationHandler(
-    const std::unique_ptr<GridTools::Cache<dim, spacedim>> &cached_tria)
-    : agglo_dh(cached_tria->get_triangulation()),
-      euler_fe(std::make_unique<FESystem<dim, spacedim>>(FE_DGQ<spacedim>(1),
-                                                         spacedim)),
-      euler_dh(cached_tria->get_triangulation()) {
+    const GridTools::Cache<dim, spacedim> &cache_tria)
+    : cached_tria(std::make_unique<GridTools::Cache<dim, spacedim>>(
+          cache_tria.get_triangulation(), cache_tria.get_mapping())) {
   Assert(dim == spacedim, ExcMessage("Not tested with different dimensions"));
   Assert(dim == 2 || dim == 3, ExcMessage("Not available in 1D."));
   Assert(
       cached_tria->get_triangulation().n_active_cells() > 0,
       ExcMessage(
           "The triangulation must not be empty upon calling this function."));
-  tria = &cached_tria->get_triangulation();
-  mapping = &cached_tria->get_mapping();
+
   fe_collection.push_back(FE_DGQ<dim, spacedim>(1));
   fe_collection.push_back(FE_Nothing<dim, spacedim>());
   // All cells are initially marked with -2, while -1 is reserved for master
   // cells.
-  master_slave_relationships.resize(
-      cached_tria->get_triangulation().n_active_cells(), -2);
-  bboxes.resize(tria->n_active_cells());
-  euler_dh.distribute_dofs(*euler_fe);
-  euler_vector.reinit(euler_dh.n_dofs());
+  // master_slave_relationships.resize(
+  //     cached_tria->get_triangulation().n_active_cells(), -2);
+  // bboxes.resize(tria->n_active_cells());
+  // euler_dh.distribute_dofs(*euler_fe);
+  // euler_vector.reinit(euler_dh.n_dofs());
+  initialize_agglomeration_data(cached_tria);
 }
 
 template <int dim, int spacedim>
@@ -141,7 +139,7 @@ void AgglomerationHandler<dim, spacedim>::initialize_hp_structure() {
     if (is_master_cell(cell))
       cell->set_active_fe_index(AggloIndex::master);
     else
-      cell->set_active_fe_index(AggloIndex::slave);
+      cell->set_active_fe_index(AggloIndex::slave);  // Slave or standard cell
 
   agglo_dh.distribute_dofs(fe_collection);
   euler_mapping =
