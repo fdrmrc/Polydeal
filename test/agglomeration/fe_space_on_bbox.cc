@@ -20,6 +20,7 @@
 // the agglomerated element.
 
 #include <deal.II/grid/grid_generator.h>
+#include <deal.II/grid/grid_out.h>
 
 #include "../tests.h"
 
@@ -70,15 +71,25 @@ int main() {
                      cells_to_be_agglomerated3, cells_to_be_agglomerated4};
 
   ah.initialize_hp_structure();
-
+  ah.set_agglomeration_flags(update_JxW_values);
+  ah.set_quadrature_degree(3);
   for (const auto &cell :
        ah.agglo_dh.active_cell_iterators() |
            IteratorFilters::ActiveFEIndexEqualTo(ah.AggloIndex::master)) {
     const auto &fev = ah.reinit(cell);
     double sum = 0.;
-    for (const auto weight : fev.get_quadrature().get_weights()) sum += weight;
+    for (const auto weight : fev.get_JxW_values()) sum += weight;
     std::cout << "Sum is: " << sum << std::endl;
   }
+
+  double total_sum = 0.;
+  for (const auto &cell : ah.agglo_dh.active_cell_iterators()) {
+    const auto &fev_general = ah.reinit(cell);
+    for (const auto weight : fev_general.get_JxW_values()) total_sum += weight;
+  }
+
+  std::cout << "Sum now (using all the cells) is: " << total_sum << std::endl;
+  std::cout << "And it's expected to be: " << 4. << std::endl;
 
   return 0;
 }

@@ -77,8 +77,16 @@ class AgglomerationHandler : public Subscriptor {
     tria_listener.disconnect();
   }
 
+  /**
+   * Set the proper flags for the FEValues object on the agglomerated space.
+   *
+   */
   inline void set_agglomeration_flags(const UpdateFlags &flags) {
     agglomeration_flags = flags;
+  }
+
+  inline void set_quadrature_degree(const unsigned int degree) {
+    agglomeration_quadrature_degree = degree;
   }
 
   /**
@@ -351,6 +359,8 @@ class AgglomerationHandler : public Subscriptor {
 
   UpdateFlags agglomeration_flags = update_default;
 
+  unsigned int agglomeration_quadrature_degree;
+
   /**
    * Initialize connectivity informations
    */
@@ -398,7 +408,8 @@ class AgglomerationHandler : public Subscriptor {
    * Helper function to determine whether or not a cell is a master or a slave
    */
   inline bool is_master_cell(
-      const typename Triangulation<dim, spacedim>::active_cell_iterator &cell) {
+      const typename Triangulation<dim, spacedim>::active_cell_iterator &cell)
+      const {
     return master_slave_relationships[cell->active_cell_index()] == -1;
   }
 
@@ -408,7 +419,8 @@ class AgglomerationHandler : public Subscriptor {
    *
    */
   inline bool is_standard_cell(
-      const typename Triangulation<dim, spacedim>::active_cell_iterator &cell) {
+      const typename Triangulation<dim, spacedim>::active_cell_iterator &cell)
+      const {
     return master_slave_relationships[cell->active_cell_index()] == -2;
   }
 
@@ -418,7 +430,8 @@ class AgglomerationHandler : public Subscriptor {
    * it's a master cell, then the it returns -1, by construction.
    */
   inline unsigned int is_slave_cell_of(
-      const typename Triangulation<dim, spacedim>::active_cell_iterator &cell) {
+      const typename Triangulation<dim, spacedim>::active_cell_iterator &cell)
+      const {
     return master_slave_relationships[cell->active_cell_index()];
   }
 
@@ -427,7 +440,8 @@ class AgglomerationHandler : public Subscriptor {
    without any information about his parents.
    */
   inline bool is_slave_cell(
-      const typename Triangulation<dim, spacedim>::active_cell_iterator &cell) {
+      const typename Triangulation<dim, spacedim>::active_cell_iterator &cell)
+      const {
     return master_slave_relationships[cell->active_cell_index()] >= 0;
   }
 

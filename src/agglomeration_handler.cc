@@ -154,36 +154,56 @@ const FEValues<dim, spacedim> &AgglomerationHandler<dim, spacedim>::reinit(
          ExcMessage("The mapping describing the physical element stemming from "
                     "agglomeration has not been set up."));
 
-  std::vector<typename Triangulation<dim, spacedim>::active_cell_iterator>
-      agglo_cells;
-  // Push back that master and slaves
-  agglo_cells.push_back(cell);
-  const auto &slaves = get_slaves_of_idx(cell->active_cell_index());
-  std::transform(
-      slaves.begin(), slaves.end(), std::back_inserter(agglo_cells),
-      [&](const typename Triangulation<dim, spacedim>::active_cell_iterator
-              &c) { return c; });
+  if (is_master_cell(cell)) {
+    std::vector<typename Triangulation<dim, spacedim>::active_cell_iterator>
+        agglo_cells;
+    // Push back that master and slaves
+    agglo_cells.push_back(cell);
+    const auto &slaves = get_slaves_of_idx(cell->active_cell_index());
+    std::transform(
+        slaves.begin(), slaves.end(), std::back_inserter(agglo_cells),
+        [&](const typename Triangulation<dim, spacedim>::active_cell_iterator
+                &c) { return c; });
 
-  Quadrature<dim> agglo_quad = agglomerated_quadrature(
-      agglo_cells, QGauss<dim>(2 * agglo_dh.get_fe().degree +
-                               1));  // @todo pass quadrature degree as member
+    Quadrature<dim> agglo_quad = agglomerated_quadrature(
+        agglo_cells, QGauss<dim>(agglomeration_quadrature_degree));
 
-  const double bbox_measure = bboxes[cell->active_cell_index()].volume();
+    const double bbox_measure = bboxes[cell->active_cell_index()].volume();
 
-  // Scale weights with the volume of the BBox. This way, the euler_mapping
-  // defining the BBOx doesn't alter them.
-  std::vector<double> scaled_weights;
-  std::transform(agglo_quad.get_weights().begin(),
-                 agglo_quad.get_weights().end(),
-                 std::back_inserter(scaled_weights),
-                 [&bbox_measure](const double w) { return w / bbox_measure; });
+    // Scale weights with the volume of the BBox. This way, the euler_mapping
+    // defining the BBOx doesn't alter them.
+    std::vector<double> scaled_weights;
+    std::transform(
+        agglo_quad.get_weights().begin(), agglo_quad.get_weights().end(),
+        std::back_inserter(scaled_weights),
+        [&bbox_measure](const double w) { return w / bbox_measure; });
 
-  Quadrature<dim> scaled_quad(agglo_quad.get_points(), scaled_weights);
+    Quadrature<dim> scaled_quad(agglo_quad.get_points(), scaled_weights);
 
-  agglomerated_scratch = std::make_unique<ScratchData>(
-      *euler_mapping, agglo_dh.get_fe(), scaled_quad, agglomeration_flags);
+    agglomerated_scratch = std::make_unique<ScratchData>(
+        *euler_mapping, agglo_dh.get_fe(), scaled_quad, agglomeration_flags);
+    return agglomerated_scratch->reinit(cell);
 
-  return agglomerated_scratch->reinit(cell);
+  } else /* if (!is_standard_cell(cell)) {*/ {
+    std::cout << "Hey" << std::endl;
+    std::cout << master_slave_relationships[cell->active_cell_index()]
+              << std::endl;
+    // ensure the DG space is the same we have from the other DoFHandler(s)
+    standard_scratch = std::make_unique<ScratchData>(
+        *mapping, fe_collection[1],
+        QGauss<dim>(agglomeration_quadrature_degree), agglomeration_flags);
+    return standard_scratch->reinit(cell);
+  }
+  // } else {
+  //   std::cout << "You" << std::endl;
+  //   // standard_scratch = std::make_unique<ScratchData>(
+  //   //     *mapping, fe_collection[1],
+  //   //     QGauss<dim>(agglomeration_quadrature_degree),
+  //   agglomeration_flags);
+  //   // return standard_scratch->reinit(cell);
+  //   FE_Nothing<dim,spacedim> fe;
+  //   return fe.reinit
+  // }
 }
 
 template class AgglomerationHandler<1>;
