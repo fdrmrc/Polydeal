@@ -153,8 +153,6 @@ const FEValues<dim, spacedim> &AgglomerationHandler<dim, spacedim>::reinit(
   Assert(euler_mapping,
          ExcMessage("The mapping describing the physical element stemming from "
                     "agglomeration has not been set up."));
-  Assert(master_slave_relationships[cell->active_cell_index()] == -1,
-         ExcInternalError("The present cell must be a master cell."));
 
   std::vector<typename Triangulation<dim, spacedim>::active_cell_iterator>
       agglo_cells;
@@ -167,11 +165,24 @@ const FEValues<dim, spacedim> &AgglomerationHandler<dim, spacedim>::reinit(
               &c) { return c; });
 
   Quadrature<dim> agglo_quad = agglomerated_quadrature(
-      agglo_cells, QGauss<dim>(2 * agglo_dh.get_fe().degree + 1));
+      agglo_cells, QGauss<dim>(2 * agglo_dh.get_fe().degree +
+                               1));  // @todo pass quadrature degree as member
+
+  const double bbox_measure = bboxes[cell->active_cell_index()].volume();
+
+  // Scale weights with the volume of the BBox. This way, the euler_mapping
+  // defining the BBOx doesn't alter them.
+  std::vector<double> scaled_weights;
+  std::transform(agglo_quad.get_weights().begin(),
+                 agglo_quad.get_weights().end(),
+                 std::back_inserter(scaled_weights),
+                 [&bbox_measure](const double w) { return w / bbox_measure; });
+
+  Quadrature<dim> scaled_quad(agglo_quad.get_points(), scaled_weights);
 
   agglomerated_scratch = std::make_unique<ScratchData>(
-      *euler_mapping, agglo_dh.get_fe(), agglo_quad, agglomeration_flags);
-  //@todo Give flags in proper way, without hardcoding
+      *euler_mapping, agglo_dh.get_fe(), scaled_quad, agglomeration_flags);
+
   return agglomerated_scratch->reinit(cell);
 }
 
