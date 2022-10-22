@@ -170,8 +170,7 @@ const FEValues<dim, spacedim> &AgglomerationHandler<dim, spacedim>::reinit(
       agglo_cells, QGauss<dim>(2 * agglo_dh.get_fe().degree + 1));
 
   agglomerated_scratch = std::make_unique<ScratchData>(
-      *euler_mapping, agglo_dh.get_fe(), agglo_quad,
-      update_values | update_quadrature_points);
+      *euler_mapping, agglo_dh.get_fe(), agglo_quad, agglomeration_flags);
   //@todo Give flags in proper way, without hardcoding
   return agglomerated_scratch->reinit(cell);
 }

@@ -77,6 +77,10 @@ class AgglomerationHandler : public Subscriptor {
     tria_listener.disconnect();
   }
 
+  inline void set_agglomeration_flags(const UpdateFlags &flags) {
+    agglomeration_flags = flags;
+  }
+
   /**
    * Set active fe indices on each cell, and store internally the objects used
    * to initialize a hp::FEValues.
@@ -344,6 +348,8 @@ class AgglomerationHandler : public Subscriptor {
   std::unique_ptr<GridTools::Cache<dim, spacedim>> cached_tria;
 
   boost::signals2::connection tria_listener;
+
+  UpdateFlags agglomeration_flags = update_default;
 
   /**
    * Initialize connectivity informations
