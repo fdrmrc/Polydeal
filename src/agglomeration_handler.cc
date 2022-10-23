@@ -126,11 +126,11 @@ Quadrature<dim> AgglomerationHandler<dim, spacedim>::agglomerated_quadrature(
 
 template <int dim, int spacedim>
 void AgglomerationHandler<dim, spacedim>::initialize_hp_structure() {
-  Assert(n_agglomerations > 0,
-         ExcMessage("No agglomeration has been performed."));
   Assert(agglo_dh.get_triangulation().n_cells() > 0,
          ExcMessage(
              "Triangulation must not be empty upon calling this function."));
+  Assert(n_agglomerations > 0,
+         ExcMessage("No agglomeration has been performed."));
   for (const auto &cell : agglo_dh.active_cell_iterators())
     if (is_master_cell(cell))
       cell->set_active_fe_index(AggloIndex::master);
