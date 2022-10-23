@@ -70,7 +70,8 @@ class AgglomerationHandler : public Subscriptor {
   DoFHandler<dim, spacedim> agglo_dh;
 
   explicit AgglomerationHandler(
-      const GridTools::Cache<dim, spacedim> &cached_tria);
+      const GridTools::Cache<dim, spacedim> &cached_tria,
+      const FE_DGQ<dim, spacedim> &fe_space = FE_DGQ<dim, spacedim>(1));
 
   ~AgglomerationHandler() {
     // disconnect the signal
@@ -316,6 +317,11 @@ class AgglomerationHandler : public Subscriptor {
 
   std::unique_ptr<FESystem<dim, spacedim>> euler_fe;
 
+  std::unique_ptr<GridTools::Cache<dim, spacedim>> cached_tria;
+
+  // The FE_DGQ space we have on each cell
+  std::unique_ptr<FE_DGQ<dim, spacedim>> fe;
+
   hp::FECollection<dim, spacedim> fe_collection;
 
   std::map<const typename Triangulation<dim, spacedim>::active_cell_iterator,
@@ -353,8 +359,6 @@ class AgglomerationHandler : public Subscriptor {
    */
   mutable std::unique_ptr<ScratchData> agglomerated_scratch;
 
-  std::unique_ptr<GridTools::Cache<dim, spacedim>> cached_tria;
-
   boost::signals2::connection tria_listener;
 
   UpdateFlags agglomeration_flags = update_default;
@@ -370,8 +374,7 @@ class AgglomerationHandler : public Subscriptor {
     mapping = &cache_tria->get_mapping();
 
     agglo_dh.reinit(*tria);
-    euler_fe = std::make_unique<FESystem<dim, spacedim>>(FE_DGQ<spacedim>(1),
-                                                         spacedim);
+    euler_fe = std::make_unique<FESystem<dim, spacedim>>(*fe, spacedim);
     euler_dh.reinit(*tria);
     euler_dh.distribute_dofs(*euler_fe);
     euler_vector.reinit(euler_dh.n_dofs());

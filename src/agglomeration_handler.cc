@@ -18,9 +18,11 @@
 
 template <int dim, int spacedim>
 AgglomerationHandler<dim, spacedim>::AgglomerationHandler(
-    const GridTools::Cache<dim, spacedim> &cache_tria)
+    const GridTools::Cache<dim, spacedim> &cache_tria,
+    const FE_DGQ<dim, spacedim> &fe_space)
     : cached_tria(std::make_unique<GridTools::Cache<dim, spacedim>>(
-          cache_tria.get_triangulation(), cache_tria.get_mapping())) {
+          cache_tria.get_triangulation(), cache_tria.get_mapping())),
+      fe(std::make_unique<FE_DGQ<dim, spacedim>>(fe_space)) {
   Assert(dim == spacedim, ExcMessage("Not tested with different dimensions"));
   Assert(dim == 2 || dim == 3, ExcMessage("Not available in 1D."));
   Assert(
@@ -28,9 +30,9 @@ AgglomerationHandler<dim, spacedim>::AgglomerationHandler(
       ExcMessage(
           "The triangulation must not be empty upon calling this function."));
 
-  fe_collection.push_back(FE_DGQ<dim, spacedim>(1));     // master
+  fe_collection.push_back(*fe);                          // master
   fe_collection.push_back(FE_Nothing<dim, spacedim>());  // slave
-  fe_collection.push_back(FE_DGQ<dim, spacedim>(1));     // standard
+  fe_collection.push_back(*fe);                          // standard
 
   initialize_agglomeration_data(cached_tria);
 }
