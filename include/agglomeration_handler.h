@@ -59,7 +59,7 @@ class AgglomerationHandler : public Subscriptor {
       unsigned int>>;
 
  public:
-  enum AggloIndex { master = 0, slave = 1 };
+  enum AggloIndex { master = 0, slave = 1, standard = 2 };
 
   static inline unsigned int n_agglomerations = 0;  // only C++17 feature
 
@@ -359,7 +359,7 @@ class AgglomerationHandler : public Subscriptor {
 
   UpdateFlags agglomeration_flags = update_default;
 
-  unsigned int agglomeration_quadrature_degree;
+  unsigned int agglomeration_quadrature_degree = 1;
 
   /**
    * Initialize connectivity informations
