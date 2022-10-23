@@ -28,15 +28,10 @@ AgglomerationHandler<dim, spacedim>::AgglomerationHandler(
       ExcMessage(
           "The triangulation must not be empty upon calling this function."));
 
-  fe_collection.push_back(FE_DGQ<dim, spacedim>(1));
-  fe_collection.push_back(FE_Nothing<dim, spacedim>());
-  // All cells are initially marked with -2, while -1 is reserved for master
-  // cells.
-  // master_slave_relationships.resize(
-  //     cached_tria->get_triangulation().n_active_cells(), -2);
-  // bboxes.resize(tria->n_active_cells());
-  // euler_dh.distribute_dofs(*euler_fe);
-  // euler_vector.reinit(euler_dh.n_dofs());
+  fe_collection.push_back(FE_DGQ<dim, spacedim>(1));     // master
+  fe_collection.push_back(FE_Nothing<dim, spacedim>());  // slave
+  fe_collection.push_back(FE_DGQ<dim, spacedim>(1));     // standard
+
   initialize_agglomeration_data(cached_tria);
 }
 
@@ -105,7 +100,8 @@ Quadrature<dim> AgglomerationHandler<dim, spacedim>::agglomerated_quadrature(
 
   FEValues<dim, spacedim> no_values(
       mapping_generic, dummy_fe, quadrature_type,
-      update_quadrature_points | update_JxW_values);  // only for quadrature
+      update_quadrature_points |
+          update_JxW_values);  // only for quadrature, see related issue.
   std::vector<Point<dim>> vec_pts;
   std::vector<double> vec_JxWs;
   for (const auto &dummy_cell : cells) {
@@ -138,8 +134,10 @@ void AgglomerationHandler<dim, spacedim>::initialize_hp_structure() {
   for (const auto &cell : agglo_dh.active_cell_iterators())
     if (is_master_cell(cell))
       cell->set_active_fe_index(AggloIndex::master);
+    else if (is_slave_cell(cell))
+      cell->set_active_fe_index(AggloIndex::slave);  // slave cell
     else
-      cell->set_active_fe_index(AggloIndex::slave);  // Slave or standard cell
+      cell->set_active_fe_index(AggloIndex::standard);  // standard
 
   agglo_dh.distribute_dofs(fe_collection);
   euler_mapping =
@@ -181,29 +179,23 @@ const FEValues<dim, spacedim> &AgglomerationHandler<dim, spacedim>::reinit(
     Quadrature<dim> scaled_quad(agglo_quad.get_points(), scaled_weights);
 
     agglomerated_scratch = std::make_unique<ScratchData>(
-        *euler_mapping, agglo_dh.get_fe(), scaled_quad, agglomeration_flags);
+        *euler_mapping, fe_collection[0], scaled_quad, agglomeration_flags);
     return agglomerated_scratch->reinit(cell);
 
-  } else /* if (!is_standard_cell(cell)) {*/ {
-    std::cout << "Hey" << std::endl;
-    std::cout << master_slave_relationships[cell->active_cell_index()]
-              << std::endl;
+  } else if (is_standard_cell(cell)) {
     // ensure the DG space is the same we have from the other DoFHandler(s)
     standard_scratch = std::make_unique<ScratchData>(
-        *mapping, fe_collection[1],
+        *mapping, fe_collection[2],
         QGauss<dim>(agglomeration_quadrature_degree), agglomeration_flags);
     return standard_scratch->reinit(cell);
+  } else {
+    std::vector<Point<dim>> pts{{}};
+    std::vector<double> wgts{0.};
+    Quadrature<dim> dummy_quad(pts, wgts);
+    standard_scratch = std::make_unique<ScratchData>(
+        *mapping, fe_collection[1], dummy_quad, agglomeration_flags);
+    return standard_scratch->reinit(cell);
   }
-  // } else {
-  //   std::cout << "You" << std::endl;
-  //   // standard_scratch = std::make_unique<ScratchData>(
-  //   //     *mapping, fe_collection[1],
-  //   //     QGauss<dim>(agglomeration_quadrature_degree),
-  //   agglomeration_flags);
-  //   // return standard_scratch->reinit(cell);
-  //   FE_Nothing<dim,spacedim> fe;
-  //   return fe.reinit
-  // }
 }
 
 template class AgglomerationHandler<1>;

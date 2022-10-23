@@ -14,13 +14,14 @@
  * ---------------------------------------------------------------------
  */
 
-// Agglomerate some cells in a grid, and create a finite element space on the
-// bounding box of an agglomeration. To check the correctness, compute the area
-// of the agglomerated cells using the weights of a custom quadrature rule over
-// the agglomerated element.
+// Loop over all cells of a triangulation, where some cells have been
+// agglomerated together, and compute the measure of the mesh by adding the
+// weights coming from every cell. What has to happen is that contributions are
+// coming from agglomerations and standard cells, while slave cells have no
+// quadrature rule over them.
 
 #include <deal.II/grid/grid_generator.h>
-#include <deal.II/grid/grid_out.h>
+#include <deal.II/grid/grid_tools.h>
 
 #include "../tests.h"
 
@@ -72,16 +73,16 @@ int main() {
 
   ah.initialize_hp_structure();
   ah.set_agglomeration_flags(update_JxW_values);
-  ah.set_quadrature_degree(3);
-
-  for (const auto &cell :
-       ah.agglo_dh.active_cell_iterators() |
-           IteratorFilters::ActiveFEIndexEqualTo(ah.AggloIndex::master)) {
-    const auto &fev = ah.reinit(cell);
-    double sum = 0.;
-    for (const auto weight : fev.get_JxW_values()) sum += weight;
-    std::cout << "Sum is: " << sum << std::endl;
+  ah.set_quadrature_degree(1);
+  double total_sum = 0.;
+  for (const auto &cell : ah.agglo_dh.active_cell_iterators()) {
+    const auto &fev_general = ah.reinit(cell);
+    for (const auto weight : fev_general.get_JxW_values()) total_sum += weight;
   }
+
+  Assert(total_sum == GridTools::volume(tria, mapping),
+         ExcMessage("Integration did not succeed"));
+  std::cout << "Ok" << std::endl;
 
   return 0;
 }
