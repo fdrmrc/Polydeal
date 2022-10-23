@@ -32,6 +32,7 @@
 #include <deal.II/hp/fe_collection.h>
 #include <deal.II/lac/vector.h>
 #include <deal.II/meshworker/scratch_data.h>
+#include <deal.II/non_matching/fe_immersed_values.h>
 #include <deal.II/non_matching/immersed_surface_quadrature.h>
 #include <deal.II/numerics/data_out.h>
 
@@ -249,11 +250,11 @@ class AgglomerationHandler : public Subscriptor {
   /**
    * agglomeration_face_number \in [0,n_agglomerated_faces)
    */
-  /*(fe_values, immersed_surface_quadrature)*/
-  std::pair<const FEValuesBase<dim, spacedim> &,
-            NonMatching::ImmersedSurfaceQuadrature<dim, spacedim>>
-  reinit(const typename DoFHandler<dim, spacedim>::active_cell_iterator &cell,
-         const unsigned int agglomeration_face_number) const;
+  /*std::pair<const FEValuesBase<dim, spacedim> &,
+            NonMatching::ImmersedSurfaceQuadrature<dim, spacedim>>*/
+  const NonMatching::FEImmersedSurfaceValues<dim> &reinit(
+      const typename DoFHandler<dim, spacedim>::active_cell_iterator &cell,
+      const unsigned int agglomeration_face_number) const;
 
   /**
    * Return the agglomerated quadrature for the given agglomeration. This
