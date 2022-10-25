@@ -71,6 +71,8 @@ int main() {
                      cells_to_be_agglomerated3, cells_to_be_agglomerated4};
 
   ah.initialize_hp_structure();
+  ah.setup_neighbors_info(agglomerations);
+
   ah.set_agglomeration_flags(update_JxW_values);
   ah.set_quadrature_degree(3);
 
@@ -81,7 +83,30 @@ int main() {
     double sum = 0.;
     for (const auto weight : fev.get_JxW_values()) sum += weight;
     std::cout << "Sum is: " << sum << std::endl;
+    unsigned int f = 2;
+    const auto &dummy = ah.reinit(cell, f);
+    // std::cout << dummy.shape_value(1, 1) << std::endl;
   }
+
+  //   FE_DGQ<2> fe(1);
+  //   auto connectivity = get_agglomerated_connectivity(ah);
+  //   for (const auto &cell :
+  //        ah.agglo_dh.active_cell_iterators() |
+  //            IteratorFilters::ActiveFEIndexEqualTo(ah.AggloIndex::master)) {
+  //     const auto &slaves = ah.get_slaves_of_idx(cell->active_cell_index());
+  //     for (const auto &slave : slaves) {
+  //       if (!connectivity[cell].empty()) {
+  //         std::cout << "Ha un neighbor" << std::endl;
+  //         FEFaceValues<2> fe_face(fe, QGauss<1>(1),
+  //                                 update_values | update_JxW_values |
+  //                                     update_quadrature_points |
+  //                                     update_normal_vectors);
+
+  //         fe_face.reinit(cell, 1);
+  //         std::cout << fe_face.shape_value(0, 0) << std::endl;
+  //       }
+  //     }
+  // }
 
   return 0;
 }

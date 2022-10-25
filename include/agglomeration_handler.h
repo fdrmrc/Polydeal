@@ -302,6 +302,14 @@ class AgglomerationHandler : public Subscriptor {
     data_out.write_vtu(ofile);
   }
 
+  /**
+   * Find (if any) the cells that have the given master index. Note that idx is
+   * signed as it can be equal to -1 (meaning that the cell is a master one) or
+   * -2.
+   */
+  std::vector<typename Triangulation<dim, spacedim>::active_cell_iterator>
+  get_slaves_of_idx(const int idx) const;
+
  private:
   std::vector<long int> master_slave_relationships;
 
@@ -325,8 +333,9 @@ class AgglomerationHandler : public Subscriptor {
 
   hp::FECollection<dim, spacedim> fe_collection;
 
-  std::map<const typename Triangulation<dim, spacedim>::active_cell_iterator,
-           NeighborsInfos>
+  mutable std::map<
+      const typename Triangulation<dim, spacedim>::active_cell_iterator,
+      NeighborsInfos>
       neighbor_connectivity;
 
   NeighborsInfos face_and_neighbor;
@@ -363,6 +372,10 @@ class AgglomerationHandler : public Subscriptor {
   boost::signals2::connection tria_listener;
 
   UpdateFlags agglomeration_flags = update_default;
+
+  UpdateFlags agglomeration_face_flags = update_quadrature_points |
+                                         update_normal_vectors | update_values |
+                                         update_JxW_values;
 
   unsigned int agglomeration_quadrature_degree = 1;
 
@@ -448,14 +461,6 @@ class AgglomerationHandler : public Subscriptor {
       const {
     return master_slave_relationships[cell->active_cell_index()] >= 0;
   }
-
-  /**
-   * Find (if any) the cells that have the given master index. Note that idx is
-   * signed as it can be equal to -1 (meaning that the cell is a master one) or
-   * -2.
-   */
-  std::vector<typename Triangulation<dim, spacedim>::active_cell_iterator>
-  get_slaves_of_idx(const int idx) const;
 
   /**
    * Construct bounding boxes for an agglomeration described by a sequence of

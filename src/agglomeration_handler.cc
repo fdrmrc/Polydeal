@@ -200,6 +200,128 @@ const FEValues<dim, spacedim> &AgglomerationHandler<dim, spacedim>::reinit(
   }
 }
 
+template <int dim, int spacedim>
+const NonMatching::FEImmersedSurfaceValues<dim>
+    &AgglomerationHandler<dim, spacedim>::reinit(
+        const typename DoFHandler<dim, spacedim>::active_cell_iterator &cell,
+        const unsigned int agglomeration_face_number) const {
+  // For now, this must be called for master cells only.
+  Assert(
+      master_slave_relationships[cell->active_cell_index()] == -1,
+      ExcMessage("This function is supposed to be called for master cells."));
+  FE_Nothing<dim, spacedim> dummy_fe;
+  DoFHandler<dim, spacedim> dummy_dh(*tria);
+  dummy_dh.distribute_dofs(dummy_fe);
+  MappingQ<dim, spacedim> mapping_generic(1);
+
+  FEFaceValues<dim, spacedim> no_values(
+      mapping_generic, dummy_fe,
+      QGauss<dim - 1>(agglomeration_quadrature_degree),
+      update_quadrature_points | update_JxW_values |
+          update_normal_vectors);  // only for quadrature
+  std::vector<Point<dim>> vec_pts;
+  std::vector<double> vec_JxWs;
+  std::vector<Tensor<1, spacedim>> vec_normals;
+  std::vector<typename Triangulation<dim, spacedim>::active_cell_iterator>
+      agglomeration;
+  agglomeration.push_back(cell);
+
+  for (const auto &c : get_slaves_of_idx(cell->active_cell_index()))
+    agglomeration.push_back(c);
+
+  for (const auto &dummy_cell : agglomeration) {
+    std::cout << "Index of slave: " << dummy_cell->active_cell_index()
+              << std::endl;
+    for (const auto &pair : neighbor_connectivity[dummy_cell]) {
+      std::cout << "Face index:" << pair.second << std::endl;
+      no_values.reinit(dummy_cell, pair.second);
+      auto q_points = no_values.get_quadrature_points();
+      const auto &JxWs = no_values.get_JxW_values();
+      auto &normals = no_values.get_normal_vectors();
+
+      typename DoFHandler<dim, spacedim>::cell_iterator cell(*dummy_cell,
+                                                             &euler_dh);
+      mapping_generic.transform_points_real_to_unit_cell(cell, q_points,
+                                                         q_points);
+
+      std::transform(q_points.begin(), q_points.end(),
+                     std::back_inserter(vec_pts),
+                     [&](const Point<spacedim> &p) { return p; });
+      std::transform(JxWs.begin(), JxWs.end(), std::back_inserter(vec_JxWs),
+                     [&](const double w) { return w; });
+      std::transform(normals.begin(), normals.end(),
+                     std::back_inserter(vec_normals),
+                     [&](const Tensor<1, spacedim> &n) { return n; });
+    }
+  }
+
+  NonMatching::ImmersedSurfaceQuadrature<dim, spacedim> surface_quad(
+      vec_pts, vec_JxWs, vec_normals);
+
+  // // Finally, add points and weights from the master cell.
+  // for (const auto &pair : neighbor_connectivity[cell]) {
+  //   no_values.reinit(cell, pair.second);
+  //   auto q_points = no_values.get_quadrature_points();
+  //   const auto &JxWs = no_values.get_JxW_values();
+  //   auto &normals = no_values.get_normal_vectors();
+
+  //   typename DoFHandler<dim, spacedim>::cell_iterator cell(*cell, &euler_dh);
+  //   mapping_generic.transform_points_real_to_unit_cell(cell, q_points,
+  //                                                      q_points);
+
+  //   std::transform(q_points.begin(), q_points.end(),
+  //                  std::back_inserter(vec_pts),
+  //                  [&](const Point<spacedim> &p) { return p; });
+  //   std::transform(JxWs.begin(), JxWs.end(), std::back_inserter(vec_JxWs),
+  //                  [&](const double w) { return w; });
+  //   std::transform(normals.begin(), normals.end(),
+  //                  std::back_inserter(vec_normals),
+  //                  [&](const Tensor<1, spacedim> &n) { return n; });
+  // }
+
+  NonMatching::FEImmersedSurfaceValues<dim> isv{*mapping, *fe, surface_quad,
+                                                agglomeration_face_flags};
+  isv.reinit(cell);
+  std::cout << isv.shape_value(1, 2) << std::endl;
+  double sum = 0.;
+  for (const auto &w : surface_quad.get_weights()) {
+    sum += w;
+  }
+  std::cout << sum << std::endl;
+  return isv;
+
+  // FEFaceValues<dim, spacedim> fe_face_v(
+  //     *euler_mapping, *fe, QGauss<dim -
+  //     1>(agglomeration_quadrature_degree), agglomeration_face_flags);
+
+  // fe_face_v.reinit(cell, agglomeration_face_number);
+
+  // auto &q_points = fe_face_v.get_quadrature_points();
+  // auto &JxW_values = fe_face_v.get_JxW_values();
+  // auto &normals = fe_face_v.get_normal_vectors();
+
+  // const double bbox_measure = bboxes[cell->active_cell_index()].volume();
+
+  // MappingQ<dim> mapping_generic(1);
+  // std::vector<Point<dim>> vec_pts(q_points.size());
+  // mapping_generic.transform_points_real_to_unit_cell(cell, q_points,
+  // vec_pts);
+
+  // // std::vector<double> scaled_weights;
+  // // std::transform(JxW_values.begin(), JxW_values.end(),
+  // //                std::back_inserter(scaled_weights),
+  // //                [&bbox_measure](const double w) { return w /
+  // bbox_measure;
+  // //                });
+
+  // // NonMatching::ImmersedSurfaceQuadrature<dim, spacedim> surface_quad(
+  // //     vec_pts, scaled_weights, normals);
+
+  // double sum = 0.;
+  // for (const auto &w : fe_face_v.get_JxW_values()) sum += w;
+  // std::cout << "Sum is: " << sum << std::endl;
+}
+
 template class AgglomerationHandler<1>;
 template class AgglomerationHandler<2>;
 template class AgglomerationHandler<3>;
