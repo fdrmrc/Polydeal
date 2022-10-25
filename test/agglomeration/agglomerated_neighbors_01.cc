@@ -23,39 +23,40 @@
 
 #include "../tests.h"
 
-int main() {
-  Triangulation<2> tria;
+template <int dim>
+void test() {
+  Triangulation<dim> tria;
   GridGenerator::hyper_cube(tria, -1, 1);
-  MappingQ<2> mapping(1);
+  MappingQ<dim> mapping(1);
   tria.refine_global(3);
-  GridTools::Cache<2> cached_tria(tria, mapping);
-  AgglomerationHandler<2> ah(cached_tria);
+  GridTools::Cache<dim> cached_tria(tria, mapping);
+  AgglomerationHandler<dim> ah(cached_tria);
 
   std::vector<unsigned int> idxs_to_be_agglomerated = {3, 6, 9, 12,
                                                        13};  //{8, 9, 10, 11};
 
-  std::vector<typename Triangulation<2>::active_cell_iterator>
+  std::vector<typename Triangulation<dim>::active_cell_iterator>
       cells_to_be_agglomerated;
   Tests::collect_cells_for_agglomeration(tria, idxs_to_be_agglomerated,
                                          cells_to_be_agglomerated);
 
   std::vector<unsigned int> idxs_to_be_agglomerated2 = {15, 36, 37};
 
-  std::vector<typename Triangulation<2>::active_cell_iterator>
+  std::vector<typename Triangulation<dim>::active_cell_iterator>
       cells_to_be_agglomerated2;
   Tests::collect_cells_for_agglomeration(tria, idxs_to_be_agglomerated2,
                                          cells_to_be_agglomerated2);
 
   std::vector<unsigned int> idxs_to_be_agglomerated3 = {57, 60, 54};
 
-  std::vector<typename Triangulation<2>::active_cell_iterator>
+  std::vector<typename Triangulation<dim>::active_cell_iterator>
       cells_to_be_agglomerated3;
   Tests::collect_cells_for_agglomeration(tria, idxs_to_be_agglomerated3,
                                          cells_to_be_agglomerated3);
 
   std::vector<unsigned int> idxs_to_be_agglomerated4 = {25, 19, 22};
 
-  std::vector<typename Triangulation<2>::active_cell_iterator>
+  std::vector<typename Triangulation<dim>::active_cell_iterator>
       cells_to_be_agglomerated4;
   Tests::collect_cells_for_agglomeration(tria, idxs_to_be_agglomerated4,
                                          cells_to_be_agglomerated4);
@@ -66,7 +67,7 @@ int main() {
   ah.agglomerate_cells(cells_to_be_agglomerated3);
   ah.agglomerate_cells(cells_to_be_agglomerated4);
 
-  std::vector<std::vector<typename Triangulation<2>::active_cell_iterator>>
+  std::vector<std::vector<typename Triangulation<dim>::active_cell_iterator>>
       agglomerations{cells_to_be_agglomerated, cells_to_be_agglomerated2,
                      cells_to_be_agglomerated3, cells_to_be_agglomerated4};
   ah.setup_neighbors_info(agglomerations);
@@ -79,4 +80,9 @@ int main() {
                 << " and local face numbering: " << x.second << std::endl;
     }
   }
+}
+
+int main() {
+  test<2>();
+  test<3>();
 }

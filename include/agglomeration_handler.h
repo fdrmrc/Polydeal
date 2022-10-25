@@ -506,7 +506,8 @@ class AgglomerationHandler : public Subscriptor {
       const typename Triangulation<dim, spacedim>::active_cell_iterator &cell,
       const typename Triangulation<dim, spacedim>::active_cell_iterator
           &other_cell) const {
-    // check if they refer to same master, OR if it's a master with its slave.
+    // check if they refer to same master, OR if it's a master with its slave
+    // (and viceversa)
     return master_slave_relationships[cell->active_cell_index()] ==
                master_slave_relationships[other_cell->active_cell_index()] ||
            master_slave_relationships[cell->active_cell_index()] ==
