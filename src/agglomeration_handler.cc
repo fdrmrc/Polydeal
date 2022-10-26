@@ -56,8 +56,22 @@ void AgglomerationHandler<dim, spacedim>::agglomerate_cells(
   unsigned int master_idx =
       *std::max_element(global_indices.begin(), global_indices.end());
 
-  for (const unsigned int idx : global_indices)
+  for (const auto &cell : vec_of_cells) {
+    if (cell->active_cell_index() == master_idx)
+      master_slave_relationships_iterators[cell->active_cell_index()] =
+          cell;  // set iterator to master cell
+  }
+
+  for (const auto &cell : vec_of_cells) {
+    if (cell->active_cell_index() != master_idx)
+      master_slave_relationships_iterators[cell->active_cell_index()] =
+          master_slave_relationships_iterators[master_idx];
+  }
+
+  for (const unsigned int idx : global_indices) {
     master_slave_relationships[idx] = master_idx;  // mark each slave
+  }
+
   master_slave_relationships[master_idx] = -1;
 
   ++n_agglomerations;  // agglomeration has been performed, record it
@@ -69,8 +83,8 @@ std::vector<typename Triangulation<dim, spacedim>::active_cell_iterator>
 AgglomerationHandler<dim, spacedim>::get_slaves_of_idx(const int idx) const {
   std::vector<typename Triangulation<dim, spacedim>::active_cell_iterator>
       slaves;
-  // Loop over the tria, and check if a each cell is a slave of master cell idx
-  // If no slave is found, return an empty vector.
+  // Loop over the tria, and check if a each cell is a slave of master cell
+  // idx If no slave is found, return an empty vector.
   for (const auto &cell : tria->active_cell_iterators()) {
     if (master_slave_relationships[cell->active_cell_index()] == idx) {
       slaves.push_back(cell);
@@ -232,9 +246,10 @@ const NonMatching::FEImmersedSurfaceValues<dim>
   for (const auto &dummy_cell : agglomeration) {
     std::cout << "Index of slave: " << dummy_cell->active_cell_index()
               << std::endl;
-    for (const auto &pair : neighbor_connectivity[dummy_cell]) {
-      std::cout << "Face index:" << pair.second << std::endl;
-      no_values.reinit(dummy_cell, pair.second);
+    for (const auto &[face_from_agglo, neigh, face_outside] :
+         neighbor_connectivity[dummy_cell]) {
+      std::cout << "Face index:" << face_from_agglo << std::endl;
+      no_values.reinit(dummy_cell, face_from_agglo);
       auto q_points = no_values.get_quadrature_points();
       const auto &JxWs = no_values.get_JxW_values();
       auto &normals = no_values.get_normal_vectors();
@@ -257,27 +272,6 @@ const NonMatching::FEImmersedSurfaceValues<dim>
 
   NonMatching::ImmersedSurfaceQuadrature<dim, spacedim> surface_quad(
       vec_pts, vec_JxWs, vec_normals);
-
-  // // Finally, add points and weights from the master cell.
-  // for (const auto &pair : neighbor_connectivity[cell]) {
-  //   no_values.reinit(cell, pair.second);
-  //   auto q_points = no_values.get_quadrature_points();
-  //   const auto &JxWs = no_values.get_JxW_values();
-  //   auto &normals = no_values.get_normal_vectors();
-
-  //   typename DoFHandler<dim, spacedim>::cell_iterator cell(*cell, &euler_dh);
-  //   mapping_generic.transform_points_real_to_unit_cell(cell, q_points,
-  //                                                      q_points);
-
-  //   std::transform(q_points.begin(), q_points.end(),
-  //                  std::back_inserter(vec_pts),
-  //                  [&](const Point<spacedim> &p) { return p; });
-  //   std::transform(JxWs.begin(), JxWs.end(), std::back_inserter(vec_JxWs),
-  //                  [&](const double w) { return w; });
-  //   std::transform(normals.begin(), normals.end(),
-  //                  std::back_inserter(vec_normals),
-  //                  [&](const Tensor<1, spacedim> &n) { return n; });
-  // }
 
   NonMatching::FEImmersedSurfaceValues<dim> isv{*mapping, *fe, surface_quad,
                                                 agglomeration_face_flags};

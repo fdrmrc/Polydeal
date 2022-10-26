@@ -50,12 +50,17 @@ class AgglomerationHandler : public Subscriptor {
   using ScratchData = MeshWorker::ScratchData<dim, spacedim>;
 
   // Internal type used to associate agglomerated cells with neighbors. In
-  // particular, we store for each cell the index of the neighboring cell (hence
-  // the first type of the pair is a cell iterator) and the *local* index
-  // (classical face_no) in the deal.II lingo of the face shared with that cell.
-  // The reason why we use a **set** of pairs is that some cells will be seen
+  // particular, we store for each cell:
+  // - local face index seen by the agglomerated cell
+  // - an iterator to the neighboring cell
+  // - local face index seen from the neighbor
+  // In case the neighbor is a cell of the agglomeration:
+  // - iterator is pointing to the master cell of the neighobring agglomeration
+  // - face index from outside is set to numbers::invalid_unsigned_int
+  // The reason why we use a **set** of tuples is that some cells will be seen
   // and checked multiple times.
-  using NeighborsInfos = std::set<std::pair<
+  using NeighborsInfos = std::set<std::tuple<
+      unsigned int,
       const typename Triangulation<dim, spacedim>::active_cell_iterator,
       unsigned int>>;
 
@@ -234,7 +239,16 @@ class AgglomerationHandler : public Subscriptor {
                 IteratorState::valid &&  // @todo Handle the case where the cell
                                          // is on the boundary
             !are_cells_agglomerated(cell, neighboring_cell)) {
-          neighbor_connectivity[cell].insert({neighboring_cell, f});
+          const auto nof = cell->neighbor_of_neighbor(f);
+          if (is_slave_cell(neighboring_cell)) {
+            neighbor_connectivity[cell].insert(
+                {f,
+                 master_slave_relationships_iterators
+                     [neighboring_cell->active_cell_index()],
+                 numbers::invalid_unsigned_int});
+          } else {
+            neighbor_connectivity[cell].insert({f, neighboring_cell, nof});
+          }
         }
       }
     }
@@ -313,6 +327,10 @@ class AgglomerationHandler : public Subscriptor {
  private:
   std::vector<long int> master_slave_relationships;
 
+  // Same as the one above, but storing cell iterators rather than indices.
+  std::vector<typename Triangulation<dim, spacedim>::active_cell_iterator>
+      master_slave_relationships_iterators;
+
   /**
    * bboxes[idx] = BBOx associated to the agglomeration with master cell indexed
    * by idx. Othwerwise ddefault BBox
@@ -337,8 +355,6 @@ class AgglomerationHandler : public Subscriptor {
       const typename Triangulation<dim, spacedim>::active_cell_iterator,
       NeighborsInfos>
       neighbor_connectivity;
-
-  NeighborsInfos face_and_neighbor;
 
   /**
    * DoFHandler for the physical space
@@ -394,6 +410,7 @@ class AgglomerationHandler : public Subscriptor {
     euler_vector.reinit(euler_dh.n_dofs());
 
     master_slave_relationships.resize(tria->n_active_cells(), -2);
+    master_slave_relationships_iterators.resize(tria->n_active_cells(), {});
     if (n_agglomerations > 0)
       std::fill(master_slave_relationships.begin(),
                 master_slave_relationships.end(),

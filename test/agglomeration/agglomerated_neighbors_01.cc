@@ -71,12 +71,15 @@ int main() {
                      cells_to_be_agglomerated3, cells_to_be_agglomerated4};
   ah.setup_neighbors_info(agglomerations);
 
-  for (const auto &value :
-       get_agglomerated_connectivity(ah)) {  // value is a set now
-    for (const auto &x : value.second) {
+  for (const auto &value : get_agglomerated_connectivity(ah)) {
+    for (auto &[local_from_agglo, neigh, face_outside] : value.second) {
+      // std::cout << infos.size() << std::endl;
       std::cout << "Cell with idx: " << (value.first)->active_cell_index()
-                << " has neighbor with idx: " << (x.first)->active_cell_index()
-                << " and local face numbering: " << x.second << std::endl;
+                << " has neighbor with idx: " << neigh->active_cell_index()
+                << " and local face numbering (from agglo): "
+                << local_from_agglo
+                << " and local face numbering (from outside agglo): "
+                << face_outside << std::endl;
     }
   }
 }
