@@ -20,6 +20,7 @@
 #include <deal.II/base/quadrature.h>
 #include <deal.II/base/subscriptor.h>
 #include <deal.II/dofs/dof_handler.h>
+#include <deal.II/dofs/dof_tools.h>
 #include <deal.II/fe/fe_dgq.h>
 #include <deal.II/fe/fe_nothing.h>
 #include <deal.II/fe/fe_system.h>
@@ -30,6 +31,8 @@
 #include <deal.II/grid/grid_tools_cache.h>
 #include <deal.II/grid/tria.h>
 #include <deal.II/hp/fe_collection.h>
+#include <deal.II/lac/dynamic_sparsity_pattern.h>
+#include <deal.II/lac/sparsity_pattern.h>
 #include <deal.II/lac/vector.h>
 #include <deal.II/meshworker/scratch_data.h>
 #include <deal.II/non_matching/fe_immersed_values.h>
@@ -101,6 +104,8 @@ class AgglomerationHandler : public Subscriptor {
    * to initialize a hp::FEValues.
    */
   void initialize_hp_structure();
+
+  void create_agglomeration_sparsity_pattern(SparsityPattern &sparsity_pattern);
 
   /**
    * Store internally that the given cells are agglomerated. The convenction we
@@ -385,6 +390,9 @@ class AgglomerationHandler : public Subscriptor {
    */
   mutable std::unique_ptr<ScratchData> agglomerated_scratch;
 
+  mutable std::unique_ptr<NonMatching::FEImmersedSurfaceValues<spacedim>>
+      agglomerated_face_values;
+
   boost::signals2::connection tria_listener;
 
   UpdateFlags agglomeration_flags = update_default;
@@ -463,10 +471,10 @@ class AgglomerationHandler : public Subscriptor {
    * Instead of returning a boolean, it gives the index of the master cell. If
    * it's a master cell, then the it returns -1, by construction.
    */
-  inline unsigned int is_slave_cell_of(
-      const typename Triangulation<dim, spacedim>::active_cell_iterator &cell)
-      const {
-    return master_slave_relationships[cell->active_cell_index()];
+  inline typename Triangulation<dim, spacedim>::active_cell_iterator &
+  is_slave_cell_of(
+      const typename Triangulation<dim, spacedim>::active_cell_iterator &cell) {
+    return master_slave_relationships_iterators[cell->active_cell_index()];
   }
 
   /**

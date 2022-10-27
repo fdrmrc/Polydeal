@@ -14,10 +14,8 @@
  * ---------------------------------------------------------------------
  */
 
-// Agglomerate some cells in a grid, and create a finite element space on the
-// bounding box of an agglomeration. To check the correctness, compute the area
-// of the agglomerated cells using the weights of a custom quadrature rule over
-// the agglomerated element.
+// Select some cells of a tria, agglomerated them together and
+// compute the sparsity pattern associated to a DG discretization.
 
 #include <deal.II/grid/grid_generator.h>
 #include <deal.II/grid/grid_out.h>
@@ -32,7 +30,8 @@ int main() {
   GridTools::Cache<2> cached_tria(tria, mapping);
   AgglomerationHandler<2> ah(cached_tria);
 
-  std::vector<unsigned int> idxs_to_be_agglomerated = {3, 6, 9, 12, 13};
+  std::vector<unsigned int> idxs_to_be_agglomerated = {3, 6, 9, 12,
+                                                       13};  //{8, 9, 10, 11};
 
   std::vector<typename Triangulation<2>::active_cell_iterator>
       cells_to_be_agglomerated;
@@ -69,24 +68,12 @@ int main() {
   std::vector<std::vector<typename Triangulation<2>::active_cell_iterator>>
       agglomerations{cells_to_be_agglomerated, cells_to_be_agglomerated2,
                      cells_to_be_agglomerated3, cells_to_be_agglomerated4};
-
-  ah.initialize_hp_structure();
   ah.setup_neighbors_info(agglomerations);
+  ah.initialize_hp_structure();
 
-  ah.set_agglomeration_flags(update_JxW_values);
-  ah.set_quadrature_degree(3);
-
-  for (const auto &cell :
-       ah.agglo_dh.active_cell_iterators() |
-           IteratorFilters::ActiveFEIndexEqualTo(ah.AggloIndex::master)) {
-    const auto &fev = ah.reinit(cell);
-    double sum = 0.;
-    for (const auto weight : fev.get_JxW_values()) sum += weight;
-    std::cout << "Sum is: " << sum << std::endl;
-    unsigned int f = 2;
-    const auto &dummy = ah.reinit(cell, f);
-    // std::cout << dummy.shape_value(1, 1) << std::endl;
-  }
-
-  return 0;
+  SparsityPattern sparsity_pattern;
+  ah.create_agglomeration_sparsity_pattern(sparsity_pattern);
+  std::ofstream out("sparsity_agglomeration.svg");
+  sparsity_pattern.print_svg(out);
+  sparsity_pattern.print(std::cout);
 }

@@ -253,12 +253,14 @@ const NonMatching::FEImmersedSurfaceValues<dim>
       auto q_points = no_values.get_quadrature_points();
       const auto &JxWs = no_values.get_JxW_values();
       auto &normals = no_values.get_normal_vectors();
+      // for (const auto &w : q_points) {
+      //   std::cout << w << std::endl;
+      // }
 
       typename DoFHandler<dim, spacedim>::cell_iterator cell(*dummy_cell,
                                                              &euler_dh);
       mapping_generic.transform_points_real_to_unit_cell(cell, q_points,
                                                          q_points);
-
       std::transform(q_points.begin(), q_points.end(),
                      std::back_inserter(vec_pts),
                      [&](const Point<spacedim> &p) { return p; });
@@ -276,12 +278,13 @@ const NonMatching::FEImmersedSurfaceValues<dim>
   NonMatching::FEImmersedSurfaceValues<dim> isv{*mapping, *fe, surface_quad,
                                                 agglomeration_face_flags};
   isv.reinit(cell);
-  std::cout << isv.shape_value(1, 2) << std::endl;
-  double sum = 0.;
-  for (const auto &w : surface_quad.get_weights()) {
-    sum += w;
-  }
-  std::cout << sum << std::endl;
+  for (unsigned int q = 0; q < vec_pts.size(); ++q)
+    std::cout << "nel punto" << vec_pts[q] << " vale " << isv.shape_value(1, q)
+              << std::endl;
+
+  // double sum = 0.;
+
+  // std::cout << sum << std::endl;
   return isv;
 
   // FEFaceValues<dim, spacedim> fe_face_v(
@@ -314,6 +317,43 @@ const NonMatching::FEImmersedSurfaceValues<dim>
   // double sum = 0.;
   // for (const auto &w : fe_face_v.get_JxW_values()) sum += w;
   // std::cout << "Sum is: " << sum << std::endl;
+}
+
+template <int dim, int spacedim>
+void AgglomerationHandler<dim, spacedim>::create_agglomeration_sparsity_pattern(
+    SparsityPattern &sparsity_pattern) {
+  Assert(sparsity_pattern.empty(),
+         ExcMessage(
+             "The Sparsity pattern must be empty upon calling this function."));
+
+  DynamicSparsityPattern dsp(agglo_dh.n_dofs(), agglo_dh.n_dofs());
+  DoFTools::make_sparsity_pattern(agglo_dh, dsp);
+
+  std::vector<types::global_dof_index> dof_indices_master(
+      agglo_dh.get_fe(0).n_dofs_per_cell());
+  std::vector<types::global_dof_index> dof_indices_neighbor(
+      agglo_dh.get_fe(2).n_dofs_per_cell());
+
+  for (const auto &value : neighbor_connectivity) {
+    const auto master_cell = is_slave_cell_of(value.first);
+    typename DoFHandler<dim, spacedim>::cell_iterator master_cell_dh(
+        *master_cell, &agglo_dh);
+    master_cell_dh->get_dof_indices(dof_indices_master);
+
+    for (const auto &[local_from_agglo, neigh, face_outside] : value.second) {
+      typename DoFHandler<dim, spacedim>::cell_iterator cell_slave(*neigh,
+                                                                   &agglo_dh);
+      cell_slave->get_dof_indices(dof_indices_neighbor);
+      for (const unsigned int row_idx : dof_indices_master)
+        dsp.add_entries(row_idx, dof_indices_neighbor.begin(),
+                        dof_indices_neighbor.end());
+      for (const unsigned int col_idx : dof_indices_neighbor)
+        dsp.add_entries(col_idx, dof_indices_master.begin(),
+                        dof_indices_master.end());
+    }
+  }
+
+  sparsity_pattern.copy_from(dsp);
 }
 
 template class AgglomerationHandler<1>;
