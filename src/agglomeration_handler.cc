@@ -18,30 +18,32 @@
 
 template <int dim, int spacedim>
 AgglomerationHandler<dim, spacedim>::AgglomerationHandler(
-    const GridTools::Cache<dim, spacedim> &cache_tria,
-    const FE_DGQ<dim, spacedim> &fe_space)
-    : cached_tria(std::make_unique<GridTools::Cache<dim, spacedim>>(
-          cache_tria.get_triangulation(), cache_tria.get_mapping())),
-      fe(std::make_unique<FE_DGQ<dim, spacedim>>(fe_space)) {
+  const GridTools::Cache<dim, spacedim> &cache_tria,
+  const FE_DGQ<dim, spacedim>           &fe_space)
+  : cached_tria(std::make_unique<GridTools::Cache<dim, spacedim>>(
+      cache_tria.get_triangulation(),
+      cache_tria.get_mapping()))
+  , fe(std::make_unique<FE_DGQ<dim, spacedim>>(fe_space))
+{
   Assert(dim == spacedim, ExcMessage("Not tested with different dimensions"));
   Assert(dim == 2 || dim == 3, ExcMessage("Not available in 1D."));
-  Assert(
-      cached_tria->get_triangulation().n_active_cells() > 0,
-      ExcMessage(
-          "The triangulation must not be empty upon calling this function."));
+  Assert(cached_tria->get_triangulation().n_active_cells() > 0,
+         ExcMessage(
+           "The triangulation must not be empty upon calling this function."));
 
-  fe_collection.push_back(*fe);                          // master
-  fe_collection.push_back(FE_Nothing<dim, spacedim>());  // slave
-  fe_collection.push_back(*fe);                          // standard
+  fe_collection.push_back(*fe);                         // master
+  fe_collection.push_back(FE_Nothing<dim, spacedim>()); // slave
+  fe_collection.push_back(*fe);                         // standard
 
   initialize_agglomeration_data(cached_tria);
 }
 
 template <int dim, int spacedim>
-void AgglomerationHandler<dim, spacedim>::agglomerate_cells(
-    const std::vector<
-        typename Triangulation<dim, spacedim>::active_cell_iterator>
-        &vec_of_cells) {
+void
+AgglomerationHandler<dim, spacedim>::agglomerate_cells(
+  const std::vector<typename Triangulation<dim, spacedim>::active_cell_iterator>
+    &vec_of_cells)
+{
   Assert(master_slave_relationships.size() > 0,
          ExcMessage("Before calling this function, be sure that the "
                     "constructor of this object has been called."));
@@ -54,59 +56,67 @@ void AgglomerationHandler<dim, spacedim>::agglomerate_cells(
 
   // Maximum index drives the selection of the master cell
   unsigned int master_idx =
-      *std::max_element(global_indices.begin(), global_indices.end());
+    *std::max_element(global_indices.begin(), global_indices.end());
 
-  for (const auto &cell : vec_of_cells) {
-    if (cell->active_cell_index() == master_idx)
-      master_slave_relationships_iterators[cell->active_cell_index()] =
-          cell;  // set iterator to master cell
-  }
+  for (const auto &cell : vec_of_cells)
+    {
+      if (cell->active_cell_index() == master_idx)
+        master_slave_relationships_iterators[cell->active_cell_index()] =
+          cell; // set iterator to master cell
+    }
 
-  for (const auto &cell : vec_of_cells) {
-    if (cell->active_cell_index() != master_idx)
-      master_slave_relationships_iterators[cell->active_cell_index()] =
+  for (const auto &cell : vec_of_cells)
+    {
+      if (cell->active_cell_index() != master_idx)
+        master_slave_relationships_iterators[cell->active_cell_index()] =
           master_slave_relationships_iterators[master_idx];
-  }
+    }
 
-  for (const unsigned int idx : global_indices) {
-    master_slave_relationships[idx] = master_idx;  // mark each slave
-  }
+  for (const unsigned int idx : global_indices)
+    {
+      master_slave_relationships[idx] = master_idx; // mark each slave
+    }
 
   master_slave_relationships[master_idx] = -1;
 
-  ++n_agglomerations;  // agglomeration has been performed, record it
-  create_bounding_box(vec_of_cells, master_idx);  // fill the vector of bboxes
+  ++n_agglomerations; // agglomeration has been performed, record it
+  create_bounding_box(vec_of_cells, master_idx); // fill the vector of bboxes
 }
 
 template <int dim, int spacedim>
 std::vector<typename Triangulation<dim, spacedim>::active_cell_iterator>
-AgglomerationHandler<dim, spacedim>::get_slaves_of_idx(const int idx) const {
+AgglomerationHandler<dim, spacedim>::get_slaves_of_idx(const int idx) const
+{
   std::vector<typename Triangulation<dim, spacedim>::active_cell_iterator>
-      slaves;
+    slaves;
   // Loop over the tria, and check if a each cell is a slave of master cell
   // idx If no slave is found, return an empty vector.
-  for (const auto &cell : tria->active_cell_iterators()) {
-    if (master_slave_relationships[cell->active_cell_index()] == idx) {
-      slaves.push_back(cell);
+  for (const auto &cell : tria->active_cell_iterators())
+    {
+      if (master_slave_relationships[cell->active_cell_index()] == idx)
+        {
+          slaves.push_back(cell);
+        }
     }
-  }
   return slaves;
 }
 
 template <int dim, int spacedim>
 std::vector<typename Triangulation<dim, spacedim>::active_cell_iterator>
 AgglomerationHandler<dim, spacedim>::get_agglomerated_cells(
-    const typename Triangulation<dim, spacedim>::active_cell_iterator &cell)
-    const {
+  const typename Triangulation<dim, spacedim>::active_cell_iterator &cell) const
+{
   const int current_idx = cell->active_cell_index();
   return get_slaves_of_idx(current_idx);
 }
 
 template <int dim, int spacedim>
-Quadrature<dim> AgglomerationHandler<dim, spacedim>::agglomerated_quadrature(
-    const std::vector<
-        typename Triangulation<dim, spacedim>::active_cell_iterator> &cells,
-    const Quadrature<dim> &quadrature_type) const {
+Quadrature<dim>
+AgglomerationHandler<dim, spacedim>::agglomerated_quadrature(
+  const std::vector<typename Triangulation<dim, spacedim>::active_cell_iterator>
+                        &cells,
+  const Quadrature<dim> &quadrature_type) const
+{
   Assert(quadrature_type.size() > 0,
          ExcMessage("Invalid size for the given Quadrature object"));
   FE_Nothing<dim, spacedim> dummy_fe;
@@ -115,243 +125,248 @@ Quadrature<dim> AgglomerationHandler<dim, spacedim>::agglomerated_quadrature(
   MappingQ<dim, spacedim> mapping_generic(1);
 
   FEValues<dim, spacedim> no_values(
-      mapping_generic, dummy_fe, quadrature_type,
-      update_quadrature_points |
-          update_JxW_values);  // only for quadrature, see related issue.
+    mapping_generic,
+    dummy_fe,
+    quadrature_type,
+    update_quadrature_points |
+      update_JxW_values); // only for quadrature, see related issue.
   std::vector<Point<dim>> vec_pts;
-  std::vector<double> vec_JxWs;
-  for (const auto &dummy_cell : cells) {
-    no_values.reinit(dummy_cell);
-    auto q_points = no_values.get_quadrature_points();
-    const auto &JxWs = no_values.get_JxW_values();
+  std::vector<double>     vec_JxWs;
+  for (const auto &dummy_cell : cells)
+    {
+      no_values.reinit(dummy_cell);
+      auto        q_points = no_values.get_quadrature_points();
+      const auto &JxWs     = no_values.get_JxW_values();
 
-    typename DoFHandler<dim, spacedim>::cell_iterator cell(*dummy_cell,
-                                                           &euler_dh);
-    mapping_generic.transform_points_real_to_unit_cell(cell, q_points,
-                                                       q_points);
+      typename DoFHandler<dim, spacedim>::cell_iterator cell(*dummy_cell,
+                                                             &euler_dh);
+      mapping_generic.transform_points_real_to_unit_cell(cell,
+                                                         q_points,
+                                                         q_points);
 
-    std::transform(q_points.begin(), q_points.end(),
-                   std::back_inserter(vec_pts),
-                   [&](const Point<spacedim> &p) { return p; });
-    std::transform(JxWs.begin(), JxWs.end(), std::back_inserter(vec_JxWs),
-                   [&](const double w) { return w; });
-  }
+      std::transform(q_points.begin(),
+                     q_points.end(),
+                     std::back_inserter(vec_pts),
+                     [&](const Point<spacedim> &p) { return p; });
+      std::transform(JxWs.begin(),
+                     JxWs.end(),
+                     std::back_inserter(vec_JxWs),
+                     [&](const double w) { return w; });
+    }
 
   return Quadrature<dim>(vec_pts, vec_JxWs);
 }
 
 template <int dim, int spacedim>
-void AgglomerationHandler<dim, spacedim>::initialize_hp_structure() {
+void
+AgglomerationHandler<dim, spacedim>::initialize_hp_structure()
+{
   Assert(agglo_dh.get_triangulation().n_cells() > 0,
          ExcMessage(
-             "Triangulation must not be empty upon calling this function."));
+           "Triangulation must not be empty upon calling this function."));
   Assert(n_agglomerations > 0,
          ExcMessage("No agglomeration has been performed."));
   for (const auto &cell : agglo_dh.active_cell_iterators())
     if (is_master_cell(cell))
       cell->set_active_fe_index(AggloIndex::master);
     else if (is_slave_cell(cell))
-      cell->set_active_fe_index(AggloIndex::slave);  // slave cell
+      cell->set_active_fe_index(AggloIndex::slave); // slave cell
     else
-      cell->set_active_fe_index(AggloIndex::standard);  // standard
+      cell->set_active_fe_index(AggloIndex::standard); // standard
 
   agglo_dh.distribute_dofs(fe_collection);
   euler_mapping =
-      std::make_unique<MappingFEField<dim, spacedim>>(euler_dh, euler_vector);
+    std::make_unique<MappingFEField<dim, spacedim>>(euler_dh, euler_vector);
 }
 
 template <int dim, int spacedim>
-const FEValues<dim, spacedim> &AgglomerationHandler<dim, spacedim>::reinit(
-    const typename DoFHandler<dim, spacedim>::active_cell_iterator &cell)
-    const {
+const FEValues<dim, spacedim> &
+AgglomerationHandler<dim, spacedim>::reinit(
+  const typename DoFHandler<dim, spacedim>::active_cell_iterator &cell) const
+{
   Assert(euler_mapping,
          ExcMessage("The mapping describing the physical element stemming from "
                     "agglomeration has not been set up."));
 
-  if (is_master_cell(cell)) {
-    std::vector<typename Triangulation<dim, spacedim>::active_cell_iterator>
+  if (is_master_cell(cell))
+    {
+      std::vector<typename Triangulation<dim, spacedim>::active_cell_iterator>
         agglo_cells;
-    // Push back that master and slaves
-    agglo_cells.push_back(cell);
-    const auto &slaves = get_slaves_of_idx(cell->active_cell_index());
-    std::transform(
-        slaves.begin(), slaves.end(), std::back_inserter(agglo_cells),
+      // Push back that master and slaves
+      agglo_cells.push_back(cell);
+      const auto &slaves = get_slaves_of_idx(cell->active_cell_index());
+      std::transform(
+        slaves.begin(),
+        slaves.end(),
+        std::back_inserter(agglo_cells),
         [&](const typename Triangulation<dim, spacedim>::active_cell_iterator
-                &c) { return c; });
+              &c) { return c; });
 
-    Quadrature<dim> agglo_quad = agglomerated_quadrature(
-        agglo_cells, QGauss<dim>(agglomeration_quadrature_degree));
+      Quadrature<dim> agglo_quad =
+        agglomerated_quadrature(agglo_cells,
+                                QGauss<dim>(agglomeration_quadrature_degree));
 
-    const double bbox_measure = bboxes[cell->active_cell_index()].volume();
+      const double bbox_measure = bboxes[cell->active_cell_index()].volume();
 
-    // Scale weights with the volume of the BBox. This way, the euler_mapping
-    // defining the BBOx doesn't alter them.
-    std::vector<double> scaled_weights;
-    std::transform(
-        agglo_quad.get_weights().begin(), agglo_quad.get_weights().end(),
-        std::back_inserter(scaled_weights),
-        [&bbox_measure](const double w) { return w / bbox_measure; });
+      // Scale weights with the volume of the BBox. This way, the euler_mapping
+      // defining the BBOx doesn't alter them.
+      std::vector<double> scaled_weights;
+      std::transform(agglo_quad.get_weights().begin(),
+                     agglo_quad.get_weights().end(),
+                     std::back_inserter(scaled_weights),
+                     [&bbox_measure](const double w) {
+                       return w / bbox_measure;
+                     });
 
-    Quadrature<dim> scaled_quad(agglo_quad.get_points(), scaled_weights);
+      Quadrature<dim> scaled_quad(agglo_quad.get_points(), scaled_weights);
 
-    agglomerated_scratch = std::make_unique<ScratchData>(
-        *euler_mapping, fe_collection[0], scaled_quad, agglomeration_flags);
-    return agglomerated_scratch->reinit(cell);
-
-  } else if (is_standard_cell(cell)) {
-    // ensure the DG space is the same we have from the other DoFHandler(s)
-    standard_scratch = std::make_unique<ScratchData>(
-        *mapping, fe_collection[2],
-        QGauss<dim>(agglomeration_quadrature_degree), agglomeration_flags);
-    return standard_scratch->reinit(cell);
-  } else {
-    std::vector<Point<dim>> pts{{}};
-    std::vector<double> wgts{0.};
-    Quadrature<dim> dummy_quad(pts, wgts);
-    standard_scratch = std::make_unique<ScratchData>(
-        *mapping, fe_collection[1], dummy_quad, agglomeration_flags);
-    return standard_scratch->reinit(cell);
-  }
+      agglomerated_scratch = std::make_unique<ScratchData>(*euler_mapping,
+                                                           fe_collection[0],
+                                                           scaled_quad,
+                                                           agglomeration_flags);
+      return agglomerated_scratch->reinit(cell);
+    }
+  else if (is_standard_cell(cell))
+    {
+      // ensure the DG space is the same we have from the other DoFHandler(s)
+      standard_scratch =
+        std::make_unique<ScratchData>(*mapping,
+                                      fe_collection[2],
+                                      QGauss<dim>(
+                                        agglomeration_quadrature_degree),
+                                      agglomeration_flags);
+      return standard_scratch->reinit(cell);
+    }
+  else
+    {
+      std::vector<Point<dim>> pts{{}};
+      std::vector<double>     wgts{0.};
+      Quadrature<dim>         dummy_quad(pts, wgts);
+      standard_scratch = std::make_unique<ScratchData>(*mapping,
+                                                       fe_collection[1],
+                                                       dummy_quad,
+                                                       agglomeration_flags);
+      return standard_scratch->reinit(cell);
+    }
 }
 
 template <int dim, int spacedim>
-const NonMatching::FEImmersedSurfaceValues<dim>
-    &AgglomerationHandler<dim, spacedim>::reinit(
-        const typename DoFHandler<dim, spacedim>::active_cell_iterator &cell,
-        const unsigned int agglomeration_face_number) const {
+const NonMatching::FEImmersedSurfaceValues<dim> &
+AgglomerationHandler<dim, spacedim>::reinit(
+  const typename DoFHandler<dim, spacedim>::active_cell_iterator &cell,
+  const unsigned int agglomeration_face_number) const
+{
   // For now, this must be called for master cells only.
-  Assert(
-      master_slave_relationships[cell->active_cell_index()] == -1,
-      ExcMessage("This function is supposed to be called for master cells."));
+  Assert(master_slave_relationships[cell->active_cell_index()] == -1,
+         ExcMessage(
+           "This function is supposed to be called for master cells."));
   FE_Nothing<dim, spacedim> dummy_fe;
   DoFHandler<dim, spacedim> dummy_dh(*tria);
   dummy_dh.distribute_dofs(dummy_fe);
   MappingQ<dim, spacedim> mapping_generic(1);
 
   FEFaceValues<dim, spacedim> no_values(
-      mapping_generic, dummy_fe,
-      QGauss<dim - 1>(agglomeration_quadrature_degree),
-      update_quadrature_points | update_JxW_values |
-          update_normal_vectors);  // only for quadrature
-  std::vector<Point<dim>> vec_pts;
-  std::vector<double> vec_JxWs;
+    mapping_generic,
+    dummy_fe,
+    QGauss<dim - 1>(agglomeration_quadrature_degree),
+    update_quadrature_points | update_JxW_values |
+      update_normal_vectors); // only for quadrature
+  std::vector<Point<dim>>          vec_pts;
+  std::vector<double>              vec_JxWs;
   std::vector<Tensor<1, spacedim>> vec_normals;
   std::vector<typename Triangulation<dim, spacedim>::active_cell_iterator>
-      agglomeration;
+    agglomeration;
   agglomeration.push_back(cell);
 
   for (const auto &c : get_slaves_of_idx(cell->active_cell_index()))
     agglomeration.push_back(c);
 
-  for (const auto &dummy_cell : agglomeration) {
-    std::cout << "Index of slave: " << dummy_cell->active_cell_index()
-              << std::endl;
-    for (const auto &[face_from_agglo, neigh, face_outside] :
-         neighbor_connectivity[dummy_cell]) {
-      std::cout << "Face index:" << face_from_agglo << std::endl;
-      no_values.reinit(dummy_cell, face_from_agglo);
-      auto q_points = no_values.get_quadrature_points();
-      const auto &JxWs = no_values.get_JxW_values();
-      auto &normals = no_values.get_normal_vectors();
-      // for (const auto &w : q_points) {
-      //   std::cout << w << std::endl;
-      // }
+  for (const auto &dummy_cell : agglomeration)
+    {
+      std::cout << "Index of slave: " << dummy_cell->active_cell_index()
+                << std::endl;
+      for (const auto &[face_from_agglo, neigh, face_outside] :
+           neighbor_connectivity[dummy_cell])
+        {
+          std::cout << "Face index:" << face_from_agglo << std::endl;
+          no_values.reinit(dummy_cell, face_from_agglo);
+          auto        q_points = no_values.get_quadrature_points();
+          const auto &JxWs     = no_values.get_JxW_values();
+          auto       &normals  = no_values.get_normal_vectors();
 
-      typename DoFHandler<dim, spacedim>::cell_iterator cell(*dummy_cell,
-                                                             &euler_dh);
-      mapping_generic.transform_points_real_to_unit_cell(cell, q_points,
-                                                         q_points);
-      std::transform(q_points.begin(), q_points.end(),
-                     std::back_inserter(vec_pts),
-                     [&](const Point<spacedim> &p) { return p; });
-      std::transform(JxWs.begin(), JxWs.end(), std::back_inserter(vec_JxWs),
-                     [&](const double w) { return w; });
-      std::transform(normals.begin(), normals.end(),
-                     std::back_inserter(vec_normals),
-                     [&](const Tensor<1, spacedim> &n) { return n; });
+          typename DoFHandler<dim, spacedim>::cell_iterator cell(*dummy_cell,
+                                                                 &euler_dh);
+          mapping_generic.transform_points_real_to_unit_cell(cell,
+                                                             q_points,
+                                                             q_points);
+          std::transform(q_points.begin(),
+                         q_points.end(),
+                         std::back_inserter(vec_pts),
+                         [&](const Point<spacedim> &p) { return p; });
+          std::transform(JxWs.begin(),
+                         JxWs.end(),
+                         std::back_inserter(vec_JxWs),
+                         [&](const double w) { return w; });
+          std::transform(normals.begin(),
+                         normals.end(),
+                         std::back_inserter(vec_normals),
+                         [&](const Tensor<1, spacedim> &n) { return n; });
+        }
     }
-  }
 
   NonMatching::ImmersedSurfaceQuadrature<dim, spacedim> surface_quad(
-      vec_pts, vec_JxWs, vec_normals);
+    vec_pts, vec_JxWs, vec_normals);
 
-  NonMatching::FEImmersedSurfaceValues<dim> isv{*mapping, *fe, surface_quad,
+  NonMatching::FEImmersedSurfaceValues<dim> isv{*mapping,
+                                                *fe,
+                                                surface_quad,
                                                 agglomeration_face_flags};
   isv.reinit(cell);
-  for (unsigned int q = 0; q < vec_pts.size(); ++q)
-    std::cout << "nel punto" << vec_pts[q] << " vale " << isv.shape_value(1, q)
-              << std::endl;
+  // @todo Add this after FEisf can take a MappingFEField
 
-  // double sum = 0.;
 
-  // std::cout << sum << std::endl;
   return isv;
-
-  // FEFaceValues<dim, spacedim> fe_face_v(
-  //     *euler_mapping, *fe, QGauss<dim -
-  //     1>(agglomeration_quadrature_degree), agglomeration_face_flags);
-
-  // fe_face_v.reinit(cell, agglomeration_face_number);
-
-  // auto &q_points = fe_face_v.get_quadrature_points();
-  // auto &JxW_values = fe_face_v.get_JxW_values();
-  // auto &normals = fe_face_v.get_normal_vectors();
-
-  // const double bbox_measure = bboxes[cell->active_cell_index()].volume();
-
-  // MappingQ<dim> mapping_generic(1);
-  // std::vector<Point<dim>> vec_pts(q_points.size());
-  // mapping_generic.transform_points_real_to_unit_cell(cell, q_points,
-  // vec_pts);
-
-  // // std::vector<double> scaled_weights;
-  // // std::transform(JxW_values.begin(), JxW_values.end(),
-  // //                std::back_inserter(scaled_weights),
-  // //                [&bbox_measure](const double w) { return w /
-  // bbox_measure;
-  // //                });
-
-  // // NonMatching::ImmersedSurfaceQuadrature<dim, spacedim> surface_quad(
-  // //     vec_pts, scaled_weights, normals);
-
-  // double sum = 0.;
-  // for (const auto &w : fe_face_v.get_JxW_values()) sum += w;
-  // std::cout << "Sum is: " << sum << std::endl;
 }
 
 template <int dim, int spacedim>
-void AgglomerationHandler<dim, spacedim>::create_agglomeration_sparsity_pattern(
-    SparsityPattern &sparsity_pattern) {
+void
+AgglomerationHandler<dim, spacedim>::create_agglomeration_sparsity_pattern(
+  SparsityPattern &sparsity_pattern)
+{
   Assert(sparsity_pattern.empty(),
          ExcMessage(
-             "The Sparsity pattern must be empty upon calling this function."));
+           "The Sparsity pattern must be empty upon calling this function."));
 
   DynamicSparsityPattern dsp(agglo_dh.n_dofs(), agglo_dh.n_dofs());
   DoFTools::make_sparsity_pattern(agglo_dh, dsp);
 
   std::vector<types::global_dof_index> dof_indices_master(
-      agglo_dh.get_fe(0).n_dofs_per_cell());
+    agglo_dh.get_fe(0).n_dofs_per_cell());
   std::vector<types::global_dof_index> dof_indices_neighbor(
-      agglo_dh.get_fe(2).n_dofs_per_cell());
+    agglo_dh.get_fe(2).n_dofs_per_cell());
 
-  for (const auto &value : neighbor_connectivity) {
-    const auto master_cell = is_slave_cell_of(value.first);
-    typename DoFHandler<dim, spacedim>::cell_iterator master_cell_dh(
+  for (const auto &value : neighbor_connectivity)
+    {
+      const auto master_cell = is_slave_cell_of(value.first);
+      typename DoFHandler<dim, spacedim>::cell_iterator master_cell_dh(
         *master_cell, &agglo_dh);
-    master_cell_dh->get_dof_indices(dof_indices_master);
+      master_cell_dh->get_dof_indices(dof_indices_master);
 
-    for (const auto &[local_from_agglo, neigh, face_outside] : value.second) {
-      typename DoFHandler<dim, spacedim>::cell_iterator cell_slave(*neigh,
-                                                                   &agglo_dh);
-      cell_slave->get_dof_indices(dof_indices_neighbor);
-      for (const unsigned int row_idx : dof_indices_master)
-        dsp.add_entries(row_idx, dof_indices_neighbor.begin(),
-                        dof_indices_neighbor.end());
-      for (const unsigned int col_idx : dof_indices_neighbor)
-        dsp.add_entries(col_idx, dof_indices_master.begin(),
-                        dof_indices_master.end());
+      for (const auto &[local_from_agglo, neigh, face_outside] : value.second)
+        {
+          typename DoFHandler<dim, spacedim>::cell_iterator cell_slave(
+            *neigh, &agglo_dh);
+          cell_slave->get_dof_indices(dof_indices_neighbor);
+          for (const unsigned int row_idx : dof_indices_master)
+            dsp.add_entries(row_idx,
+                            dof_indices_neighbor.begin(),
+                            dof_indices_neighbor.end());
+          for (const unsigned int col_idx : dof_indices_neighbor)
+            dsp.add_entries(col_idx,
+                            dof_indices_master.begin(),
+                            dof_indices_master.end());
+        }
     }
-  }
 
   sparsity_pattern.copy_from(dsp);
 }

@@ -1,3 +1,24 @@
+/* ---------------------------------------------------------------------
+ *
+ * Copyright (C) 2022 by the deal.II authors
+ *
+ * This file is part of the deal.II library.
+ *
+ * The deal.II library is free software; you can use it, redistribute
+ * it, and/or modify it under the terms of the GNU Lesser General
+ * Public License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ * The full text of the license can be found in the file LICENSE.md at
+ * the top level directory of deal.II.
+ *
+ * ---------------------------------------------------------------------
+ */
+
+
+
+// Agglomerate some cells in a grid, and compute the number of agglomerated
+// faces for each agglomeration.
+
 #include <deal.II/grid/grid_generator.h>
 #include <deal.II/grid/grid_out.h>
 
@@ -58,9 +79,9 @@ main()
 
   for (const auto &cell : ah.agglo_dh.active_cell_iterators())
     {
-      auto ippo = ah.n_agglomerated_faces(cell);
+      const auto n_faces = ah.n_agglomerated_faces(cell);
       std::cout << "Number of agglomerated faces for cell "
-                << cell->active_cell_index() << " is " << ippo << std::endl;
+                << cell->active_cell_index() << " is " << n_faces << std::endl;
     }
 
   std::ofstream out("snippet_grid.vtk");
