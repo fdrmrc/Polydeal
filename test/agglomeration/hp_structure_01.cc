@@ -31,40 +31,46 @@
 
 #include "../tests.h"
 
-int main() {
+int
+main()
+{
   Triangulation<2> tria;
   GridGenerator::hyper_cube(tria, -1, 1);
   MappingQ<2> mapping(1);
   tria.refine_global(2);
-  GridTools::Cache<2> cached_tria(tria, mapping);
+  GridTools::Cache<2>     cached_tria(tria, mapping);
   AgglomerationHandler<2> ah(cached_tria);
 
   std::vector<unsigned int> idxs_to_be_agglomerated = {0, 1, 2, 3};
 
   std::vector<typename Triangulation<2>::active_cell_iterator>
-      cells_to_be_agglomerated;
-  Tests::collect_cells_for_agglomeration(tria, idxs_to_be_agglomerated,
+    cells_to_be_agglomerated;
+  Tests::collect_cells_for_agglomeration(tria,
+                                         idxs_to_be_agglomerated,
                                          cells_to_be_agglomerated);
 
   std::vector<unsigned int> idxs_to_be_agglomerated2 = {4, 5, 6, 7};
 
   std::vector<typename Triangulation<2>::active_cell_iterator>
-      cells_to_be_agglomerated2;
-  Tests::collect_cells_for_agglomeration(tria, idxs_to_be_agglomerated2,
+    cells_to_be_agglomerated2;
+  Tests::collect_cells_for_agglomeration(tria,
+                                         idxs_to_be_agglomerated2,
                                          cells_to_be_agglomerated2);
 
   std::vector<unsigned int> idxs_to_be_agglomerated3 = {8, 9, 10, 11};
 
   std::vector<typename Triangulation<2>::active_cell_iterator>
-      cells_to_be_agglomerated3;
-  Tests::collect_cells_for_agglomeration(tria, idxs_to_be_agglomerated3,
+    cells_to_be_agglomerated3;
+  Tests::collect_cells_for_agglomeration(tria,
+                                         idxs_to_be_agglomerated3,
                                          cells_to_be_agglomerated3);
 
   std::vector<unsigned int> idxs_to_be_agglomerated4 = {12, 13, 14, 15};
 
   std::vector<typename Triangulation<2>::active_cell_iterator>
-      cells_to_be_agglomerated4;
-  Tests::collect_cells_for_agglomeration(tria, idxs_to_be_agglomerated4,
+    cells_to_be_agglomerated4;
+  Tests::collect_cells_for_agglomeration(tria,
+                                         idxs_to_be_agglomerated4,
                                          cells_to_be_agglomerated4);
 
   // Agglomerate the cells just stored
@@ -82,19 +88,22 @@ int main() {
 
   for (const auto &cell :
        ah.agglo_dh.active_cell_iterators() |
-           IteratorFilters::ActiveFEIndexEqualTo(ah.AggloIndex::master)) {
-    cell->get_dof_indices(dof_indices);
-    std::cout << "Cell with global index: " << cell->active_cell_index()
-              << " has global DoF indices: " << std::endl;
-    for (const auto &idx : dof_indices) {
-      std::cout << idx << std::endl;
+         IteratorFilters::ActiveFEIndexEqualTo(ah.AggloIndex::master))
+    {
+      cell->get_dof_indices(dof_indices);
+      std::cout << "Cell with global index: " << cell->active_cell_index()
+                << " has global DoF indices: " << std::endl;
+      for (const auto &idx : dof_indices)
+        {
+          std::cout << idx << std::endl;
+        }
+      std::cout << " and vertices: " << std::endl;
+      typename Triangulation<2>::cell_iterator cell_it(*cell, &ah.agglo_dh);
+      for (const auto i : cell_it->vertex_indices())
+        {
+          std::cout << cell_it->vertex(i) << std::endl;
+        }
     }
-    std::cout << " and vertices: " << std::endl;
-    typename Triangulation<2>::cell_iterator cell_it(*cell, &ah.agglo_dh);
-    for (const auto i : cell_it->vertex_indices()) {
-      std::cout << cell_it->vertex(i) << std::endl;
-    }
-  }
 
   return 0;
 }

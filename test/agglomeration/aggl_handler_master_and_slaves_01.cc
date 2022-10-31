@@ -22,18 +22,21 @@
 
 #include "../tests.h"
 
-int main() {
+int
+main()
+{
   Triangulation<2> tria;
   GridGenerator::hyper_cube(tria, -1, 1);
   MappingQ<2> mapping(1);
   tria.refine_global(2);
-  GridTools::Cache<2> cached_tria(tria, mapping);
+  GridTools::Cache<2>     cached_tria(tria, mapping);
   AgglomerationHandler<2> ah(cached_tria);
 
   std::vector<unsigned int> idxs_to_be_agglomerated = {3, 6, 9, 12, 13};
   std::vector<typename Triangulation<2>::active_cell_iterator>
-      cells_to_be_agglomerated;
-  Tests::collect_cells_for_agglomeration(tria, idxs_to_be_agglomerated,
+    cells_to_be_agglomerated;
+  Tests::collect_cells_for_agglomeration(tria,
+                                         idxs_to_be_agglomerated,
                                          cells_to_be_agglomerated);
 
   // Agglomerate the cells just stored
