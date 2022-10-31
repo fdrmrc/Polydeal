@@ -76,6 +76,15 @@ class AgglomerationHandler : public Subscriptor
     const typename Triangulation<dim, spacedim>::active_cell_iterator,
     unsigned int>>;
 
+  using CellAndFace =
+    std::pair<const typename Triangulation<dim, spacedim>::active_cell_iterator,
+              unsigned int>;
+
+  using MasterNeighborInfo = std::vector<std::tuple<
+    unsigned int,
+    const typename Triangulation<dim, spacedim>::active_cell_iterator,
+    unsigned int>>;
+
 public:
   enum AggloIndex
   {
@@ -184,11 +193,11 @@ public:
   }
 
   /**
-   * Return, for each cell belonging to the same agglomeration, the number of
-   * agglomerated faces.
+   * Return, for a cell the number of agglomerated faces. If it's a standard
+   * cell, the result is 0.
    */
   unsigned int
-  n_agglomerated_faces(
+  n_agglomerated_faces_per_cell(
     const typename Triangulation<dim, spacedim>::active_cell_iterator &cell)
     const
   {
@@ -201,6 +210,28 @@ public:
           {
             ++n_neighbors;
           }
+      }
+    return n_neighbors;
+  }
+
+
+  /**
+   * Return, for each cell belonging to the same agglomeration, the number of
+   * agglomerated faces.
+   */
+  unsigned int
+  n_agglomerated_faces_per_agglomeration(
+    const typename Triangulation<dim, spacedim>::active_cell_iterator
+      &master_cell) const
+  {
+    Assert(master_slave_relationships[master_cell->active_cell_index()] == -1,
+           ExcMessage("You should pass a master cell."));
+    auto agglomeration = get_slaves_of_idx(master_cell->active_cell_index());
+    agglomeration.push_back(master_cell);
+    unsigned int n_neighbors = 0;
+    for (const auto &cell : agglomeration)
+      {
+        n_neighbors += n_agglomerated_faces_per_cell(cell);
       }
     return n_neighbors;
   }
@@ -300,6 +331,53 @@ public:
       }
   }
 
+
+  void
+  setup_master_neighbor_connectivity(
+    const typename Triangulation<dim, spacedim>::active_cell_iterator
+      &master_cell)
+  {
+    Assert(master_slave_relationships[master_cell->active_cell_index()] == -1,
+           ExcMessage("The present cell is not a master one."));
+    auto agglomeration = get_slaves_of_idx(master_cell->active_cell_index());
+    agglomeration.push_back(master_cell);
+    unsigned int n_agglo_faces = 0;
+    for (const auto &cell : agglomeration)
+      {
+        for (const auto f : cell->face_indices())
+          {
+            const auto &neighboring_cell = cell->neighbor(f);
+            // Check if cell is not on the boundary and if it's not agglomerated
+            // with the neighbor If so, it's a neighbor of the present
+            // agglomeration
+            if (neighboring_cell.state() ==
+                  IteratorState::
+                    valid && // @todo Handle the case where the cell
+                             // is on the boundary
+                !are_cells_agglomerated(cell, neighboring_cell))
+              {
+                // a new face of the agglomeration has been discovered.
+                const auto &cell_and_face =
+                  CellAndFace(master_cell, n_agglo_faces);
+                const auto nof = cell->neighbor_of_neighbor(f);
+                if (is_slave_cell(neighboring_cell))
+                  master_neighbors[cell_and_face].emplace_back(
+                    f,
+                    master_slave_relationships_iterators
+                      [neighboring_cell->active_cell_index()],
+                    nof);
+                else
+                  master_neighbors[cell_and_face].emplace_back(f,
+                                                               neighboring_cell,
+                                                               nof);
+                ++n_agglo_faces;
+              }
+          }
+      }
+  }
+
+
+
   /**
    * Where the magic happens!
    */
@@ -378,6 +456,9 @@ public:
   std::vector<typename Triangulation<dim, spacedim>::active_cell_iterator>
   get_slaves_of_idx(const int idx) const;
 
+  mutable std::map<CellAndFace, MasterNeighborInfo> master_neighbors;
+
+
 private:
   std::vector<long int> master_slave_relationships;
 
@@ -409,6 +490,7 @@ private:
     const typename Triangulation<dim, spacedim>::active_cell_iterator,
     NeighborsInfos>
     neighbor_connectivity;
+
 
   /**
    * DoFHandler for the physical space

@@ -54,17 +54,46 @@ main()
   ah.agglomerate_cells(cells_to_be_agglomerated2);
   ah.agglomerate_cells(cells_to_be_agglomerated3);
   ah.agglomerate_cells(cells_to_be_agglomerated4);
-
+  ah.initialize_hp_structure();
 
   for (const auto &cell : ah.agglo_dh.active_cell_iterators())
     {
-      auto ippo = ah.n_agglomerated_faces(cell);
+      const unsigned int agglo_faces_per_cell =
+        ah.n_agglomerated_faces_per_cell(cell);
       std::cout << "Number of agglomerated faces for cell "
-                << cell->active_cell_index() << " is " << ippo << std::endl;
+                << cell->active_cell_index() << " is " << agglo_faces_per_cell
+                << std::endl;
     }
 
   std::ofstream out("snippet_grid.vtk");
   GridOut       grid_out;
   grid_out.write_vtk(tria, out);
+
+
+  for (const auto &cell :
+       ah.agglo_dh.active_cell_iterators() |
+         IteratorFilters::ActiveFEIndexEqualTo(ah.AggloIndex::master))
+    {
+      std::cout << "Cell with idx: " << cell->active_cell_index() << std::endl;
+      ah.setup_master_neighbor_connectivity(cell);
+      unsigned int n_agglomerated_faces_per_cell =
+        ah.n_agglomerated_faces_per_agglomeration(cell);
+      std::cout << "Agglo faces: " << n_agglomerated_faces_per_cell
+                << std::endl;
+      for (unsigned int f = 0; f < n_agglomerated_faces_per_cell; ++f)
+        {
+          std::cout << "Agglomerated face with idx: " << f << std::endl;
+          auto my_value = ah.master_neighbors[{cell, f}];
+          for (const auto &t : my_value)
+            {
+              std::cout << "Face idx: " << std::get<0>(t) << std::endl;
+              std::cout << "Neighbor idx: "
+                        << std::get<1>(t)->active_cell_index() << std::endl;
+              std::cout << "Face idx from outside " << std::get<2>(t)
+                        << std::endl;
+            }
+        }
+    }
+
   return 0;
 }
