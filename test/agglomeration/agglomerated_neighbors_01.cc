@@ -77,16 +77,31 @@ main()
                    cells_to_be_agglomerated2,
                    cells_to_be_agglomerated3,
                    cells_to_be_agglomerated4};
-  ah.setup_neighbors_info(agglomerations);
 
-  for (const auto &value : get_agglomerated_connectivity(ah))
-    { // value is a set now
-      for (const auto &x : value.second)
+  ah.initialize_hp_structure();
+  ah.setup_connectivity_of_agglomeration();
+  for (const auto &cell :
+       ah.agglo_dh.active_cell_iterators() |
+         IteratorFilters::ActiveFEIndexEqualTo(ah.AggloIndex::master))
+    {
+      std::cout << "Cell with idx: " << cell->active_cell_index() << std::endl;
+      unsigned int n_agglomerated_faces_per_cell =
+        ah.n_agglomerated_faces_per_agglomeration(cell);
+      std::cout << "Number of faces for the agglomeration: "
+                << n_agglomerated_faces_per_cell << std::endl;
+      for (unsigned int f = 0; f < n_agglomerated_faces_per_cell; ++f)
         {
-          std::cout << "Cell with idx: " << (value.first)->active_cell_index()
-                    << " has neighbor with idx: "
-                    << (x.first)->active_cell_index()
-                    << " and local face numbering: " << x.second << std::endl;
+          std::cout << "Agglomerated face with idx: " << f << std::endl;
+          const auto &[local_face_idx, neigh, local_face_idx_out] =
+            ah.master_neighbors[{cell, f}];
+          {
+            std::cout << "Face idx: " << local_face_idx << std::endl;
+            std::cout << "Neighbor idx: " << neigh->active_cell_index()
+                      << std::endl;
+            std::cout << "Face idx from outside: " << local_face_idx_out
+                      << std::endl;
+          }
+          std::cout << std::endl;
         }
     }
 }

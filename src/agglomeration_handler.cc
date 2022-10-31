@@ -25,7 +25,7 @@ AgglomerationHandler<dim, spacedim>::AgglomerationHandler(
       cache_tria.get_mapping()))
   , fe(std::make_unique<FE_DGQ<dim, spacedim>>(fe_space))
 {
-  Assert(dim == spacedim, ExcMessage("Not tested with different dimensions"));
+  Assert(dim == spacedim, ExcNotImplemented("Not available with codim > 0"));
   Assert(dim == 2 || dim == 3, ExcMessage("Not available in 1D."));
   Assert(cached_tria->get_triangulation().n_active_cells() > 0,
          ExcMessage(
@@ -60,6 +60,26 @@ AgglomerationHandler<dim, spacedim>::agglomerate_cells(
 
   for (const unsigned int idx : global_indices)
     master_slave_relationships[idx] = master_idx; // mark each slave
+
+  for (const auto &cell : vec_of_cells)
+    {
+      if (cell->active_cell_index() == master_idx)
+        master_slave_relationships_iterators[cell->active_cell_index()] =
+          cell; // set iterator to master cell
+    }
+
+  for (const auto &cell : vec_of_cells)
+    {
+      if (cell->active_cell_index() != master_idx)
+        master_slave_relationships_iterators[cell->active_cell_index()] =
+          master_slave_relationships_iterators[master_idx];
+    }
+
+  for (const unsigned int idx : global_indices)
+    {
+      master_slave_relationships[idx] = master_idx; // mark each slave
+    }
+
   master_slave_relationships[master_idx] = -1;
 
   ++n_agglomerations; // agglomeration has been performed, record it
@@ -72,8 +92,9 @@ AgglomerationHandler<dim, spacedim>::get_slaves_of_idx(const int idx) const
 {
   std::vector<typename Triangulation<dim, spacedim>::active_cell_iterator>
     slaves;
-  // Loop over the tria, and check if a each cell is a slave of master cell idx
-  // If no slave is found, return an empty vector.
+
+  // Loop over the tria, and check if a each cell is a slave of master cell
+  // idx If no slave is found, return an empty vector.
   for (const auto &cell : tria->active_cell_iterators())
     {
       if (master_slave_relationships[cell->active_cell_index()] == idx)
@@ -231,6 +252,163 @@ AgglomerationHandler<dim, spacedim>::reinit(
                                                        agglomeration_flags);
       return standard_scratch->reinit(cell);
     }
+}
+
+template <int dim, int spacedim>
+const NonMatching::FEImmersedSurfaceValues<dim> &
+AgglomerationHandler<dim, spacedim>::reinit(
+  const typename DoFHandler<dim, spacedim>::active_cell_iterator &cell,
+  const unsigned int agglomeration_face_number) const
+{
+  // For now, this must be called for master cells only.
+  Assert(master_slave_relationships[cell->active_cell_index()] == -1,
+         ExcMessage(
+           "This function is supposed to be called for master cells."));
+  FE_Nothing<dim, spacedim> dummy_fe;
+  DoFHandler<dim, spacedim> dummy_dh(*tria);
+  dummy_dh.distribute_dofs(dummy_fe);
+  MappingQ<dim, spacedim> mapping_generic(1);
+
+  FEFaceValues<dim, spacedim> no_values(
+    mapping_generic,
+    dummy_fe,
+    QGauss<dim - 1>(agglomeration_quadrature_degree),
+    update_quadrature_points | update_JxW_values |
+      update_normal_vectors); // only for quadrature
+  std::vector<Point<dim>>          vec_pts;
+  std::vector<double>              vec_JxWs;
+  std::vector<Tensor<1, spacedim>> vec_normals;
+
+
+  const auto &info_neighbors =
+    master_neighbors[{cell, agglomeration_face_number}];
+  const auto &local_face_idx     = std::get<0>(info_neighbors);
+  const auto &neighboring_cell   = std::get<1>(info_neighbors);
+  const auto &local_face_idx_out = std::get<2>(info_neighbors);
+
+  no_values.reinit(neighboring_cell->neighbor(local_face_idx_out),
+                   local_face_idx);
+
+  auto        q_points = no_values.get_quadrature_points();
+  double      sum      = 0.;
+  const auto &JxWs     = no_values.get_JxW_values();
+  for (const auto &j : JxWs)
+    sum += j;
+  std::cout << "Sum is: " << sum << std::endl;
+  auto &normals = no_values.get_normal_vectors();
+
+  typename DoFHandler<dim, spacedim>::cell_iterator cell_dh(
+    *neighboring_cell->neighbor(local_face_idx_out), &euler_dh);
+  mapping_generic.transform_points_real_to_unit_cell(cell_dh,
+                                                     q_points,
+                                                     q_points);
+  std::transform(q_points.begin(),
+                 q_points.end(),
+                 std::back_inserter(vec_pts),
+                 [&](const Point<spacedim> &p) { return p; });
+  std::transform(JxWs.begin(),
+                 JxWs.end(),
+                 std::back_inserter(vec_JxWs),
+                 [&](const double w) { return w; });
+  std::transform(normals.begin(),
+                 normals.end(),
+                 std::back_inserter(vec_normals),
+                 [&](const Tensor<1, spacedim> &n) { return n; });
+  // const double bbox_measure = bboxes[cell->active_cell_index()].volume();
+
+  // // Scale weights with the volume of the BBox. This way, the euler_mapping
+  // // defining the BBOx doesn't alter them.
+  // std::vector<double> scaled_weights;
+  // std::transform(JxWs.begin(),
+  //                JxWs.end(),
+  //                std::back_inserter(scaled_weights),
+  //                [&bbox_measure](const double w) { return w / bbox_measure;
+  //                });
+
+  NonMatching::ImmersedSurfaceQuadrature<dim, spacedim> surface_quad(
+    vec_pts, vec_JxWs, vec_normals);
+
+  agglomerated_isv =
+    std::make_unique<NonMatching::FEImmersedSurfaceValues<spacedim>>(
+      *euler_mapping, *fe, surface_quad, agglomeration_face_flags);
+
+  agglomerated_isv->reinit(cell);
+  return *agglomerated_isv;
+}
+
+template <int dim, int spacedim>
+void
+AgglomerationHandler<dim, spacedim>::create_agglomeration_sparsity_pattern(
+  SparsityPattern &sparsity_pattern)
+{
+  Assert(n_agglomerations > 0,
+         ExcMessage("The agglomeration has not been set up correctly."));
+  Assert(sparsity_pattern.empty(),
+         ExcMessage(
+           "The Sparsity pattern must be empty upon calling this function."));
+
+  DynamicSparsityPattern    dsp(agglo_dh.n_dofs(), agglo_dh.n_dofs());
+  AffineConstraints<double> constraints;
+  const bool                keep_constrained_dofs = true;
+  // The following lambda is used to teach to `make_flux_sparsity_pattern()` to
+  // couple only cells that are standard, not also slaves and master cells, for
+  // which we need to compute DoFs separately later.
+
+  const auto face_has_flux_coupling = [&](const auto        &cell,
+                                          const unsigned int face_index) {
+    return master_slave_relationships[cell->active_cell_index()] *
+             master_slave_relationships[cell->neighbor(face_index)
+                                          ->active_cell_index()] ==
+           +4;
+  };
+  const unsigned int           n_components = fe_collection.n_components();
+  Table<2, DoFTools::Coupling> cell_coupling(n_components, n_components);
+  Table<2, DoFTools::Coupling> face_coupling(n_components, n_components);
+  cell_coupling[0][0] = DoFTools::always;
+  face_coupling[0][0] = DoFTools::always;
+  DoFTools::make_flux_sparsity_pattern(agglo_dh,
+                                       dsp,
+                                       constraints,
+                                       keep_constrained_dofs,
+                                       cell_coupling,
+                                       face_coupling,
+                                       numbers::invalid_subdomain_id,
+                                       face_has_flux_coupling);
+
+
+  std::vector<types::global_dof_index> dof_indices_master(
+    agglo_dh.get_fe(0).n_dofs_per_cell());
+  std::vector<types::global_dof_index> dof_indices_neighbor(
+    agglo_dh.get_fe(2).n_dofs_per_cell());
+
+  // Get the information about the neighboring
+  // cells and add the corresponding entries to the sparsity pattern.
+
+  for (const auto &value : master_neighbors)
+    {
+      // value.first is a pair storing master_cell and agglo_face index.
+      // Another `first` is necessary to get the cell.
+      const auto &master_cell = (value.first).first;
+      typename DoFHandler<dim, spacedim>::cell_iterator master_cell_dh(
+        *master_cell, &agglo_dh);
+      master_cell_dh->get_dof_indices(dof_indices_master);
+
+      const auto &neigh = std::get<1>(value.second);
+      typename DoFHandler<dim, spacedim>::cell_iterator cell_slave(*neigh,
+                                                                   &agglo_dh);
+      cell_slave->get_dof_indices(dof_indices_neighbor);
+      for (const unsigned int row_idx : dof_indices_master)
+        dsp.add_entries(row_idx,
+                        dof_indices_neighbor.begin(),
+                        dof_indices_neighbor.end());
+      for (const unsigned int col_idx : dof_indices_neighbor)
+        dsp.add_entries(col_idx,
+                        dof_indices_master.begin(),
+                        dof_indices_master.end());
+    }
+
+
+  sparsity_pattern.copy_from(dsp);
 }
 
 template class AgglomerationHandler<1>;
