@@ -78,12 +78,9 @@ main()
   ah.agglomerate_cells(cells_to_be_agglomerated2);
   ah.agglomerate_cells(cells_to_be_agglomerated3);
   ah.agglomerate_cells(cells_to_be_agglomerated4);
-  ah.setup_neighbors_of_agglomeration(cells_to_be_agglomerated);
-  ah.setup_neighbors_of_agglomeration(cells_to_be_agglomerated2);
-  ah.setup_neighbors_of_agglomeration(cells_to_be_agglomerated3);
-  ah.setup_neighbors_of_agglomeration(cells_to_be_agglomerated4);
 
   ah.initialize_hp_structure();
+  ah.setup_connectivity_of_agglomeration();
   std::vector<types::global_dof_index> dof_indices(4);
 
   for (const auto &cell :
