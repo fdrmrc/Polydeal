@@ -34,7 +34,8 @@ test_hyper_cube(Triangulation<2> &tria)
   GridTools::Cache<2>     cached_tria(tria, mapping);
   AgglomerationHandler<2> ah(cached_tria);
 
-  std::vector<unsigned int> idxs_to_be_agglomerated = {3, 6, 9, 12, 13};
+  std::vector<types::global_cell_index> idxs_to_be_agglomerated = {
+    3, 6, 9, 12, 13};
 
   std::vector<typename Triangulation<2>::active_cell_iterator>
     cells_to_be_agglomerated;
@@ -42,7 +43,7 @@ test_hyper_cube(Triangulation<2> &tria)
                                          idxs_to_be_agglomerated,
                                          cells_to_be_agglomerated);
 
-  std::vector<unsigned int> idxs_to_be_agglomerated2 = {15, 36, 37};
+  std::vector<types::global_cell_index> idxs_to_be_agglomerated2 = {15, 36, 37};
 
   std::vector<typename Triangulation<2>::active_cell_iterator>
     cells_to_be_agglomerated2;
@@ -50,7 +51,7 @@ test_hyper_cube(Triangulation<2> &tria)
                                          idxs_to_be_agglomerated2,
                                          cells_to_be_agglomerated2);
 
-  std::vector<unsigned int> idxs_to_be_agglomerated3 = {57, 60, 54};
+  std::vector<types::global_cell_index> idxs_to_be_agglomerated3 = {57, 60, 54};
 
   std::vector<typename Triangulation<2>::active_cell_iterator>
     cells_to_be_agglomerated3;
@@ -58,7 +59,7 @@ test_hyper_cube(Triangulation<2> &tria)
                                          idxs_to_be_agglomerated3,
                                          cells_to_be_agglomerated3);
 
-  std::vector<unsigned int> idxs_to_be_agglomerated4 = {25, 19, 22};
+  std::vector<types::global_cell_index> idxs_to_be_agglomerated4 = {25, 19, 22};
 
   std::vector<typename Triangulation<2>::active_cell_iterator>
     cells_to_be_agglomerated4;
@@ -78,11 +79,12 @@ test_hyper_cube(Triangulation<2> &tria)
                    cells_to_be_agglomerated3,
                    cells_to_be_agglomerated4};
 
-  ah.initialize_hp_structure();
+  FE_DGQ<2> fe_dg(1);
+  ah.distribute_agglomerated_dofs(fe_dg);
   ah.set_agglomeration_flags(update_JxW_values);
   ah.set_quadrature_degree(1);
   double total_sum = 0.;
-  for (const auto &cell : ah.agglo_dh.active_cell_iterators())
+  for (const auto &cell : ah.agglomeration_cell_iterators())
     {
       const auto &fev_general = ah.reinit(cell);
       for (const auto weight : fev_general.get_JxW_values())
@@ -103,7 +105,8 @@ test_hyper_ball(Triangulation<2> &tria)
   GridTools::Cache<2>     cached_tria(tria, mapping);
   AgglomerationHandler<2> ah(cached_tria);
 
-  std::vector<unsigned int> idxs_to_be_agglomerated = {3, 6, 9, 12, 13};
+  std::vector<types::global_cell_index> idxs_to_be_agglomerated = {
+    3, 6, 9, 12, 13};
 
   std::vector<typename Triangulation<2>::active_cell_iterator>
     cells_to_be_agglomerated;
@@ -111,7 +114,7 @@ test_hyper_ball(Triangulation<2> &tria)
                                          idxs_to_be_agglomerated,
                                          cells_to_be_agglomerated);
 
-  std::vector<unsigned int> idxs_to_be_agglomerated2 = {15, 36, 37};
+  std::vector<types::global_cell_index> idxs_to_be_agglomerated2 = {15, 36, 37};
 
   std::vector<typename Triangulation<2>::active_cell_iterator>
     cells_to_be_agglomerated2;
@@ -119,7 +122,7 @@ test_hyper_ball(Triangulation<2> &tria)
                                          idxs_to_be_agglomerated2,
                                          cells_to_be_agglomerated2);
 
-  std::vector<unsigned int> idxs_to_be_agglomerated3 = {57, 60, 54};
+  std::vector<types::global_cell_index> idxs_to_be_agglomerated3 = {57, 60, 54};
 
   std::vector<typename Triangulation<2>::active_cell_iterator>
     cells_to_be_agglomerated3;
@@ -127,7 +130,7 @@ test_hyper_ball(Triangulation<2> &tria)
                                          idxs_to_be_agglomerated3,
                                          cells_to_be_agglomerated3);
 
-  std::vector<unsigned int> idxs_to_be_agglomerated4 = {25, 19, 22};
+  std::vector<types::global_cell_index> idxs_to_be_agglomerated4 = {25, 19, 22};
 
   std::vector<typename Triangulation<2>::active_cell_iterator>
     cells_to_be_agglomerated4;
@@ -147,11 +150,12 @@ test_hyper_ball(Triangulation<2> &tria)
                    cells_to_be_agglomerated3,
                    cells_to_be_agglomerated4};
 
-  ah.initialize_hp_structure();
+  FE_DGQ<2> fe_dg(1);
+  ah.distribute_agglomerated_dofs(fe_dg);
   ah.set_agglomeration_flags(update_JxW_values);
   ah.set_quadrature_degree(2);
   double total_sum = 0.;
-  for (const auto &cell : ah.agglo_dh.active_cell_iterators())
+  for (const auto &cell : ah.agglomeration_cell_iterators())
     {
       const auto &fev_general = ah.reinit(cell);
       for (const auto weight : fev_general.get_JxW_values())
