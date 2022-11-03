@@ -14,9 +14,8 @@ main()
   GridGenerator::hyper_cube(tria, -1, 1);
 
   tria.refine_global(3);
-  MappingQ<2>             mapping(1);
-  GridTools::Cache<2>     cached_tria(tria, mapping);
-  AgglomerationHandler<2> ah(cached_tria);
+  MappingQ<2>         mapping(1);
+  GridTools::Cache<2> cached_tria(tria, mapping);
 
   std::vector<unsigned int> idxs_to_be_agglomerated = {3, 6, 9, 12, 13};
 
@@ -52,12 +51,13 @@ main()
                                          cells_to_be_agglomerated4);
 
   // Agglomerate the cells just stored
+  AgglomerationHandler<2> ah(cached_tria);
   ah.agglomerate_cells(cells_to_be_agglomerated);
   ah.agglomerate_cells(cells_to_be_agglomerated2);
   ah.agglomerate_cells(cells_to_be_agglomerated3);
   ah.agglomerate_cells(cells_to_be_agglomerated4);
-  ah.initialize_hp_structure();
-  ah.setup_connectivity_of_agglomeration();
+  FE_DGQ<2> fe_dg(1);
+  ah.distribute_agglomerated_dofs(fe_dg);
 
   for (const auto &cell : ah.agglo_dh.active_cell_iterators())
     {

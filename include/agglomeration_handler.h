@@ -128,13 +128,32 @@ public:
   DoFHandler<dim, spacedim> agglo_dh;
 
   explicit AgglomerationHandler(
-    const GridTools::Cache<dim, spacedim> &cached_tria,
-    const FE_DGQ<dim, spacedim>           &fe_space = FE_DGQ<dim, spacedim>(1));
+    const GridTools::Cache<dim, spacedim> &cached_tria);
 
   ~AgglomerationHandler()
   {
     // disconnect the signal
     tria_listener.disconnect();
+  }
+
+  /**
+   * Distribute degrees of freedom on a grid where some cells have been
+   * agglomerated.
+   */
+  template <class FiniteElement>
+  void
+  distribute_agglomerated_dofs(const FiniteElement &fe_space)
+  {
+    Assert((dynamic_cast<const FE_DGQ<dim, spacedim> *>(&fe_space)),
+           ExcNotImplemented());
+    fe = std::make_unique<FE_DGQ<dim, spacedim>>(fe_space);
+
+    fe_collection.push_back(*fe);                         // master
+    fe_collection.push_back(FE_Nothing<dim, spacedim>()); // slave
+    fe_collection.push_back(*fe);                         // standard
+
+    initialize_hp_structure();
+    setup_connectivity_of_agglomeration();
   }
 
   /**
@@ -154,16 +173,6 @@ public:
   {
     agglomeration_quadrature_degree = degree;
   }
-
-  /**
-   * Assign a finite element index on each cell of a triangulation, depending if
-   * it is a master cell, a slave cell, or a standard deal.II cell. A user
-   * doesn't need to know the internals of this, the only thing that is relevant
-   * is that after the call to the present function, DoFs are distributed in a
-   * different way if a cell is a master, slave, or standard cell.
-   */
-  void
-  initialize_hp_structure();
 
   /**
    * Given a Triangulation with some agglomerated cells, create the sparsity
@@ -294,28 +303,6 @@ public:
     const typename Triangulation<dim, spacedim>::active_cell_iterator &cell,
     const unsigned int agglomerated_face_number) const;
 
-
-  /**
-   *
-   * Initialize all the necessary connectivity information for an agglomeration.
-   */
-  void
-  setup_connectivity_of_agglomeration()
-  {
-    Assert(master_slave_relationships.size() > 0,
-           ExcMessage("The agglomeration has not been initilized"));
-    Assert(
-      agglo_dh.n_dofs() > 0,
-      ExcMessage(
-        "The DoFHandler associated to the agglomeration has not been initialized. It's likely that you forgot to distribute the DoFs, i.e. you may want to check if a call to `initialize_hp_structure()` has been done."));
-    for (const auto &cell :
-         agglo_dh.active_cell_iterators() |
-           IteratorFilters::ActiveFEIndexEqualTo(AggloIndex::master))
-      {
-        setup_master_neighbor_connectivity(cell);
-      }
-  }
-
   /**
    * Construct a finite element space on an agglomeration.
    */
@@ -429,7 +416,8 @@ private:
     mapping = &cache_tria->get_mapping();
 
     agglo_dh.reinit(*tria);
-    euler_fe = std::make_unique<FESystem<dim, spacedim>>(*fe, spacedim);
+    FE_DGQ<dim, spacedim> dummy_dg(1);
+    euler_fe = std::make_unique<FESystem<dim, spacedim>>(dummy_dg, spacedim);
     euler_dh.reinit(*tria);
     euler_dh.distribute_dofs(*euler_fe);
     euler_vector.reinit(euler_dh.n_dofs());
@@ -578,6 +566,18 @@ private:
              cell->active_cell_index();
   }
 
+
+
+  /**
+   * Assign a finite element index on each cell of a triangulation, depending if
+   * it is a master cell, a slave cell, or a standard deal.II cell. A user
+   * doesn't need to know the internals of this, the only thing that is relevant
+   * is that after the call to the present function, DoFs are distributed in a
+   * different way if a cell is a master, slave, or standard cell.
+   */
+  void
+  initialize_hp_structure();
+
   /**
    * Given an agglomeration described by the master cell `master_cell`, this
    * function stores who are the faces of the agglomeration and their neighbors.
@@ -623,6 +623,26 @@ private:
                 ++n_agglo_faces;
               }
           }
+      }
+  }
+
+  /**
+   * Initialize all the necessary connectivity information for an agglomeration.
+   */
+  void
+  setup_connectivity_of_agglomeration()
+  {
+    Assert(master_slave_relationships.size() > 0,
+           ExcMessage("The agglomeration has not been initilized"));
+    Assert(
+      agglo_dh.n_dofs() > 0,
+      ExcMessage(
+        "The DoFHandler associated to the agglomeration has not been initialized. It's likely that you forgot to distribute the DoFs, i.e. you may want to check if a call to `initialize_hp_structure()` has been done."));
+    for (const auto &cell :
+         agglo_dh.active_cell_iterators() |
+           IteratorFilters::ActiveFEIndexEqualTo(AggloIndex::master))
+      {
+        setup_master_neighbor_connectivity(cell);
       }
   }
 };

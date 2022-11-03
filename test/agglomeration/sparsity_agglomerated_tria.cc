@@ -72,12 +72,12 @@ main()
   ah.agglomerate_cells(cells_to_be_agglomerated4);
 
   std::vector<std::vector<typename Triangulation<2>::active_cell_iterator>>
-    agglomerations{cells_to_be_agglomerated,
+            agglomerations{cells_to_be_agglomerated,
                    cells_to_be_agglomerated2,
                    cells_to_be_agglomerated3,
                    cells_to_be_agglomerated4};
-  ah.initialize_hp_structure();
-  ah.setup_connectivity_of_agglomeration();
+  FE_DGQ<2> fe_dg(1);
+  ah.distribute_agglomerated_dofs(fe_dg);
   SparsityPattern sparsity_pattern;
   ah.create_agglomeration_sparsity_pattern(sparsity_pattern);
   std::ofstream out("sparsity_agglomeration.svg");

@@ -79,8 +79,8 @@ main()
   ah.agglomerate_cells(cells_to_be_agglomerated3);
   ah.agglomerate_cells(cells_to_be_agglomerated4);
 
-  ah.initialize_hp_structure();
-  ah.setup_connectivity_of_agglomeration();
+  FE_DGQ<2> fe_dg(1);
+  ah.distribute_agglomerated_dofs(fe_dg);
   std::vector<types::global_dof_index> dof_indices(4);
 
   for (const auto &cell :

@@ -19,6 +19,8 @@
 #define tests_h
 
 
+#include <deal.II/fe/fe_dgq.h>
+
 #include "include/agglomeration_handler.h"
 
 namespace Tests

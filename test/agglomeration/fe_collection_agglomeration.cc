@@ -78,7 +78,8 @@ test_hyper_cube(Triangulation<2> &tria)
                    cells_to_be_agglomerated3,
                    cells_to_be_agglomerated4};
 
-  ah.initialize_hp_structure();
+  FE_DGQ<2> fe_dg(1);
+  ah.distribute_agglomerated_dofs(fe_dg);
   ah.set_agglomeration_flags(update_JxW_values);
   ah.set_quadrature_degree(1);
   double total_sum = 0.;
@@ -147,7 +148,8 @@ test_hyper_ball(Triangulation<2> &tria)
                    cells_to_be_agglomerated3,
                    cells_to_be_agglomerated4};
 
-  ah.initialize_hp_structure();
+  FE_DGQ<2> fe_dg(1);
+  ah.distribute_agglomerated_dofs(fe_dg);
   ah.set_agglomeration_flags(update_JxW_values);
   ah.set_quadrature_degree(2);
   double total_sum = 0.;

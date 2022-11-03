@@ -78,9 +78,9 @@ main()
                    cells_to_be_agglomerated3,
                    cells_to_be_agglomerated4};
 
-  ah.initialize_hp_structure();
+  FE_DGQ<2> fe_dg(1);
+  ah.distribute_agglomerated_dofs(fe_dg);
   double perimeter = 0.;
-  ah.setup_connectivity_of_agglomeration();
   for (const auto &cell :
        ah.agglo_dh.active_cell_iterators() |
          IteratorFilters::ActiveFEIndexEqualTo(ah.AggloIndex::master))
