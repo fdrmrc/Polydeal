@@ -412,9 +412,9 @@ private:
 
   UpdateFlags agglomeration_flags = update_default;
 
-  UpdateFlags agglomeration_face_flags = update_quadrature_points |
-                                         update_normal_vectors | update_values |
-                                         update_JxW_values;
+  UpdateFlags agglomeration_face_flags =
+    update_quadrature_points | update_normal_vectors | update_values |
+    update_inverse_jacobians | update_JxW_values;
 
   unsigned int agglomeration_quadrature_degree = 1;
 

@@ -1,28 +1,43 @@
+/* ---------------------------------------------------------------------
+ *
+ * Copyright (C) 2022 by the deal.II authors
+ *
+ * This file is part of the deal.II library.
+ *
+ * The deal.II library is free software; you can use it, redistribute
+ * it, and/or modify it under the terms of the GNU Lesser General
+ * Public License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ * The full text of the license can be found in the file LICENSE.md at
+ * the top level directory of deal.II.
+ *
+ * ---------------------------------------------------------------------
+ */
+
+// Select some cells of a tria, agglomerated them together and check that the
+// vector describing the agglomeration has the right information, i.e.
+// v[idx] = -1 if cell is master, otherwise index of the master of idx-th cell.
+
 #include <deal.II/grid/grid_generator.h>
 #include <deal.II/grid/grid_out.h>
 
-#include <algorithm>
-
 #include "../tests.h"
-
-#include "../include/agglomeration_handler.h"
 
 int
 main()
 {
   Triangulation<2> tria;
   GridGenerator::hyper_cube(tria, -1, 1);
-
+  MappingQ<2> mapping(1);
   tria.refine_global(3);
-  MappingQ<2>             mapping(1);
   GridTools::Cache<2>     cached_tria(tria, mapping);
   AgglomerationHandler<2> ah(cached_tria);
 
-  std::vector<unsigned int> idxs_to_be_agglomerated = {3, 6, 9, 12, 13};
+  std::vector<unsigned int> idxs_to_be_agglomerated = {
+    3, 6, 9, 12, 13}; //{8, 9, 10, 11};
 
   std::vector<typename Triangulation<2>::active_cell_iterator>
     cells_to_be_agglomerated;
-
   Tests::collect_cells_for_agglomeration(tria,
                                          idxs_to_be_agglomerated,
                                          cells_to_be_agglomerated);
@@ -56,53 +71,32 @@ main()
   ah.agglomerate_cells(cells_to_be_agglomerated2);
   ah.agglomerate_cells(cells_to_be_agglomerated3);
   ah.agglomerate_cells(cells_to_be_agglomerated4);
+
+  std::vector<std::vector<typename Triangulation<2>::active_cell_iterator>>
+    agglomerations{cells_to_be_agglomerated,
+                   cells_to_be_agglomerated2,
+                   cells_to_be_agglomerated3,
+                   cells_to_be_agglomerated4};
+
   ah.initialize_hp_structure();
+  double perimeter = 0.;
   ah.setup_connectivity_of_agglomeration();
-
-  for (const auto &cell : ah.agglo_dh.active_cell_iterators())
-    {
-      const unsigned int agglo_faces_per_cell =
-        ah.n_agglomerated_faces_per_cell(cell);
-      std::cout << "Number of agglomerated faces for cell "
-                << cell->active_cell_index() << " is " << agglo_faces_per_cell
-                << std::endl;
-    }
-
-
-  double total_sum =
-    0.; // compute the value of the perimeter of each agglomeration;
-  ah.set_quadrature_degree(3);
   for (const auto &cell :
        ah.agglo_dh.active_cell_iterators() |
          IteratorFilters::ActiveFEIndexEqualTo(ah.AggloIndex::master))
     {
-      std::cout << "Cell with idx: " << cell->active_cell_index() << std::endl;
       unsigned int n_agglomerated_faces_per_cell =
         ah.n_agglomerated_faces_per_agglomeration(cell);
-      std::cout << "Agglo faces: " << n_agglomerated_faces_per_cell
-                << std::endl;
-      for (unsigned int f = 0; f < n_agglomerated_faces_per_cell; ++f)
+      for (size_t f = 0; f < n_agglomerated_faces_per_cell; ++f)
         {
-          std::cout << "Agglomerated face with idx: " << f << std::endl;
-          const auto &info_about_neighbors = ah.master_neighbors[{cell, f}];
-          const auto &test_feisv           = ah.reinit(cell, f);
-          double      sum                  = 0.;
-          for (const auto &w : test_feisv.get_JxW_values())
-            sum += w;
-          std::cout << sum << std::endl;
-          total_sum += sum;
-          sum = 0.;
-          std::cout << "Face idx: " << std::get<0>(info_about_neighbors)
-                    << std::endl;
-          std::cout << "Neighbor idx: "
-                    << std::get<1>(info_about_neighbors)->active_cell_index()
-                    << std::endl;
-          std::cout << "Face idx from outside "
-                    << std::get<2>(info_about_neighbors) << std::endl;
+          const auto &test_feisv = ah.reinit(cell, f);
+          perimeter += std::accumulate(test_feisv.get_JxW_values().begin(),
+                                       test_feisv.get_JxW_values().end(),
+                                       0.);
         }
-      std::cout << "Perimeter of this agglomeration is : " << total_sum
+      std::cout << "Perimeter of agglomeration with master idx: "
+                << cell->active_cell_index() << " is " << perimeter
                 << std::endl;
-      total_sum = 0.;
+      perimeter = 0.;
     }
-  return 0;
 }
