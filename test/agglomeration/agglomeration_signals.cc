@@ -31,7 +31,7 @@ main()
   GridTools::Cache<2>     cached_tria(tria, mapping);
   AgglomerationHandler<2> ah(cached_tria);
 
-  std::vector<unsigned int> idxs_to_be_agglomerated = {0, 1, 2, 3};
+  std::vector<types::global_cell_index> idxs_to_be_agglomerated = {0, 1, 2, 3};
 
   std::vector<typename Triangulation<2>::active_cell_iterator>
     cells_to_be_agglomerated;
@@ -39,7 +39,7 @@ main()
                                          idxs_to_be_agglomerated,
                                          cells_to_be_agglomerated);
 
-  std::vector<unsigned int> idxs_to_be_agglomerated2 = {4, 5, 6, 7};
+  std::vector<types::global_cell_index> idxs_to_be_agglomerated2 = {4, 5, 6, 7};
 
   std::vector<typename Triangulation<2>::active_cell_iterator>
     cells_to_be_agglomerated2;
@@ -47,7 +47,7 @@ main()
                                          idxs_to_be_agglomerated2,
                                          cells_to_be_agglomerated2);
 
-  std::vector<unsigned int> idxs_to_be_agglomerated3 = {8, 9, 10, 11};
+  std::vector<types::global_cell_index> idxs_to_be_agglomerated3 = {8, 9, 10, 11};
 
   std::vector<typename Triangulation<2>::active_cell_iterator>
     cells_to_be_agglomerated3;
@@ -55,7 +55,7 @@ main()
                                          idxs_to_be_agglomerated3,
                                          cells_to_be_agglomerated3);
 
-  std::vector<unsigned int> idxs_to_be_agglomerated4 = {12, 13, 14, 15};
+  std::vector<types::global_cell_index> idxs_to_be_agglomerated4 = {12, 13, 14, 15};
 
   std::vector<typename Triangulation<2>::active_cell_iterator>
     cells_to_be_agglomerated4;

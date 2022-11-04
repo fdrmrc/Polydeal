@@ -80,16 +80,16 @@ public:
   // The reason why we use a **set** of tuples is that some cells will be seen
   // and checked multiple times.
   using NeighborsInfos = std::set<std::tuple<
-    unsigned int,
+    types::global_cell_index,
     const typename Triangulation<dim, spacedim>::active_cell_iterator,
-    unsigned int>>;
+    types::global_cell_index>>;
 
   // In order to enumerate the faces of an agglomeration, we consider a map
   // where the key is represented by an iterator to the (master) cell and the
   // index of the agglomerated face.
   using CellAndFace =
     std::pair<const typename Triangulation<dim, spacedim>::active_cell_iterator,
-              unsigned int>;
+              types::global_cell_index>;
 
   // As value, we have a vector where each element identifies:
   // - the local face index from the agglomeration
@@ -98,9 +98,9 @@ public:
   // - the face index seen from outside
   // This is necessary to compute quadrature rules on each agglomerated face.
   using MasterNeighborInfo = std::tuple<
-    unsigned int,
+    types::global_cell_index,
     const typename Triangulation<dim, spacedim>::active_cell_iterator,
-    unsigned int>;
+    types::global_cell_index>;
 
   /**
    * Record the number of agglomerations on the grid.
@@ -511,7 +511,7 @@ private:
     const std::vector<
       typename Triangulation<dim, spacedim>::active_cell_iterator>
                       &vec_of_cells,
-    const unsigned int master_idx)
+    const types::global_cell_index master_idx)
   {
     Assert(n_agglomerations > 0,
            ExcMessage("No agglomeration has been performed."));

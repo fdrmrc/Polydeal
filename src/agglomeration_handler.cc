@@ -45,15 +45,15 @@ AgglomerationHandler<dim, spacedim>::agglomerate_cells(
   Assert(vec_of_cells.size() >= 1, ExcMessage("No cells to be agglomerated."));
 
   // Get global index for each cell
-  std::vector<unsigned int> global_indices;
+  std::vector<types::global_cell_index> global_indices;
   for (const auto &cell : vec_of_cells)
     global_indices.push_back(cell->active_cell_index());
 
   // Maximum index drives the selection of the master cell
-  unsigned int master_idx =
+ types::global_cell_index master_idx =
     *std::max_element(global_indices.begin(), global_indices.end());
 
-  for (const unsigned int idx : global_indices)
+  for (const types::global_cell_index idx : global_indices)
     master_slave_relationships[idx] = master_idx; // mark each slave
 
   for (const auto &cell : vec_of_cells)
@@ -70,7 +70,7 @@ AgglomerationHandler<dim, spacedim>::agglomerate_cells(
           master_slave_relationships_iterators[master_idx];
     }
 
-  for (const unsigned int idx : global_indices)
+  for (const types::global_cell_index idx : global_indices)
     {
       master_slave_relationships[idx] = master_idx; // mark each slave
     }
@@ -362,7 +362,7 @@ AgglomerationHandler<dim, spacedim>::create_agglomeration_sparsity_pattern(
   // which we need to compute DoFs separately later.
 
   const auto face_has_flux_coupling = [&](const auto        &cell,
-                                          const unsigned int face_index) {
+                                          const types::global_cell_index face_index) {
     return master_slave_relationships[cell->active_cell_index()] *
              master_slave_relationships[cell->neighbor(face_index)
                                           ->active_cell_index()] ==
