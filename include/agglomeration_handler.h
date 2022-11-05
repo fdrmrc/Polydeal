@@ -69,20 +69,8 @@ public:
 
   using ScratchData = MeshWorker::ScratchData<dim, spacedim>;
 
-  // Internal type used to associate agglomerated cells with neighbors. In
-  // particular, we store for each cell:
-  // - local face index seen by the agglomerated cell
-  // - an iterator to the neighboring cell
-  // - local face index seen from the neighbor
-  // In case the neighbor is a cell of the agglomeration:
-  // - iterator is pointing to the master cell of the neighobring agglomeration
-  // - face index from outside is set to numbers::invalid_unsigned_int
-  // The reason why we use a **set** of tuples is that some cells will be seen
-  // and checked multiple times.
-  using NeighborsInfos = std::set<std::tuple<
-    types::global_cell_index,
-    const typename Triangulation<dim, spacedim>::active_cell_iterator,
-    types::global_cell_index>>;
+  // Internal type used to associate the free faces adjacent to an agglomeration
+  using FaceInfo = std::vector<types::global_cell_index>;
 
   // In order to enumerate the faces of an agglomeration, we consider a map
   // where the key is represented by an iterator to the (master) cell and the
@@ -119,8 +107,8 @@ public:
    */
   mutable std::map<
     const typename Triangulation<dim, spacedim>::active_cell_iterator,
-    NeighborsInfos>
-    neighbor_connectivity;
+    FaceInfo>
+    inadmissible_faces;
 
   /**
    * DoFHandler for the agglomerated space
@@ -129,6 +117,8 @@ public:
 
   explicit AgglomerationHandler(
     const GridTools::Cache<dim, spacedim> &cached_tria);
+
+  AgglomerationHandler() = default;
 
   ~AgglomerationHandler()
   {
@@ -255,8 +245,9 @@ public:
     for (const auto &f : cell->face_indices())
       {
         const auto &neighboring_cell = cell->neighbor(f);
-        if (neighboring_cell.state() == IteratorState::valid &&
-            !are_cells_agglomerated(cell, neighboring_cell))
+        if ((neighboring_cell.state() == IteratorState::valid &&
+             !are_cells_agglomerated(cell, neighboring_cell)) ||
+            cell->face(f)->at_boundary())
           {
             ++n_neighbors;
           }
@@ -401,7 +392,7 @@ private:
 
   UpdateFlags agglomeration_face_flags =
     update_quadrature_points | update_normal_vectors | update_values |
-    update_inverse_jacobians | update_JxW_values;
+    update_gradients | update_inverse_jacobians | update_JxW_values;
 
   unsigned int agglomeration_quadrature_degree = 1;
 
@@ -429,7 +420,7 @@ private:
                 master_slave_relationships.end(),
                 -2); // identify all the tria with standard deal.II cells.
 
-    neighbor_connectivity.clear();
+    inadmissible_faces.clear();
     master_neighbors.clear();
     bboxes.resize(tria->n_active_cells());
 
@@ -510,7 +501,7 @@ private:
   create_bounding_box(
     const std::vector<
       typename Triangulation<dim, spacedim>::active_cell_iterator>
-                      &vec_of_cells,
+                                  &vec_of_cells,
     const types::global_cell_index master_idx)
   {
     Assert(n_agglomerations > 0,
@@ -609,6 +600,10 @@ private:
                 const auto &cell_and_face =
                   CellAndFace(master_cell, n_agglo_faces);
                 const auto nof = cell->neighbor_of_neighbor(f);
+                // The local index seen from the neighbor must be recorded, so
+                // that during assembly it will be handled differently. //TODO:
+                // document better with a sketch.
+                inadmissible_faces[neighboring_cell].emplace_back(nof);
 
                 if (is_slave_cell(neighboring_cell))
                   master_neighbors.emplace(
@@ -620,6 +615,19 @@ private:
                 else
                   master_neighbors.emplace(
                     cell_and_face, std::make_tuple(f, neighboring_cell, nof));
+                ++n_agglo_faces;
+              }
+            else if (cell->face(f)->at_boundary())
+              {
+                // Boundary face of a boundary cell.
+                // Note that the neighboring cell must be invalid.
+                const auto &cell_and_face =
+                  CellAndFace(master_cell, n_agglo_faces);
+                master_neighbors.emplace(
+                  cell_and_face,
+                  std::make_tuple(f,
+                                  neighboring_cell,
+                                  std::numeric_limits<int>::max()));
                 ++n_agglo_faces;
               }
           }

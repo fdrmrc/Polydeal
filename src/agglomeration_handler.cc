@@ -50,7 +50,7 @@ AgglomerationHandler<dim, spacedim>::agglomerate_cells(
     global_indices.push_back(cell->active_cell_index());
 
   // Maximum index drives the selection of the master cell
- types::global_cell_index master_idx =
+  types::global_cell_index master_idx =
     *std::max_element(global_indices.begin(), global_indices.end());
 
   for (const types::global_cell_index idx : global_indices)
@@ -290,55 +290,62 @@ AgglomerationHandler<dim, spacedim>::reinit(
   const auto &neighboring_cell   = std::get<1>(info_neighbors);
   const auto &local_face_idx_out = std::get<2>(info_neighbors);
 
-  no_values.reinit(neighboring_cell->neighbor(local_face_idx_out),
-                   local_face_idx);
-
-  auto        q_points = no_values.get_quadrature_points();
-  const auto &JxWs     = no_values.get_JxW_values();
-  const auto &normals  = no_values.get_normal_vectors();
-
-  typename DoFHandler<dim, spacedim>::cell_iterator cell_dh(
-    *neighboring_cell->neighbor(local_face_idx_out), &euler_dh);
-  mapping_generic.transform_points_real_to_unit_cell(cell_dh,
-                                                     q_points,
-                                                     q_points);
-  NonMatching::ImmersedSurfaceQuadrature<dim, spacedim> surface_quad(q_points,
-                                                                     JxWs,
-                                                                     normals);
-
-  agglomerated_isv =
-    std::make_unique<NonMatching::FEImmersedSurfaceValues<spacedim>>(
-      *euler_mapping, *fe, surface_quad, agglomeration_face_flags);
-
-  agglomerated_isv->reinit(cell);
-
-  // Weights must be scaled with det(J)*J^-t n for each quadrature point now.
-  const double        bbox_measure = bboxes[cell->active_cell_index()].volume();
-  std::vector<double> scale_factors;
-  for (unsigned int i = 0; i < q_points.size(); ++i)
+  if (neighboring_cell.state() == IteratorState::valid)
     {
-      // J^-t*n
-      const auto &JmT = (agglomerated_isv->inverse_jacobian(i)).transpose();
-      scale_factors.push_back(bbox_measure *
-                              apply_transformation(JmT, normals[i]).norm());
-    }
+      no_values.reinit(neighboring_cell->neighbor(local_face_idx_out),
+                       local_face_idx);
 
-  // Scale original weights properly
-  std::vector<double> scaled_weights(JxWs.size());
-  for (unsigned int i = 0; i < JxWs.size(); ++i)
+      auto        q_points = no_values.get_quadrature_points();
+      const auto &JxWs     = no_values.get_JxW_values();
+      const auto &normals  = no_values.get_normal_vectors();
+
+      typename DoFHandler<dim, spacedim>::cell_iterator cell_dh(
+        *neighboring_cell->neighbor(local_face_idx_out), &euler_dh);
+      mapping_generic.transform_points_real_to_unit_cell(cell_dh,
+                                                         q_points,
+                                                         q_points);
+      NonMatching::ImmersedSurfaceQuadrature<dim, spacedim> surface_quad(
+        q_points, JxWs, normals);
+
+      agglomerated_isv =
+        std::make_unique<NonMatching::FEImmersedSurfaceValues<spacedim>>(
+          *euler_mapping, *fe, surface_quad, agglomeration_face_flags);
+
+      agglomerated_isv->reinit(cell);
+
+      // Weights must be scaled with det(J)*J^-t n for each quadrature point
+      // now.
+      const double bbox_measure = bboxes[cell->active_cell_index()].volume();
+      std::vector<double> scale_factors;
+      for (unsigned int i = 0; i < q_points.size(); ++i)
+        {
+          // J^-t*n
+          const auto &JmT = (agglomerated_isv->inverse_jacobian(i)).transpose();
+          scale_factors.push_back(bbox_measure *
+                                  apply_transformation(JmT, normals[i]).norm());
+        }
+
+      // Scale original weights properly
+      std::vector<double> scaled_weights(JxWs.size());
+      for (unsigned int i = 0; i < JxWs.size(); ++i)
+        {
+          scaled_weights[i] = JxWs[i] / scale_factors[i];
+        }
+
+      // update the Quadrature rule
+      surface_quad.initialize(q_points, scaled_weights);
+
+      // update the ptr to FEIsv and finally call reinit
+      agglomerated_isv.reset(new NonMatching::FEImmersedSurfaceValues<spacedim>(
+        *euler_mapping, *fe, surface_quad, agglomeration_face_flags));
+      agglomerated_isv->reinit(cell);
+
+      return *agglomerated_isv;
+    }
+  else
     {
-      scaled_weights[i] = JxWs[i] / scale_factors[i];
+      return *agglomerated_isv;
     }
-
-  // update the Quadrature rule
-  surface_quad.initialize(q_points, scaled_weights);
-
-  // update the ptr to FEIsv and finally call reinit
-  agglomerated_isv.reset(new NonMatching::FEImmersedSurfaceValues<spacedim>(
-    *euler_mapping, *fe, surface_quad, agglomeration_face_flags));
-  agglomerated_isv->reinit(cell);
-
-  return *agglomerated_isv;
 }
 
 
@@ -361,13 +368,13 @@ AgglomerationHandler<dim, spacedim>::create_agglomeration_sparsity_pattern(
   // couple only cells that are standard, not also slaves and master cells, for
   // which we need to compute DoFs separately later.
 
-  const auto face_has_flux_coupling = [&](const auto        &cell,
-                                          const types::global_cell_index face_index) {
-    return master_slave_relationships[cell->active_cell_index()] *
-             master_slave_relationships[cell->neighbor(face_index)
-                                          ->active_cell_index()] ==
-           +4;
-  };
+  const auto face_has_flux_coupling =
+    [&](const auto &cell, const types::global_cell_index face_index) {
+      return master_slave_relationships[cell->active_cell_index()] *
+               master_slave_relationships[cell->neighbor(face_index)
+                                            ->active_cell_index()] ==
+             +4;
+    };
   const unsigned int           n_components = fe_collection.n_components();
   Table<2, DoFTools::Coupling> cell_coupling(n_components, n_components);
   Table<2, DoFTools::Coupling> face_coupling(n_components, n_components);
@@ -401,17 +408,20 @@ AgglomerationHandler<dim, spacedim>::create_agglomeration_sparsity_pattern(
       master_cell_dh->get_dof_indices(dof_indices_master);
 
       const auto &neigh = std::get<1>(value.second);
-      typename DoFHandler<dim, spacedim>::cell_iterator cell_slave(*neigh,
-                                                                   &agglo_dh);
-      cell_slave->get_dof_indices(dof_indices_neighbor);
-      for (const unsigned int row_idx : dof_indices_master)
-        dsp.add_entries(row_idx,
-                        dof_indices_neighbor.begin(),
-                        dof_indices_neighbor.end());
-      for (const unsigned int col_idx : dof_indices_neighbor)
-        dsp.add_entries(col_idx,
-                        dof_indices_master.begin(),
-                        dof_indices_master.end());
+      if (neigh.state() == IteratorState::valid)
+        {
+          typename DoFHandler<dim, spacedim>::cell_iterator cell_slave(
+            *neigh, &agglo_dh);
+          cell_slave->get_dof_indices(dof_indices_neighbor);
+          for (const unsigned int row_idx : dof_indices_master)
+            dsp.add_entries(row_idx,
+                            dof_indices_neighbor.begin(),
+                            dof_indices_neighbor.end());
+          for (const unsigned int col_idx : dof_indices_neighbor)
+            dsp.add_entries(col_idx,
+                            dof_indices_master.begin(),
+                            dof_indices_master.end());
+        }
     }
 
 

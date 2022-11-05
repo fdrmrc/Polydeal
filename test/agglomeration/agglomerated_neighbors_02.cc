@@ -29,12 +29,11 @@ main()
   Triangulation<2> tria;
   GridGenerator::hyper_cube(tria, -1, 1);
   MappingQ<2> mapping(1);
-  tria.refine_global(3);
+  tria.refine_global(2);
   GridTools::Cache<2>     cached_tria(tria, mapping);
   AgglomerationHandler<2> ah(cached_tria);
 
-  std::vector<types::global_cell_index> idxs_to_be_agglomerated = {
-    3, 6, 9, 12, 13}; //{8, 9, 10, 11};
+  std::vector<types::global_cell_index> idxs_to_be_agglomerated = {0, 1, 2, 3};
 
   std::vector<typename Triangulation<2>::active_cell_iterator>
     cells_to_be_agglomerated;
@@ -42,7 +41,7 @@ main()
                                          idxs_to_be_agglomerated,
                                          cells_to_be_agglomerated);
 
-  std::vector<types::global_cell_index> idxs_to_be_agglomerated2 = {15, 36, 37};
+  std::vector<types::global_cell_index> idxs_to_be_agglomerated2 = {4, 5, 6, 7};
 
   std::vector<typename Triangulation<2>::active_cell_iterator>
     cells_to_be_agglomerated2;
@@ -50,7 +49,10 @@ main()
                                          idxs_to_be_agglomerated2,
                                          cells_to_be_agglomerated2);
 
-  std::vector<types::global_cell_index> idxs_to_be_agglomerated3 = {57, 60, 54};
+  std::vector<types::global_cell_index> idxs_to_be_agglomerated3 = {8,
+                                                                    9,
+                                                                    10,
+                                                                    11};
 
   std::vector<typename Triangulation<2>::active_cell_iterator>
     cells_to_be_agglomerated3;
@@ -58,7 +60,10 @@ main()
                                          idxs_to_be_agglomerated3,
                                          cells_to_be_agglomerated3);
 
-  std::vector<types::global_cell_index> idxs_to_be_agglomerated4 = {25, 19, 22};
+  std::vector<types::global_cell_index> idxs_to_be_agglomerated4 = {12,
+                                                                    13,
+                                                                    14,
+                                                                    15};
 
   std::vector<typename Triangulation<2>::active_cell_iterator>
     cells_to_be_agglomerated4;
@@ -101,7 +106,6 @@ main()
                 std::cout << "Neighbor idx: " << neigh->active_cell_index()
                           << std::endl;
               }
-
             std::cout << "Face idx from outside: " << local_face_idx_out
                       << std::endl;
           }
