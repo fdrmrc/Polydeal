@@ -22,7 +22,7 @@ public:
 
   virtual void
   value_list(const std::vector<Point<dim>> &points,
-             std::vector<double>           &values,
+             std::vector<double> &          values,
              const unsigned int /*component*/) const override;
 };
 
@@ -30,7 +30,7 @@ public:
 template <int dim>
 void
 RightHandSide<dim>::value_list(const std::vector<Point<dim>> &points,
-                               std::vector<double>           &values,
+                               std::vector<double> &          values,
                                const unsigned int /*component*/) const
 {
   for (unsigned int i = 0; i < values.size(); ++i)
@@ -50,8 +50,8 @@ private:
   setup_agglomeration();
   void
   distribute_jumps_and_averages(
-    FEFaceValues<dim>                                    &fe_face,
-    FEFaceValues<dim>                                    &fe_face1,
+    FEFaceValues<dim> &                                   fe_face,
+    FEFaceValues<dim> &                                   fe_face1,
     const typename DoFHandler<dim>::active_cell_iterator &cell,
     const unsigned int                                    f);
   void
@@ -167,12 +167,12 @@ Poisson<dim>::setup_agglomeration()
 template <int dim>
 void
 Poisson<dim>::distribute_jumps_and_averages(
-  FEFaceValues<dim>                                    &fe_face,
-  FEFaceValues<dim>                                    &fe_face1,
+  FEValuesBase<dim> &                                   fe_face,
+  FEValuesBase<dim> &                                   fe_face1,
   const typename DoFHandler<dim>::active_cell_iterator &cell,
   const unsigned int                                    f)
 {
-  if (cell->face(f)->at_boundary())
+  if (ah.at_boundary(cell, f))
     {
       std::cout << "at boundary" << std::endl;
       fe_face.reinit(cell, f);
@@ -357,7 +357,7 @@ Poisson<dim>::assemble_system()
       cell_rhs                 = 0;
       const auto &agglo_values = ah->reinit(cell);
 
-      const auto         &q_points  = agglo_values.get_quadrature_points();
+      const auto &        q_points  = agglo_values.get_quadrature_points();
       const unsigned int  n_qpoints = q_points.size();
       std::vector<double> rhs(n_qpoints);
       rhs_function->value_list(q_points, rhs);
@@ -398,181 +398,191 @@ Poisson<dim>::assemble_system()
       std::cout << "Number of agglomerated faces per agglomeration: "
                 << n_agglomerated_faces << std::endl;
       for (unsigned int f = 0; f < n_agglomerated_faces; ++f)
-        {
-          // We need to retrieve information about the deal.II face shared with
-          // this agglomerated face. This can be asked to master_neighbors, that
-          // takes precisely the master cell of the agglomeration and the index
-          // of the **agglomerated** face.
-          const auto &[local_face_idx,
-                       neighboring_cell,
-                       local_face_idx_outside] =
-            ah->master_neighbors[{cell, f}];
+        if (ah.at_boundary(cell, f) == false)
+          {
+            const auto fe = ah.reinit(cell, f);
+            const auto n_fe =
+              ah.reinit(ah->agglomerated_neighbor(cell, f),
+                        ah.agglomerated_neighbor_of_neighbor(cell, f));
+
+
+            // We need to retrieve information about the deal.II face shared
+            // with this agglomerated face. This can be asked to
+            // master_neighbors, that takes precisely the master cell of the
+            // agglomeration and the index of the **agglomerated** face.
+            const auto &[local_face_idx,
+                         neighboring_cell,
+                         local_face_idx_outside] =
+              ah->master_neighbors[{cell, f}];
 
 
 
-          if (local_face_idx_outside == std::numeric_limits<int>::max())
-            {
-              // This face of the agglomeration is on the boundary.
-              // TODO: modify reinit(cell,face) also in this case so that
-              // you get in practice an FEFaceValues on the boundary face.
-              // Maybe add a "dummy" DoFHandler so that you can reinit also on
-              // boudary cells? Currently, there are no DoFs on those cells at
-              // the boundary. Check the one in reinit(cell,face).
-              // What is really missing is the iterator to that particular cell.
-              // This could be added to the setup_master_neighbor() when the
-              // cell is on the boudary.
-              // In that case, return also the iterator to the particular cell.
-              std::cout << "Agglomerated face on the boundary" << std::endl;
-              const auto &fe_isv = ah->reinit(cell, f);
+            if (local_face_idx_outside == std::numeric_limits<int>::max())
+              {
+                // This face of the agglomeration is on the boundary.
+                // TODO: modify reinit(cell,face) also in this case so that
+                // you get in practice an FEFaceValues on the boundary face.
+                // Maybe add a "dummy" DoFHandler so that you can reinit also on
+                // boudary cells? Currently, there are no DoFs on those cells at
+                // the boundary. Check the one in reinit(cell,face).
+                // What is really missing is the iterator to that particular
+                // cell. This could be added to the setup_master_neighbor() when
+                // the cell is on the boudary. In that case, return also the
+                // iterator to the particular cell.
+                std::cout << "Agglomerated face on the boundary" << std::endl;
+                const auto &fe_isv = ah->reinit(cell, f);
 
-              const unsigned int dofs_per_cell = fe_face.dofs_per_cell;
-              FullMatrix<double> cell_matrix(dofs_per_cell, dofs_per_cell);
-              std::vector<types::global_dof_index> local_dof_indices_bdary_cell(
-                dofs_per_cell);
-              const double hf = cell->face(f)->measure();
+                const unsigned int dofs_per_cell = fe_face.dofs_per_cell;
+                FullMatrix<double> cell_matrix(dofs_per_cell, dofs_per_cell);
+                std::vector<types::global_dof_index>
+                             local_dof_indices_bdary_cell(dofs_per_cell);
+                const double hf = cell->face(f)->measure();
 
-              // Get normal vectors seen from each agglomeration.
-              const auto &normals = fe_isv.get_normal_vectors();
-              cell_matrix         = 0.;
-              for (unsigned int q_index : fe_face.quadrature_point_indices())
-                {
-                  for (unsigned int i = 0; i < dofs_per_cell; ++i)
-                    {
-                      for (unsigned int j = 0; j < dofs_per_cell; ++j)
-                        {
-                          cell_matrix(i, j) +=
-                            (-fe_isv.shape_value(i, q_index) *
-                               fe_isv.shape_grad(j, q_index) *
-                               normals[q_index] -
-                             fe_isv.shape_grad(i, q_index) * normals[q_index] *
-                               fe_isv.shape_value(j, q_index) +
-                             (penalty / hf) * fe_isv.shape_value(i, q_index) *
-                               fe_isv.shape_value(j, q_index)) *
-                            fe_isv.JxW(q_index);
-                        }
-                    }
-                }
+                // Get normal vectors seen from each agglomeration.
+                const auto &normals = fe_isv.get_normal_vectors();
+                cell_matrix         = 0.;
+                for (unsigned int q_index : fe_face.quadrature_point_indices())
+                  {
+                    for (unsigned int i = 0; i < dofs_per_cell; ++i)
+                      {
+                        for (unsigned int j = 0; j < dofs_per_cell; ++j)
+                          {
+                            cell_matrix(i, j) +=
+                              (-fe_isv.shape_value(i, q_index) *
+                                 fe_isv.shape_grad(j, q_index) *
+                                 normals[q_index] -
+                               fe_isv.shape_grad(i, q_index) *
+                                 normals[q_index] *
+                                 fe_isv.shape_value(j, q_index) +
+                               (penalty / hf) * fe_isv.shape_value(i, q_index) *
+                                 fe_isv.shape_value(j, q_index)) *
+                              fe_isv.JxW(q_index);
+                          }
+                      }
+                  }
 
-              // distribute DoFs
-              cell->get_dof_indices(local_dof_indices_bdary_cell);
-              system_matrix.add(local_dof_indices_bdary_cell, cell_matrix);
-            }
-          else
-            {
-              const auto &fe_isv = ah->reinit(cell, f);
-              fe_face.reinit(neighboring_cell, local_face_idx_outside);
+                // distribute DoFs
+                cell->get_dof_indices(local_dof_indices_bdary_cell);
+                system_matrix.add(local_dof_indices_bdary_cell, cell_matrix);
+              }
+            else
+              {
+                const auto &fe_isv = ah->reinit(cell, f);
+                fe_face.reinit(neighboring_cell, local_face_idx_outside);
 
-              std::vector<types::global_dof_index> local_dof_indices1(
-                dofs_per_cell);
+                std::vector<types::global_dof_index> local_dof_indices1(
+                  dofs_per_cell);
 
-              const double hf =
-                neighboring_cell->face(local_face_idx_outside)->measure();
-              FullMatrix<double> A_00(dofs_per_cell, dofs_per_cell);
-              FullMatrix<double> A_01(dofs_per_cell, dofs_per_cell);
-              FullMatrix<double> A_10(dofs_per_cell, dofs_per_cell);
-              FullMatrix<double> A_11(dofs_per_cell, dofs_per_cell);
+                const double hf =
+                  neighboring_cell->face(local_face_idx_outside)->measure();
+                FullMatrix<double> A_00(dofs_per_cell, dofs_per_cell);
+                FullMatrix<double> A_01(dofs_per_cell, dofs_per_cell);
+                FullMatrix<double> A_10(dofs_per_cell, dofs_per_cell);
+                FullMatrix<double> A_11(dofs_per_cell, dofs_per_cell);
 
 
 
-              // Get normal vectors seen from each agglomeration.
-              const auto &normals = fe_isv.get_normal_vectors();
-              // A00
-              for (unsigned int q_index : fe_isv.quadrature_point_indices())
-                {
-                  std::cout << normals[q_index] << std::endl;
-                  for (unsigned int i = 0; i < dofs_per_cell; ++i)
-                    {
-                      for (unsigned int j = 0; j < dofs_per_cell; ++j)
-                        {
-                          A_00(i, j) +=
-                            (-0.5 * fe_isv.shape_grad(i, q_index) *
-                               normals[q_index] *
-                               fe_isv.shape_value(j, q_index) -
-                             0.5 * fe_isv.shape_grad(j, q_index) *
-                               normals[q_index] *
-                               fe_isv.shape_value(i, q_index) +
-                             (penalty / hf) * fe_isv.shape_value(i, q_index) *
-                               fe_isv.shape_value(j, q_index)) *
-                            fe_isv.JxW(q_index);
-                        }
-                    }
-                }
-              // A10
-              for (unsigned int q_index : fe_isv.quadrature_point_indices())
-                {
-                  for (unsigned int i = 0; i < dofs_per_cell; ++i)
-                    {
-                      for (unsigned int j = 0; j < dofs_per_cell; ++j)
-                        {
-                          A_01(i, j) +=
-                            (-0.5 * fe_face.shape_grad(i, q_index) *
-                               normals[q_index] *
-                               fe_isv.shape_value(j, q_index) +
-                             0.5 * fe_isv.shape_grad(j, q_index) *
-                               normals[q_index] *
-                               fe_face.shape_value(i, q_index) -
-                             (penalty / hf) * fe_face.shape_value(i, q_index) *
-                               fe_isv.shape_value(j, q_index)) *
-                            fe_isv.JxW(q_index);
-                        }
-                    }
-                }
-              // A01
-              for (unsigned int q_index : fe_isv.quadrature_point_indices())
-                {
-                  for (unsigned int i = 0; i < dofs_per_cell; ++i)
-                    {
-                      for (unsigned int j = 0; j < dofs_per_cell; ++j)
-                        {
-                          A_10(i, j) +=
-                            (-0.5 * fe_isv.shape_grad(i, q_index) *
-                               normals[q_index] *
-                               fe_face.shape_value(j, q_index) -
-                             0.5 * fe_face.shape_grad(j, q_index) *
-                               normals[q_index] *
-                               fe_isv.shape_value(i, q_index) -
-                             (penalty / hf) * fe_isv.shape_value(i, q_index) *
-                               fe_face.shape_value(j, q_index)) *
-                            fe_isv.JxW(q_index);
-                        }
-                    }
-                }
-              // A11
-              for (unsigned int q_index : fe_isv.quadrature_point_indices())
-                {
-                  for (unsigned int i = 0; i < dofs_per_cell; ++i)
-                    {
-                      for (unsigned int j = 0; j < dofs_per_cell; ++j)
-                        {
-                          A_11(i, j) +=
-                            (-0.5 * fe_face.shape_grad(i, q_index) *
-                               normals[q_index] *
-                               fe_face.shape_value(j, q_index) -
-                             0.5 * fe_face.shape_grad(j, q_index) *
-                               normals[q_index] *
-                               fe_face.shape_value(i, q_index) +
-                             (penalty / hf) * fe_face.shape_value(i, q_index) *
-                               fe_face.shape_value(j, q_index)) *
-                            fe_isv.JxW(q_index);
-                        }
-                    }
-                }
+                // Get normal vectors seen from each agglomeration.
+                const auto &normals = fe_isv.get_normal_vectors();
+                // A00
+                for (unsigned int q_index : fe_isv.quadrature_point_indices())
+                  {
+                    std::cout << normals[q_index] << std::endl;
+                    for (unsigned int i = 0; i < dofs_per_cell; ++i)
+                      {
+                        for (unsigned int j = 0; j < dofs_per_cell; ++j)
+                          {
+                            A_00(i, j) +=
+                              (-0.5 * fe_isv.shape_grad(i, q_index) *
+                                 normals[q_index] *
+                                 fe_isv.shape_value(j, q_index) -
+                               0.5 * fe_isv.shape_grad(j, q_index) *
+                                 normals[q_index] *
+                                 fe_isv.shape_value(i, q_index) +
+                               (penalty / hf) * fe_isv.shape_value(i, q_index) *
+                                 fe_isv.shape_value(j, q_index)) *
+                              fe_isv.JxW(q_index);
+                          }
+                      }
+                  }
+                // A10
+                for (unsigned int q_index : fe_isv.quadrature_point_indices())
+                  {
+                    for (unsigned int i = 0; i < dofs_per_cell; ++i)
+                      {
+                        for (unsigned int j = 0; j < dofs_per_cell; ++j)
+                          {
+                            A_01(i, j) +=
+                              (-0.5 * fe_face.shape_grad(i, q_index) *
+                                 normals[q_index] *
+                                 fe_isv.shape_value(j, q_index) +
+                               0.5 * fe_isv.shape_grad(j, q_index) *
+                                 normals[q_index] *
+                                 fe_face.shape_value(i, q_index) -
+                               (penalty / hf) *
+                                 fe_face.shape_value(i, q_index) *
+                                 fe_isv.shape_value(j, q_index)) *
+                              fe_isv.JxW(q_index);
+                          }
+                      }
+                  }
+                // A01
+                for (unsigned int q_index : fe_isv.quadrature_point_indices())
+                  {
+                    for (unsigned int i = 0; i < dofs_per_cell; ++i)
+                      {
+                        for (unsigned int j = 0; j < dofs_per_cell; ++j)
+                          {
+                            A_10(i, j) +=
+                              (-0.5 * fe_isv.shape_grad(i, q_index) *
+                                 normals[q_index] *
+                                 fe_face.shape_value(j, q_index) -
+                               0.5 * fe_face.shape_grad(j, q_index) *
+                                 normals[q_index] *
+                                 fe_isv.shape_value(i, q_index) -
+                               (penalty / hf) * fe_isv.shape_value(i, q_index) *
+                                 fe_face.shape_value(j, q_index)) *
+                              fe_isv.JxW(q_index);
+                          }
+                      }
+                  }
+                // A11
+                for (unsigned int q_index : fe_isv.quadrature_point_indices())
+                  {
+                    for (unsigned int i = 0; i < dofs_per_cell; ++i)
+                      {
+                        for (unsigned int j = 0; j < dofs_per_cell; ++j)
+                          {
+                            A_11(i, j) +=
+                              (-0.5 * fe_face.shape_grad(i, q_index) *
+                                 normals[q_index] *
+                                 fe_face.shape_value(j, q_index) -
+                               0.5 * fe_face.shape_grad(j, q_index) *
+                                 normals[q_index] *
+                                 fe_face.shape_value(i, q_index) +
+                               (penalty / hf) *
+                                 fe_face.shape_value(i, q_index) *
+                                 fe_face.shape_value(j, q_index)) *
+                              fe_isv.JxW(q_index);
+                          }
+                      }
+                  }
 
-              // distribute DoFs accordingly
-              cell->get_dof_indices(local_dof_indices);
-              // Need to convert the neighbor to a valid "dh" iterator
-              typename DoFHandler<dim>::cell_iterator neigh_dh(
-                *neighboring_cell, &(ah->agglo_dh));
-              std::cout << "Neighbor is " << neigh_dh->active_cell_index()
-                        << std::endl;
-              neigh_dh->get_dof_indices(local_dof_indices1);
+                // distribute DoFs accordingly
+                cell->get_dof_indices(local_dof_indices);
+                // Need to convert the neighbor to a valid "dh" iterator
+                typename DoFHandler<dim>::cell_iterator neigh_dh(
+                  *neighboring_cell, &(ah->agglo_dh));
+                std::cout << "Neighbor is " << neigh_dh->active_cell_index()
+                          << std::endl;
+                neigh_dh->get_dof_indices(local_dof_indices1);
 
-              system_matrix.add(local_dof_indices, A_00);
-              system_matrix.add(local_dof_indices, local_dof_indices1, A_01);
-              system_matrix.add(local_dof_indices1, local_dof_indices, A_10);
-              system_matrix.add(local_dof_indices1, A_11);
-            }
-        }
+                system_matrix.add(local_dof_indices, A_00);
+                system_matrix.add(local_dof_indices, local_dof_indices1, A_01);
+                system_matrix.add(local_dof_indices1, local_dof_indices, A_10);
+                system_matrix.add(local_dof_indices1, A_11);
+              }
+          }
     }
 
 
@@ -588,7 +598,7 @@ Poisson<dim>::assemble_system()
       cell_rhs                 = 0;
       const auto &agglo_values = ah->reinit(cell);
 
-      const auto         &q_points  = agglo_values.get_quadrature_points();
+      const auto &        q_points  = agglo_values.get_quadrature_points();
       const unsigned int  n_qpoints = q_points.size();
       std::vector<double> rhs(n_qpoints);
       rhs_function->value_list(q_points, rhs);
