@@ -69,27 +69,20 @@ public:
 
   using ScratchData = MeshWorker::ScratchData<dim, spacedim>;
 
-  // Internal type used to associate agglomerated cells with neighbors. In
-  // particular, we store for each cell:
-  // - local face index seen by the agglomerated cell
-  // - an iterator to the neighboring cell
-  // - local face index seen from the neighbor
-  // In case the neighbor is a cell of the agglomeration:
-  // - iterator is pointing to the master cell of the neighobring agglomeration
-  // - face index from outside is set to numbers::invalid_unsigned_int
-  // The reason why we use a **set** of tuples is that some cells will be seen
-  // and checked multiple times.
-  using NeighborsInfos = std::set<std::tuple<
-    unsigned int,
-    const typename Triangulation<dim, spacedim>::active_cell_iterator,
-    unsigned int>>;
+  // Internal type used to associate the free faces adjacent to an agglomeration
+  using FaceInfo = std::vector<types::global_cell_index>;
 
   // In order to enumerate the faces of an agglomeration, we consider a map
   // where the key is represented by an iterator to the (master) cell and the
   // index of the agglomerated face.
   using CellAndFace =
     std::pair<const typename Triangulation<dim, spacedim>::active_cell_iterator,
-              unsigned int>;
+              types::global_cell_index>;
+
+  using MasterAndNeighborAndFace = std::tuple<
+    const typename Triangulation<dim, spacedim>::active_cell_iterator,
+    const typename Triangulation<dim, spacedim>::active_cell_iterator,
+    types::global_cell_index>;
 
   // As value, we have a vector where each element identifies:
   // - the local face index from the agglomeration
@@ -98,9 +91,9 @@ public:
   // - the face index seen from outside
   // This is necessary to compute quadrature rules on each agglomerated face.
   using MasterNeighborInfo = std::tuple<
-    unsigned int,
+    types::global_cell_index,
     const typename Triangulation<dim, spacedim>::active_cell_iterator,
-    unsigned int>;
+    types::global_cell_index>;
 
   /**
    * Record the number of agglomerations on the grid.
@@ -114,13 +107,16 @@ public:
    */
   mutable std::map<CellAndFace, MasterNeighborInfo> master_neighbors;
 
+  mutable std::map<MasterAndNeighborAndFace, types::global_cell_index>
+    shared_face_agglomeration_idx;
+
   /**
    * Similar to the member above, but for all cells in an agglomeration.
    */
   mutable std::map<
     const typename Triangulation<dim, spacedim>::active_cell_iterator,
-    NeighborsInfos>
-    neighbor_connectivity;
+    FaceInfo>
+    inadmissible_faces;
 
   /**
    * DoFHandler for the agglomerated space
@@ -128,13 +124,34 @@ public:
   DoFHandler<dim, spacedim> agglo_dh;
 
   explicit AgglomerationHandler(
-    const GridTools::Cache<dim, spacedim> &cached_tria,
-    const FE_DGQ<dim, spacedim>           &fe_space = FE_DGQ<dim, spacedim>(1));
+    const GridTools::Cache<dim, spacedim> &cached_tria);
+
+  AgglomerationHandler() = default;
 
   ~AgglomerationHandler()
   {
     // disconnect the signal
     tria_listener.disconnect();
+  }
+
+  /**
+   * Distribute degrees of freedom on a grid where some cells have been
+   * agglomerated.
+   */
+  template <class FiniteElement>
+  void
+  distribute_agglomerated_dofs(const FiniteElement &fe_space)
+  {
+    Assert((dynamic_cast<const FE_DGQ<dim, spacedim> *>(&fe_space)),
+           ExcNotImplemented());
+    fe = std::make_unique<FE_DGQ<dim, spacedim>>(fe_space);
+
+    fe_collection.push_back(*fe);                         // master
+    fe_collection.push_back(FE_Nothing<dim, spacedim>()); // slave
+    fe_collection.push_back(*fe);                         // standard
+
+    initialize_hp_structure();
+    setup_connectivity_of_agglomeration();
   }
 
   /**
@@ -154,16 +171,6 @@ public:
   {
     agglomeration_quadrature_degree = degree;
   }
-
-  /**
-   * Assign a finite element index on each cell of a triangulation, depending if
-   * it is a master cell, a slave cell, or a standard deal.II cell. A user
-   * doesn't need to know the internals of this, the only thing that is relevant
-   * is that after the call to the present function, DoFs are distributed in a
-   * different way if a cell is a master, slave, or standard cell.
-   */
-  void
-  initialize_hp_structure();
 
   /**
    * Given a Triangulation with some agglomerated cells, create the sparsity
@@ -213,7 +220,7 @@ public:
    * with which master.
    */
   friend void
-  print_agglomeration(std::ostream                              &os,
+  print_agglomeration(std::ostream &                             os,
                       const AgglomerationHandler<dim, spacedim> &ah)
   {
     for (const auto &cell : ah.euler_dh.active_cell_iterators())
@@ -246,8 +253,9 @@ public:
     for (const auto &f : cell->face_indices())
       {
         const auto &neighboring_cell = cell->neighbor(f);
-        if (neighboring_cell.state() == IteratorState::valid &&
-            !are_cells_agglomerated(cell, neighboring_cell))
+        if ((neighboring_cell.state() == IteratorState::valid &&
+             !are_cells_agglomerated(cell, neighboring_cell)) ||
+            cell->face(f)->at_boundary())
           {
             ++n_neighbors;
           }
@@ -256,63 +264,112 @@ public:
   }
 
   /**
-   * Return, for a *master* of agglomeration, the number of agglomerated faces
-   * in the agglomeration.
+   * Return, for a cell, the number of faces. In case the cell is a standard
+   * cell, then the number of faces is the classical one. If it's a master cell,
+   * then it returns the number of faces of the agglomeration identified by the
+   * master cell itself.
    */
   unsigned int
-  n_agglomerated_faces_per_agglomeration(
-    const typename Triangulation<dim, spacedim>::active_cell_iterator
-      &master_cell) const
+  n_faces(
+    const typename DoFHandler<dim, spacedim>::active_cell_iterator &cell) const
   {
-    Assert(master_slave_relationships[master_cell->active_cell_index()] == -1,
-           ExcMessage("You should pass a master cell."));
-    auto agglomeration = get_slaves_of_idx(master_cell->active_cell_index());
-    agglomeration.push_back(master_cell);
-    unsigned int n_neighbors = 0;
-    for (const auto &cell : agglomeration)
+    Assert(!is_slave_cell(cell), ExcMessage("You cannot pass a slave cell."));
+    if (is_standard_cell(cell))
       {
-        n_neighbors += n_agglomerated_faces_per_cell(cell);
+        return cell->n_faces();
       }
-    return n_neighbors;
+    else
+      {
+        auto agglomeration = get_slaves_of_idx(cell->active_cell_index());
+        agglomeration.push_back(cell);
+        unsigned int n_neighbors = 0;
+        for (const auto &cell : agglomeration)
+          {
+            n_neighbors += n_agglomerated_faces_per_cell(cell);
+          }
+        return n_neighbors;
+      }
   }
 
   /**
    * Return, for each cell belonging to the same agllomeration, a cell belonging
    * to the neighbor agglomeration
    */
-  typename Triangulation<dim, spacedim>::active_cell_iterator
+  typename DoFHandler<dim, spacedim>::active_cell_iterator
   agglomerated_neighbor(
-    const typename Triangulation<dim, spacedim>::active_cell_iterator &cell,
-    const unsigned int agglomerated_face_number) const;
+    const typename DoFHandler<dim, spacedim>::active_cell_iterator &cell,
+    const unsigned int                                              f) const
+  {
+    Assert(!is_slave_cell(cell),
+           ExcMessage("This cells is not supposed to be a slave."));
+    if (!at_boundary(cell, f))
+      {
+        if (is_standard_cell(cell) && is_standard_cell(cell->neighbor(f)))
+          {
+            return cell->neighbor(f);
+          }
+        else if (is_master_cell(cell))
+          {
+            const auto &neigh = std::get<1>(master_neighbors[{cell, f}]);
+            typename DoFHandler<dim, spacedim>::active_cell_iterator cell_dh(
+              *neigh, &agglo_dh);
+            return cell_dh;
+          }
+        else
+          {
+            // If I fall here, I want to find the neighbor for a standard cell
+            // adjacent to an agglomeration
+            const auto &master_cell =
+              master_slave_relationships_iterators[cell->neighbor(f)
+                                                     ->active_cell_index()];
+            typename DoFHandler<dim, spacedim>::active_cell_iterator cell_dh(
+              *master_cell, &agglo_dh);
+            return cell_dh;
+          }
+      }
+    else
+      {
+        return {};
+      }
+  }
 
   /**
-   * Return, for each cell belonging to the same agllomeration, the index of the
-   * agglomerated face of the neighbor
+   * Generalize the 'cell->neighbor_of_neighbor(f)' to the case where 'cell' is:
+   * - a master cell of an agglomeration.
+   * - a standard cell adjacent to an agglomeration.
    */
   unsigned int
   neighbor_of_agglomerated_neighbor(
-    const typename Triangulation<dim, spacedim>::active_cell_iterator &cell,
-    const unsigned int agglomerated_face_number) const;
-
-
-  /**
-   *
-   * Initialize all the necessary connectivity information for an agglomeration.
-   */
-  void
-  setup_connectivity_of_agglomeration()
+    const typename DoFHandler<dim, spacedim>::active_cell_iterator &cell,
+    const unsigned int                                              f) const
   {
-    Assert(master_slave_relationships.size() > 0,
-           ExcMessage("The agglomeration has not been initilized"));
-    Assert(
-      agglo_dh.n_dofs() > 0,
-      ExcMessage(
-        "The DoFHandler associated to the agglomeration has not been initialized. It's likely that you forgot to distribute the DoFs, i.e. you may want to check if a call to `initialize_hp_structure()` has been done."));
-    for (const auto &cell :
-         agglo_dh.active_cell_iterators() |
-           IteratorFilters::ActiveFEIndexEqualTo(AggloIndex::master))
+    Assert(!is_slave_cell(cell),
+           ExcMessage("This cells is not supposed to be a slave."));
+    // First, make sure it's not a boundary face.
+    if (!at_boundary(cell, f))
       {
-        setup_master_neighbor_connectivity(cell);
+        if (is_standard_cell(cell) && is_standard_cell(cell->neighbor(f)))
+          {
+            return cell->neighbor_of_neighbor(f);
+          }
+        else if (is_master_cell(cell))
+          {
+            // return the local_idx_from_outside for a master cell
+            return std::get<2>(master_neighbors[{cell, f}]);
+          }
+        else
+          { // If I fall here, I want to find the neighbor of neighbor for a
+            // standard cell
+            // adjacent to an agglomeration
+            const auto &master_cell = agglomerated_neighbor(
+              cell, f); // this is the master of the neighboring agglomeration
+
+            return shared_face_agglomeration_idx[{master_cell, cell, f}];
+          }
+      }
+    else
+      {
+        return {};
       }
   }
 
@@ -328,9 +385,17 @@ public:
    * `agglomeration_face_number`, initialize shape functions, normals and
    * quadratures.
    */
-  const NonMatching::FEImmersedSurfaceValues<dim> &
+  const FEValuesBase<dim, spacedim> &
   reinit(const typename DoFHandler<dim, spacedim>::active_cell_iterator &cell,
          const unsigned int agglomeration_face_number) const;
+
+  std::pair<const FEValuesBase<dim, spacedim> &,
+            const FEValuesBase<dim, spacedim> &>
+  reinit_interface(
+    const typename DoFHandler<dim, spacedim>::active_cell_iterator &cell_in,
+    const typename DoFHandler<dim, spacedim>::active_cell_iterator &neigh_cell,
+    const unsigned int                                              local_in,
+    const unsigned int local_outside) const;
 
   /**
    * Return the agglomerated quadrature for the given agglomeration. This
@@ -350,6 +415,74 @@ public:
   std::vector<typename Triangulation<dim, spacedim>::active_cell_iterator>
   get_slaves_of_idx(const int idx) const;
 
+  /**
+   * Helper function to determine whether or not a cell is a master or a slave
+   */
+  inline bool
+  is_master_cell(
+    const typename Triangulation<dim, spacedim>::active_cell_iterator &cell)
+    const
+  {
+    return master_slave_relationships[cell->active_cell_index()] == -1;
+  }
+
+  /**
+   * Helper function to determine if the given cell is a standard deal.II cell,
+   * that is: not master, nor slave.
+   *
+   */
+  inline bool
+  is_standard_cell(
+    const typename Triangulation<dim, spacedim>::active_cell_iterator &cell)
+    const
+  {
+    return master_slave_relationships[cell->active_cell_index()] == -2;
+  }
+
+  /**
+ * Helper function to determine whether or not a cell is a slave cell,
+ without any information about his parents.
+ */
+  inline bool
+  is_slave_cell(
+    const typename Triangulation<dim, spacedim>::active_cell_iterator &cell)
+    const
+  {
+    return master_slave_relationships[cell->active_cell_index()] >= 0;
+  }
+
+  /**
+   *
+   * This function generalizes the behaviour of cell->face(f)->at_boundary()
+   * in the case where f is an index out of the range [0,..., n_faces).
+   * In practice, if you call this function with a standard deal.II cell, you
+   * have precisely the same result as calling cell->face(f)->at_boundary().
+   * Otherwise, if the cell is a master one, you have a boolean returning true
+   * is that face for the agglomeration is on the boundary or not.
+   */
+  bool
+  at_boundary(
+    const typename DoFHandler<dim, spacedim>::active_cell_iterator &cell,
+    const unsigned int                                              f) const
+  {
+    Assert(!is_slave_cell(cell),
+           ExcMessage("This function should not be called for a slave cell."));
+    if (is_standard_cell(cell))
+      return cell->face(f)->at_boundary();
+    else
+      return std::get<2>(master_neighbors[{cell, f}]) ==
+             std::numeric_limits<unsigned int>::max();
+  }
+
+
+  decltype(auto)
+  agglomeration_cell_iterators()
+  {
+    return agglo_dh.active_cell_iterators();
+  }
+
+  std::unique_ptr<MappingFEField<dim, spacedim> /*, Vector<double>*/>
+    euler_mapping;
 
 private:
   std::vector<long int> master_slave_relationships;
@@ -389,14 +522,21 @@ private:
    */
   Vector<double> euler_vector;
 
-  std::unique_ptr<MappingFEField<dim, spacedim> /*, Vector<double>*/>
-    euler_mapping;
+
 
   /**
    * Use this in reinit(cell) for standard (non-agglomerated) standard cells,
    * and return the result of scratch.reinit(cell) for cells
    */
   mutable std::unique_ptr<ScratchData> standard_scratch;
+
+  mutable std::unique_ptr<ScratchData> standard_scratch_face;
+
+  mutable std::unique_ptr<ScratchData> standard_scratch_face_any;
+
+  mutable std::unique_ptr<ScratchData> standard_scratch_face_std;
+
+  mutable std::unique_ptr<ScratchData> standard_scratch_face_std_neigh;
 
   /**
    * Fill this up in reinit(cell), for agglomerated cells, using the custom
@@ -405,6 +545,7 @@ private:
    */
   mutable std::unique_ptr<ScratchData> agglomerated_scratch;
 
+
   mutable std::unique_ptr<NonMatching::FEImmersedSurfaceValues<spacedim>>
     agglomerated_isv;
 
@@ -412,9 +553,9 @@ private:
 
   UpdateFlags agglomeration_flags = update_default;
 
-  UpdateFlags agglomeration_face_flags = update_quadrature_points |
-                                         update_normal_vectors | update_values |
-                                         update_JxW_values;
+  UpdateFlags agglomeration_face_flags =
+    update_quadrature_points | update_normal_vectors | update_values |
+    update_gradients | update_inverse_jacobians | update_JxW_values;
 
   unsigned int agglomeration_quadrature_degree = 1;
 
@@ -429,7 +570,8 @@ private:
     mapping = &cache_tria->get_mapping();
 
     agglo_dh.reinit(*tria);
-    euler_fe = std::make_unique<FESystem<dim, spacedim>>(*fe, spacedim);
+    FE_DGQ<dim, spacedim> dummy_dg(1);
+    euler_fe = std::make_unique<FESystem<dim, spacedim>>(dummy_dg, spacedim);
     euler_dh.reinit(*tria);
     euler_dh.distribute_dofs(*euler_fe);
     euler_vector.reinit(euler_dh.n_dofs());
@@ -441,7 +583,7 @@ private:
                 master_slave_relationships.end(),
                 -2); // identify all the tria with standard deal.II cells.
 
-    neighbor_connectivity.clear();
+    inadmissible_faces.clear();
     master_neighbors.clear();
     bboxes.resize(tria->n_active_cells());
 
@@ -466,30 +608,6 @@ private:
   }
 
   /**
-   * Helper function to determine whether or not a cell is a master or a slave
-   */
-  inline bool
-  is_master_cell(
-    const typename Triangulation<dim, spacedim>::active_cell_iterator &cell)
-    const
-  {
-    return master_slave_relationships[cell->active_cell_index()] == -1;
-  }
-
-  /**
-   * Helper function to determine if the given cell is a standard deal.II cell,
-   * that is: not master, nor slave.
-   *
-   */
-  inline bool
-  is_standard_cell(
-    const typename Triangulation<dim, spacedim>::active_cell_iterator &cell)
-    const
-  {
-    return master_slave_relationships[cell->active_cell_index()] == -2;
-  }
-
-  /**
    * Helper function to determine whether or not a cell is a slave cell.
    * Instead of returning a boolean, it gives the index of the master cell. If
    * it's a master cell, then the it returns -1, by construction.
@@ -503,18 +621,6 @@ private:
   }
 
   /**
-   * Helper function to determine whether or not a cell is a slave cell,
-   without any information about his parents.
-   */
-  inline bool
-  is_slave_cell(
-    const typename Triangulation<dim, spacedim>::active_cell_iterator &cell)
-    const
-  {
-    return master_slave_relationships[cell->active_cell_index()] >= 0;
-  }
-
-  /**
    * Construct bounding boxes for an agglomeration described by a sequence of
    * cells. This fills also the euler vector
    */
@@ -522,8 +628,8 @@ private:
   create_bounding_box(
     const std::vector<
       typename Triangulation<dim, spacedim>::active_cell_iterator>
-                      &vec_of_cells,
-    const unsigned int master_idx)
+      &                            vec_of_cells,
+    const types::global_cell_index master_idx)
   {
     Assert(n_agglomerations > 0,
            ExcMessage("No agglomeration has been performed."));
@@ -578,6 +684,18 @@ private:
              cell->active_cell_index();
   }
 
+
+
+  /**
+   * Assign a finite element index on each cell of a triangulation, depending if
+   * it is a master cell, a slave cell, or a standard deal.II cell. A user
+   * doesn't need to know the internals of this, the only thing that is relevant
+   * is that after the call to the present function, DoFs are distributed in a
+   * different way if a cell is a master, slave, or standard cell.
+   */
+  void
+  initialize_hp_structure();
+
   /**
    * Given an agglomeration described by the master cell `master_cell`, this
    * function stores who are the faces of the agglomeration and their neighbors.
@@ -610,6 +728,7 @@ private:
                   CellAndFace(master_cell, n_agglo_faces);
                 const auto nof = cell->neighbor_of_neighbor(f);
 
+
                 if (is_slave_cell(neighboring_cell))
                   master_neighbors.emplace(
                     cell_and_face,
@@ -620,9 +739,48 @@ private:
                 else
                   master_neighbors.emplace(
                     cell_and_face, std::make_tuple(f, neighboring_cell, nof));
+
+                // Now, link the index of the agglomerated face with the master
+                // and the neighboring cell.
+                shared_face_agglomeration_idx.emplace(
+                  MasterAndNeighborAndFace(master_cell, neighboring_cell, nof),
+                  n_agglo_faces);
+                ++n_agglo_faces;
+              }
+            else if (cell->face(f)->at_boundary())
+              {
+                // Boundary face of a boundary cell.
+                // Note that the neighboring cell must be invalid.
+                const auto &cell_and_face =
+                  CellAndFace(master_cell, n_agglo_faces);
+                master_neighbors.emplace(
+                  cell_and_face,
+                  std::make_tuple(f,
+                                  neighboring_cell,
+                                  std::numeric_limits<unsigned int>::max()));
                 ++n_agglo_faces;
               }
           }
+      }
+  }
+
+  /**
+   * Initialize all the necessary connectivity information for an agglomeration.
+   */
+  void
+  setup_connectivity_of_agglomeration()
+  {
+    // Assert(master_slave_relationships.size() > 0,
+    //        ExcMessage("The agglomeration has not been initilized"));
+    Assert(
+      agglo_dh.n_dofs() > 0,
+      ExcMessage(
+        "The DoFHandler associated to the agglomeration has not been initialized. It's likely that you forgot to distribute the DoFs, i.e. you may want to check if a call to `initialize_hp_structure()` has been done."));
+    for (const auto &cell :
+         agglo_dh.active_cell_iterators() |
+           IteratorFilters::ActiveFEIndexEqualTo(AggloIndex::master))
+      {
+        setup_master_neighbor_connectivity(cell);
       }
   }
 };

@@ -19,6 +19,8 @@
 #define tests_h
 
 
+#include <deal.II/fe/fe_dgq.h>
+
 #include "include/agglomeration_handler.h"
 
 namespace Tests
@@ -27,7 +29,7 @@ namespace Tests
   void
   collect_cells_for_agglomeration(
     const Triangulation<dim, spacedim> &tria,
-    std::vector<unsigned int>          &cell_idxs,
+    std::vector<types::global_cell_index>          &cell_idxs,
     std::vector<typename Triangulation<dim, spacedim>::active_cell_iterator>
       &cells_to_be_agglomerated)
   {

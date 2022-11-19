@@ -14,10 +14,11 @@
  * ---------------------------------------------------------------------
  */
 
-// Set an agglomeration up. Refine the grid and add another agglomeration.
-// Finally, check that things are still consistent.
+// Check that FEImmsersedSurfaceValues work correctly by computing the perimeter
+// of standard and agglomerated cells.
 
 #include <deal.II/grid/grid_generator.h>
+#include <deal.II/grid/grid_out.h>
 
 #include "../tests.h"
 
@@ -27,11 +28,12 @@ main()
   Triangulation<2> tria;
   GridGenerator::hyper_cube(tria, -1, 1);
   MappingQ<2> mapping(1);
-  tria.refine_global(2);
+  tria.refine_global(3);
   GridTools::Cache<2>     cached_tria(tria, mapping);
   AgglomerationHandler<2> ah(cached_tria);
 
-  std::vector<types::global_cell_index> idxs_to_be_agglomerated = {0, 1, 2, 3};
+  std::vector<types::global_cell_index> idxs_to_be_agglomerated = {
+    3, 6, 9, 12, 13}; //{8, 9, 10, 11};
 
   std::vector<typename Triangulation<2>::active_cell_iterator>
     cells_to_be_agglomerated;
@@ -39,7 +41,7 @@ main()
                                          idxs_to_be_agglomerated,
                                          cells_to_be_agglomerated);
 
-  std::vector<types::global_cell_index> idxs_to_be_agglomerated2 = {4, 5, 6, 7};
+  std::vector<types::global_cell_index> idxs_to_be_agglomerated2 = {15, 36, 37};
 
   std::vector<typename Triangulation<2>::active_cell_iterator>
     cells_to_be_agglomerated2;
@@ -47,7 +49,7 @@ main()
                                          idxs_to_be_agglomerated2,
                                          cells_to_be_agglomerated2);
 
-  std::vector<types::global_cell_index> idxs_to_be_agglomerated3 = {8, 9, 10, 11};
+  std::vector<types::global_cell_index> idxs_to_be_agglomerated3 = {57, 60, 54};
 
   std::vector<typename Triangulation<2>::active_cell_iterator>
     cells_to_be_agglomerated3;
@@ -55,7 +57,7 @@ main()
                                          idxs_to_be_agglomerated3,
                                          cells_to_be_agglomerated3);
 
-  std::vector<types::global_cell_index> idxs_to_be_agglomerated4 = {12, 13, 14, 15};
+  std::vector<types::global_cell_index> idxs_to_be_agglomerated4 = {25, 19, 22};
 
   std::vector<typename Triangulation<2>::active_cell_iterator>
     cells_to_be_agglomerated4;
@@ -69,11 +71,30 @@ main()
   ah.agglomerate_cells(cells_to_be_agglomerated3);
   ah.agglomerate_cells(cells_to_be_agglomerated4);
 
-  // Refine the triangulation, and check that the internal data structure for
-  // connectivity is empty now.
-  tria.refine_global(1);
-  Assert(get_agglomerated_connectivity(ah).empty() == true,
-         ExcMessage("The connectivity has not been cleared."));
-  std::cout << "OK" << std::endl;
-  return 0;
+  std::vector<std::vector<typename Triangulation<2>::active_cell_iterator>>
+    agglomerations{cells_to_be_agglomerated,
+                   cells_to_be_agglomerated2,
+                   cells_to_be_agglomerated3,
+                   cells_to_be_agglomerated4};
+
+  FE_DGQ<2> fe_dg(1);
+  ah.distribute_agglomerated_dofs(fe_dg);
+  double perimeter = 0.;
+  for (const auto &cell :
+       ah.agglomeration_cell_iterators() |
+         IteratorFilters::ActiveFEIndexEqualTo(ah.AggloIndex::master))
+    {
+      unsigned int n_agglomerated_faces_per_cell = ah.n_faces(cell);
+      for (size_t f = 0; f < n_agglomerated_faces_per_cell; ++f)
+        {
+          const auto &test_feisv = ah.reinit(cell, f);
+          perimeter += std::accumulate(test_feisv.get_JxW_values().begin(),
+                                       test_feisv.get_JxW_values().end(),
+                                       0.);
+        }
+      std::cout << "Perimeter of agglomeration with master idx: "
+                << cell->active_cell_index() << " is " << perimeter
+                << std::endl;
+      perimeter = 0.;
+    }
 }

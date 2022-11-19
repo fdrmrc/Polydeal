@@ -33,7 +33,7 @@ main()
   GridTools::Cache<2>     cached_tria(tria, mapping);
   AgglomerationHandler<2> ah(cached_tria);
 
-  std::vector<unsigned int> idxs_to_be_agglomerated = {
+  std::vector<types::global_cell_index> idxs_to_be_agglomerated = {
     3, 6, 9, 12, 13}; //{8, 9, 10, 11};
 
   std::vector<typename Triangulation<2>::active_cell_iterator>
@@ -42,7 +42,7 @@ main()
                                          idxs_to_be_agglomerated,
                                          cells_to_be_agglomerated);
 
-  std::vector<unsigned int> idxs_to_be_agglomerated2 = {15, 36, 37};
+  std::vector<types::global_cell_index> idxs_to_be_agglomerated2 = {15, 36, 37};
 
   std::vector<typename Triangulation<2>::active_cell_iterator>
     cells_to_be_agglomerated2;
@@ -50,7 +50,7 @@ main()
                                          idxs_to_be_agglomerated2,
                                          cells_to_be_agglomerated2);
 
-  std::vector<unsigned int> idxs_to_be_agglomerated3 = {57, 60, 54};
+  std::vector<types::global_cell_index> idxs_to_be_agglomerated3 = {57, 60, 54};
 
   std::vector<typename Triangulation<2>::active_cell_iterator>
     cells_to_be_agglomerated3;
@@ -58,7 +58,7 @@ main()
                                          idxs_to_be_agglomerated3,
                                          cells_to_be_agglomerated3);
 
-  std::vector<unsigned int> idxs_to_be_agglomerated4 = {25, 19, 22};
+  std::vector<types::global_cell_index> idxs_to_be_agglomerated4 = {25, 19, 22};
 
   std::vector<typename Triangulation<2>::active_cell_iterator>
     cells_to_be_agglomerated4;
@@ -78,15 +78,14 @@ main()
                    cells_to_be_agglomerated3,
                    cells_to_be_agglomerated4};
 
-  ah.initialize_hp_structure();
-  ah.setup_connectivity_of_agglomeration();
+  FE_DGQ<2> fe_dg(1);
+  ah.distribute_agglomerated_dofs(fe_dg);
   for (const auto &cell :
-       ah.agglo_dh.active_cell_iterators() |
+       ah.agglomeration_cell_iterators() |
          IteratorFilters::ActiveFEIndexEqualTo(ah.AggloIndex::master))
     {
       std::cout << "Cell with idx: " << cell->active_cell_index() << std::endl;
-      unsigned int n_agglomerated_faces_per_cell =
-        ah.n_agglomerated_faces_per_agglomeration(cell);
+      unsigned int n_agglomerated_faces_per_cell = ah.n_faces(cell);
       std::cout << "Number of faces for the agglomeration: "
                 << n_agglomerated_faces_per_cell << std::endl;
       for (unsigned int f = 0; f < n_agglomerated_faces_per_cell; ++f)
@@ -96,8 +95,12 @@ main()
             ah.master_neighbors[{cell, f}];
           {
             std::cout << "Face idx: " << local_face_idx << std::endl;
-            std::cout << "Neighbor idx: " << neigh->active_cell_index()
-                      << std::endl;
+            if (neigh.state() == IteratorState::valid)
+              {
+                std::cout << "Neighbor idx: " << neigh->active_cell_index()
+                          << std::endl;
+              }
+
             std::cout << "Face idx from outside: " << local_face_idx_out
                       << std::endl;
           }
