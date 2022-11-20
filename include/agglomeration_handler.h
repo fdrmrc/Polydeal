@@ -452,6 +452,29 @@ public:
   }
 
   /**
+   * This predicate returns true if the present cell is not-slave
+   *
+   */
+  class IsNotSlave
+  {
+  public:
+    IsNotSlave(AgglomerationHandler<dim, spacedim> *agglo_handler_ptr)
+    {
+      ah = agglo_handler_ptr;
+    }
+
+    template <typename BIterator>
+    bool
+    operator()(const BIterator &cell) const
+    {
+      return !ah->is_slave_cell(cell);
+    }
+
+  private:
+    AgglomerationHandler<dim, spacedim> *ah;
+  };
+
+  /**
    *
    * This function generalizes the behaviour of cell->face(f)->at_boundary()
    * in the case where f is an index out of the range [0,..., n_faces).
@@ -478,7 +501,7 @@ public:
   decltype(auto)
   agglomeration_cell_iterators()
   {
-    return agglo_dh.active_cell_iterators();
+    return agglo_dh.active_cell_iterators() | IsNotSlave(this);
   }
 
   std::unique_ptr<MappingFEField<dim, spacedim> /*, Vector<double>*/>
@@ -492,8 +515,8 @@ private:
     master_slave_relationships_iterators;
 
   /**
-   * bboxes[idx] = BBOx associated to the agglomeration with master cell indexed
-   * by idx. Othwerwise ddefault BBox is empty
+   * bboxes[idx] = BBOx associated to the agglomeration with master cell
+   * indexed by idx. Othwerwise ddefault BBox is empty
    *
    */
   std::vector<BoundingBox<spacedim>> bboxes; // TODO: use map also for BBOxes ?
@@ -687,18 +710,20 @@ private:
 
 
   /**
-   * Assign a finite element index on each cell of a triangulation, depending if
-   * it is a master cell, a slave cell, or a standard deal.II cell. A user
-   * doesn't need to know the internals of this, the only thing that is relevant
-   * is that after the call to the present function, DoFs are distributed in a
-   * different way if a cell is a master, slave, or standard cell.
+   * Assign a finite element index on each cell of a triangulation, depending
+   * if it is a master cell, a slave cell, or a standard deal.II cell. A user
+   * doesn't need to know the internals of this, the only thing that is
+   * relevant is that after the call to the present function, DoFs are
+   * distributed in a different way if a cell is a master, slave, or standard
+   * cell.
    */
   void
   initialize_hp_structure();
 
   /**
    * Given an agglomeration described by the master cell `master_cell`, this
-   * function stores who are the faces of the agglomeration and their neighbors.
+   * function stores who are the faces of the agglomeration and their
+   * neighbors.
    */
   void
   setup_master_neighbor_connectivity(
@@ -715,12 +740,12 @@ private:
         for (const auto f : cell->face_indices())
           {
             const auto &neighboring_cell = cell->neighbor(f);
-            // Check if cell is not on the boundary and if it's not agglomerated
-            // with the neighbor If so, it's a neighbor of the present
-            // agglomeration
+            // Check if cell is not on the boundary and if it's not
+            // agglomerated with the neighbor If so, it's a neighbor of the
+            // present agglomeration
             if (neighboring_cell.state() ==
-                  IteratorState::valid && // TODO Handle the case where the cell
-                                          // is on the boundary
+                  IteratorState::valid && // TODO Handle the case where the
+                                          // cell is on the boundary
                 !are_cells_agglomerated(cell, neighboring_cell))
               {
                 // a new face of the agglomeration has been discovered.
@@ -740,8 +765,8 @@ private:
                   master_neighbors.emplace(
                     cell_and_face, std::make_tuple(f, neighboring_cell, nof));
 
-                // Now, link the index of the agglomerated face with the master
-                // and the neighboring cell.
+                // Now, link the index of the agglomerated face with the
+                // master and the neighboring cell.
                 shared_face_agglomeration_idx.emplace(
                   MasterAndNeighborAndFace(master_cell, neighboring_cell, nof),
                   n_agglo_faces);
@@ -765,7 +790,8 @@ private:
   }
 
   /**
-   * Initialize all the necessary connectivity information for an agglomeration.
+   * Initialize all the necessary connectivity information for an
+   * agglomeration.
    */
   void
   setup_connectivity_of_agglomeration()
