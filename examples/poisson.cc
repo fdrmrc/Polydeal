@@ -200,7 +200,7 @@ Poisson<dim>::assemble_system()
 
 
   FEFaceValues<dim> fe_face_boundary_values(dg_fe,
-                                            QGauss<1>(3),
+                                            QGauss<dim - 1>(3),
                                             update_values | update_JxW_values |
                                               update_gradients |
                                               update_normal_vectors |
@@ -333,17 +333,7 @@ Poisson<dim>::assemble_system()
                                    fe_faces0.shape_value(i, q_index) *
                                    fe_faces0.shape_value(j, q_index)) *
                                 fe_faces0.JxW(q_index);
-                            }
-                        }
-                    }
-                  // M12
-                  for (unsigned int q_index :
-                       fe_faces0.quadrature_point_indices())
-                    {
-                      for (unsigned int i = 0; i < dofs_per_cell; ++i)
-                        {
-                          for (unsigned int j = 0; j < dofs_per_cell; ++j)
-                            {
+
                               M12(i, j) +=
                                 (0.5 * fe_faces0.shape_grad(i, q_index) *
                                    normals[q_index] *
@@ -355,17 +345,8 @@ Poisson<dim>::assemble_system()
                                    fe_faces0.shape_value(i, q_index) *
                                    fe_faces1.shape_value(j, q_index)) *
                                 fe_faces1.JxW(q_index);
-                            }
-                        }
-                    }
-                  // A10
-                  for (unsigned int q_index :
-                       fe_faces0.quadrature_point_indices())
-                    {
-                      for (unsigned int i = 0; i < dofs_per_cell; ++i)
-                        {
-                          for (unsigned int j = 0; j < dofs_per_cell; ++j)
-                            {
+
+                              // A10
                               M21(i, j) +=
                                 (-0.5 * fe_faces1.shape_grad(i, q_index) *
                                    normals[q_index] *
@@ -377,17 +358,8 @@ Poisson<dim>::assemble_system()
                                    fe_faces1.shape_value(i, q_index) *
                                    fe_faces0.shape_value(j, q_index)) *
                                 fe_faces1.JxW(q_index);
-                            }
-                        }
-                    }
-                  // A11
-                  for (unsigned int q_index :
-                       fe_faces0.quadrature_point_indices())
-                    {
-                      for (unsigned int i = 0; i < dofs_per_cell; ++i)
-                        {
-                          for (unsigned int j = 0; j < dofs_per_cell; ++j)
-                            {
+
+                              // A11
                               M22(i, j) +=
                                 (0.5 * fe_faces1.shape_grad(i, q_index) *
                                    normals[q_index] *
