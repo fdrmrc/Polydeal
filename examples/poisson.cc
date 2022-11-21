@@ -178,15 +178,15 @@ void
 Poisson<dim>::assemble_system()
 {
   system_matrix.reinit(sparsity);
-  solution.reinit(ah->agglo_dh.n_dofs());
-  system_rhs.reinit(ah->agglo_dh.n_dofs());
+  solution.reinit(ah->n_dofs());
+  system_rhs.reinit(ah->n_dofs());
 
   const unsigned int quadrature_degree = 3;
   ah->set_quadrature_degree(quadrature_degree);
   ah->set_agglomeration_flags(update_values | update_JxW_values |
                               update_gradients | update_quadrature_points);
 
-  const unsigned int dofs_per_cell = dg_fe.n_dofs_per_cell();
+  const unsigned int dofs_per_cell = ah->n_dofs_per_cell();
 
   FullMatrix<double> cell_matrix(dofs_per_cell, dofs_per_cell);
   Vector<double>     cell_rhs(dofs_per_cell);
@@ -378,6 +378,7 @@ Poisson<dim>::assemble_system()
                   // distribute DoFs accordingly
                   std::cout << "Neighbor is " << neigh_cell->active_cell_index()
                             << std::endl;
+                  // Retrieve DoFs info from the cell iterator.
                   typename DoFHandler<dim>::cell_iterator neigh_dh(
                     *neigh_cell, &(ah->agglo_dh));
                   neigh_dh->get_dof_indices(local_dof_indices_neighbor);

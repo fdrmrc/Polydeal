@@ -52,8 +52,41 @@
 
 using namespace dealii;
 
+template <int dim, int spacedim>
+class AgglomerationHandler;
+
+namespace dealii
+{
+  namespace IteratorFilters
+  {
+    /**
+     * This predicate returns true if the present cell is not-slave.
+     *
+     */
+    template <int dim, int spacedim>
+    class IsNotSlave
+    {
+    public:
+      IsNotSlave(AgglomerationHandler<dim, spacedim> *agglo_handler_ptr)
+      {
+        ah = agglo_handler_ptr;
+      }
+
+      template <typename BIterator>
+      bool
+      operator()(const BIterator &cell) const
+      {
+        return !ah->is_slave_cell(cell);
+      }
+
+    private:
+      AgglomerationHandler<dim, spacedim> *ah;
+    };
+
+  } // namespace IteratorFilters
+} // namespace dealii
+
 /**
- *
  * Assumption: each cell may have only one master cell
  */
 template <int dim, int spacedim = dim>
@@ -143,7 +176,8 @@ public:
   distribute_agglomerated_dofs(const FiniteElement &fe_space)
   {
     Assert((dynamic_cast<const FE_DGQ<dim, spacedim> *>(&fe_space)),
-           ExcNotImplemented());
+           ExcNotImplemented(
+             "Currently, this interface supports only DG discretizations."));
     fe = std::make_unique<FE_DGQ<dim, spacedim>>(fe_space);
 
     fe_collection.push_back(*fe);                         // master
@@ -451,28 +485,7 @@ public:
     return master_slave_relationships[cell->active_cell_index()] >= 0;
   }
 
-  /**
-   * This predicate returns true if the present cell is not-slave
-   *
-   */
-  class IsNotSlave
-  {
-  public:
-    IsNotSlave(AgglomerationHandler<dim, spacedim> *agglo_handler_ptr)
-    {
-      ah = agglo_handler_ptr;
-    }
 
-    template <typename BIterator>
-    bool
-    operator()(const BIterator &cell) const
-    {
-      return !ah->is_slave_cell(cell);
-    }
-
-  private:
-    AgglomerationHandler<dim, spacedim> *ah;
-  };
 
   /**
    *
@@ -501,11 +514,23 @@ public:
   decltype(auto)
   agglomeration_cell_iterators()
   {
-    return agglo_dh.active_cell_iterators() | IsNotSlave(this);
+    return agglo_dh.active_cell_iterators() | IteratorFilters::IsNotSlave(this);
   }
 
   std::unique_ptr<MappingFEField<dim, spacedim> /*, Vector<double>*/>
     euler_mapping;
+
+  inline unsigned int
+  n_dofs_per_cell() const noexcept
+  {
+    return fe->n_dofs_per_cell();
+  }
+
+  inline types::global_dof_index
+  n_dofs() const noexcept
+  {
+    return agglo_dh.n_dofs();
+  }
 
 private:
   std::vector<long int> master_slave_relationships;
@@ -544,7 +569,6 @@ private:
    * Eulerian vector describing the new cells obtained by the bounding boxes
    */
   Vector<double> euler_vector;
-
 
 
   /**
