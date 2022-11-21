@@ -181,7 +181,7 @@ Poisson<dim>::assemble_system()
   solution.reinit(ah->n_dofs());
   system_rhs.reinit(ah->n_dofs());
 
-  const unsigned int quadrature_degree = 3;
+  const unsigned int quadrature_degree = 2 * dg_fe.get_degree() + 1;
   ah->set_quadrature_degree(quadrature_degree);
   ah->set_agglomeration_flags(update_values | update_JxW_values |
                               update_gradients | update_quadrature_points);
@@ -200,7 +200,7 @@ Poisson<dim>::assemble_system()
 
 
   FEFaceValues<dim> fe_face_boundary_values(dg_fe,
-                                            QGauss<dim - 1>(3),
+                                            QGauss<dim - 1>(quadrature_degree),
                                             update_values | update_JxW_values |
                                               update_gradients |
                                               update_normal_vectors |
