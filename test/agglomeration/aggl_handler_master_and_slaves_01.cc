@@ -41,5 +41,5 @@ main()
 
   // Agglomerate the cells just stored
   ah.agglomerate_cells(cells_to_be_agglomerated);
-  print_agglomeration(std::cout, ah);
+  ah.print_agglomeration(std::cout);
 }

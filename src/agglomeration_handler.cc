@@ -30,6 +30,7 @@ AgglomerationHandler<dim, spacedim>::AgglomerationHandler(
   Assert(cached_tria->get_triangulation().n_active_cells() > 0,
          ExcMessage(
            "The triangulation must not be empty upon calling this function."));
+  n_agglomerations = 0;
   initialize_agglomeration_data(cached_tria);
 }
 
@@ -121,7 +122,7 @@ template <int dim, int spacedim>
 Quadrature<dim>
 AgglomerationHandler<dim, spacedim>::agglomerated_quadrature(
   const std::vector<typename Triangulation<dim, spacedim>::active_cell_iterator>
-    &                    cells,
+                        &cells,
   const Quadrature<dim> &quadrature_type) const
 {
   Assert(quadrature_type.size() > 0,
@@ -262,6 +263,128 @@ AgglomerationHandler<dim, spacedim>::reinit(
 
 template <int dim, int spacedim>
 const FEValuesBase<dim, spacedim> &
+AgglomerationHandler<dim, spacedim>::reinit_master(
+  const typename DoFHandler<dim, spacedim>::active_cell_iterator &cell,
+  const unsigned int                                              face_number,
+  std::unique_ptr<NonMatching::FEImmersedSurfaceValues<spacedim>>
+    &agglo_isv_ptr) const
+{
+  Assert(is_master_cell(cell), ExcMessage("This cell must be a master one."));
+  const auto &info_neighbors   = master_neighbors[{cell, face_number}];
+  const auto &local_face_idx   = std::get<0>(info_neighbors);
+  const auto &neighboring_cell = std::get<3>(info_neighbors);
+  // const auto &local_face_idx_out = std::get<2>(info_neighbors);
+
+  FE_Nothing<dim, spacedim> dummy_fe;
+  DoFHandler<dim, spacedim> dummy_dh(*tria);
+  dummy_dh.distribute_dofs(dummy_fe);
+
+  FEFaceValues<dim, spacedim> no_values(
+    *mapping,
+    dummy_fe,
+    QGauss<dim - 1>(agglomeration_quadrature_degree),
+    update_quadrature_points | update_JxW_values |
+      update_normal_vectors); // only for quadrature
+
+
+
+  if (neighboring_cell.state() == IteratorState::valid)
+    {
+      no_values.reinit(neighboring_cell, local_face_idx);
+
+      auto q_points = no_values.get_quadrature_points();
+
+      const auto &JxWs    = no_values.get_JxW_values();
+      const auto &normals = no_values.get_normal_vectors();
+
+      // typename DoFHandler<dim, spacedim>::cell_iterator cell_dh(
+      //   *neighboring_cell->neighbor(local_face_idx_out), &euler_dh);
+      const double bbox_measure = bboxes[cell->active_cell_index()].volume();
+      std::vector<Point<spacedim>> unit_q_points;
+
+      std::transform(q_points.begin(),
+                     q_points.end(),
+                     std::back_inserter(unit_q_points),
+                     [&](const Point<spacedim> &p) {
+                       return euler_mapping->transform_real_to_unit_cell(cell,
+                                                                         p);
+                     });
+
+      NonMatching::ImmersedSurfaceQuadrature<dim, spacedim> surface_quad(
+        unit_q_points, JxWs, normals);
+
+      agglo_isv_ptr =
+        std::make_unique<NonMatching::FEImmersedSurfaceValues<spacedim>>(
+          *euler_mapping, *fe, surface_quad, agglomeration_face_flags);
+
+      agglo_isv_ptr->reinit(cell);
+
+      // Weights must be scaled with det(J)*J^-t n for each quadrature point
+      // now.
+      std::vector<double> scale_factors;
+      for (unsigned int i = 0; i < q_points.size(); ++i)
+        {
+          // J^-t*n
+          const auto &JmT = (agglo_isv_ptr->inverse_jacobian(i)).transpose();
+          scale_factors.push_back(bbox_measure *
+                                  apply_transformation(JmT, normals[i]).norm());
+        }
+
+      // Scale original weights properly
+      std::vector<double> scaled_weights(JxWs.size());
+      for (unsigned int i = 0; i < JxWs.size(); ++i)
+        {
+          scaled_weights[i] = JxWs[i] / scale_factors[i];
+        }
+
+      // update the Quadrature rule
+      surface_quad.initialize(unit_q_points, scaled_weights);
+
+      // update the ptr to FEIsv and finally call reinit
+      agglo_isv_ptr.reset(new NonMatching::FEImmersedSurfaceValues<spacedim>(
+        *euler_mapping, *fe, surface_quad, agglomeration_face_flags));
+
+      agglo_isv_ptr->reinit(cell);
+
+      return *agglo_isv_ptr;
+    }
+  else
+    {
+      // Then it's a boundary face of an agglomeration living on the
+      // boundary of the tria. You need to return an FEFaceValues on the
+      // boundary face of a boundary cell.
+      Triangulation<dim, spacedim> dummy_tria;
+
+      const auto CellType = dealii::ReferenceCell::n_vertices_to_type(
+        dim, cell->n_vertices()); // understand the kind of reference cell
+                                  // from vertices
+
+      GridGenerator::reference_cell(
+        dummy_tria, CellType); // store reference cell stored in tria
+      dealii::DoFHandler<dim, spacedim> dh(dummy_tria);
+      dh.distribute_dofs(*fe);
+
+      const auto &cell_dh = dh.begin_active();
+      for (unsigned int i = 0; i < cell->n_vertices(); ++i)
+        cell_dh->vertex(i) = cell->vertex(i); // the vertices of this real cell
+
+
+      // Return a standard FEFaceValues, using scratch data
+      standard_scratch_face_bdary = std::make_unique<ScratchData>(
+        *mapping,
+        fe_collection[2],
+        QGauss<dim>(agglomeration_quadrature_degree),
+        agglomeration_flags,
+        QGauss<dim - 1>(agglomeration_quadrature_degree),
+        agglomeration_face_flags);
+      return standard_scratch_face_bdary->reinit(cell_dh, local_face_idx);
+    }
+}
+
+
+
+template <int dim, int spacedim>
+const FEValuesBase<dim, spacedim> &
 AgglomerationHandler<dim, spacedim>::reinit(
   const typename DoFHandler<dim, spacedim>::active_cell_iterator &cell,
   const unsigned int face_number) const
@@ -269,133 +392,10 @@ AgglomerationHandler<dim, spacedim>::reinit(
   Assert(euler_mapping,
          ExcMessage("The mapping describing the physical element stemming from "
                     "agglomeration has not been set up."));
-  const auto &info_neighbors     = master_neighbors[{cell, face_number}];
-  const auto &local_face_idx     = std::get<0>(info_neighbors);
-  const auto &neighboring_cell   = std::get<1>(info_neighbors);
-  const auto &local_face_idx_out = std::get<2>(info_neighbors);
-  if (is_master_cell(cell))
-    {
-      FE_Nothing<dim, spacedim> dummy_fe;
-      DoFHandler<dim, spacedim> dummy_dh(*tria);
-      dummy_dh.distribute_dofs(dummy_fe);
 
-      FEFaceValues<dim, spacedim> no_values(
-        *mapping,
-        dummy_fe,
-        QGauss<dim - 1>(agglomeration_quadrature_degree),
-        update_quadrature_points | update_JxW_values |
-          update_normal_vectors); // only for quadrature
-
-
-
-      if (neighboring_cell.state() == IteratorState::valid)
-        {
-          // auto test = agglomerated_neighbor(
-          //   cell, shared_face_agglomeration_idx[{cell, face_number}]);
-          // std::cout << "neighboring_cell dalla master "
-          //           << cell->active_cell_index()
-          //           << " ha indice: " <<
-          //           neighboring_cell->active_cell_index()
-          //           << std::endl;
-          // std::cout << "Local face idx: " << local_face_idx << std::endl;
-          no_values.reinit(neighboring_cell->neighbor(local_face_idx_out),
-                           local_face_idx);
-
-          auto q_points = no_values.get_quadrature_points();
-
-          const auto &JxWs    = no_values.get_JxW_values();
-          const auto &normals = no_values.get_normal_vectors();
-
-          typename DoFHandler<dim, spacedim>::cell_iterator cell_dh(
-            *neighboring_cell->neighbor(local_face_idx_out), &euler_dh);
-          const double bbox_measure =
-            bboxes[cell->active_cell_index()].volume();
-          std::vector<Point<spacedim>> unit_q_points;
-
-          std::transform(q_points.begin(),
-                         q_points.end(),
-                         std::back_inserter(unit_q_points),
-                         [&](const Point<spacedim> &p) {
-                           return euler_mapping->transform_real_to_unit_cell(
-                             cell, p);
-                         });
-
-          NonMatching::ImmersedSurfaceQuadrature<dim, spacedim> surface_quad(
-            unit_q_points, JxWs, normals);
-
-          agglomerated_isv =
-            std::make_unique<NonMatching::FEImmersedSurfaceValues<spacedim>>(
-              *euler_mapping, *fe, surface_quad, agglomeration_face_flags);
-
-          agglomerated_isv->reinit(cell);
-
-          // Weights must be scaled with det(J)*J^-t n for each quadrature point
-          // now.
-          std::vector<double> scale_factors;
-          for (unsigned int i = 0; i < q_points.size(); ++i)
-            {
-              // J^-t*n
-              const auto &JmT =
-                (agglomerated_isv->inverse_jacobian(i)).transpose();
-              scale_factors.push_back(
-                bbox_measure * apply_transformation(JmT, normals[i]).norm());
-            }
-
-          // Scale original weights properly
-          std::vector<double> scaled_weights(JxWs.size());
-          for (unsigned int i = 0; i < JxWs.size(); ++i)
-            {
-              scaled_weights[i] = JxWs[i] / scale_factors[i];
-            }
-
-          // update the Quadrature rule
-          surface_quad.initialize(unit_q_points, scaled_weights);
-
-          // update the ptr to FEIsv and finally call reinit
-          agglomerated_isv.reset(
-            new NonMatching::FEImmersedSurfaceValues<spacedim>(
-              *euler_mapping, *fe, surface_quad, agglomeration_face_flags));
-
-          agglomerated_isv->reinit(cell);
-
-          return *agglomerated_isv;
-        }
-      else
-        {
-          // Then it's a boundary face of an agglomeration living on the
-          // boundary of the tria. You need to return an FEFaceValues on the
-          // boundary face of a boundary cell.
-          Triangulation<dim, spacedim> dummy_tria;
-
-          const auto CellType = dealii::ReferenceCell::n_vertices_to_type(
-            dim, cell->n_vertices()); // understand the kind of reference cell
-                                      // from vertices
-
-          GridGenerator::reference_cell(
-            dummy_tria, CellType); // store reference cell stored in tria
-          dealii::DoFHandler<dim, spacedim> dh(dummy_tria);
-          dh.distribute_dofs(*fe);
-
-          const auto &cell_dh = dh.begin_active();
-          for (unsigned int i = 0; i < cell->n_vertices(); ++i)
-            cell_dh->vertex(i) =
-              cell->vertex(i); // the vertices of this real cell
-
-
-          // Return a standard FEFaceValues, using scratch data
-          standard_scratch_face = std::make_unique<ScratchData>(
-            *mapping,
-            fe_collection[2],
-            QGauss<dim>(agglomeration_quadrature_degree),
-            agglomeration_flags,
-            QGauss<dim - 1>(agglomeration_quadrature_degree),
-            agglomeration_face_flags);
-          return standard_scratch_face->reinit(cell_dh, local_face_idx);
-        }
-    }
-  else if ((is_standard_cell(cell) && at_boundary(cell, face_number)) ||
-           (is_standard_cell(cell) &&
-            is_master_cell(agglomerated_neighbor(cell, face_number))))
+  if ((is_standard_cell(cell) && at_boundary(cell, face_number)) ||
+      (is_standard_cell(cell) &&
+       is_master_cell(agglomerated_neighbor(cell, face_number))))
     {
       standard_scratch_face_any = std::make_unique<ScratchData>(
         *mapping,
@@ -408,15 +408,8 @@ AgglomerationHandler<dim, spacedim>::reinit(
     }
   else
     {
-      Assert(false, ExcMessage("This should not happen."));
-      std::vector<Point<dim>> pts{{}};
-      std::vector<double>     wgts{0.};
-      Quadrature<dim>         dummy_quad(pts, wgts);
-      standard_scratch = std::make_unique<ScratchData>(*mapping,
-                                                       fe_collection[1],
-                                                       dummy_quad,
-                                                       agglomeration_flags);
-      return standard_scratch->reinit(cell);
+      Assert(is_master_cell(cell), ExcMessage("This should be true."));
+      return reinit_master(cell, face_number, agglomerated_isv_bdary);
     }
 }
 
@@ -463,19 +456,37 @@ AgglomerationHandler<dim, spacedim>::reinit_interface(
     }
   else if (is_standard_cell(neigh_cell) && is_master_cell(cell_in))
     {
-      const auto &fe_in = reinit(cell_in, local_in);
+      const auto &fe_in                 = reinit(cell_in, local_in);
+      standard_scratch_face_std_another = std::make_unique<ScratchData>(
+        *mapping,
+        fe_collection[2],
+        QGauss<dim>(agglomeration_quadrature_degree),
+        agglomeration_flags,
+        QGauss<dim - 1>(agglomeration_quadrature_degree),
+        agglomeration_face_flags);
+
       std::pair<const FEValuesBase<dim, spacedim> &,
                 const FEValuesBase<dim, spacedim> &>
-        my_p(fe_in, standard_scratch_face_std->reinit(neigh_cell, local_neigh));
-
+        my_p(fe_in,
+             standard_scratch_face_std_another->reinit(neigh_cell,
+                                                       local_neigh));
       return my_p;
     }
   else if (is_standard_cell(cell_in) && is_master_cell(neigh_cell))
     {
-      const auto &fe_out = reinit(neigh_cell, local_neigh);
+      const auto &fe_out                = reinit(neigh_cell, local_neigh);
+      standard_scratch_face_std_another = std::make_unique<ScratchData>(
+        *mapping,
+        fe_collection[2],
+        QGauss<dim>(agglomeration_quadrature_degree),
+        agglomeration_flags,
+        QGauss<dim - 1>(agglomeration_quadrature_degree),
+        agglomeration_face_flags);
+
       std::pair<const FEValuesBase<dim, spacedim> &,
                 const FEValuesBase<dim, spacedim> &>
-        my_p(standard_scratch_face_std->reinit(cell_in, local_in), fe_out);
+        my_p(standard_scratch_face_std_another->reinit(cell_in, local_in),
+             fe_out);
 
       return my_p;
     }
@@ -487,19 +498,14 @@ AgglomerationHandler<dim, spacedim>::reinit_interface(
       // averages between a face shared by two neighboring agglomerations.
       // This feature is not implemented yet
 
-      const auto &fe_in  = reinit(cell_in, local_in);
-      const auto &fe_out = reinit(neigh_cell, local_neigh);
+      const auto &fe_in = reinit_master(cell_in, local_in, agglomerated_isv);
+      const auto &fe_out =
+        reinit_master(neigh_cell, local_neigh, agglomerated_isv_neigh);
       std::pair<const FEValuesBase<dim, spacedim> &,
                 const FEValuesBase<dim, spacedim> &>
         my_p(fe_in, fe_out);
 
       return my_p;
-      // Assert(
-      //   false,
-      //   ExcNotImplemented(
-      //     "Both cells are master cells. That means you want to compute the
-      //     jumps or averages between a face shared by two neighboring
-      //     agglomerations. This feature is not implemented yet."));
     }
 }
 
