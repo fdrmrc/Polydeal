@@ -25,7 +25,9 @@
 // the creation of two FEFaceValues, one reinited from T_0 and the other one
 // reinited from T_1. If one of the two is a face of an agglomeration, then you
 // want again the same behaviour, i.e. you want to have the same quadrature
-// points, in the same order, as in the standard case.
+// points, in the same order, as in the standard case. The difference between
+// this test and the previous ones is that now there's a case where both cells
+// are master cells.
 
 #include <deal.II/grid/grid_generator.h>
 
@@ -42,7 +44,8 @@ test_q_points_agglomerated_face(Triangulation<dim> &tria)
   GridTools::Cache<2>     cached_tria(tria, mapping);
   AgglomerationHandler<2> ah(cached_tria);
 
-  std::vector<types::global_cell_index> idxs_to_be_agglomerated = {3, 6, 9};
+  std::vector<types::global_cell_index> idxs_to_be_agglomerated = {
+    3, 6, 9, 12, 13}; //{8, 9, 10, 11};
 
   std::vector<typename Triangulation<2>::active_cell_iterator>
     cells_to_be_agglomerated;
@@ -50,7 +53,7 @@ test_q_points_agglomerated_face(Triangulation<dim> &tria)
                                          idxs_to_be_agglomerated,
                                          cells_to_be_agglomerated);
 
-  std::vector<types::global_cell_index> idxs_to_be_agglomerated2 = {36, 37};
+  std::vector<types::global_cell_index> idxs_to_be_agglomerated2 = {15, 36, 37};
 
   std::vector<typename Triangulation<2>::active_cell_iterator>
     cells_to_be_agglomerated2;
@@ -58,7 +61,7 @@ test_q_points_agglomerated_face(Triangulation<dim> &tria)
                                          idxs_to_be_agglomerated2,
                                          cells_to_be_agglomerated2);
 
-  std::vector<types::global_cell_index> idxs_to_be_agglomerated3 = {25, 19};
+  std::vector<types::global_cell_index> idxs_to_be_agglomerated3 = {57, 60, 54};
 
   std::vector<typename Triangulation<2>::active_cell_iterator>
     cells_to_be_agglomerated3;
@@ -66,16 +69,25 @@ test_q_points_agglomerated_face(Triangulation<dim> &tria)
                                          idxs_to_be_agglomerated3,
                                          cells_to_be_agglomerated3);
 
+  std::vector<types::global_cell_index> idxs_to_be_agglomerated4 = {25, 19, 22};
+
+  std::vector<typename Triangulation<2>::active_cell_iterator>
+    cells_to_be_agglomerated4;
+  Tests::collect_cells_for_agglomeration(tria,
+                                         idxs_to_be_agglomerated4,
+                                         cells_to_be_agglomerated4);
+
   // Agglomerate the cells just stored
   ah.agglomerate_cells(cells_to_be_agglomerated);
   ah.agglomerate_cells(cells_to_be_agglomerated2);
   ah.agglomerate_cells(cells_to_be_agglomerated3);
+  ah.agglomerate_cells(cells_to_be_agglomerated4);
 
 
   FE_DGQ<2> fe_dg(1);
   ah.distribute_agglomerated_dofs(fe_dg);
   ah.set_quadrature_degree(3);
-  for (const auto &cell : ah.agglo_dh.active_cell_iterators())
+  for (const auto &cell : ah.agglomeration_cell_iterators())
     {
       if (!ah.is_slave_cell(cell))
         {

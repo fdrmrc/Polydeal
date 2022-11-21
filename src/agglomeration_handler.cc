@@ -481,11 +481,25 @@ AgglomerationHandler<dim, spacedim>::reinit_interface(
     }
   else
     {
-      // both are masters
-      Assert(
-        false,
-        ExcNotImplemented(
-          "Both cells are master cells. That means you want to compute the jumps or averages between a face shared by two neighboring agglomerations. This feature is not implemented yet."));
+      Assert(is_master_cell(cell_in) && is_master_cell(neigh_cell),
+             ExcMessage("Both cells should be masters."));
+      // both are masters. That means you want to compute the jumps or
+      // averages between a face shared by two neighboring agglomerations.
+      // This feature is not implemented yet
+
+      const auto &fe_in  = reinit(cell_in, local_in);
+      const auto &fe_out = reinit(neigh_cell, local_neigh);
+      std::pair<const FEValuesBase<dim, spacedim> &,
+                const FEValuesBase<dim, spacedim> &>
+        my_p(fe_in, fe_out);
+
+      return my_p;
+      // Assert(
+      //   false,
+      //   ExcNotImplemented(
+      //     "Both cells are master cells. That means you want to compute the
+      //     jumps or averages between a face shared by two neighboring
+      //     agglomerations. This feature is not implemented yet."));
     }
 }
 

@@ -144,7 +144,8 @@ Poisson<dim>::setup_agglomeration()
                                          cells_to_be_agglomerated4);
 
 
-  std::vector<types::global_cell_index> idxs_to_be_agglomerated5 = {3772, 3773};
+  std::vector<types::global_cell_index> idxs_to_be_agglomerated5 = {
+    3760, 3761}; //{3772,3773}
   std::vector<typename Triangulation<dim>::active_cell_iterator>
     cells_to_be_agglomerated5;
   Tests::collect_cells_for_agglomeration(tria,
@@ -158,6 +159,13 @@ Poisson<dim>::setup_agglomeration()
                                          idxs_to_be_agglomerated6,
                                          cells_to_be_agglomerated6);
 
+  std::vector<types::global_cell_index> idxs_to_be_agglomerated7 = {3765, 3764};
+  std::vector<typename Triangulation<dim>::active_cell_iterator>
+    cells_to_be_agglomerated7;
+  Tests::collect_cells_for_agglomeration(tria,
+                                         idxs_to_be_agglomerated7,
+                                         cells_to_be_agglomerated7);
+
 
   // Agglomerate the cells just stored
   ah = std::make_unique<AgglomerationHandler<dim>>(*cached_tria);
@@ -167,6 +175,7 @@ Poisson<dim>::setup_agglomeration()
   ah->agglomerate_cells(cells_to_be_agglomerated4);
   ah->agglomerate_cells(cells_to_be_agglomerated5);
   ah->agglomerate_cells(cells_to_be_agglomerated6);
+  ah->agglomerate_cells(cells_to_be_agglomerated7);
   ah->distribute_agglomerated_dofs(dg_fe);
   ah->create_agglomeration_sparsity_pattern(sparsity);
 }
