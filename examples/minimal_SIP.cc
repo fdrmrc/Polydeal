@@ -29,6 +29,8 @@
 
 #include "../include/agglomeration_handler.h"
 
+constexpr double entry_tol = 1e-14;
+
 template <int dim>
 class RightHandSide : public Function<dim>
 {
@@ -91,6 +93,11 @@ public:
   constexpr Poisson(const bool = true);
   void
   run();
+  inline const SparseMatrix<double> &
+  get_matrix()
+  {
+    return system_matrix;
+  }
 
   double penalty = 20.;
 };
@@ -542,12 +549,40 @@ main(int argc, char *argv[])
           Poisson<2> poisson_problem(false); // standard SIPDG
           poisson_problem.run();
         }
+      else if (std::strcmp(argv[1], "test_equality") == 0)
+        {
+          std::cout << "Running the two techniques and testing for equality"
+                    << std::endl;
+          Poisson<2> standard_problem(false);
+          standard_problem.run();
+          const auto &standard_matrix = standard_problem.get_matrix();
+          Poisson<2>  agglo_problem(true);
+          agglo_problem.run();
+          const auto &agglo_matrix = agglo_problem.get_matrix();
+
+          std::cout
+            << "Comparing entries of the two matrices by subtracting them:"
+            << std::endl;
+          for (unsigned int i = 0; i < standard_matrix.m(); ++i)
+            for (unsigned int j = 0; j < standard_matrix.n(); ++j)
+              {
+                std::cout << std::fabs(standard_matrix.el(i, j) -
+                                       agglo_matrix.el(i, j))
+                          << "\t";
+                Assert(
+                  std::fabs(standard_matrix.el(i, j) - agglo_matrix.el(i, j)) <
+                    entry_tol,
+                  ExcMessage(
+                    "Matrices are not equivalent up to machine precision. Code is buggy."));
+              }
+          std::cout << std::endl;
+        }
       else
         {
           Assert(
             false,
             ExcMessage(
-              "Please choose between `agglo` and `standard` way of assembling the matrix."));
+              "Please choose between `agglo` and `standard` way of assembling the matrix. If you want to test if the two approcahes are equal, use `test_equality` as command line argument."));
         }
     }
   else
