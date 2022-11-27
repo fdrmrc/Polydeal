@@ -91,7 +91,7 @@ main()
       for (unsigned int f = 0; f < n_agglomerated_faces_per_cell; ++f)
         {
           std::cout << "Agglomerated face with idx: " << f << std::endl;
-          const auto &[local_face_idx, neigh, local_face_idx_out] =
+          const auto &[local_face_idx, neigh, local_face_idx_out, dummy] =
             ah.master_neighbors[{cell, f}];
           {
             std::cout << "Face idx: " << local_face_idx << std::endl;

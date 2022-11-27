@@ -1,0 +1,44 @@
+Cell with idx: 3
+Number of faces for this cell: 8
+Neighbor of neighbor for (3,0) = 4294967295
+Neighbor of neighbor for (3,1) = 4294967295
+Neighbor of neighbor for (3,2) = 0
+Neighbor of neighbor for (3,3) = 4294967295
+Neighbor of neighbor for (3,4) = 4294967295
+Neighbor of neighbor for (3,5) = 1
+Neighbor of neighbor for (3,6) = 4
+Neighbor of neighbor for (3,7) = 3
+
+Cell with idx: 7
+Number of faces for this cell: 8
+Neighbor of neighbor for (7,0) = 2
+Neighbor of neighbor for (7,1) = 4294967295
+Neighbor of neighbor for (7,2) = 4294967295
+Neighbor of neighbor for (7,3) = 4294967295
+Neighbor of neighbor for (7,4) = 6
+Neighbor of neighbor for (7,5) = 1
+Neighbor of neighbor for (7,6) = 4294967295
+Neighbor of neighbor for (7,7) = 3
+
+Cell with idx: 11
+Number of faces for this cell: 8
+Neighbor of neighbor for (11,0) = 4294967295
+Neighbor of neighbor for (11,1) = 5
+Neighbor of neighbor for (11,2) = 0
+Neighbor of neighbor for (11,3) = 7
+Neighbor of neighbor for (11,4) = 4294967295
+Neighbor of neighbor for (11,5) = 4294967295
+Neighbor of neighbor for (11,6) = 4
+Neighbor of neighbor for (11,7) = 4294967295
+
+Cell with idx: 15
+Number of faces for this cell: 8
+Neighbor of neighbor for (15,0) = 2
+Neighbor of neighbor for (15,1) = 5
+Neighbor of neighbor for (15,2) = 4294967295
+Neighbor of neighbor for (15,3) = 7
+Neighbor of neighbor for (15,4) = 6
+Neighbor of neighbor for (15,5) = 4294967295
+Neighbor of neighbor for (15,6) = 4294967295
+Neighbor of neighbor for (15,7) = 4294967295
+

@@ -14,11 +14,25 @@
  * ---------------------------------------------------------------------
  */
 
-// Select some cells of a tria, agglomerated them together and check that the
-// connectivity information for master cells is correct.
+// Start from a 4x4 grid, agglomerate cells so that you have 4 cells:
+// x  -  -   x  -   -  x
+// |         |         |
+//     12         15
+// |         |         |
+// x  -  -   x  -  -   x
+// |         |         |
+//      3          7
+// |         |         |
+// x   -  -  x  -  -   x
+//
+// Here, 3, 7, 12, 15 are the indices of the master cells of the agglomeration.
+// In this situation, for each cell T, there are *two* face indices from the
+// neighboring cell such that the neighbor is T.
+// This test checks that `neighbor_of_agglomerated_neighbor` can be called for
+// each face of the agglomeration. As per documentation, when a face is a
+// boundary face of the triangulation, and invalid unsigned int is returned.
 
 #include <deal.II/grid/grid_generator.h>
-#include <deal.II/grid/grid_out.h>
 
 #include "../tests.h"
 
@@ -89,25 +103,17 @@ main()
          IteratorFilters::ActiveFEIndexEqualTo(ah.AggloIndex::master))
     {
       std::cout << "Cell with idx: " << cell->active_cell_index() << std::endl;
-      unsigned int n_agglomerated_faces_per_cell = ah.n_faces(cell);
-      std::cout << "Number of faces for the agglomeration: "
-                << n_agglomerated_faces_per_cell << std::endl;
-      for (unsigned int f = 0; f < n_agglomerated_faces_per_cell; ++f)
-        { 
-          std::cout << "Agglomerated face with idx: " << f << std::endl;
-          const auto &[local_face_idx, neigh, local_face_idx_out, dummy] =
-            ah.master_neighbors[{cell, f}];
-          {
-            std::cout << "Face idx: " << local_face_idx << std::endl;
-            if (neigh.state() == IteratorState::valid)
-              {
-                std::cout << "Neighbor idx: " << neigh->active_cell_index()
-                          << std::endl;
-              }
-            std::cout << "Face idx from outside: " << local_face_idx_out
-                      << std::endl;
-          }
-          std::cout << std::endl;
+      const unsigned int n_faces = ah.n_faces(cell);
+      std::cout << "Number of faces for this cell: " << n_faces << std::endl;
+      for (unsigned int f = 0; f < n_faces; ++f)
+        {
+          std::cout << "Neighbor of neighbor for (" << cell->active_cell_index()
+                    << "," << f
+                    << ") = " << ah.neighbor_of_agglomerated_neighbor(cell, f)
+                    << std::endl;
         }
+
+
+      std::cout << std::endl;
     }
 }
