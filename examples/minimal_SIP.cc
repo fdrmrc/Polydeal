@@ -88,7 +88,7 @@ private:
   std::unique_ptr<const Function<dim>>   rhs_function;
 
 public:
-  constexpr Poisson(const bool & = true);
+  constexpr Poisson(const bool = true);
   void
   run();
 
@@ -98,7 +98,7 @@ public:
 
 
 template <int dim>
-constexpr Poisson<dim>::Poisson(const bool &agglomerated_or_not)
+constexpr Poisson<dim>::Poisson(const bool agglomerated_or_not)
   : to_agglomerate(agglomerated_or_not)
   , mapping(1)
   , dg_fe(1)
