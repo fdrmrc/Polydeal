@@ -212,8 +212,7 @@ AgglomerationHandler<dim, spacedim>::reinit(
               &c) { return c; });
 
       Quadrature<dim> agglo_quad =
-        agglomerated_quadrature(agglo_cells,
-                                QGauss<dim>(agglomeration_quadrature_degree));
+        agglomerated_quadrature(agglo_cells, agglomeration_quad);
 
       const double bbox_measure = bboxes[cell->active_cell_index()].volume();
 
@@ -238,12 +237,10 @@ AgglomerationHandler<dim, spacedim>::reinit(
   else if (is_standard_cell(cell))
     {
       // ensure the DG space is the same we have from the other DoFHandler(s)
-      standard_scratch =
-        std::make_unique<ScratchData>(*mapping,
-                                      fe_collection[2],
-                                      QGauss<dim>(
-                                        agglomeration_quadrature_degree),
-                                      agglomeration_flags);
+      standard_scratch = std::make_unique<ScratchData>(*mapping,
+                                                       fe_collection[2],
+                                                       agglomeration_quad,
+                                                       agglomeration_flags);
       return standard_scratch->reinit(cell);
     }
   else
@@ -282,7 +279,7 @@ AgglomerationHandler<dim, spacedim>::reinit_master(
   FEFaceValues<dim, spacedim> no_values(
     *mapping,
     dummy_fe,
-    QGauss<dim - 1>(agglomeration_quadrature_degree),
+    agglomeration_face_quad,
     update_quadrature_points | update_JxW_values |
       update_normal_vectors); // only for quadrature
 
@@ -370,13 +367,13 @@ AgglomerationHandler<dim, spacedim>::reinit_master(
 
 
       // Return a standard FEFaceValues, using scratch data
-      standard_scratch_face_bdary = std::make_unique<ScratchData>(
-        *mapping,
-        fe_collection[2],
-        QGauss<dim>(agglomeration_quadrature_degree),
-        agglomeration_flags,
-        QGauss<dim - 1>(agglomeration_quadrature_degree),
-        agglomeration_face_flags);
+      standard_scratch_face_bdary =
+        std::make_unique<ScratchData>(*mapping,
+                                      fe_collection[2],
+                                      agglomeration_quad,
+                                      agglomeration_flags,
+                                      agglomeration_face_quad,
+                                      agglomeration_face_flags);
       return standard_scratch_face_bdary->reinit(cell_dh, local_face_idx);
     }
 }
@@ -397,13 +394,13 @@ AgglomerationHandler<dim, spacedim>::reinit(
       (is_standard_cell(cell) &&
        is_master_cell(agglomerated_neighbor(cell, face_number))))
     {
-      standard_scratch_face_any = std::make_unique<ScratchData>(
-        *mapping,
-        fe_collection[2],
-        QGauss<dim>(agglomeration_quadrature_degree),
-        agglomeration_flags,
-        QGauss<dim - 1>(agglomeration_quadrature_degree),
-        agglomeration_face_flags);
+      standard_scratch_face_any =
+        std::make_unique<ScratchData>(*mapping,
+                                      fe_collection[2],
+                                      agglomeration_quad,
+                                      agglomeration_flags,
+                                      agglomeration_face_quad,
+                                      agglomeration_face_flags);
       return standard_scratch_face_any->reinit(cell, face_number);
     }
   else
@@ -431,21 +428,21 @@ AgglomerationHandler<dim, spacedim>::reinit_interface(
 
   if (is_standard_cell(cell_in) && is_standard_cell(neigh_cell))
     {
-      standard_scratch_face_std = std::make_unique<ScratchData>(
-        *mapping,
-        fe_collection[2],
-        QGauss<dim>(agglomeration_quadrature_degree),
-        agglomeration_flags,
-        QGauss<dim - 1>(agglomeration_quadrature_degree),
-        agglomeration_face_flags);
+      standard_scratch_face_std =
+        std::make_unique<ScratchData>(*mapping,
+                                      fe_collection[2],
+                                      agglomeration_quad,
+                                      agglomeration_flags,
+                                      agglomeration_face_quad,
+                                      agglomeration_face_flags);
 
-      standard_scratch_face_std_neigh = std::make_unique<ScratchData>(
-        *mapping,
-        fe_collection[2],
-        QGauss<dim>(agglomeration_quadrature_degree),
-        agglomeration_flags,
-        QGauss<dim - 1>(agglomeration_quadrature_degree),
-        agglomeration_face_flags);
+      standard_scratch_face_std_neigh =
+        std::make_unique<ScratchData>(*mapping,
+                                      fe_collection[2],
+                                      agglomeration_quad,
+                                      agglomeration_flags,
+                                      agglomeration_face_quad,
+                                      agglomeration_face_flags);
 
       std::pair<const FEValuesBase<dim, spacedim> &,
                 const FEValuesBase<dim, spacedim> &>
@@ -456,14 +453,14 @@ AgglomerationHandler<dim, spacedim>::reinit_interface(
     }
   else if (is_standard_cell(neigh_cell) && is_master_cell(cell_in))
     {
-      const auto &fe_in                 = reinit(cell_in, local_in);
-      standard_scratch_face_std_another = std::make_unique<ScratchData>(
-        *mapping,
-        fe_collection[2],
-        QGauss<dim>(agglomeration_quadrature_degree),
-        agglomeration_flags,
-        QGauss<dim - 1>(agglomeration_quadrature_degree),
-        agglomeration_face_flags);
+      const auto &fe_in = reinit(cell_in, local_in);
+      standard_scratch_face_std_another =
+        std::make_unique<ScratchData>(*mapping,
+                                      fe_collection[2],
+                                      agglomeration_quad,
+                                      agglomeration_flags,
+                                      agglomeration_face_quad,
+                                      agglomeration_face_flags);
 
       std::pair<const FEValuesBase<dim, spacedim> &,
                 const FEValuesBase<dim, spacedim> &>
@@ -474,14 +471,14 @@ AgglomerationHandler<dim, spacedim>::reinit_interface(
     }
   else if (is_standard_cell(cell_in) && is_master_cell(neigh_cell))
     {
-      const auto &fe_out                = reinit(neigh_cell, local_neigh);
-      standard_scratch_face_std_another = std::make_unique<ScratchData>(
-        *mapping,
-        fe_collection[2],
-        QGauss<dim>(agglomeration_quadrature_degree),
-        agglomeration_flags,
-        QGauss<dim - 1>(agglomeration_quadrature_degree),
-        agglomeration_face_flags);
+      const auto &fe_out = reinit(neigh_cell, local_neigh);
+      standard_scratch_face_std_another =
+        std::make_unique<ScratchData>(*mapping,
+                                      fe_collection[2],
+                                      agglomeration_quad,
+                                      agglomeration_flags,
+                                      agglomeration_face_quad,
+                                      agglomeration_face_flags);
 
       std::pair<const FEValuesBase<dim, spacedim> &,
                 const FEValuesBase<dim, spacedim> &>

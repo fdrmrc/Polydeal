@@ -22,7 +22,7 @@ public:
 
   virtual void
   value_list(const std::vector<Point<dim>> &points,
-             std::vector<double> &          values,
+             std::vector<double>           &values,
              const unsigned int /*component*/) const override;
 };
 
@@ -30,7 +30,7 @@ public:
 template <int dim>
 void
 RightHandSide<dim>::value_list(const std::vector<Point<dim>> &points,
-                               std::vector<double> &          values,
+                               std::vector<double>           &values,
                                const unsigned int /*component*/) const
 {
   for (unsigned int i = 0; i < values.size(); ++i)
@@ -50,8 +50,8 @@ private:
   setup_agglomeration();
   void
   distribute_jumps_and_averages(
-    FEFaceValues<dim> &                                   fe_face,
-    FEFaceValues<dim> &                                   fe_face1,
+    FEFaceValues<dim>                                    &fe_face,
+    FEFaceValues<dim>                                    &fe_face1,
     const typename DoFHandler<dim>::active_cell_iterator &cell,
     const unsigned int                                    f);
   void
@@ -174,8 +174,8 @@ Poisson<dim>::setup_agglomeration()
 template <int dim>
 void
 Poisson<dim>::distribute_jumps_and_averages(
-  FEFaceValues<dim> &                                   fe_face,
-  FEFaceValues<dim> &                                   fe_face1,
+  FEFaceValues<dim>                                    &fe_face,
+  FEFaceValues<dim>                                    &fe_face1,
   const typename DoFHandler<dim>::active_cell_iterator &cell,
   const unsigned int                                    f)
 {
@@ -557,7 +557,7 @@ Poisson<dim>::assemble_system()
       // const auto &agglo_values = ah->reinit(cell);
       fe_values.reinit(cell);
 
-      const auto &        q_points  = fe_values.get_quadrature_points();
+      const auto         &q_points  = fe_values.get_quadrature_points();
       const unsigned int  n_qpoints = q_points.size();
       std::vector<double> rhs(n_qpoints);
       rhs_function->value_list(q_points, rhs);
@@ -670,43 +670,5 @@ main()
   Poisson<2> poisson_problem;
   poisson_problem.run();
 
-
-
-  // double total_sum =
-  //   0.; // compute the value of the perimeter of each agglomeration;
-  // ah.set_quadrature_degree(3);
-  // for (const auto &cell :
-  //      ah.agglo_dh.active_cell_iterators() |
-  //        IteratorFilters::ActiveFEIndexEqualTo(ah.AggloIndex::master))
-  //   {
-  //     std::cout << "Cell with idx: " << cell->active_cell_index() <<
-  //     std::endl; unsigned int n_agglomerated_faces_per_cell =
-  //       ah.n_faces(cell);
-  //     std::cout << "Agglo faces: " << n_agglomerated_faces_per_cell
-  //               << std::endl;
-  //     for (unsigned int f = 0; f < n_agglomerated_faces_per_cell; ++f)
-  //       {
-  //         std::cout << "Agglomerated face with idx: " << f << std::endl;
-  //         const auto &info_about_neighbors = ah.master_neighbors[{cell,
-  //         f}]; const auto &test_feisv           = ah.reinit(cell, f);
-  //         double      sum                  = 0.;
-  //         for (const auto &w : test_feisv.get_JxW_values())
-  //           sum += w;
-  //         std::cout << sum << std::endl;
-  //         total_sum += sum;
-  //         sum = 0.;
-  //         std::cout << "Face idx: " << std::get<0>(info_about_neighbors)
-  //                   << std::endl;
-  //         std::cout << "Neighbor idx: "
-  //                   <<
-  //                   std::get<1>(info_about_neighbors)->active_cell_index()
-  //                   << std::endl;
-  //         std::cout << "Face idx from outside "
-  //                   << std::get<2>(info_about_neighbors) << std::endl;
-  //       }
-  //     std::cout << "Perimeter of this agglomeration is : " << total_sum
-  //               << std::endl;
-  //     total_sum = 0.;
-  //   }
   return 0;
 }

@@ -160,19 +160,13 @@ public:
   explicit AgglomerationHandler(
     const GridTools::Cache<dim, spacedim> &cached_tria);
 
-
-
   AgglomerationHandler() = default;
-
-
 
   ~AgglomerationHandler()
   {
     // disconnect the signal
     tria_listener.disconnect();
   }
-
-
 
   /**
    * Distribute degrees of freedom on a grid where some cells have been
@@ -196,25 +190,22 @@ public:
   }
 
 
-
   /**
-   * Set the proper flags for the FEValues object on the agglomerated cell.
+   *
+   * Set the degree of the quadrature formula to be used and the proper flags
+   * for the FEValues object on the agglomerated cell.
    */
-  inline void
-  set_agglomeration_flags(const UpdateFlags &flags)
+  void
+  initialize_fe_values(
+    const Quadrature<dim>     &cell_quadrature,
+    const UpdateFlags         &flags,
+    const Quadrature<dim - 1> &face_quadrature = QGauss<dim - 1>(1),
+    const UpdateFlags         &face_flags      = UpdateFlags::update_default)
   {
-    agglomeration_flags = flags;
-  }
-
-
-
-  /**
-   * Set the degree of the quadrature formula to be used.
-   */
-  inline void
-  set_quadrature_degree(const unsigned int degree)
-  {
-    agglomeration_quadrature_degree = degree;
+    agglomeration_quad       = cell_quadrature;
+    agglomeration_flags      = flags;
+    agglomeration_face_quad  = face_quadrature;
+    agglomeration_face_flags = face_flags | internal_agglomeration_face_flags;
   }
 
   /**
@@ -249,8 +240,6 @@ public:
     const typename Triangulation<dim, spacedim>::active_cell_iterator &cell)
     const;
 
-
-
   /**
    * Get the connectivity of the agglomeration. TODO: this data structure should
    * be private. Keep the getter just for the time being
@@ -280,16 +269,27 @@ public:
 
 
   /**
-   * Return the vector of BoundingBox. Each one of the bounding boxes bounds an
-   * agglomeration.
+   * Return a vector of BoundingBox. Each one of the bounding boxes bounds an
+   * agglomeration present in your triangulation.
    */
-  inline friend std::vector<BoundingBox<spacedim>>
-  get_bboxes(const AgglomerationHandler<dim, spacedim> &ah)
+  inline const std::vector<BoundingBox<spacedim>> &
+  get_bboxes() const
   {
-    return ah.bboxes;
+    return bboxes;
   }
 
 
+  /**
+   *
+   * Return a constant reference to the DoFHandler underlying the
+   * agglomeration. It knows which cell have been agglomerated, and which FE
+   * spaces are present on each cell of the triangulation.
+   */
+  inline const DoFHandler<dim, spacedim> &
+  get_dof_handler() const
+  {
+    return agglo_dh;
+  }
 
   /**
    * Return the number of agglomerated faces for a generic deal.II cell. If it's
@@ -563,9 +563,9 @@ public:
 
 
   /**
- * Helper function to determine whether or not a cell is a slave cell,
- without any information about his parents.
- */
+   * Helper function to determine whether or not a cell is a slave cell, without
+   * any information about his parents.
+   */
   inline bool
   is_slave_cell(
     const typename Triangulation<dim, spacedim>::active_cell_iterator &cell)
@@ -696,13 +696,18 @@ private:
 
   boost::signals2::connection tria_listener;
 
-  UpdateFlags agglomeration_flags = update_default;
+  UpdateFlags agglomeration_flags;
 
-  UpdateFlags agglomeration_face_flags =
+  UpdateFlags agglomeration_face_flags;
+
+  UpdateFlags internal_agglomeration_face_flags =
     update_quadrature_points | update_normal_vectors | update_values |
-    update_gradients | update_inverse_jacobians | update_JxW_values;
+    update_gradients | update_JxW_values | update_inverse_jacobians;
 
-  unsigned int agglomeration_quadrature_degree = 1;
+  Quadrature<dim> agglomeration_quad;
+
+  Quadrature<dim - 1> agglomeration_face_quad;
+
 
   /**
    * Initialize connectivity informations

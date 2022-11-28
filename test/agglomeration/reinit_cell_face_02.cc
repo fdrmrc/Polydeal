@@ -90,6 +90,7 @@ reinit_on_neighbor(Triangulation<dim> &tria)
 
   FE_DGQ<2> fe_dg(1);
   ah.distribute_agglomerated_dofs(fe_dg);
+  ah.initialize_fe_values(QGauss<2>(1), update_default);
   for (const auto &cell : ah.agglomeration_cell_iterators())
     {
       if (!ah.is_slave_cell(cell))

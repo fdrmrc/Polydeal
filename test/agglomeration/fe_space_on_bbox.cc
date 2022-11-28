@@ -81,8 +81,7 @@ main()
 
   FE_DGQ<2> fe_dg(1);
   ah.distribute_agglomerated_dofs(fe_dg);
-  ah.set_agglomeration_flags(update_JxW_values);
-  ah.set_quadrature_degree(3);
+  ah.initialize_fe_values(QGauss<2>(1), update_JxW_values);
 
   for (const auto &cell :
        ah.agglomeration_cell_iterators() |

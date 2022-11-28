@@ -79,6 +79,7 @@ main()
 
   FE_DGQ<2> fe_dg(1);
   ah.distribute_agglomerated_dofs(fe_dg);
+  ah.initialize_fe_values(QGauss<2>(1), update_JxW_values);
   double perimeter = 0.;
   for (const auto &cell :
        ah.agglomeration_cell_iterators() |

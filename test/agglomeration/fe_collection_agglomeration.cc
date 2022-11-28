@@ -81,8 +81,7 @@ test_hyper_cube(Triangulation<2> &tria)
 
   FE_DGQ<2> fe_dg(1);
   ah.distribute_agglomerated_dofs(fe_dg);
-  ah.set_agglomeration_flags(update_JxW_values);
-  ah.set_quadrature_degree(1);
+  ah.initialize_fe_values(QGauss<2>(1), update_JxW_values);
   double total_sum = 0.;
   for (const auto &cell : ah.agglomeration_cell_iterators())
     {
@@ -152,8 +151,7 @@ test_hyper_ball(Triangulation<2> &tria)
 
   FE_DGQ<2> fe_dg(1);
   ah.distribute_agglomerated_dofs(fe_dg);
-  ah.set_agglomeration_flags(update_JxW_values);
-  ah.set_quadrature_degree(2);
+  ah.initialize_fe_values(QGauss<2>(2), update_JxW_values);
   double total_sum = 0.;
   for (const auto &cell : ah.agglomeration_cell_iterators())
     {
