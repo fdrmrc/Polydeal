@@ -86,7 +86,7 @@ test_q_points_agglomerated_face(Triangulation<dim> &tria)
 
   FE_DGQ<2> fe_dg(1);
   ah.distribute_agglomerated_dofs(fe_dg);
-  ah.set_quadrature_degree(3);
+  ah.initialize_fe_values(QGauss<dim>(1), update_default);
   for (const auto &cell : ah.agglomeration_cell_iterators())
     {
       if (!ah.is_slave_cell(cell))
@@ -99,7 +99,7 @@ test_q_points_agglomerated_face(Triangulation<dim> &tria)
             {
               if (!ah.at_boundary(cell, f))
                 {
-                  const auto & neigh_cell = ah.agglomerated_neighbor(cell, f);
+                  const auto  &neigh_cell = ah.agglomerated_neighbor(cell, f);
                   unsigned int nofn =
                     ah.neighbor_of_agglomerated_neighbor(cell, f);
                   std::cout

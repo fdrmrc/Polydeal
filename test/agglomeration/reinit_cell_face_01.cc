@@ -79,10 +79,11 @@ main()
 
   FE_DGQ<2> fe_dg(1);
   ah.distribute_agglomerated_dofs(fe_dg);
+  ah.initialize_fe_values(QGauss<2>(1), update_JxW_values);
   double perimeter = 0.;
   for (const auto &cell :
        ah.agglomeration_cell_iterators() |
-         IteratorFilters::ActiveFEIndexEqualTo(ah.AggloIndex::master))
+         IteratorFilters::ActiveFEIndexEqualTo(ah.CellAgglomerationType::master))
     {
       unsigned int n_agglomerated_faces_per_cell = ah.n_faces(cell);
       for (size_t f = 0; f < n_agglomerated_faces_per_cell; ++f)

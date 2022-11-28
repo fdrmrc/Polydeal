@@ -84,19 +84,19 @@ main()
 
   FE_DGQ<2> fe_dg(1);
   ah.distribute_agglomerated_dofs(fe_dg);
-  for (const auto &cell :
-       ah.agglomeration_cell_iterators() |
-         IteratorFilters::ActiveFEIndexEqualTo(ah.AggloIndex::master))
+  for (const auto &cell : ah.agglomeration_cell_iterators() |
+                            IteratorFilters::ActiveFEIndexEqualTo(
+                              ah.CellAgglomerationType::master))
     {
       std::cout << "Cell with idx: " << cell->active_cell_index() << std::endl;
       unsigned int n_agglomerated_faces_per_cell = ah.n_faces(cell);
       std::cout << "Number of faces for the agglomeration: "
                 << n_agglomerated_faces_per_cell << std::endl;
       for (unsigned int f = 0; f < n_agglomerated_faces_per_cell; ++f)
-        { 
+        {
           std::cout << "Agglomerated face with idx: " << f << std::endl;
           const auto &[local_face_idx, neigh, local_face_idx_out, dummy] =
-            ah.master_neighbors[{cell, f}];
+            ah.get_agglomerated_connectivity()[{cell, f}];
           {
             std::cout << "Face idx: " << local_face_idx << std::endl;
             if (neigh.state() == IteratorState::valid)

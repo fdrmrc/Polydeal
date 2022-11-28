@@ -47,7 +47,10 @@ main()
                                          idxs_to_be_agglomerated2,
                                          cells_to_be_agglomerated2);
 
-  std::vector<types::global_cell_index> idxs_to_be_agglomerated3 = {8, 9, 10, 11};
+  std::vector<types::global_cell_index> idxs_to_be_agglomerated3 = {8,
+                                                                    9,
+                                                                    10,
+                                                                    11};
 
   std::vector<typename Triangulation<2>::active_cell_iterator>
     cells_to_be_agglomerated3;
@@ -55,7 +58,10 @@ main()
                                          idxs_to_be_agglomerated3,
                                          cells_to_be_agglomerated3);
 
-  std::vector<types::global_cell_index> idxs_to_be_agglomerated4 = {12, 13, 14, 15};
+  std::vector<types::global_cell_index> idxs_to_be_agglomerated4 = {12,
+                                                                    13,
+                                                                    14,
+                                                                    15};
 
   std::vector<typename Triangulation<2>::active_cell_iterator>
     cells_to_be_agglomerated4;
@@ -72,7 +78,7 @@ main()
   // Refine the triangulation, and check that the internal data structure for
   // connectivity is empty now.
   tria.refine_global(1);
-  Assert(get_agglomerated_connectivity(ah).empty() == true,
+  Assert(ah.get_agglomerated_connectivity().empty() == true,
          ExcMessage("The connectivity has not been cleared."));
   std::cout << "OK" << std::endl;
   return 0;

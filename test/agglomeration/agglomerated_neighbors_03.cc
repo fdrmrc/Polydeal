@@ -100,7 +100,7 @@ main()
   ah.distribute_agglomerated_dofs(fe_dg);
   for (const auto &cell :
        ah.agglomeration_cell_iterators() |
-         IteratorFilters::ActiveFEIndexEqualTo(ah.AggloIndex::master))
+         IteratorFilters::ActiveFEIndexEqualTo(ah.CellAgglomerationType::master))
     {
       std::cout << "Cell with idx: " << cell->active_cell_index() << std::endl;
       const unsigned int n_faces = ah.n_faces(cell);

@@ -190,10 +190,13 @@ Poisson<dim>::assemble_system()
   solution.reinit(ah->n_dofs());
   system_rhs.reinit(ah->n_dofs());
 
-  const unsigned int quadrature_degree = 2 * dg_fe.get_degree() + 1;
-  ah->set_quadrature_degree(quadrature_degree);
-  ah->set_agglomeration_flags(update_values | update_JxW_values |
-                              update_gradients | update_quadrature_points);
+  const unsigned int quadrature_degree      = 2 * dg_fe.get_degree() + 1;
+  const unsigned int face_quadrature_degree = 2 * dg_fe.get_degree() + 1;
+  ah->initialize_fe_values(QGauss<dim>(quadrature_degree),
+                           update_gradients | update_JxW_values |
+                             update_quadrature_points | update_JxW_values |
+                             update_values,
+                           QGauss<dim - 1>(face_quadrature_degree));
 
   const unsigned int dofs_per_cell = ah->n_dofs_per_cell();
 
@@ -207,16 +210,7 @@ Poisson<dim>::assemble_system()
   FullMatrix<double> M21(dofs_per_cell, dofs_per_cell);
   FullMatrix<double> M22(dofs_per_cell, dofs_per_cell);
 
-
-  FEFaceValues<dim> fe_face_boundary_values(dg_fe,
-                                            QGauss<dim - 1>(quadrature_degree),
-                                            update_values | update_JxW_values |
-                                              update_gradients |
-                                              update_normal_vectors |
-                                              update_quadrature_points);
-
   std::vector<types::global_dof_index> local_dof_indices(dofs_per_cell);
-
 
   for (const auto &cell : ah->agglomeration_cell_iterators())
     {
@@ -392,14 +386,21 @@ Poisson<dim>::assemble_system()
                     *neigh_cell, &(ah->agglo_dh));
                   neigh_dh->get_dof_indices(local_dof_indices_neighbor);
 
-                  system_matrix.add(local_dof_indices, M11);
-                  system_matrix.add(local_dof_indices,
-                                    local_dof_indices_neighbor,
-                                    M12);
-                  system_matrix.add(local_dof_indices_neighbor,
-                                    local_dof_indices,
-                                    M21);
-                  system_matrix.add(local_dof_indices_neighbor, M22);
+                  constraints.distribute_local_to_global(M11,
+                                                         local_dof_indices,
+                                                         system_matrix);
+                  constraints.distribute_local_to_global(
+                    M12,
+                    local_dof_indices,
+                    local_dof_indices_neighbor,
+                    system_matrix);
+                  constraints.distribute_local_to_global(
+                    M21,
+                    local_dof_indices_neighbor,
+                    local_dof_indices,
+                    system_matrix);
+                  constraints.distribute_local_to_global(
+                    M22, local_dof_indices_neighbor, system_matrix);
                 } // Loop only once trough internal faces
             }
         } // Loop over faces of current cell
