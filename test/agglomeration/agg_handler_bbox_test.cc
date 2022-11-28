@@ -34,7 +34,8 @@ main()
   GridTools::Cache<2>     cached_tria(tria, mapping);
   AgglomerationHandler<2> ah(cached_tria);
 
-  std::vector<types::global_cell_index> idxs_to_be_agglomerated = {3, 6, 9, 12, 13};
+  std::vector<types::global_cell_index> idxs_to_be_agglomerated = {
+    3, 6, 9, 12, 13};
   std::vector<typename Triangulation<2>::active_cell_iterator>
     cells_to_be_agglomerated;
   Tests::collect_cells_for_agglomeration(tria,
@@ -42,7 +43,7 @@ main()
                                          cells_to_be_agglomerated);
 
   ah.agglomerate_cells(cells_to_be_agglomerated);
-  const auto bbox_agglomeration_pts = get_bboxes(ah)[13].get_boundary_points();
+  const auto bbox_agglomeration_pts = ah.get_bboxes()[13].get_boundary_points();
   std::cout << "p0: =" << bbox_agglomeration_pts.first << std::endl;
   std::cout << "p1: =" << bbox_agglomeration_pts.second << std::endl;
 }
