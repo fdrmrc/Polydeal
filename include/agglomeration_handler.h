@@ -93,64 +93,17 @@ template <int dim, int spacedim = dim>
 class AgglomerationHandler : public Subscriptor
 {
 public:
-  enum AggloIndex
+  enum CellAgglomerationType
   {
     master   = 0,
     slave    = 1,
     standard = 2
   };
 
-  using ScratchData = MeshWorker::ScratchData<dim, spacedim>;
-
-  // Internal type used to associate the free faces adjacent to an agglomeration
-  using FaceInfo = std::vector<types::global_cell_index>;
-
-  // In order to enumerate the faces of an agglomeration, we consider a map
-  // where the key is represented by an iterator to the (master) cell and the
-  // index of the agglomerated face.
-  using CellAndFace =
-    std::pair<const typename Triangulation<dim, spacedim>::active_cell_iterator,
-              types::global_cell_index>;
-
-  using MasterAndNeighborAndFace = std::tuple<
-    const typename Triangulation<dim, spacedim>::active_cell_iterator,
-    const typename Triangulation<dim, spacedim>::active_cell_iterator,
-    types::global_cell_index>;
-
-  // As value, we have a vector where each element identifies:
-  // - the local face index from the agglomeration
-  // - a cell_iterator to the neighboring cell (which is outside of the
-  // agglomeration)
-  // - the face index seen from outside
-  // This is necessary to compute quadrature rules on each agglomerated face.
-  using MasterNeighborInfo = std::tuple<
-    types::global_cell_index,
-    const typename Triangulation<dim, spacedim>::active_cell_iterator,
-    types::global_cell_index,
-    const typename Triangulation<dim, spacedim>::active_cell_iterator>;
-
   /**
    * Record the number of agglomerations on the grid.
    */
   unsigned int n_agglomerations;
-
-  /**
-   * For each pair (master_cell,agglo_face_no) give information about local face
-   * indices and neighbors.
-   *
-   */
-  mutable std::map<CellAndFace, MasterNeighborInfo> master_neighbors;
-
-  mutable std::map<MasterAndNeighborAndFace, types::global_cell_index>
-    shared_face_agglomeration_idx;
-
-  /**
-   * Similar to the member above, but for all cells in an agglomeration.
-   */
-  mutable std::map<
-    const typename Triangulation<dim, spacedim>::active_cell_iterator,
-    FaceInfo>
-    inadmissible_faces;
 
   /**
    * DoFHandler for the agglomerated space
@@ -242,15 +195,13 @@ public:
 
   /**
    * Get the connectivity of the agglomeration. TODO: this data structure should
-   * be private. Keep the getter just for the time being
+   * be private. Keep the getter just for the time being.
    */
-  inline friend std::map<CellAndFace, MasterNeighborInfo>
-  get_agglomerated_connectivity(const AgglomerationHandler<dim, spacedim> &ah)
+  inline decltype(auto)
+  get_agglomerated_connectivity()
   {
-    return ah.master_neighbors;
+    return master_neighbors;
   }
-
-
 
   /**
    * Display the indices of the vector identifying which cell is agglomerated
@@ -622,15 +573,62 @@ public:
   }
 
 private:
+  using ScratchData = MeshWorker::ScratchData<dim, spacedim>;
+
+  // In order to enumerate the faces of an agglomeration, we consider a map
+  // where the key is represented by an iterator to the (master) cell and the
+  // index of the agglomerated face.
+  using CellAndFace =
+    std::pair<const typename Triangulation<dim, spacedim>::active_cell_iterator,
+              types::global_cell_index>;
+
+  using MasterAndNeighborAndFace = std::tuple<
+    const typename Triangulation<dim, spacedim>::active_cell_iterator,
+    const typename Triangulation<dim, spacedim>::active_cell_iterator,
+    types::global_cell_index>;
+
+  // As value, we have a vector where each element identifies:
+  // - the local face index from the agglomeration
+  // - a cell_iterator to the neighboring cell (which is outside of the
+  // agglomeration)
+  // - the face index seen from outside
+  // This is necessary to compute quadrature rules on each agglomerated face.
+  using MasterNeighborInfo = std::tuple<
+    types::global_cell_index,
+    const typename Triangulation<dim, spacedim>::active_cell_iterator,
+    types::global_cell_index,
+    const typename Triangulation<dim, spacedim>::active_cell_iterator>;
+
+  /**
+   * For each pair (master_cell,agglo_face_no) give information about local face
+   * indices and neighbors.
+   *
+   */
+  mutable std::map<CellAndFace, MasterNeighborInfo> master_neighbors;
+
+  mutable std::map<MasterAndNeighborAndFace, types::global_cell_index>
+    shared_face_agglomeration_idx;
+
+  /**
+   * Vector of indices such that v[cell->active_cell_index()] returns
+   * { -1 if `cell` is a master cell
+   * { -2 if `cell` is a standard deal.II cell
+   * { `cell_master->active_cell_index()`, i.e. the index of the master cell if
+   * `cell` is a slave cell.
+   */
   std::vector<long int> master_slave_relationships;
 
-  // Same as the one above, but storing cell iterators rather than indices.
+  /**
+   *  Same as the one above, but storing cell iterators rather than indices.
+   *
+   */
   std::vector<typename Triangulation<dim, spacedim>::active_cell_iterator>
     master_slave_relationships_iterators;
 
   /**
-   * bboxes[idx] = BBOx associated to the agglomeration with master cell
-   * indexed by idx. Othwerwise ddefault BBox is empty
+   * Vector of `BoundingBoxes` s.t. `bboxes[idx]` equals BBOx associated to the
+   * agglomeration with master cell indexed by ìdx`. Othwerwise default BBox is
+   * empty
    *
    */
   std::vector<BoundingBox<spacedim>> bboxes; // TODO: use map also for BBOxes ?
@@ -700,7 +698,7 @@ private:
 
   UpdateFlags agglomeration_face_flags;
 
-  UpdateFlags internal_agglomeration_face_flags =
+  const UpdateFlags internal_agglomeration_face_flags =
     update_quadrature_points | update_normal_vectors | update_values |
     update_gradients | update_JxW_values | update_inverse_jacobians;
 
@@ -733,7 +731,6 @@ private:
                 master_slave_relationships.end(),
                 -2); // identify all the tria with standard deal.II cells.
 
-    inadmissible_faces.clear();
     master_neighbors.clear();
     bboxes.resize(tria->n_active_cells());
 
@@ -934,7 +931,7 @@ private:
         "The DoFHandler associated to the agglomeration has not been initialized. It's likely that you forgot to distribute the DoFs, i.e. you may want to check if a call to `initialize_hp_structure()` has been done."));
     for (const auto &cell :
          agglo_dh.active_cell_iterators() |
-           IteratorFilters::ActiveFEIndexEqualTo(AggloIndex::master))
+           IteratorFilters::ActiveFEIndexEqualTo(CellAgglomerationType::master))
       {
         setup_master_neighbor_connectivity(cell);
       }

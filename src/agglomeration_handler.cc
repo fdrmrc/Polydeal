@@ -175,11 +175,11 @@ AgglomerationHandler<dim, spacedim>::initialize_hp_structure()
   //        ExcMessage("No agglomeration has been performed."));
   for (const auto &cell : agglo_dh.active_cell_iterators())
     if (is_master_cell(cell))
-      cell->set_active_fe_index(AggloIndex::master);
+      cell->set_active_fe_index(CellAgglomerationType::master);
     else if (is_slave_cell(cell))
-      cell->set_active_fe_index(AggloIndex::slave); // slave cell
+      cell->set_active_fe_index(CellAgglomerationType::slave); // slave cell
     else
-      cell->set_active_fe_index(AggloIndex::standard); // standard
+      cell->set_active_fe_index(CellAgglomerationType::standard); // standard
 
   agglo_dh.distribute_dofs(fe_collection);
   euler_mapping =

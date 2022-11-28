@@ -91,7 +91,7 @@ main()
 
   for (const auto &cell :
        ah.agglomeration_cell_iterators() |
-         IteratorFilters::ActiveFEIndexEqualTo(ah.AggloIndex::master))
+         IteratorFilters::ActiveFEIndexEqualTo(ah.CellAgglomerationType::master))
     {
       cell->get_dof_indices(dof_indices);
       std::cout << "Cell with global index: " << cell->active_cell_index()

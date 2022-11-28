@@ -83,7 +83,7 @@ main()
   double perimeter = 0.;
   for (const auto &cell :
        ah.agglomeration_cell_iterators() |
-         IteratorFilters::ActiveFEIndexEqualTo(ah.AggloIndex::master))
+         IteratorFilters::ActiveFEIndexEqualTo(ah.CellAgglomerationType::master))
     {
       unsigned int n_agglomerated_faces_per_cell = ah.n_faces(cell);
       for (size_t f = 0; f < n_agglomerated_faces_per_cell; ++f)

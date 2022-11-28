@@ -85,7 +85,7 @@ main()
 
   for (const auto &cell :
        ah.agglomeration_cell_iterators() |
-         IteratorFilters::ActiveFEIndexEqualTo(ah.AggloIndex::master))
+         IteratorFilters::ActiveFEIndexEqualTo(ah.CellAgglomerationType::master))
     {
       const auto &fev = ah.reinit(cell);
       double      sum = 0.;
