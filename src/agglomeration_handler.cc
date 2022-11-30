@@ -270,7 +270,6 @@ AgglomerationHandler<dim, spacedim>::reinit_master(
   const auto &info_neighbors   = master_neighbors[{cell, face_number}];
   const auto &local_face_idx   = std::get<0>(info_neighbors);
   const auto &neighboring_cell = std::get<3>(info_neighbors);
-  // const auto &local_face_idx_out = std::get<2>(info_neighbors);
 
   FE_Nothing<dim, spacedim> dummy_fe;
   DoFHandler<dim, spacedim> dummy_dh(*tria);
@@ -283,8 +282,6 @@ AgglomerationHandler<dim, spacedim>::reinit_master(
     update_quadrature_points | update_JxW_values |
       update_normal_vectors); // only for quadrature
 
-
-
   if (neighboring_cell.state() == IteratorState::valid)
     {
       no_values.reinit(neighboring_cell, local_face_idx);
@@ -294,9 +291,8 @@ AgglomerationHandler<dim, spacedim>::reinit_master(
       const auto &JxWs    = no_values.get_JxW_values();
       const auto &normals = no_values.get_normal_vectors();
 
-      // typename DoFHandler<dim, spacedim>::cell_iterator cell_dh(
-      //   *neighboring_cell->neighbor(local_face_idx_out), &euler_dh);
-      const double bbox_measure = bboxes[cell->active_cell_index()].volume();
+      const auto                  &bbox = bboxes[cell->active_cell_index()];
+      const double                 bbox_measure = bbox.volume();
       std::vector<Point<spacedim>> unit_q_points;
 
       std::transform(q_points.begin(),
@@ -307,39 +303,32 @@ AgglomerationHandler<dim, spacedim>::reinit_master(
                                                                          p);
                      });
 
+
+      // Weights must be scaled with |det(J)*J^-t n| for each quadrature point.
+      // Use the fact that we are using a BBox, so the jacobi entries are the
+      // side_length in each direction and normals are already available at this
+      // point.
+      std::vector<double> scale_factors(q_points.size());
+      std::vector<double> scaled_weights(q_points.size());
+      Tensor<1, spacedim> side_lengths;
+
+      for (unsigned int q = 0; q < q_points.size(); ++q)
+        {
+          for (unsigned int direction = 0; direction < spacedim; ++direction)
+            side_lengths[direction] = 1. / (bbox.side_length(direction));
+
+          scale_factors[q] =
+            std::fabs(bbox_measure * scalar_product(side_lengths, normals[q]));
+
+          scaled_weights[q] = JxWs[q] / scale_factors[q];
+        }
+
       NonMatching::ImmersedSurfaceQuadrature<dim, spacedim> surface_quad(
-        unit_q_points, JxWs, normals);
+        unit_q_points, scaled_weights, normals);
 
       agglo_isv_ptr =
         std::make_unique<NonMatching::FEImmersedSurfaceValues<spacedim>>(
           *euler_mapping, *fe, surface_quad, agglomeration_face_flags);
-
-      agglo_isv_ptr->reinit(cell);
-
-      // Weights must be scaled with det(J)*J^-t n for each quadrature point
-      // now.
-      std::vector<double> scale_factors;
-      for (unsigned int i = 0; i < q_points.size(); ++i)
-        {
-          // J^-t*n
-          const auto &JmT = (agglo_isv_ptr->inverse_jacobian(i)).transpose();
-          scale_factors.push_back(bbox_measure *
-                                  apply_transformation(JmT, normals[i]).norm());
-        }
-
-      // Scale original weights properly
-      std::vector<double> scaled_weights(JxWs.size());
-      for (unsigned int i = 0; i < JxWs.size(); ++i)
-        {
-          scaled_weights[i] = JxWs[i] / scale_factors[i];
-        }
-
-      // update the Quadrature rule
-      surface_quad.initialize(unit_q_points, scaled_weights);
-
-      // update the ptr to FEIsv and finally call reinit
-      agglo_isv_ptr.reset(new NonMatching::FEImmersedSurfaceValues<spacedim>(
-        *euler_mapping, *fe, surface_quad, agglomeration_face_flags));
 
       agglo_isv_ptr->reinit(cell);
 
@@ -350,23 +339,8 @@ AgglomerationHandler<dim, spacedim>::reinit_master(
       // Then it's a boundary face of an agglomeration living on the
       // boundary of the tria. You need to return an FEFaceValues on the
       // boundary face of a boundary cell.
-      Triangulation<dim, spacedim> dummy_tria;
+      no_values.reinit(neighboring_cell, local_face_idx);
 
-      const auto CellType = dealii::ReferenceCell::n_vertices_to_type(
-        dim, cell->n_vertices()); // understand the kind of reference cell
-                                  // from vertices
-
-      GridGenerator::reference_cell(
-        dummy_tria, CellType); // store reference cell stored in tria
-      dealii::DoFHandler<dim, spacedim> dh(dummy_tria);
-      dh.distribute_dofs(*fe);
-
-      const auto &cell_dh = dh.begin_active();
-      for (unsigned int i = 0; i < cell->n_vertices(); ++i)
-        cell_dh->vertex(i) = cell->vertex(i); // the vertices of this real cell
-
-
-      // Return a standard FEFaceValues, using scratch data
       standard_scratch_face_bdary =
         std::make_unique<ScratchData>(*mapping,
                                       fe_collection[2],
@@ -374,7 +348,8 @@ AgglomerationHandler<dim, spacedim>::reinit_master(
                                       agglomeration_flags,
                                       agglomeration_face_quad,
                                       agglomeration_face_flags);
-      return standard_scratch_face_bdary->reinit(cell_dh, local_face_idx);
+
+      return standard_scratch_face_bdary->reinit(cell);
     }
 }
 
