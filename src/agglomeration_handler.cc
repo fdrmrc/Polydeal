@@ -282,8 +282,6 @@ AgglomerationHandler<dim, spacedim>::reinit_master(
     update_quadrature_points | update_JxW_values |
       update_normal_vectors); // only for quadrature
 
-
-
   if (neighboring_cell.state() == IteratorState::valid)
     {
       no_values.reinit(neighboring_cell, local_face_idx);
@@ -341,23 +339,8 @@ AgglomerationHandler<dim, spacedim>::reinit_master(
       // Then it's a boundary face of an agglomeration living on the
       // boundary of the tria. You need to return an FEFaceValues on the
       // boundary face of a boundary cell.
-      Triangulation<dim, spacedim> dummy_tria;
+      no_values.reinit(neighboring_cell, local_face_idx);
 
-      const auto CellType = dealii::ReferenceCell::n_vertices_to_type(
-        dim, cell->n_vertices()); // understand the kind of reference cell
-                                  // from vertices
-
-      GridGenerator::reference_cell(
-        dummy_tria, CellType); // store reference cell stored in tria
-      dealii::DoFHandler<dim, spacedim> dh(dummy_tria);
-      dh.distribute_dofs(*fe);
-
-      const auto &cell_dh = dh.begin_active();
-      for (unsigned int i = 0; i < cell->n_vertices(); ++i)
-        cell_dh->vertex(i) = cell->vertex(i); // the vertices of this real cell
-
-
-      // Return a standard FEFaceValues, using scratch data
       standard_scratch_face_bdary =
         std::make_unique<ScratchData>(*mapping,
                                       fe_collection[2],
@@ -365,7 +348,8 @@ AgglomerationHandler<dim, spacedim>::reinit_master(
                                       agglomeration_flags,
                                       agglomeration_face_quad,
                                       agglomeration_face_flags);
-      return standard_scratch_face_bdary->reinit(cell_dh, local_face_idx);
+
+      return standard_scratch_face_bdary->reinit(cell);
     }
 }
 
