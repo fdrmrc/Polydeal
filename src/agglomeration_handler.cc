@@ -270,7 +270,6 @@ AgglomerationHandler<dim, spacedim>::reinit_master(
   const auto &info_neighbors   = master_neighbors[{cell, face_number}];
   const auto &local_face_idx   = std::get<0>(info_neighbors);
   const auto &neighboring_cell = std::get<3>(info_neighbors);
-  // const auto &local_face_idx_out = std::get<2>(info_neighbors);
 
   FE_Nothing<dim, spacedim> dummy_fe;
   DoFHandler<dim, spacedim> dummy_dh(*tria);
@@ -294,9 +293,8 @@ AgglomerationHandler<dim, spacedim>::reinit_master(
       const auto &JxWs    = no_values.get_JxW_values();
       const auto &normals = no_values.get_normal_vectors();
 
-      // typename DoFHandler<dim, spacedim>::cell_iterator cell_dh(
-      //   *neighboring_cell->neighbor(local_face_idx_out), &euler_dh);
-      const double bbox_measure = bboxes[cell->active_cell_index()].volume();
+      const auto                  &bbox = bboxes[cell->active_cell_index()];
+      const double                 bbox_measure = bbox.volume();
       std::vector<Point<spacedim>> unit_q_points;
 
       std::transform(q_points.begin(),
@@ -307,39 +305,32 @@ AgglomerationHandler<dim, spacedim>::reinit_master(
                                                                          p);
                      });
 
+
+      // Weights must be scaled with |det(J)*J^-t n| for each quadrature point.
+      // Use the fact that we are using a BBox, so the jacobi entries are the
+      // side_length in each direction and normals are already available at this
+      // point.
+      std::vector<double> scale_factors(q_points.size());
+      std::vector<double> scaled_weights(q_points.size());
+      Tensor<1, spacedim> side_lengths;
+
+      for (unsigned int q = 0; q < q_points.size(); ++q)
+        {
+          for (unsigned int direction = 0; direction < spacedim; ++direction)
+            side_lengths[direction] = 1. / (bbox.side_length(direction));
+
+          scale_factors[q] =
+            std::fabs(bbox_measure * scalar_product(side_lengths, normals[q]));
+
+          scaled_weights[q] = JxWs[q] / scale_factors[q];
+        }
+
       NonMatching::ImmersedSurfaceQuadrature<dim, spacedim> surface_quad(
-        unit_q_points, JxWs, normals);
+        unit_q_points, scaled_weights, normals);
 
       agglo_isv_ptr =
         std::make_unique<NonMatching::FEImmersedSurfaceValues<spacedim>>(
           *euler_mapping, *fe, surface_quad, agglomeration_face_flags);
-
-      agglo_isv_ptr->reinit(cell);
-
-      // Weights must be scaled with det(J)*J^-t n for each quadrature point
-      // now.
-      std::vector<double> scale_factors;
-      for (unsigned int i = 0; i < q_points.size(); ++i)
-        {
-          // J^-t*n
-          const auto &JmT = (agglo_isv_ptr->inverse_jacobian(i)).transpose();
-          scale_factors.push_back(bbox_measure *
-                                  apply_transformation(JmT, normals[i]).norm());
-        }
-
-      // Scale original weights properly
-      std::vector<double> scaled_weights(JxWs.size());
-      for (unsigned int i = 0; i < JxWs.size(); ++i)
-        {
-          scaled_weights[i] = JxWs[i] / scale_factors[i];
-        }
-
-      // update the Quadrature rule
-      surface_quad.initialize(unit_q_points, scaled_weights);
-
-      // update the ptr to FEIsv and finally call reinit
-      agglo_isv_ptr.reset(new NonMatching::FEImmersedSurfaceValues<spacedim>(
-        *euler_mapping, *fe, surface_quad, agglomeration_face_flags));
 
       agglo_isv_ptr->reinit(cell);
 
