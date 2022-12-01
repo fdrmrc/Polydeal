@@ -24,75 +24,99 @@
 
 #include "../tests.h"
 
+
+template <int dim>
+void
+test()
+{
+  Triangulation<dim> tria;
+  GridGenerator::hyper_cube(tria, -1, 1);
+  MappingQ<dim> mapping(1);
+  tria.refine_global(3);
+  GridTools::Cache<dim>     cached_tria(tria, mapping);
+  AgglomerationHandler<dim> ah(cached_tria);
+
+
+  if constexpr (dim == 2)
+    {
+      std::vector<types::global_cell_index> idxs_to_be_agglomerated = {
+        3, 6, 9, 12, 13};
+
+      std::vector<typename Triangulation<dim>::active_cell_iterator>
+        cells_to_be_agglomerated;
+      Tests::collect_cells_for_agglomeration(tria,
+                                             idxs_to_be_agglomerated,
+                                             cells_to_be_agglomerated);
+
+      std::vector<types::global_cell_index> idxs_to_be_agglomerated2 = {15,
+                                                                        36,
+                                                                        37};
+
+      std::vector<typename Triangulation<dim>::active_cell_iterator>
+        cells_to_be_agglomerated2;
+      Tests::collect_cells_for_agglomeration(tria,
+                                             idxs_to_be_agglomerated2,
+                                             cells_to_be_agglomerated2);
+
+      std::vector<types::global_cell_index> idxs_to_be_agglomerated3 = {57,
+                                                                        60,
+                                                                        54};
+
+      std::vector<typename Triangulation<dim>::active_cell_iterator>
+        cells_to_be_agglomerated3;
+      Tests::collect_cells_for_agglomeration(tria,
+                                             idxs_to_be_agglomerated3,
+                                             cells_to_be_agglomerated3);
+
+      std::vector<types::global_cell_index> idxs_to_be_agglomerated4 = {25,
+                                                                        19,
+                                                                        22};
+
+      std::vector<typename Triangulation<dim>::active_cell_iterator>
+        cells_to_be_agglomerated4;
+      Tests::collect_cells_for_agglomeration(tria,
+                                             idxs_to_be_agglomerated4,
+                                             cells_to_be_agglomerated4);
+
+      // Agglomerate the cells just stored
+      ah.agglomerate_cells(cells_to_be_agglomerated);
+      ah.agglomerate_cells(cells_to_be_agglomerated2);
+      ah.agglomerate_cells(cells_to_be_agglomerated3);
+      ah.agglomerate_cells(cells_to_be_agglomerated4);
+    }
+  else if constexpr (dim == 3)
+    {
+      std::vector<types::global_cell_index> idxs_to_be_agglomerated = {463,
+                                                                       459};
+      std::vector<typename Triangulation<dim>::active_cell_iterator>
+        cells_to_be_agglomerated;
+      Tests::collect_cells_for_agglomeration(tria,
+                                             idxs_to_be_agglomerated,
+                                             cells_to_be_agglomerated);
+
+      ah.agglomerate_cells(cells_to_be_agglomerated);
+    }
+
+  FE_DGQ<dim> fe_dg(1);
+  ah.distribute_agglomerated_dofs(fe_dg);
+  ah.initialize_fe_values(QGauss<dim>(1), update_JxW_values);
+
+  for (const auto &cell : ah.agglomeration_cell_iterators())
+    if (ah.is_master_cell(cell))
+      {
+        const auto &fev = ah.reinit(cell);
+        double      sum = 0.;
+        for (const auto weight : fev.get_JxW_values())
+          sum += weight;
+        std::cout << "Sum is: " << sum << std::endl;
+      }
+}
+
+
 int
 main()
 {
-  Triangulation<2> tria;
-  GridGenerator::hyper_cube(tria, -1, 1);
-  MappingQ<2> mapping(1);
-  tria.refine_global(3);
-  GridTools::Cache<2>     cached_tria(tria, mapping);
-  AgglomerationHandler<2> ah(cached_tria);
-
-  std::vector<types::global_cell_index> idxs_to_be_agglomerated = {
-    3, 6, 9, 12, 13};
-
-  std::vector<typename Triangulation<2>::active_cell_iterator>
-    cells_to_be_agglomerated;
-  Tests::collect_cells_for_agglomeration(tria,
-                                         idxs_to_be_agglomerated,
-                                         cells_to_be_agglomerated);
-
-  std::vector<types::global_cell_index> idxs_to_be_agglomerated2 = {15, 36, 37};
-
-  std::vector<typename Triangulation<2>::active_cell_iterator>
-    cells_to_be_agglomerated2;
-  Tests::collect_cells_for_agglomeration(tria,
-                                         idxs_to_be_agglomerated2,
-                                         cells_to_be_agglomerated2);
-
-  std::vector<types::global_cell_index> idxs_to_be_agglomerated3 = {57, 60, 54};
-
-  std::vector<typename Triangulation<2>::active_cell_iterator>
-    cells_to_be_agglomerated3;
-  Tests::collect_cells_for_agglomeration(tria,
-                                         idxs_to_be_agglomerated3,
-                                         cells_to_be_agglomerated3);
-
-  std::vector<types::global_cell_index> idxs_to_be_agglomerated4 = {25, 19, 22};
-
-  std::vector<typename Triangulation<2>::active_cell_iterator>
-    cells_to_be_agglomerated4;
-  Tests::collect_cells_for_agglomeration(tria,
-                                         idxs_to_be_agglomerated4,
-                                         cells_to_be_agglomerated4);
-
-  // Agglomerate the cells just stored
-  ah.agglomerate_cells(cells_to_be_agglomerated);
-  ah.agglomerate_cells(cells_to_be_agglomerated2);
-  ah.agglomerate_cells(cells_to_be_agglomerated3);
-  ah.agglomerate_cells(cells_to_be_agglomerated4);
-
-  std::vector<std::vector<typename Triangulation<2>::active_cell_iterator>>
-    agglomerations{cells_to_be_agglomerated,
-                   cells_to_be_agglomerated2,
-                   cells_to_be_agglomerated3,
-                   cells_to_be_agglomerated4};
-
-  FE_DGQ<2> fe_dg(1);
-  ah.distribute_agglomerated_dofs(fe_dg);
-  ah.initialize_fe_values(QGauss<2>(1), update_JxW_values);
-
-  for (const auto &cell :
-       ah.agglomeration_cell_iterators() |
-         IteratorFilters::ActiveFEIndexEqualTo(ah.CellAgglomerationType::master))
-    {
-      const auto &fev = ah.reinit(cell);
-      double      sum = 0.;
-      for (const auto weight : fev.get_JxW_values())
-        sum += weight;
-      std::cout << "Sum is: " << sum << std::endl;
-    }
-
+  test<2>();
+  test<3>();
   return 0;
 }

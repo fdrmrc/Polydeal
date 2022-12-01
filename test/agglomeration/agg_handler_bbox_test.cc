@@ -17,6 +17,8 @@
 // Select some cells of a tria, agglomerated them together and check the
 // bounding box of the resulting agglomeration.
 
+#include <deal.II/base/bounding_box_data_out.h>
+
 #include <deal.II/grid/grid_generator.h>
 #include <deal.II/grid/grid_out.h>
 
@@ -24,26 +26,58 @@
 
 #include "../tests.h"
 
+
+template <int dim>
+void
+test()
+{
+  Triangulation<dim> tria;
+  GridGenerator::hyper_cube(tria, -1, 1);
+  tria.refine_global(2);
+  MappingQ<dim>             mapping(1);
+  GridTools::Cache<dim>     cached_tria(tria, mapping);
+  AgglomerationHandler<dim> ah(cached_tria);
+
+  if constexpr (dim == 2)
+    {
+      std::vector<types::global_cell_index> idxs_to_be_agglomerated = {
+        3, 6, 9, 12, 13};
+      std::vector<typename Triangulation<dim>::active_cell_iterator>
+        cells_to_be_agglomerated;
+      Tests::collect_cells_for_agglomeration(tria,
+                                             idxs_to_be_agglomerated,
+                                             cells_to_be_agglomerated);
+
+      ah.agglomerate_cells(cells_to_be_agglomerated);
+      const auto &bbox_agglomeration_pts =
+        ah.get_bboxes()[13].get_boundary_points();
+      std::cout << "p0: =" << bbox_agglomeration_pts.first << std::endl;
+      std::cout << "p1: =" << bbox_agglomeration_pts.second << std::endl;
+    }
+  else if constexpr (dim == 3)
+    {
+      std::vector<types::global_cell_index> idxs_to_be_agglomerated = {30, 58};
+      std::vector<typename Triangulation<dim>::active_cell_iterator>
+        cells_to_be_agglomerated;
+      Tests::collect_cells_for_agglomeration(tria,
+                                             idxs_to_be_agglomerated,
+                                             cells_to_be_agglomerated);
+
+      ah.agglomerate_cells(cells_to_be_agglomerated);
+      const auto &bbox_agglomeration_pts =
+        ah.get_bboxes()[58].get_boundary_points();
+      std::cout << "p0: =" << bbox_agglomeration_pts.first << std::endl;
+      std::cout << "p1: =" << bbox_agglomeration_pts.second << std::endl;
+
+      // std::ofstream           ofile("bboxes.vtu");
+      // BoundingBoxDataOut<dim> data_out;
+      // data_out.build_patches(ah.get_bboxes());
+      // data_out.write_vtu(ofile);
+    }
+}
 int
 main()
 {
-  Triangulation<2> tria;
-  GridGenerator::hyper_cube(tria, -1, 1);
-  tria.refine_global(2);
-  MappingQ<2>             mapping(1);
-  GridTools::Cache<2>     cached_tria(tria, mapping);
-  AgglomerationHandler<2> ah(cached_tria);
-
-  std::vector<types::global_cell_index> idxs_to_be_agglomerated = {
-    3, 6, 9, 12, 13};
-  std::vector<typename Triangulation<2>::active_cell_iterator>
-    cells_to_be_agglomerated;
-  Tests::collect_cells_for_agglomeration(tria,
-                                         idxs_to_be_agglomerated,
-                                         cells_to_be_agglomerated);
-
-  ah.agglomerate_cells(cells_to_be_agglomerated);
-  const auto bbox_agglomeration_pts = ah.get_bboxes()[13].get_boundary_points();
-  std::cout << "p0: =" << bbox_agglomeration_pts.first << std::endl;
-  std::cout << "p1: =" << bbox_agglomeration_pts.second << std::endl;
+  test<2>();
+  test<3>();
 }

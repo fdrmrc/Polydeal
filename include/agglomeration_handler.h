@@ -780,8 +780,7 @@ private:
   {
     Assert(n_agglomerations > 0,
            ExcMessage("No agglomeration has been performed."));
-    Assert(dim == 2 && spacedim == 2,
-           ExcNotImplemented()); // TODO #3 Not working in 3D
+    Assert(dim > 1, ExcNotImplemented());
 
     std::vector<types::global_dof_index> dof_indices(euler_fe->dofs_per_cell);
     std::vector<Point<spacedim>>         pts; // store all the vertices
@@ -796,21 +795,72 @@ private:
 
     bboxes[master_idx] = BoundingBox<spacedim>(pts);
 
-    // TODO: implement this also in 3D.
     const auto &p0 = bboxes[master_idx].get_boundary_points().first;
     const auto &p1 = bboxes[master_idx].get_boundary_points().second;
+    if constexpr (dim == 2)
+      {
+        euler_vector[dof_indices[0]] = p0[0];
+        euler_vector[dof_indices[4]] = p0[1];
+        // Lower right
+        euler_vector[dof_indices[1]] = p1[0];
+        euler_vector[dof_indices[5]] = p0[1];
+        // Upper left
+        euler_vector[dof_indices[2]] = p0[0];
+        euler_vector[dof_indices[6]] = p1[1];
+        // Upper right
+        euler_vector[dof_indices[3]] = p1[0];
+        euler_vector[dof_indices[7]] = p1[1];
+      }
+    else if constexpr (dim == 3)
+      {
+        // Lowers
 
-    euler_vector[dof_indices[0]] = p0[0];
-    euler_vector[dof_indices[4]] = p0[1];
-    // Lower right
-    euler_vector[dof_indices[1]] = p1[0];
-    euler_vector[dof_indices[5]] = p0[1];
-    // Upper left
-    euler_vector[dof_indices[2]] = p0[0];
-    euler_vector[dof_indices[6]] = p1[1];
-    // Upper right
-    euler_vector[dof_indices[3]] = p1[0];
-    euler_vector[dof_indices[7]] = p1[1];
+        // left
+        euler_vector[dof_indices[0]]  = p0[0];
+        euler_vector[dof_indices[8]]  = p0[1];
+        euler_vector[dof_indices[16]] = p0[2];
+
+        // right
+        euler_vector[dof_indices[1]]  = p1[0];
+        euler_vector[dof_indices[9]]  = p0[1];
+        euler_vector[dof_indices[17]] = p0[2];
+
+        // left
+        euler_vector[dof_indices[2]]  = p0[0];
+        euler_vector[dof_indices[10]] = p1[1];
+        euler_vector[dof_indices[18]] = p0[2];
+
+        // right
+        euler_vector[dof_indices[3]]  = p1[0];
+        euler_vector[dof_indices[11]] = p1[1];
+        euler_vector[dof_indices[19]] = p0[2];
+
+        // Uppers
+
+        // left
+        euler_vector[dof_indices[4]]  = p0[0];
+        euler_vector[dof_indices[12]] = p0[1];
+        euler_vector[dof_indices[20]] = p1[2];
+
+        // right
+        euler_vector[dof_indices[5]]  = p1[0];
+        euler_vector[dof_indices[13]] = p0[1];
+        euler_vector[dof_indices[21]] = p1[2];
+
+        // left
+        euler_vector[dof_indices[6]]  = p0[0];
+        euler_vector[dof_indices[14]] = p1[1];
+        euler_vector[dof_indices[22]] = p1[2];
+
+        // right
+        euler_vector[dof_indices[7]]  = p1[0];
+        euler_vector[dof_indices[15]] = p1[1];
+        euler_vector[dof_indices[23]] = p1[2];
+      }
+    else
+      {
+        Assert(false, ExcInternalError());
+      }
   }
 
   /**
