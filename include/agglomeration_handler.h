@@ -839,7 +839,7 @@ private:
 
         // left
         euler_vector[dof_indices[4]]  = p0[0];
-        euler_vector[dof_indices[12]] = p1[1];
+        euler_vector[dof_indices[12]] = p0[1];
         euler_vector[dof_indices[20]] = p1[2];
 
         // right
