@@ -150,10 +150,10 @@ public:
    */
   void
   initialize_fe_values(
-    const Quadrature<dim>     &cell_quadrature,
-    const UpdateFlags         &flags,
+    const Quadrature<dim> &    cell_quadrature,
+    const UpdateFlags &        flags,
     const Quadrature<dim - 1> &face_quadrature = QGauss<dim - 1>(1),
-    const UpdateFlags         &face_flags      = UpdateFlags::update_default)
+    const UpdateFlags &        face_flags      = UpdateFlags::update_default)
   {
     agglomeration_quad       = cell_quadrature;
     agglomeration_flags      = flags;
@@ -401,6 +401,7 @@ public:
                   }
               }
             Assert(false, ExcInternalError());
+            return {}; // just to suppress warnings
           }
         else if (is_master_cell(cell) &&
                  is_standard_cell(agglomerated_neighbor(cell, f)))
@@ -775,7 +776,7 @@ private:
   create_bounding_box(
     const std::vector<
       typename Triangulation<dim, spacedim>::active_cell_iterator>
-                                  &vec_of_cells,
+      &                            vec_of_cells,
     const types::global_cell_index master_idx)
   {
     Assert(n_agglomerations > 0,
