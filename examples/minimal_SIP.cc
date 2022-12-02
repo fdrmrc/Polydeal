@@ -41,7 +41,7 @@ public:
 
   virtual void
   value_list(const std::vector<Point<dim>> &points,
-             std::vector<double>           &values,
+             std::vector<double> &          values,
              const unsigned int /*component*/) const override;
 };
 
@@ -49,7 +49,7 @@ public:
 template <int dim>
 void
 RightHandSide<dim>::value_list(const std::vector<Point<dim>> &points,
-                               std::vector<double>           &values,
+                               std::vector<double> &          values,
                                const unsigned int /*component*/) const
 {
   for (unsigned int i = 0; i < values.size(); ++i)
@@ -116,14 +116,25 @@ void
 Poisson<dim>::make_grid()
 {
   GridGenerator::hyper_cube(tria, -1, 1);
-  if (to_agglomerate)
+  if constexpr (dim == 2)
     {
-      tria.refine_global(2);
+      if (to_agglomerate)
+        {
+          tria.refine_global(2);
+        }
+      else
+        {
+          tria.refine_global(1);
+        }
     }
-  else
+  else if constexpr (dim == 3)
     {
-      tria.refine_global(1);
+      if (to_agglomerate)
+        {
+          tria.refine_global(1);
+        }
     }
+  std::cout << "Number of cells: " << tria.n_active_cells() << std::endl;
   std::ofstream out("sixtenn_grid.vtk");
   GridOut       grid_out;
   grid_out.write_vtk(tria, out);
@@ -146,56 +157,73 @@ Poisson<dim>::setup_agglomeration()
 
   if (to_agglomerate)
     {
-      std::vector<types::global_cell_index> idxs_to_be_agglomerated = {0,
-                                                                       1,
-                                                                       2,
-                                                                       3};
+      if constexpr (dim == 2)
+        {
+          std::vector<types::global_cell_index> idxs_to_be_agglomerated = {0,
+                                                                           1,
+                                                                           2,
+                                                                           3};
 
-      std::vector<typename Triangulation<dim>::active_cell_iterator>
-        cells_to_be_agglomerated;
-      Tests::collect_cells_for_agglomeration(tria,
-                                             idxs_to_be_agglomerated,
-                                             cells_to_be_agglomerated);
-
-
-      std::vector<types::global_cell_index> idxs_to_be_agglomerated2 = {4,
-                                                                        5,
-                                                                        6,
-                                                                        7};
-
-      std::vector<typename Triangulation<dim>::active_cell_iterator>
-        cells_to_be_agglomerated2;
-      Tests::collect_cells_for_agglomeration(tria,
-                                             idxs_to_be_agglomerated2,
-                                             cells_to_be_agglomerated2);
+          std::vector<typename Triangulation<dim>::active_cell_iterator>
+            cells_to_be_agglomerated;
+          Tests::collect_cells_for_agglomeration(tria,
+                                                 idxs_to_be_agglomerated,
+                                                 cells_to_be_agglomerated);
 
 
-      std::vector<types::global_cell_index> idxs_to_be_agglomerated3 = {8,
-                                                                        9,
-                                                                        10,
-                                                                        11};
-      std::vector<typename Triangulation<dim>::active_cell_iterator>
-        cells_to_be_agglomerated3;
-      Tests::collect_cells_for_agglomeration(tria,
-                                             idxs_to_be_agglomerated3,
-                                             cells_to_be_agglomerated3);
+          std::vector<types::global_cell_index> idxs_to_be_agglomerated2 = {4,
+                                                                            5,
+                                                                            6,
+                                                                            7};
+
+          std::vector<typename Triangulation<dim>::active_cell_iterator>
+            cells_to_be_agglomerated2;
+          Tests::collect_cells_for_agglomeration(tria,
+                                                 idxs_to_be_agglomerated2,
+                                                 cells_to_be_agglomerated2);
 
 
-      std::vector<types::global_cell_index> idxs_to_be_agglomerated4 = {
-        12, 13, 14, 15}; //{36,37}
-      std::vector<typename Triangulation<dim>::active_cell_iterator>
-        cells_to_be_agglomerated4;
-      Tests::collect_cells_for_agglomeration(tria,
-                                             idxs_to_be_agglomerated4,
-                                             cells_to_be_agglomerated4);
+          std::vector<types::global_cell_index> idxs_to_be_agglomerated3 = {8,
+                                                                            9,
+                                                                            10,
+                                                                            11};
+          std::vector<typename Triangulation<dim>::active_cell_iterator>
+            cells_to_be_agglomerated3;
+          Tests::collect_cells_for_agglomeration(tria,
+                                                 idxs_to_be_agglomerated3,
+                                                 cells_to_be_agglomerated3);
+
+
+          std::vector<types::global_cell_index> idxs_to_be_agglomerated4 = {
+            12, 13, 14, 15}; //{36,37}
+          std::vector<typename Triangulation<dim>::active_cell_iterator>
+            cells_to_be_agglomerated4;
+          Tests::collect_cells_for_agglomeration(tria,
+                                                 idxs_to_be_agglomerated4,
+                                                 cells_to_be_agglomerated4);
 
 
 
-      // Agglomerate the cells just stored
-      ah->agglomerate_cells(cells_to_be_agglomerated);
-      ah->agglomerate_cells(cells_to_be_agglomerated2);
-      ah->agglomerate_cells(cells_to_be_agglomerated3);
-      ah->agglomerate_cells(cells_to_be_agglomerated4);
+          // Agglomerate the cells just stored
+          ah->agglomerate_cells(cells_to_be_agglomerated);
+          ah->agglomerate_cells(cells_to_be_agglomerated2);
+          ah->agglomerate_cells(cells_to_be_agglomerated3);
+          ah->agglomerate_cells(cells_to_be_agglomerated4);
+        }
+      else if constexpr (dim == 3)
+        {
+          std::vector<types::global_cell_index> idxs_to_be_agglomerated = {
+            0, 1, 2, 3, 4, 5, 6, 7};
+
+          std::vector<typename Triangulation<dim>::active_cell_iterator>
+            cells_to_be_agglomerated;
+          Tests::collect_cells_for_agglomeration(tria,
+                                                 idxs_to_be_agglomerated,
+                                                 cells_to_be_agglomerated);
+
+          // Agglomerate the cells just stored
+          ah->agglomerate_cells(cells_to_be_agglomerated);
+        }
     }
   ah->distribute_agglomerated_dofs(dg_fe);
   ah->create_agglomeration_sparsity_pattern(sparsity);
@@ -244,7 +272,7 @@ Poisson<dim>::assemble_system()
       cell_rhs                 = 0;
       const auto &agglo_values = ah->reinit(cell);
 
-      const auto         &q_points  = agglo_values.get_quadrature_points();
+      const auto &        q_points  = agglo_values.get_quadrature_points();
       const unsigned int  n_qpoints = q_points.size();
       std::vector<double> rhs(n_qpoints);
       rhs_function->value_list(q_points, rhs);
@@ -530,10 +558,11 @@ Poisson<dim>::run()
 int
 main(int argc, char *argv[])
 {
+  constexpr unsigned int dim = 3;
   if (argc == 1)
     {
-      std::cout << "Running SIP with 4 agglomerated cells." << std::endl;
-      Poisson<2> poisson_problem;
+      std::cout << "Running SIP with agglomerations." << std::endl;
+      Poisson<dim> poisson_problem;
       poisson_problem.run();
     }
   else if (argc == 2)
@@ -541,23 +570,23 @@ main(int argc, char *argv[])
       if (std::strcmp(argv[1], "agglo") == 0)
         {
           std::cout << "Running SIP with 4 agglomerated cells." << std::endl;
-          Poisson<2> poisson_problem(true); // agglomerate
+          Poisson<dim> poisson_problem(true); // agglomerate
           poisson_problem.run();
         }
       else if (std::strcmp(argv[1], "standard") == 0)
         {
           std::cout << "Running SIP with standard grid." << std::endl;
-          Poisson<2> poisson_problem(false); // standard SIPDG
+          Poisson<dim> poisson_problem(false); // standard SIPDG
           poisson_problem.run();
         }
       else if (std::strcmp(argv[1], "test_equality") == 0)
         {
           std::cout << "Running the two techniques and testing for equality"
                     << std::endl;
-          Poisson<2> standard_problem(false);
+          Poisson<dim> standard_problem(false);
           standard_problem.run();
-          const auto &standard_matrix = standard_problem.get_matrix();
-          Poisson<2>  agglo_problem(true);
+          const auto & standard_matrix = standard_problem.get_matrix();
+          Poisson<dim> agglo_problem(true);
           agglo_problem.run();
           const auto &agglo_matrix = agglo_problem.get_matrix();
 
