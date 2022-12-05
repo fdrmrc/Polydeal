@@ -285,7 +285,6 @@ AgglomerationHandler<dim, spacedim>::reinit_master(
   if (neighboring_cell.state() == IteratorState::valid)
     {
       no_values.reinit(neighboring_cell, local_face_idx);
-
       auto q_points = no_values.get_quadrature_points();
 
       const auto &JxWs    = no_values.get_JxW_values();
@@ -303,24 +302,24 @@ AgglomerationHandler<dim, spacedim>::reinit_master(
                                                                          p);
                      });
 
-
-      // Weights must be scaled with |det(J)*J^-t n| for each quadrature point.
+      // Weights must be scaled with det(J)*|J^-t n| for each quadrature point.
       // Use the fact that we are using a BBox, so the jacobi entries are the
       // side_length in each direction and normals are already available at this
       // point.
       std::vector<double> scale_factors(q_points.size());
       std::vector<double> scaled_weights(q_points.size());
-      Tensor<1, spacedim> side_lengths;
+      Tensor<1, spacedim> scale;
 
       for (unsigned int q = 0; q < q_points.size(); ++q)
         {
           for (unsigned int direction = 0; direction < spacedim; ++direction)
-            side_lengths[direction] = 1. / (bbox.side_length(direction));
+            {
+              scale[direction] =
+                normals[q][direction] / (bbox.side_length(direction));
+            }
 
-          scale_factors[q] =
-            std::fabs(bbox_measure * scalar_product(side_lengths, normals[q]));
-
-          scaled_weights[q] = JxWs[q] / scale_factors[q];
+          // scale_factors[q]  = bbox_measure * scale.norm();
+          scaled_weights[q] = JxWs[q] / (bbox_measure * scale.norm());
         }
 
       NonMatching::ImmersedSurfaceQuadrature<dim, spacedim> surface_quad(
