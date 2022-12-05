@@ -318,7 +318,6 @@ Poisson<dim>::assemble_system()
               std::cout << "With dofs_per_cell =" << fe_face.dofs_per_cell
                         << std::endl;
 
-
               // Get normal vectors seen from each agglomeration.
               const auto &normals = fe_face.get_normal_vectors();
               cell_matrix         = 0.;
@@ -396,7 +395,6 @@ Poisson<dim>::assemble_system()
                                       j,
                                       q_index) *      // ({grad u_h} .
                                     normals[q_index]) //  n)
-
                                  -
                                  //
                                  (feiv.average_of_shape_gradients(
@@ -404,14 +402,12 @@ Poisson<dim>::assemble_system()
                                   normals[q_index]) * //  n)
                                    feiv.jump_in_shape_values(j,
                                                              q_index) // [u_h]
-
                                  +
                                  (penalty / hf) *
                                    feiv.jump_in_shape_values(i,
                                                              q_index) * // [v_h]
                                    feiv.jump_in_shape_values(j,
                                                              q_index) // [u_h]
-
                                  ) *
                                 feiv.JxW(q_index);
                             }
