@@ -92,7 +92,7 @@ test_external_grid(Triangulation<2> &tria)
 {
   GridIn<dim> grid_in;
   grid_in.attach_triangulation(tria);
-  std::ifstream input_file("circle-grid.inp");
+  std::ifstream input_file(SOURCE_DIR "/circle-grid.inp");
   grid_in.read_ucd(input_file);
   tria.refine_global(1);
   MappingQ<2>             mapping(1);
