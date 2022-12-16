@@ -285,25 +285,38 @@ AgglomerationHandler<dim, spacedim>::reinit_master(
   if (neighboring_cell.state() == IteratorState::valid)
     {
       no_values.reinit(neighboring_cell, local_face_idx);
+      std::cout << "reinited inside" << std::endl;
       auto q_points = no_values.get_quadrature_points();
 
       const auto &JxWs    = no_values.get_JxW_values();
       const auto &normals = no_values.get_normal_vectors();
 
-      const auto                  &bbox = bboxes[cell->active_cell_index()];
-      const double                 bbox_measure = bbox.volume();
+      const auto &bbox = bboxes[cell->active_cell_index()];
+
+      const double bbox_measure = bbox.volume();
+      std::cout << "Got the volume = " << bbox_measure << std::endl;
       std::vector<Point<spacedim>> unit_q_points;
 
+      for (const auto &p : q_points)
+        {
+          std::cout << "Point: " << p << "inside?" << bbox.point_inside(p)
+                    << std::endl;
+          std::cout << bbox.real_to_unit(p) << std::endl;
+        }
+
+      std::cout << "Done" << std::endl;
       std::transform(q_points.begin(),
                      q_points.end(),
                      std::back_inserter(unit_q_points),
                      [&](const Point<spacedim> &p) {
-                       return euler_mapping->transform_real_to_unit_cell(cell,
-                                                                         p);
+                       return /*euler_mapping->transform_real_to_unit_cell(cell,
+                                                                         p);*/
+                         bbox.real_to_unit(p);
                      });
+      std::cout << "Got the points" << std::endl;
 
       // Weights must be scaled with det(J)*|J^-t n| for each quadrature point.
-      // Use the fact that we are using a BBox, so the jacobi entries are the
+      // Use the fact that we are using a AABBox, so the jacobi entries are the
       // side_length in each direction and normals are already available at this
       // point.
       std::vector<double> scale_factors(q_points.size());
@@ -321,6 +334,7 @@ AgglomerationHandler<dim, spacedim>::reinit_master(
           // scale_factors[q]  = bbox_measure * scale.norm();
           scaled_weights[q] = JxWs[q] / (bbox_measure * scale.norm());
         }
+      std::cout << "Scaled the weights" << std::endl;
 
       NonMatching::ImmersedSurfaceQuadrature<dim, spacedim> surface_quad(
         unit_q_points, scaled_weights, normals);
@@ -467,11 +481,12 @@ AgglomerationHandler<dim, spacedim>::reinit_interface(
              ExcMessage("Both cells should be masters."));
       // both are masters. That means you want to compute the jumps or
       // averages between a face shared by two neighboring agglomerations.
-      // This feature is not implemented yet
 
       const auto &fe_in = reinit_master(cell_in, local_in, agglomerated_isv);
+      std::cout << "First master" << std::endl;
       const auto &fe_out =
         reinit_master(neigh_cell, local_neigh, agglomerated_isv_neigh);
+      std::cout << "Second master" << std::endl;
       std::pair<const FEValuesBase<dim, spacedim> &,
                 const FEValuesBase<dim, spacedim> &>
         my_p(fe_in, fe_out);
@@ -497,8 +512,8 @@ AgglomerationHandler<dim, spacedim>::create_agglomeration_sparsity_pattern(
   AffineConstraints<double> constraints;
   const bool                keep_constrained_dofs = true;
   // The following lambda is used to teach to `make_flux_sparsity_pattern()`
-  // to couple only cells that are standard, not also slaves and master cells,
-  // for which we need to compute DoFs separately later.
+  // to couple only cells that are standard, not also slaves and master cells.
+  // Indeed, for them we need to compute DoFs separately later.
 
   const auto face_has_flux_coupling =
     [&](const auto &cell, const types::global_cell_index face_index) {

@@ -1,5 +1,7 @@
 #include <deal.II/grid/grid_generator.h>
+#include <deal.II/grid/grid_in.h>
 #include <deal.II/grid/grid_out.h>
+#include <deal.II/grid/grid_tools.h>
 
 #include <deal.II/lac/sparse_direct.h>
 #include <deal.II/lac/sparse_matrix.h>
@@ -73,30 +75,46 @@ private:
   std::unique_ptr<const Function<dim>>   rhs_function;
 
 public:
-  Poisson();
+  Poisson(const unsigned int);
   void
   run();
 
-  double penalty = 20.;
+  double       penalty      = 20.;
+  unsigned int n_partitions = 1;
 };
 
 
 
 template <int dim>
-Poisson<dim>::Poisson()
+Poisson<dim>::Poisson(const unsigned int n_parts)
   : mapping(1)
   , dg_fe(1)
+  , n_partitions{n_parts}
 {}
 
 template <int dim>
 void
 Poisson<dim>::make_grid()
 {
-  GridGenerator::hyper_cube(tria, -1, 1);
-  tria.refine_global(6);
+  // GridIn<dim> grid_in;
+  // grid_in.attach_triangulation(tria);
+  // std::ifstream input_file("circle-grid.inp");
+  // grid_in.read_ucd(input_file);
+  GridGenerator::hyper_ball(tria);
+  tria.refine_global(2);
   cached_tria  = std::make_unique<GridTools::Cache<dim>>(tria, mapping);
+  ah           = std::make_unique<AgglomerationHandler<dim>>(*cached_tria);
   rhs_function = std::make_unique<const RightHandSide<dim>>();
 
+  GridTools::partition_triangulation(n_partitions,
+                                     tria,
+                                     SparsityTools::Partitioner::metis);
+  {
+    std::ofstream out("test_circle");
+    GridOut       grid_out;
+    grid_out.write_mesh_per_processor_as_vtu(tria, "test_circle");
+    std::cout << "Grid written " << std::endl;
+  }
   constraints.close();
 }
 
@@ -107,79 +125,46 @@ void
 Poisson<dim>::setup_agglomeration()
 
 {
-  // std::vector<types::global_cell_index> idxs_to_be_agglomerated = {
-  //   3, 9}; //{8, 9, 10, 11};
-  std::vector<types::global_cell_index> idxs_to_be_agglomerated = {
-    3235, 3238}; //{3,9};
+  std::multimap<types::global_cell_index,
+                typename Triangulation<dim>::active_cell_iterator>
+    subdomain_2_vec;
+  for (unsigned int subd_idx = 0; subd_idx < n_partitions; ++subd_idx)
+    {
+      for (const auto &cell : tria.active_cell_iterators())
+        {
+          if (cell->subdomain_id() == subd_idx)
+            {
+              subdomain_2_vec.insert({subd_idx, cell});
+            }
+        }
+    }
 
   std::vector<typename Triangulation<dim>::active_cell_iterator>
-    cells_to_be_agglomerated;
-  Tests::collect_cells_for_agglomeration(tria,
-                                         idxs_to_be_agglomerated,
-                                         cells_to_be_agglomerated);
+                                        cells_to_be_agglomerated;
+  std::vector<types::global_cell_index> idxs_to_be_agglomerated;
 
+  for (unsigned int subd_idx = 0; subd_idx < n_partitions; ++subd_idx)
+    {
+      auto range = subdomain_2_vec.equal_range(subd_idx);
 
-  std::vector<types::global_cell_index> idxs_to_be_agglomerated2 = {
-    831, 874}; //{25,19}
+      for (auto it = range.first; it != range.second; ++it)
+        {
+          idxs_to_be_agglomerated.push_back(it->second->active_cell_index());
+        }
+      Tests::collect_cells_for_agglomeration(tria,
+                                             idxs_to_be_agglomerated,
+                                             cells_to_be_agglomerated);
 
-  std::vector<typename Triangulation<dim>::active_cell_iterator>
-    cells_to_be_agglomerated2;
-  Tests::collect_cells_for_agglomeration(tria,
-                                         idxs_to_be_agglomerated2,
-                                         cells_to_be_agglomerated2);
+      ah->agglomerate_cells(cells_to_be_agglomerated);
+      cells_to_be_agglomerated.clear();
+      idxs_to_be_agglomerated.clear();
+    }
 
-
-  std::vector<types::global_cell_index> idxs_to_be_agglomerated3 = {1226, 1227};
-  std::vector<typename Triangulation<dim>::active_cell_iterator>
-    cells_to_be_agglomerated3;
-  Tests::collect_cells_for_agglomeration(tria,
-                                         idxs_to_be_agglomerated3,
-                                         cells_to_be_agglomerated3);
-
-
-  std::vector<types::global_cell_index> idxs_to_be_agglomerated4 = {
-    2279, 2278}; //{36,37}
-  std::vector<typename Triangulation<dim>::active_cell_iterator>
-    cells_to_be_agglomerated4;
-  Tests::collect_cells_for_agglomeration(tria,
-                                         idxs_to_be_agglomerated4,
-                                         cells_to_be_agglomerated4);
-
-
-  std::vector<types::global_cell_index> idxs_to_be_agglomerated5 = {
-    3760, 3761}; //{3772,3773}
-  std::vector<typename Triangulation<dim>::active_cell_iterator>
-    cells_to_be_agglomerated5;
-  Tests::collect_cells_for_agglomeration(tria,
-                                         idxs_to_be_agglomerated5,
-                                         cells_to_be_agglomerated5);
-
-  std::vector<types::global_cell_index> idxs_to_be_agglomerated6 = {3648, 3306};
-  std::vector<typename Triangulation<dim>::active_cell_iterator>
-    cells_to_be_agglomerated6;
-  Tests::collect_cells_for_agglomeration(tria,
-                                         idxs_to_be_agglomerated6,
-                                         cells_to_be_agglomerated6);
-
-  std::vector<types::global_cell_index> idxs_to_be_agglomerated7 = {3765, 3764};
-  std::vector<typename Triangulation<dim>::active_cell_iterator>
-    cells_to_be_agglomerated7;
-  Tests::collect_cells_for_agglomeration(tria,
-                                         idxs_to_be_agglomerated7,
-                                         cells_to_be_agglomerated7);
-
-
-  // Agglomerate the cells just stored
-  ah = std::make_unique<AgglomerationHandler<dim>>(*cached_tria);
-  ah->agglomerate_cells(cells_to_be_agglomerated);
-  ah->agglomerate_cells(cells_to_be_agglomerated2);
-  ah->agglomerate_cells(cells_to_be_agglomerated3);
-  ah->agglomerate_cells(cells_to_be_agglomerated4);
-  ah->agglomerate_cells(cells_to_be_agglomerated5);
-  ah->agglomerate_cells(cells_to_be_agglomerated6);
-  ah->agglomerate_cells(cells_to_be_agglomerated7);
   ah->distribute_agglomerated_dofs(dg_fe);
   ah->create_agglomeration_sparsity_pattern(sparsity);
+  std::cout << "Agglomerated" << std::endl;
+
+  ah->print_agglomeration(std::cout);
 }
 
 
@@ -293,14 +278,22 @@ Poisson<dim>::assemble_system()
           else
             {
               const auto &neigh_cell = ah->agglomerated_neighbor(cell, f);
+              std::cout << "Agglomerated Neighbor:"
+                        << neigh_cell->active_cell_index() << std::endl;
 
               // This is necessary to loop over internal faces only once.
               if (cell->active_cell_index() < neigh_cell->active_cell_index())
                 {
                   unsigned int nofn =
                     ah->neighbor_of_agglomerated_neighbor(cell, f);
+
+                  std::cout << "Neighbor of Agglomerated Neighbor:" << nofn
+                            << std::endl;
+
                   const auto &fe_faces =
                     ah->reinit_interface(cell, neigh_cell, f, nofn);
+
+                  std::cout << "Reiniting:" << nofn << std::endl;
 
                   const auto &fe_faces0 = fe_faces.first;
                   const auto &fe_faces1 = fe_faces.second;
@@ -442,32 +435,7 @@ Poisson<dim>::output_results()
     DataOut<dim> data_out;
     data_out.attach_dof_handler(ah->agglo_dh);
     data_out.add_data_vector(solution, "u", DataOut<dim>::type_dof_data);
-    data_out.build_patches(*(ah->euler_mapping), 3);
-    data_out.write_vtu(output);
-  }
-  {
-    Triangulation<dim> tria_2;
-    tria_2.copy_triangulation(tria);
-    DoFHandler<dim> dofh_2(tria_2);
-    dofh_2.distribute_dofs(dg_fe);
-    Vector<double>                  solution_2(dofh_2.n_dofs());
-    Functions::FEFieldFunction<dim> fe_function(ah->get_dof_handler(),
-                                                solution);
-    VectorTools::project(dofh_2,
-                         constraints,
-                         QGauss<dim>(2 * dg_fe.get_degree() + 1),
-                         fe_function,
-                         solution_2);
-
-    const std::string filename = "test_fefield_function.vtu";
-    std::ofstream     output(filename);
-
-    DataOut<dim> data_out;
-    data_out.attach_dof_handler(dofh_2);
-    data_out.add_data_vector(solution_2,
-                             "u_interpolated",
-                             DataOut<dim>::type_dof_data);
-    data_out.build_patches(mapping, 3);
+    data_out.build_patches(*(ah->euler_mapping));
     data_out.write_vtu(output);
   }
 }
@@ -486,7 +454,8 @@ Poisson<dim>::run()
 int
 main()
 {
-  Poisson<2> poisson_problem;
+  const unsigned int n_partitions = 20;
+  Poisson<2>         poisson_problem(n_partitions);
   poisson_problem.run();
 
   return 0;

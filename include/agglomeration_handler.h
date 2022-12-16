@@ -150,10 +150,10 @@ public:
    */
   void
   initialize_fe_values(
-    const Quadrature<dim> &    cell_quadrature,
-    const UpdateFlags &        flags,
+    const Quadrature<dim>     &cell_quadrature,
+    const UpdateFlags         &flags,
     const Quadrature<dim - 1> &face_quadrature = QGauss<dim - 1>(1),
-    const UpdateFlags &        face_flags      = UpdateFlags::update_default)
+    const UpdateFlags         &face_flags      = UpdateFlags::update_default)
   {
     agglomeration_quad       = cell_quadrature;
     agglomeration_flags      = flags;
@@ -776,7 +776,7 @@ private:
   create_bounding_box(
     const std::vector<
       typename Triangulation<dim, spacedim>::active_cell_iterator>
-      &                            vec_of_cells,
+                                  &vec_of_cells,
     const types::global_cell_index master_idx)
   {
     Assert(n_agglomerations > 0,
@@ -873,6 +873,15 @@ private:
     const typename Triangulation<dim, spacedim>::active_cell_iterator
       &other_cell) const
   {
+    // Check if both are master cells. This happens when two agglomerations are
+    // sharing a facet and from both sides the cells are masters.
+    if ((master_slave_relationships[cell->active_cell_index()] *
+           master_slave_relationships[other_cell->active_cell_index()] ==
+         1))
+      {
+        return 0;
+      }
+
     // check if they refer to same master, OR if it's a master with its slave
     // (and viceversa)
     return master_slave_relationships[cell->active_cell_index()] ==
@@ -925,6 +934,7 @@ private:
                 !are_cells_agglomerated(cell, neighboring_cell))
               {
                 // a new face of the agglomeration has been discovered.
+
                 const auto &cell_and_face =
                   CellAndFace(master_cell, n_agglo_faces);
                 const auto nof = cell->neighbor_of_neighbor(f);
