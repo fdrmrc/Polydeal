@@ -22,6 +22,8 @@
 #include <deal.II/lac/sparse_matrix.h>
 
 #include <deal.II/numerics/data_out.h>
+#include <deal.II/numerics/fe_field_function.h>
+#include <deal.II/numerics/vector_tools_interpolate.h>
 
 #include <algorithm>
 
@@ -542,6 +544,16 @@ Poisson<dim>::output_results()
     data_out.build_patches(*(ah->euler_mapping));
     data_out.write_vtu(output);
   }
+
+  {
+    DoFHandler<dim> dh2(tria);
+    dh2.distribute_dofs(dg_fe);
+    Functions::FEFieldFunction<dim> fe_function(ah->get_dof_handler(),
+                                                solution);
+
+    Vector<double> interpolated_solution;
+    VectorTools::interpolate(dh2, fe_function, interpolated_solution);
+  }
 }
 
 template <int dim>
@@ -558,7 +570,7 @@ Poisson<dim>::run()
 int
 main(int argc, char *argv[])
 {
-  constexpr unsigned int dim = 3;
+  constexpr unsigned int dim = 2;
   if (argc == 1)
     {
       std::cout << "Running SIP with agglomerations." << std::endl;

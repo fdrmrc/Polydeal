@@ -26,7 +26,7 @@ public:
 
   virtual void
   value_list(const std::vector<Point<dim>> &points,
-             std::vector<double>           &values,
+             std::vector<double> &          values,
              const unsigned int /*component*/) const override;
 };
 
@@ -34,7 +34,7 @@ public:
 template <int dim>
 void
 RightHandSide<dim>::value_list(const std::vector<Point<dim>> &points,
-                               std::vector<double>           &values,
+                               std::vector<double> &          values,
                                const unsigned int /*component*/) const
 {
   for (unsigned int i = 0; i < values.size(); ++i)
@@ -206,7 +206,7 @@ Poisson<dim>::assemble_system()
       cell_rhs                 = 0;
       const auto &agglo_values = ah->reinit(cell);
 
-      const auto         &q_points  = agglo_values.get_quadrature_points();
+      const auto &        q_points  = agglo_values.get_quadrature_points();
       const unsigned int  n_qpoints = q_points.size();
       std::vector<double> rhs(n_qpoints);
       rhs_function->value_list(q_points, rhs);
@@ -454,7 +454,7 @@ Poisson<dim>::run()
 int
 main()
 {
-  const unsigned int n_partitions = 20;
+  const unsigned int n_partitions = 2;
   Poisson<2>         poisson_problem(n_partitions);
   poisson_problem.run();
 
