@@ -72,9 +72,9 @@ namespace dealii
         ah = agglo_handler_ptr;
       }
 
-      template <typename BIterator>
+      template <typename CellIterator>
       bool
-      operator()(const BIterator &cell) const
+      operator()(const CellIterator &cell) const
       {
         return !ah->is_slave_cell(cell);
       }
@@ -150,10 +150,10 @@ public:
    */
   void
   initialize_fe_values(
-    const Quadrature<dim> &    cell_quadrature,
-    const UpdateFlags &        flags,
+    const Quadrature<dim>     &cell_quadrature,
+    const UpdateFlags         &flags,
     const Quadrature<dim - 1> &face_quadrature = QGauss<dim - 1>(1),
-    const UpdateFlags &        face_flags      = UpdateFlags::update_default)
+    const UpdateFlags         &face_flags      = UpdateFlags::update_default)
   {
     agglomeration_quad       = cell_quadrature;
     agglomeration_flags      = flags;
@@ -489,10 +489,9 @@ public:
   /**
    * Helper function to determine whether or not a cell is a master or a slave
    */
+  template <typename CellIterator>
   inline bool
-  is_master_cell(
-    const typename Triangulation<dim, spacedim>::active_cell_iterator &cell)
-    const
+  is_master_cell(const CellIterator &cell) const
   {
     return master_slave_relationships[cell->active_cell_index()] == -1;
   }
@@ -504,10 +503,9 @@ public:
    * that is: not master, nor slave.
    *
    */
+  template <typename CellIterator>
   inline bool
-  is_standard_cell(
-    const typename Triangulation<dim, spacedim>::active_cell_iterator &cell)
-    const
+  is_standard_cell(const CellIterator &cell) const
   {
     return master_slave_relationships[cell->active_cell_index()] == -2;
   }
@@ -518,10 +516,9 @@ public:
    * Helper function to determine whether or not a cell is a slave cell, without
    * any information about his parents.
    */
+  template <typename CellIterator>
   inline bool
-  is_slave_cell(
-    const typename Triangulation<dim, spacedim>::active_cell_iterator &cell)
-    const
+  is_slave_cell(const CellIterator &cell) const
   {
     return master_slave_relationships[cell->active_cell_index()] >= 0;
   }
@@ -776,7 +773,7 @@ private:
   create_bounding_box(
     const std::vector<
       typename Triangulation<dim, spacedim>::active_cell_iterator>
-      &                            vec_of_cells,
+                                  &vec_of_cells,
     const types::global_cell_index master_idx)
   {
     Assert(n_agglomerations > 0,
