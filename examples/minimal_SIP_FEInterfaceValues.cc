@@ -24,6 +24,9 @@
 #include <deal.II/lac/sparse_matrix.h>
 
 #include <deal.II/numerics/data_out.h>
+#include <deal.II/numerics/fe_field_function.h>
+#include <deal.II/numerics/vector_tools_interpolate.h>
+#include <deal.II/numerics/vector_tools_project.h>
 
 #include <algorithm>
 
@@ -470,6 +473,67 @@ Poisson<dim>::output_results()
     data_out.attach_dof_handler(ah->get_dof_handler());
     data_out.add_data_vector(solution, "u", DataOut<dim>::type_dof_data);
     data_out.build_patches(*(ah->euler_mapping));
+    data_out.write_vtu(output);
+  }
+  {
+    DoFHandler<dim> output_dh(tria);
+    output_dh.distribute_dofs(FE_DGQ<dim>(1));
+    Vector<double> solution_interpolated(output_dh.n_dofs());
+
+    // TOCHECK: also cells without "BBOX" are used, so indeed one gets
+    // exceptions related to distorted cells
+
+    Functions::FEFieldFunction<dim> fe_function(output_dh,
+                                                solution,
+                                                *(ah->euler_mapping));
+
+    // VectorTools::interpolate(*(ah->euler_mapping),
+    //                          output_dh,
+    //                          fe_function,
+    //                          solution_interpolated);
+
+
+    // Loop over masters and slaves
+    // for (const auto &cell : ah->get_dof_handler().active_cell_iterators())
+    //   {
+    //     typename Triangulation<dim>::active_cell_iterator cell_it(
+    //       *cell, &ah->get_dof_handler());
+    //     if (ah->is_slave_cell(cell_it))
+    //       {
+    //         std::cout << "Cell with index will be set: "
+    //                   << cell_it->active_cell_index() << std::endl;
+    //         fe_function.set_active_cell(cell);
+    //         const auto &vertices = ah->euler_mapping->get_vertices(cell);
+    //         std::vector<Point<dim>> vec_vertices(vertices.size());
+    //         for (unsigned int i = 0; i < vertices.size(); i++)
+    //           {
+    //             vec_vertices[i] = vertices[i];
+    //           }
+    //         std::vector<double> values(vertices.size());
+
+    //         // Set the values at vec_vertices
+    //         fe_function.value_list(vec_vertices, values);
+    //       }
+    //   }
+
+    // solution_interpolated.size()=64, ah.n_dofs()=16 if
+    // ah->get_dof_handler() is used
+    VectorTools::project(*(ah->euler_mapping),
+                         output_dh,
+                         constraints,
+                         QGauss<dim>(3),
+                         fe_function,
+                         solution_interpolated);
+
+    const std::string filename = "agglomerated_Poisson_FEFieldFunction.vtu";
+    std::ofstream     output(filename);
+
+    DataOut<dim> data_out;
+    data_out.attach_dof_handler(output_dh);
+    data_out.add_data_vector(solution_interpolated,
+                             "u_interpolated",
+                             DataOut<dim>::type_dof_data);
+    data_out.build_patches();
     data_out.write_vtu(output);
   }
 }

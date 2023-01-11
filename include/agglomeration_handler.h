@@ -573,6 +573,16 @@ public:
     return agglo_dh.n_dofs();
   }
 
+
+  /**
+   * Utility to plot globally, on the whole mesh, the finite element solution
+   * defined locally on each bounding box.
+   *
+   */
+  void
+  agglomeration_plotter()
+  {}
+
 private:
   using ScratchData = MeshWorker::ScratchData<dim, spacedim>;
 

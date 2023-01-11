@@ -8,6 +8,7 @@
 
 #include <deal.II/numerics/data_out.h>
 #include <deal.II/numerics/fe_field_function.h>
+#include <deal.II/numerics/vector_tools_interpolate.h>
 #include <deal.II/numerics/vector_tools_project.h>
 
 #include <algorithm>
@@ -89,7 +90,7 @@ template <int dim>
 Poisson<dim>::Poisson(const unsigned int n_parts)
   : mapping(1)
   , dg_fe(1)
-  , n_partitions{n_parts}
+  , n_partitions(n_parts)
 {}
 
 template <int dim>
@@ -123,7 +124,6 @@ Poisson<dim>::make_grid()
 template <int dim>
 void
 Poisson<dim>::setup_agglomeration()
-
 {
   std::multimap<types::global_cell_index,
                 typename Triangulation<dim>::active_cell_iterator>
@@ -436,6 +436,26 @@ Poisson<dim>::output_results()
     data_out.attach_dof_handler(ah->agglo_dh);
     data_out.add_data_vector(solution, "u", DataOut<dim>::type_dof_data);
     data_out.build_patches(*(ah->euler_mapping));
+    data_out.write_vtu(output);
+  }
+  {
+    DoFHandler<dim> output_dh(tria);
+    output_dh.distribute_dofs(FE_DGQ<dim>(1));
+    Vector<double> solution_interpolated(output_dh.n_dofs());
+
+    Functions::FEFieldFunction<dim> fe_function(ah->agglo_dh, solution);
+
+    VectorTools::interpolate(output_dh, fe_function, solution_interpolated);
+
+    const std::string filename = "agglomerated_Poisson_FEFieldFunction.vtu";
+    std::ofstream     output(filename);
+
+    DataOut<dim> data_out;
+    data_out.attach_dof_handler(output_dh);
+    data_out.add_data_vector(solution_interpolated,
+                             "u_interpolated",
+                             DataOut<dim>::type_dof_data);
+    data_out.build_patches();
     data_out.write_vtu(output);
   }
 }
