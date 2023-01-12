@@ -26,6 +26,7 @@
 #include <deal.II/numerics/data_out.h>
 #include <deal.II/numerics/fe_field_function.h>
 #include <deal.II/numerics/vector_tools_interpolate.h>
+#include <deal.II/numerics/vector_tools_point_value.h>
 #include <deal.II/numerics/vector_tools_project.h>
 
 #include <algorithm>
@@ -476,16 +477,16 @@ Poisson<dim>::output_results()
     data_out.write_vtu(output);
   }
   {
-    DoFHandler<dim> output_dh(tria);
-    output_dh.distribute_dofs(FE_DGQ<dim>(1));
-    Vector<double> solution_interpolated(output_dh.n_dofs());
+    // DoFHandler<dim> output_dh(tria);
+    // output_dh.distribute_dofs(FE_DGQ<dim>(1));
+    // Vector<double> solution_interpolated(output_dh.n_dofs());
 
-    // TOCHECK: also cells without "BBOX" are used, so indeed one gets
-    // exceptions related to distorted cells
+    // // TOCHECK: also cells without "BBOX" are used, so indeed one gets
+    // // exceptions related to distorted cells
 
-    Functions::FEFieldFunction<dim> fe_function(output_dh,
-                                                solution,
-                                                *(ah->euler_mapping));
+    // Functions::FEFieldFunction<dim> fe_function(output_dh,
+    //                                             solution,
+    //                                             *(ah->euler_mapping));
 
     // VectorTools::interpolate(*(ah->euler_mapping),
     //                          output_dh,
@@ -516,25 +517,36 @@ Poisson<dim>::output_results()
     //       }
     //   }
 
+
+    // for (const auto &cell : output_dh.active_cell_iterators())
+    //   {
+    //     Vector<double> value(1);
+    //     VectorTools::point_value(
+    //       *(ah->euler_mapping), output_dh, solution, cell->vertex(0), value);
+    //   }
+
     // solution_interpolated.size()=64, ah.n_dofs()=16 if
     // ah->get_dof_handler() is used
-    VectorTools::project(*(ah->euler_mapping),
-                         output_dh,
-                         constraints,
-                         QGauss<dim>(3),
-                         fe_function,
-                         solution_interpolated);
+    // VectorTools::project(output_dh,
+    //                      constraints,
+    //                      QGauss<dim>(3),
+    //                      fe_function,
+    //                      solution_interpolated);
 
-    const std::string filename = "agglomerated_Poisson_FEFieldFunction.vtu";
-    std::ofstream     output(filename);
+    // const std::string filename = "agglomerated_Poisson_FEFieldFunction.vtu";
+    // std::ofstream     output(filename);
 
-    DataOut<dim> data_out;
-    data_out.attach_dof_handler(output_dh);
-    data_out.add_data_vector(solution_interpolated,
-                             "u_interpolated",
-                             DataOut<dim>::type_dof_data);
-    data_out.build_patches();
-    data_out.write_vtu(output);
+    // DataOut<dim> data_out;
+    // data_out.attach_dof_handler(output_dh);
+    // data_out.add_data_vector(solution_interpolated,
+    //                          "u_interpolated",
+    //                          DataOut<dim>::type_dof_data);
+    // data_out.build_patches();
+    // data_out.write_vtu(output);
+  }
+
+  {
+    ah->agglomeration_plotter(solution);
   }
 }
 

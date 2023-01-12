@@ -579,9 +579,70 @@ public:
    * defined locally on each bounding box.
    *
    */
+  template <typename InputVector>
   void
-  agglomeration_plotter()
-  {}
+  agglomeration_plotter(const InputVector &solution)
+  {
+    Assert(solution.size() > 0,
+           ExcMessage("Solution vector must have a positive size."));
+    Assert(euler_mapping,
+           ExcMessage("The agglomeration mapping has not been set."));
+
+    DoFHandler<dim, spacedim> output_dh(*tria);
+    output_dh.distribute_dofs(fe_collection[0]);
+    unsigned int n_dofs_per_cell = fe_collection[0].dofs_per_cell;
+    InputVector  extended_sol(output_dh.n_dofs());
+    std::vector<types::global_dof_index> local_dof_indices(n_dofs_per_cell);
+    std::vector<types::global_dof_index> local_master_dof_indices(
+      n_dofs_per_cell);
+    std::vector<Point<dim>>                       pts;
+    std::vector<typename InputVector::value_type> wgts;
+
+    for (const auto &cell : output_dh.active_cell_iterators())
+      {
+        // Set the master cell associated with the present cell, which may be a
+        // slave in principle.
+
+        const auto &master_cell =
+          master_slave_relationships_iterators[cell->active_cell_index()];
+        typename DoFHandler<dim, spacedim>::cell_iterator master_cell_dh(
+          *master_cell, &agglo_dh);
+
+        for (const auto i : cell->vertex_indices())
+          {
+            pts.push_back(bboxes[master_cell->active_cell_index()].real_to_unit(
+              cell->vertex(i)));
+            wgts.push_back(1. / cell->n_vertices());
+          }
+
+        Quadrature<dim>         quad(pts, wgts);
+        FEValues<dim, spacedim> agglo_values(fe_collection[0],
+                                             quad,
+                                             update_values);
+        agglo_values.reinit(cell);
+        cell->get_dof_indices(local_dof_indices);
+        master_cell_dh->get_dof_indices(local_master_dof_indices);
+        for (unsigned int q_index = 0; q_index < cell->n_vertices(); ++q_index)
+          {
+            for (unsigned int i = 0; i < n_dofs_per_cell; ++i)
+              {
+                extended_sol[local_dof_indices[i]] +=
+                  solution[local_master_dof_indices[i]] *
+                  agglo_values.shape_value(i, q_index);
+              }
+          }
+      }
+
+    const std::string filename = "extended_solution.vtk";
+    std::ofstream     output(filename);
+    DataOut<dim>      data_out;
+    data_out.attach_dof_handler(output_dh);
+    data_out.add_data_vector(extended_sol,
+                             "u_extended",
+                             DataOut<dim>::type_dof_data);
+    data_out.build_patches();
+    data_out.write_vtk(output);
+  }
 
 private:
   using ScratchData = MeshWorker::ScratchData<dim, spacedim>;
