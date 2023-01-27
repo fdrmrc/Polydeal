@@ -50,7 +50,10 @@ AgglomerationHandler<dim, spacedim>::agglomerate_cells(
   // Get global index for each cell
   std::vector<types::global_cell_index> global_indices;
   for (const auto &cell : vec_of_cells)
-    global_indices.push_back(cell->active_cell_index());
+    {
+      if (!is_master_cell(cell))
+        global_indices.push_back(cell->active_cell_index());
+    }
 
   // Maximum index drives the selection of the master cell
   types::global_cell_index master_idx =
