@@ -20,7 +20,10 @@
 
 #include <deal.II/grid/grid_tools_cache.h>
 
+#include <deal.II/non_matching/fe_values.h>
 #include <deal.II/non_matching/mesh_classifier.h>
+
+#include <deal.II/numerics/vector_tools_interpolate.templates.h>
 
 #include <vector>
 using namespace dealii;
@@ -38,8 +41,9 @@ class Agglomerator : public Subscriptor
 public:
   Agglomerator() = default;
 
-  Agglomerator(const GridTools::Cache<dim, spacedim> &cached_tria,
-               const Function<dim>                   &level_set);
+  Agglomerator(const GridTools::Cache<dim, spacedim> &cache_tria,
+               const Function<dim>                   &level_set,
+               const Quadrature<1>                   &quad_1D = QGauss<1>(3));
 
   ~Agglomerator() = default;
 
@@ -54,13 +58,43 @@ public:
 private:
   std::unique_ptr<GridTools::Cache<dim, spacedim>> cached_tria;
 
-  std::unique_ptr<Function<dim>> level_set;
+  /**
+   * 1D base Quadrature rule used internally by NonMatching::FEValues to
+   * construct a tensor product rule.
+   *
+   */
+  std::unique_ptr<Quadrature<1>> quadrature_1D;
+
+  typename NonMatching::MeshClassifier<dim> mesh_classifier;
+
+  /**
+   * Continuous level set function that describes the geometry of the domain.
+   *
+   */
+  std::unique_ptr<Function<dim>> level_set_function;
+
+  /**
+   * Discrete level set that describes the geometry of the domain.
+   *
+   */
+  Vector<double> level_set_vector;
+
+  /**
+   * DoFs for the discrete level set function.
+   */
+  DoFHandler<dim> level_set_dof_handler;
+
+  const FE_Q<dim> level_set_fe;
 
   std::vector<
     std::vector<typename Triangulation<dim, spacedim>::active_cell_iterator>>
     agglomerates;
 
-  typename NonMatching::MeshClassifier mesh_classifier;
+  /**
+   * Identify which cells of the mesh are cut.
+   */
+  void
+  identify_cut_cells();
 
   /**
    * Identify in which cells of the triangulation small cuts occurs.
@@ -78,4 +112,3 @@ private:
     const double subcell_measure,
     const double tol = .3);
 };
-
