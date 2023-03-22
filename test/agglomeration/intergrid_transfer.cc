@@ -61,30 +61,28 @@ test_prolongation(const unsigned int        n_refinements,
     go.write_vtk(tria, fine_filename);
   }
 
-  {
-    Tensor<1, dim> exponents_monomial;
-    Vector<double> vec(coarse_dh.n_dofs());
-    VectorTools::interpolate(coarse_dh, function, vec);
 
-    Vector<double> dst(fine_dh.n_dofs());
-    // Prolongate
-    non_nested_prolongation(
-      coarse_cache, fine_cache, coarse_dh, fine_dh, fe_space, vec, dst);
-    DataOut<2> data_out;
-    data_out.attach_dof_handler(fine_dh);
-    data_out.add_data_vector(dst, "solution");
-    data_out.build_patches();
-    DataOut<2> data_out2;
-    data_out2.attach_dof_handler(coarse_dh);
-    data_out2.add_data_vector(vec, "coarse_function");
-    data_out2.build_patches();
+  Vector<double> vec(coarse_dh.n_dofs());
+  VectorTools::interpolate(coarse_dh, function, vec);
+  Vector<double> dst(fine_dh.n_dofs());
+  // Prolongate
+  non_nested_prolongation(
+    coarse_cache, fine_cache, coarse_dh, fine_dh, fe_space, vec, dst);
 
-    std::ofstream output("prolonged_sol.vtk");
-    data_out.write_vtk(output);
-    std::ofstream output2("sol_on_coarse.vtk");
-    data_out2.write_vtk(output2);
-  }
+  DataOut<2> data_out;
+  data_out.attach_dof_handler(coarse_dh);
+  data_out.add_data_vector(vec, "solution");
+  data_out.build_patches();
+  std::ofstream output_coarse("coarse_sol.vtk");
+  data_out.write_vtk(output_coarse);
+  data_out.clear();
+  std::ofstream output_fine("prolonged_sol.vtk");
+  data_out.attach_dof_handler(fine_dh);
+  data_out.add_data_vector(dst, "prolonged_solution");
+  data_out.build_patches();
+  data_out.write_vtk(output_fine);
 }
+
 int
 main()
 {
