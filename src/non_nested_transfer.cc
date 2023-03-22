@@ -31,7 +31,9 @@ non_nested_prolongation(const GridTools::Cache<dim0, spacedim> &coarse_cache,
   Assert(fe_space.has_support_points(),
          ExcMessage("The FiniteElement need to have support points."))
 
-    const auto      &unit_pts        = fe_space.get_unit_support_points();
+    const ReferenceCell reference_cell =
+      coarse_cache.get_triangulation().get_reference_cells()[0];
+  const auto        &unit_pts        = fe_space.get_unit_support_points();
   const unsigned int n_dofs_per_cell = fe_space.n_dofs_per_cell();
   const auto        &coarse_tree = coarse_cache.get_cell_bounding_boxes_rtree();
   const auto        &tree        = fine_cache.get_cell_bounding_boxes_rtree();
@@ -68,7 +70,7 @@ non_nested_prolongation(const GridTools::Cache<dim0, spacedim> &coarse_cache,
             {
               const auto &ref_p = coarse_mapping.transform_real_to_unit_cell(
                 coarse_cell, fe_values.quadrature_point(i));
-              if (GeometryInfo<dim0>::is_inside_unit_cell(ref_p))
+              if (reference_cell.contains_point(ref_p))
                 dofs_and_pts.emplace_back(space_dofs[i], ref_p);
             }
         }
