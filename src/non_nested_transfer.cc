@@ -29,28 +29,31 @@ non_nested_prolongation(const GridTools::Cache<dim0, spacedim> &coarse_cache,
                         VectorType                             &dst)
 {
   Assert(fe_space.has_support_points(),
-         ExcMessage("The FiniteElement need to have support points."))
+         ExcMessage("The FiniteElement must have support points."))
 
     const ReferenceCell reference_cell =
       coarse_cache.get_triangulation().get_reference_cells()[0];
-  const auto        &unit_pts        = fe_space.get_unit_support_points();
-  const unsigned int n_dofs_per_cell = fe_space.n_dofs_per_cell();
+  const auto        &unit_pts = fe_space.get_unit_support_points();
+  const unsigned int n_coarse_dofs_per_cell = fe_space.n_dofs_per_cell();
+  const unsigned int n_fine_dofs_per_cell   = fe_space.n_dofs_per_cell();
   const auto        &coarse_tree = coarse_cache.get_cell_bounding_boxes_rtree();
   const auto        &tree        = fine_cache.get_cell_bounding_boxes_rtree();
-  std::vector<types::global_dof_index> coarse_dofs(n_dofs_per_cell);
-  std::vector<types::global_dof_index> space_dofs(n_dofs_per_cell);
+  std::vector<types::global_dof_index> coarse_dofs(n_coarse_dofs_per_cell);
+  std::vector<types::global_dof_index> fine_dofs(n_fine_dofs_per_cell);
   const auto &coarse_mapping = coarse_cache.get_mapping();
 
   FullMatrix<double> prolongation_matrix(
-    fine_dh.n_dofs(), coarse_dh.n_dofs()); // use Sparse, of course...
+    fine_dh.n_dofs(),
+    coarse_dh.n_dofs()); // Just for testing. TODO: sparse format
 
+  const double             tol = 1e-4; // TODO
   Quadrature<dim1>         quadrature(unit_pts);
   FEValues<dim1, spacedim> fe_values(fine_cache.get_mapping(),
                                      fe_space,
                                      quadrature,
                                      update_quadrature_points);
   std::vector<std::pair<types::global_dof_index, Point<spacedim>>> dofs_and_pts;
-
+  std::vector<types::global_dof_index> dof_valence(fine_dh.n_dofs(), 0);
   for (const auto &[coarse_box, coarse_cell] : coarse_tree)
     {
       typename DoFHandler<dim0, spacedim>::active_cell_iterator coarse_cell_dh(
@@ -60,18 +63,21 @@ non_nested_prolongation(const GridTools::Cache<dim0, spacedim> &coarse_cache,
       for (const auto &[space_box, fine_cell] :
            tree | bgi::adaptors::queried(bgi::intersects(coarse_box)))
         {
-          // Collect all the DoFs and points that are falling in this fine cell
+          // Collect all the DoFs and points that are in this fine cell.
           typename DoFHandler<dim1, spacedim>::active_cell_iterator
             fine_cell_dh(*fine_cell, &fine_dh);
-          fine_cell_dh->get_dof_indices(space_dofs);
+          fine_cell_dh->get_dof_indices(fine_dofs);
           fe_values.reinit(fine_cell_dh);
 
-          for (unsigned int i = 0; i < space_dofs.size(); ++i)
+          for (unsigned int i = 0; i < n_fine_dofs_per_cell; ++i)
             {
               const auto &ref_p = coarse_mapping.transform_real_to_unit_cell(
                 coarse_cell, fe_values.quadrature_point(i));
-              if (reference_cell.contains_point(ref_p))
-                dofs_and_pts.emplace_back(space_dofs[i], ref_p);
+              if (reference_cell.contains_point(ref_p, tol))
+                {
+                  // Record DoF and its reference position
+                  dofs_and_pts.emplace_back(fine_dofs[i], ref_p);
+                }
             }
         }
 
@@ -86,6 +92,10 @@ non_nested_prolongation(const GridTools::Cache<dim0, spacedim> &coarse_cache,
                                      }),
                          dofs_and_pts.end());
 
+      //  Record valence of DoF
+      for (const auto &p : dofs_and_pts)
+        ++dof_valence[p.first];
+
       // Distribute
       for (unsigned int i = 0; i < coarse_dofs.size(); ++i)
         for (unsigned int q = 0; q < dofs_and_pts.size(); ++q)
@@ -94,8 +104,19 @@ non_nested_prolongation(const GridTools::Cache<dim0, spacedim> &coarse_cache,
 
       dofs_and_pts.clear();
     }
+
   // Prolongate
   prolongation_matrix.vmult(dst, src);
+  // Pointwise scaling with the weights.
+  for (unsigned int i = 0; i < dst.size(); ++i)
+    dst[i] /= dof_valence[i];
+
+
+#if FALSE
+  // Just for debugging purposes
+  for (const auto &w : dof_valence)
+    std::cout << w << std::endl;
+#endif
 }
 
 
