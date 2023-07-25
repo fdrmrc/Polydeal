@@ -61,8 +61,8 @@ test(const unsigned int ref = 6, const unsigned int extraction_level = 0)
   for (const auto &cell : tria.active_cell_iterators())
     boxes[i++] = std::make_pair(mapping.get_bounding_box(cell), cell);
 
-  const auto tree = pack_rtree<bgi::rstar<max_elem_per_node>>(boxes);
-  // const auto tree = pack_rtree<bgi::linear<max_elem_per_node>>(boxes);
+  // const auto tree = pack_rtree<bgi::rstar<max_elem_per_node>>(boxes);
+  const auto tree = pack_rtree<bgi::linear<max_elem_per_node>>(boxes);
 
   const auto vec_boxes = extract_rtree_level(tree, extraction_level);
 
@@ -86,6 +86,7 @@ test(const unsigned int ref = 6, const unsigned int extraction_level = 0)
       for (const auto &my_pair : cells)
         {
           std::cout << my_pair.second->active_cell_index() << std::endl;
+          my_pair.second->set_subdomain_id(i);
           idxs_to_agglomerate.push_back(my_pair.second->active_cell_index());
         }
 
@@ -111,7 +112,21 @@ test(const unsigned int ref = 6, const unsigned int extraction_level = 0)
     grid_out.write_vtk(tria, out);
     std::cout << "Grid written " << std::endl;
 
-    ah.print_agglomeration(std::cout);
+    // Check number of agglomerates
+    {
+      for (unsigned int j = 0; j < i; ++j)
+        std::cout << GridTools::count_cells_with_subdomain_association(tria, j)
+                  << " cells have subdomain " + std::to_string(j) << std::endl;
+      GridOut           grid_out_svg;
+      GridOutFlags::Svg svg_flags;
+      svg_flags.label_subdomain_id = true;
+      svg_flags.coloring           = GridOutFlags::Svg::subdomain_id;
+      grid_out_svg.set_flags(svg_flags);
+      std::ofstream out("grid_ball_agglomerates.svg");
+      grid_out_svg.write_svg(tria, out);
+    }
+
+    // ah.print_agglomeration(std::cout);
   }
 
   unsigned int n_master_cells = 0;
@@ -126,28 +141,28 @@ test(const unsigned int ref = 6, const unsigned int extraction_level = 0)
   std::cout << "NUMBER OF TOTAL CELLS: " << tria.n_active_cells() << std::endl;
   std::cout << "Number of master cells: " << n_master_cells << std::endl;
 
-  FE_DGQ<dim, spacedim> dg_fe(1);
-  ah.distribute_agglomerated_dofs(dg_fe);
+  // FE_DGQ<dim, spacedim> dg_fe(1);
+  // ah.distribute_agglomerated_dofs(dg_fe);
 
 
-  for (const auto &cell : ah.agglomeration_cell_iterators())
-    {
-      const unsigned int n_faces = ah.n_faces(cell);
-      std::cout << cell->active_cell_index() << " has " << n_faces << std::endl;
-      for (unsigned int f = 0; f < n_faces; ++f)
-        {
-          const auto &neigh_cell = ah.agglomerated_neighbor(cell, f);
-        }
-    }
+  // for (const auto &cell : ah.agglomeration_cell_iterators())
+  //   {
+  //     const unsigned int n_faces = ah.n_faces(cell);
+  //     std::cout << cell->active_cell_index() << " has " << n_faces <<
+  //     std::endl; for (unsigned int f = 0; f < n_faces; ++f)
+  //       {
+  //         const auto &neigh_cell = ah.agglomerated_neighbor(cell, f);
+  //       }
+  //   }
 }
 
 int
 main()
 {
   // const unsigned int            extraction_levels  = 14;
-  const unsigned int            global_refinements = 4;
-  static constexpr unsigned int max_per_node       = 16;
+  static constexpr unsigned int global_refinements = 4;
+  static constexpr unsigned int max_per_node       = 16; // 16;
   // for (unsigned int i = 0; i < extraction_levels; ++i)
   //   test<2, 2>(global_refinements, i);
-  test<2, 2, max_per_node>(global_refinements, 1);
+  test<2, 2, max_per_node>(global_refinements, 2);
 }
