@@ -64,6 +64,7 @@ test(const unsigned int ref = 6, const unsigned int extraction_level = 0)
   // const auto tree = pack_rtree<bgi::rstar<max_elem_per_node>>(boxes);
   const auto tree = pack_rtree<bgi::linear<max_elem_per_node>>(boxes);
 
+  Assert(n_levels(tree) >= 2, ExcMessage("At least two levels are needed."));
   const auto vec_boxes = extract_rtree_level(tree, extraction_level);
 
   std::vector<BoundingBox<spacedim>> bboxes;
