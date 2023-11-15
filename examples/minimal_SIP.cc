@@ -542,6 +542,23 @@ Poisson<dim>::output_results()
     data_out.build_patches(*(ah->euler_mapping));
     data_out.write_vtu(output);
   }
+  {
+    const std::string filename = "interpolated_solution.vtu";
+    std::ofstream     output(filename);
+
+    // Setup interpolation onto classical underlying DoFHandler
+    ah->setup_output_interpolation_matrix();
+    Vector<double> interpolated_solution(ah->output_dh.n_dofs());
+    ah->output_interpolation_matrix.vmult(interpolated_solution, solution);
+
+    DataOut<dim> data_out;
+    data_out.attach_dof_handler(ah->output_dh);
+    data_out.add_data_vector(interpolated_solution,
+                             "u",
+                             DataOut<dim>::type_dof_data);
+    data_out.build_patches(mapping);
+    data_out.write_vtu(output);
+  }
 }
 
 template <int dim>
@@ -558,7 +575,7 @@ Poisson<dim>::run()
 int
 main(int argc, char *argv[])
 {
-  constexpr unsigned int dim = 3;
+  constexpr unsigned int dim = 2;
   if (argc == 1)
     {
       std::cout << "Running SIP with agglomerations." << std::endl;
