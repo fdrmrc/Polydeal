@@ -37,6 +37,7 @@
 #include <deal.II/hp/fe_collection.h>
 
 #include <deal.II/lac/dynamic_sparsity_pattern.h>
+#include <deal.II/lac/sparse_matrix.h>
 #include <deal.II/lac/sparsity_pattern.h>
 #include <deal.II/lac/vector.h>
 
@@ -123,6 +124,21 @@ public:
    */
   DoFHandler<dim, spacedim> agglo_dh;
 
+  /**
+   * DoFHandler for the finest space: classical deal.II space
+   */
+  DoFHandler<dim, spacedim> output_dh;
+
+  /**
+   * Sparsity to interpolate on the output dh.
+   */
+  SparsityPattern output_interpolation_sparsity;
+
+  /**
+   * Interpolation matrix for the output dh.
+   */
+  SparseMatrix<double> output_interpolation;
+
   explicit AgglomerationHandler(
     const GridTools::Cache<dim, spacedim> &cached_tria);
 
@@ -152,6 +168,9 @@ public:
 
     initialize_hp_structure();
     setup_connectivity_of_agglomeration();
+
+    output_dh.reinit(*tria);
+    output_dh.distribute_dofs(*fe);
   }
 
   /**
@@ -220,7 +239,7 @@ public:
    * with which master.
    */
   friend void
-  print_agglomeration(std::ostream &                             os,
+  print_agglomeration(std::ostream                              &os,
                       const AgglomerationHandler<dim, spacedim> &ah)
   {
     for (const auto &cell : ah.euler_dh.active_cell_iterators())
@@ -426,6 +445,17 @@ public:
     return master_slave_relationships[cell->active_cell_index()] == -1;
   }
 
+  inline types::global_cell_index
+  get_master_idx(
+    const typename Triangulation<dim, spacedim>::active_cell_iterator &cell)
+    const
+  {
+    auto idx = master_slave_relationships[cell->active_cell_index()];
+    Assert(is_master_cell(cell), ExcMessage("This cell is not a master one."));
+    return idx;
+  }
+
+
   /**
    * Helper function to determine if the given cell is a standard deal.II cell,
    * that is: not master, nor slave.
@@ -628,7 +658,7 @@ private:
   create_bounding_box(
     const std::vector<
       typename Triangulation<dim, spacedim>::active_cell_iterator>
-      &                            vec_of_cells,
+                                  &vec_of_cells,
     const types::global_cell_index master_idx)
   {
     Assert(n_agglomerations > 0,
@@ -782,6 +812,84 @@ private:
       {
         setup_master_neighbor_connectivity(cell);
       }
+  }
+
+  void
+  setup_output_interpolation_matrix()
+  {
+    DynamicSparsityPattern dsp(output_dh.n_dofs(), agglo_dh.n_dofs());
+
+    std::vector<types::global_dof_index> agglo_dof_indices(fe->dofs_per_cell);
+    std::vector<types::global_dof_index> output_dof_indices(fe->dofs_per_cell);
+
+    Quadrature<dim> quad(fe->get_unit_support_points());
+
+    FEValues<dim, spacedim> output_fe_values(*fe,
+                                             quad,
+                                             update_quadrature_points);
+
+    for (const auto &cell : agglo_dh.active_cell_iterators())
+      if (is_master_cell(cell))
+        {
+          auto slaves = get_slaves_of_idx(get_master_idx(cell));
+          slaves.emplace_back(cell);
+
+          cell->get_dof_indices(agglo_dof_indices);
+
+          for (const auto &slave : slaves)
+            {
+              // addd master-slave relationship
+              const auto slave_output =
+                slave->as_dof_handler_iterator(output_dh);
+              slave_output->get_dof_indices(output_dof_indices);
+              for (const auto row : output_dof_indices)
+                dsp.add_entries(row,
+                                agglo_dof_indices.begin(),
+                                agglo_dof_indices.end());
+            }
+        }
+    output_interpolation_sparsity.copy_from(dsp);
+    output_interpolation.reinit(output_interpolation_sparsity);
+
+    FullMatrix<double>      local_matrix(fe->dofs_per_cell, fe->dofs_per_cell);
+    std::vector<Point<dim>> reference_q_points(fe->dofs_per_cell);
+    AffineConstraints<double> c;
+    c.close();
+    for (const auto &cell : agglo_dh.active_cell_iterators())
+      if (is_master_cell(cell))
+        {
+          auto slaves = get_slaves_of_idx(get_master_idx(cell));
+          slaves.emplace_back(cell);
+
+          cell->get_dof_indices(agglo_dof_indices);
+
+          for (const auto &slave : slaves)
+            {
+              // addd master-slave relationship
+              const auto slave_output =
+                slave->as_dof_handler_iterator(output_dh);
+
+              slave_output->get_dof_indices(output_dof_indices);
+              output_fe_values.reinit(slave_output);
+
+              const auto &q_points = output_fe_values.get_quadrature_points();
+              local_matrix         = 0;
+              for (const auto i : output_fe_values.dof_indices())
+                {
+                  const auto &p =
+                    euler_mapping->transform_real_to_unit_cell(cell,
+                                                               q_points[i]);
+                  for (const auto j : output_fe_values.dof_indices())
+                    {
+                      local_matrix(i, j) = fe->shape_value(j, p);
+                    }
+                }
+              c.distribute_local_to_global(local_matrix,
+                                           output_dof_indices,
+                                           agglo_dof_indices,
+                                           output_interpolation);
+            }
+        }
   }
 };
 
