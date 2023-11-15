@@ -37,6 +37,7 @@
 #include <deal.II/hp/fe_collection.h>
 
 #include <deal.II/lac/dynamic_sparsity_pattern.h>
+#include <deal.II/lac/sparse_matrix.h>
 #include <deal.II/lac/sparsity_pattern.h>
 #include <deal.II/lac/vector.h>
 
@@ -110,6 +111,21 @@ public:
    */
   DoFHandler<dim, spacedim> agglo_dh;
 
+  /**
+   * DoFHandler for the finest space: classical deal.II space
+   */
+  DoFHandler<dim, spacedim> output_dh;
+
+  /**
+   * Sparsity to interpolate on the output dh.
+   */
+  SparsityPattern output_interpolation_sparsity;
+
+  /**
+   * Interpolation matrix for the output dh.
+   */
+  SparseMatrix<double> output_interpolation_matrix;
+
   explicit AgglomerationHandler(
     const GridTools::Cache<dim, spacedim> &cached_tria);
 
@@ -150,10 +166,10 @@ public:
    */
   void
   initialize_fe_values(
-    const Quadrature<dim>     &cell_quadrature,
-    const UpdateFlags         &flags,
+    const Quadrature<dim> &    cell_quadrature,
+    const UpdateFlags &        flags,
     const Quadrature<dim - 1> &face_quadrature = QGauss<dim - 1>(1),
-    const UpdateFlags         &face_flags      = UpdateFlags::update_default)
+    const UpdateFlags &        face_flags      = UpdateFlags::update_default)
   {
     agglomeration_quad       = cell_quadrature;
     agglomeration_flags      = flags;
@@ -570,6 +586,13 @@ public:
     return agglo_dh.n_dofs();
   }
 
+  /**
+   * Interpolate the solution defined on the agglomerates onto a classical
+   * deal.II DoFHandler.
+   */
+  void
+  setup_output_interpolation_matrix();
+
 private:
   using ScratchData = MeshWorker::ScratchData<dim, spacedim>;
 
@@ -773,7 +796,7 @@ private:
   create_bounding_box(
     const std::vector<
       typename Triangulation<dim, spacedim>::active_cell_iterator>
-                                  &vec_of_cells,
+      &                            vec_of_cells,
     const types::global_cell_index master_idx)
   {
     Assert(n_agglomerations > 0,

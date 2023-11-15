@@ -122,7 +122,7 @@ template <int dim, int spacedim>
 Quadrature<dim>
 AgglomerationHandler<dim, spacedim>::agglomerated_quadrature(
   const std::vector<typename Triangulation<dim, spacedim>::active_cell_iterator>
-                        &cells,
+    &                    cells,
   const Quadrature<dim> &quadrature_type) const
 {
   Assert(quadrature_type.size() > 0,
@@ -290,7 +290,7 @@ AgglomerationHandler<dim, spacedim>::reinit_master(
       const auto &JxWs    = no_values.get_JxW_values();
       const auto &normals = no_values.get_normal_vectors();
 
-      const auto                  &bbox = bboxes[cell->active_cell_index()];
+      const auto &                 bbox = bboxes[cell->active_cell_index()];
       const double                 bbox_measure = bbox.volume();
       std::vector<Point<spacedim>> unit_q_points;
 
@@ -558,6 +558,89 @@ AgglomerationHandler<dim, spacedim>::create_agglomeration_sparsity_pattern(
 
 
   sparsity_pattern.copy_from(dsp);
+}
+
+
+template <int dim, int spacedim>
+
+void
+AgglomerationHandler<dim, spacedim>::setup_output_interpolation_matrix()
+{
+  // Setup an auxiliary DoFHandler for output purposes
+  output_dh.reinit(*tria);
+  output_dh.distribute_dofs(*fe);
+
+  DynamicSparsityPattern dsp(output_dh.n_dofs(), agglo_dh.n_dofs());
+
+  std::vector<types::global_dof_index> agglo_dof_indices(fe->dofs_per_cell);
+  std::vector<types::global_dof_index> output_dof_indices(fe->dofs_per_cell);
+
+  Quadrature<dim> quad(fe->get_unit_support_points());
+
+  FEValues<dim, spacedim> output_fe_values(*fe, quad, update_quadrature_points);
+
+  for (const auto &cell : agglo_dh.active_cell_iterators())
+    if (is_master_cell(cell))
+      {
+        auto slaves = get_slaves_of_idx(cell->active_cell_index());
+        slaves.emplace_back(cell);
+
+        cell->get_dof_indices(agglo_dof_indices);
+
+        for (const auto &slave : slaves)
+          {
+            // addd master-slave relationship
+            const auto slave_output = slave->as_dof_handler_iterator(output_dh);
+            slave_output->get_dof_indices(output_dof_indices);
+            for (const auto row : output_dof_indices)
+              dsp.add_entries(row,
+                              agglo_dof_indices.begin(),
+                              agglo_dof_indices.end());
+          }
+      }
+  output_interpolation_sparsity.copy_from(dsp);
+  output_interpolation_matrix.reinit(output_interpolation_sparsity);
+
+  FullMatrix<double>      local_matrix(fe->dofs_per_cell, fe->dofs_per_cell);
+  std::vector<Point<dim>> reference_q_points(fe->dofs_per_cell);
+
+  // Dummy DoFHandler, only needed for loc2glb
+  AffineConstraints<double> c;
+  c.close();
+
+  for (const auto &cell : agglo_dh.active_cell_iterators())
+    if (is_master_cell(cell))
+      {
+        auto slaves = get_slaves_of_idx(cell->active_cell_index());
+        slaves.emplace_back(cell);
+
+        cell->get_dof_indices(agglo_dof_indices);
+
+        for (const auto &slave : slaves)
+          {
+            // addd master-slave relationship
+            const auto slave_output = slave->as_dof_handler_iterator(output_dh);
+
+            slave_output->get_dof_indices(output_dof_indices);
+            output_fe_values.reinit(slave_output);
+
+            const auto &q_points = output_fe_values.get_quadrature_points();
+            local_matrix         = 0;
+            for (const auto i : output_fe_values.dof_indices())
+              {
+                const auto &p =
+                  bboxes[cell->active_cell_index()].real_to_unit(q_points[i]);
+                for (const auto j : output_fe_values.dof_indices())
+                  {
+                    local_matrix(i, j) = fe->shape_value(j, p);
+                  }
+              }
+            c.distribute_local_to_global(local_matrix,
+                                         output_dof_indices,
+                                         agglo_dof_indices,
+                                         output_interpolation_matrix);
+          }
+      }
 }
 
 template class AgglomerationHandler<1>;
