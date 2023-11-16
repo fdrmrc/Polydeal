@@ -665,8 +665,6 @@ AgglomerationHandler<dim, spacedim>::setup_output_interpolation_matrix()
           output_fe_values.reinit(standard_output);
 
           local_matrix = 0.;
-
-          const auto &q_points = output_fe_values.get_quadrature_points();
           for (const auto i : output_fe_values.dof_indices())
             local_matrix(i, i) = 1.;
           c.distribute_local_to_global(local_matrix,
