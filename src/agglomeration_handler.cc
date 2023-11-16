@@ -573,6 +573,7 @@ AgglomerationHandler<dim, spacedim>::setup_output_interpolation_matrix()
   DynamicSparsityPattern dsp(output_dh.n_dofs(), agglo_dh.n_dofs());
 
   std::vector<types::global_dof_index> agglo_dof_indices(fe->dofs_per_cell);
+  std::vector<types::global_dof_index> standard_dof_indices(fe->dofs_per_cell);
   std::vector<types::global_dof_index> output_dof_indices(fe->dofs_per_cell);
 
   Quadrature<dim> quad(fe->get_unit_support_points());
@@ -598,6 +599,16 @@ AgglomerationHandler<dim, spacedim>::setup_output_interpolation_matrix()
                               agglo_dof_indices.end());
           }
       }
+    else if (is_standard_cell(cell))
+      {
+        cell->get_dof_indices(agglo_dof_indices);
+        const auto standard_output = cell->as_dof_handler_iterator(output_dh);
+        standard_output->get_dof_indices(standard_dof_indices);
+        for (const auto row : standard_dof_indices)
+          dsp.add_entries(row,
+                          agglo_dof_indices.begin(),
+                          agglo_dof_indices.end());
+      }
   output_interpolation_sparsity.copy_from(dsp);
   output_interpolation_matrix.reinit(output_interpolation_sparsity);
 
@@ -609,38 +620,61 @@ AgglomerationHandler<dim, spacedim>::setup_output_interpolation_matrix()
   c.close();
 
   for (const auto &cell : agglo_dh.active_cell_iterators())
-    if (is_master_cell(cell))
-      {
-        auto slaves = get_slaves_of_idx(cell->active_cell_index());
-        slaves.emplace_back(cell);
+    {
+      if (is_master_cell(cell))
+        {
+          auto slaves = get_slaves_of_idx(cell->active_cell_index());
+          slaves.emplace_back(cell);
 
-        cell->get_dof_indices(agglo_dof_indices);
+          cell->get_dof_indices(agglo_dof_indices);
 
-        for (const auto &slave : slaves)
-          {
-            // addd master-slave relationship
-            const auto slave_output = slave->as_dof_handler_iterator(output_dh);
+          for (const auto &slave : slaves)
+            {
+              // addd master-slave relationship
+              const auto slave_output =
+                slave->as_dof_handler_iterator(output_dh);
 
-            slave_output->get_dof_indices(output_dof_indices);
-            output_fe_values.reinit(slave_output);
+              slave_output->get_dof_indices(output_dof_indices);
+              output_fe_values.reinit(slave_output);
 
-            const auto &q_points = output_fe_values.get_quadrature_points();
-            local_matrix         = 0;
-            for (const auto i : output_fe_values.dof_indices())
-              {
-                const auto &p =
-                  bboxes[cell->active_cell_index()].real_to_unit(q_points[i]);
-                for (const auto j : output_fe_values.dof_indices())
-                  {
-                    local_matrix(i, j) = fe->shape_value(j, p);
-                  }
-              }
-            c.distribute_local_to_global(local_matrix,
-                                         output_dof_indices,
-                                         agglo_dof_indices,
-                                         output_interpolation_matrix);
-          }
-      }
+              local_matrix = 0.;
+
+              const auto &q_points = output_fe_values.get_quadrature_points();
+              for (const auto i : output_fe_values.dof_indices())
+                {
+                  const auto &p =
+                    bboxes[cell->active_cell_index()].real_to_unit(q_points[i]);
+                  for (const auto j : output_fe_values.dof_indices())
+                    {
+                      local_matrix(i, j) = fe->shape_value(j, p);
+                    }
+                }
+              c.distribute_local_to_global(local_matrix,
+                                           output_dof_indices,
+                                           agglo_dof_indices,
+                                           output_interpolation_matrix);
+            }
+        }
+      else if (is_standard_cell(cell))
+        {
+          cell->get_dof_indices(agglo_dof_indices);
+
+          const auto standard_output = cell->as_dof_handler_iterator(output_dh);
+
+          standard_output->get_dof_indices(standard_dof_indices);
+          output_fe_values.reinit(standard_output);
+
+          local_matrix = 0.;
+
+          const auto &q_points = output_fe_values.get_quadrature_points();
+          for (const auto i : output_fe_values.dof_indices())
+            local_matrix(i, i) = 1.;
+          c.distribute_local_to_global(local_matrix,
+                                       standard_dof_indices,
+                                       agglo_dof_indices,
+                                       output_interpolation_matrix);
+        }
+    }
 }
 
 template class AgglomerationHandler<1>;
