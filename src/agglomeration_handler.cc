@@ -675,6 +675,40 @@ AgglomerationHandler<dim, spacedim>::setup_output_interpolation_matrix()
     }
 }
 
+
+
+template <int dim, int spacedim>
+double
+AgglomerationHandler<dim, spacedim>::volume(
+  const typename Triangulation<dim>::active_cell_iterator &cell) const
+{
+  Assert(!is_slave_cell(cell),
+         ExcMessage("The present function cannot be called for slave cells."));
+
+  if (is_master_cell(cell))
+    {
+      // Get the agglomerate
+      std::vector<typename Triangulation<dim, spacedim>::active_cell_iterator>
+        agglo_cells = get_slaves_of_idx(cell->active_cell_index());
+      // Push back master cell
+      agglo_cells.push_back(cell);
+
+      Quadrature<dim> quad =
+        agglomerated_quadrature(agglo_cells, QGauss<dim>{2 * fe->degree + 1});
+
+      return std::accumulate(quad.get_weights().begin(),
+                             quad.get_weights().end(),
+                             0.);
+    }
+  else
+    {
+      // Standard deal.II way to get the measure of a cell.
+      return cell->measure();
+    }
+}
+
+
+
 template class AgglomerationHandler<1>;
 template class AgglomerationHandler<2>;
 template class AgglomerationHandler<3>;

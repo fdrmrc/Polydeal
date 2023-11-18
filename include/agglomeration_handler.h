@@ -593,6 +593,16 @@ public:
   void
   setup_output_interpolation_matrix();
 
+  /**
+   *
+   * Compute the volume of an agglomerate. This @p cell argument takes the
+   * deal.II cell that identifies an agglomerate. If it's a standard cell,
+   * than the this function is equivalent to cell->volume(). An exception is
+   * thrown is the given cell is a slave cell.
+   */
+  double
+  volume(const typename Triangulation<dim>::active_cell_iterator &cell) const;
+
 private:
   using ScratchData = MeshWorker::ScratchData<dim, spacedim>;
 
