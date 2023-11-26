@@ -340,6 +340,7 @@ AgglomerationHandler<dim, spacedim>::reinit_master(
       // boundary face of a boundary cell.
       no_values.reinit(neighboring_cell, local_face_idx);
 
+      // TODO: check if *mapping or *euler_mapping
       standard_scratch_face_bdary =
         std::make_unique<ScratchData>(*mapping,
                                       fe_collection[2],
@@ -428,6 +429,7 @@ AgglomerationHandler<dim, spacedim>::reinit_interface(
   else if (is_standard_cell(neigh_cell) && is_master_cell(cell_in))
     {
       const auto &fe_in = reinit(cell_in, local_in);
+      // TODO: check if euler or mapping
       standard_scratch_face_std_another =
         std::make_unique<ScratchData>(*mapping,
                                       fe_collection[2],
@@ -704,6 +706,30 @@ AgglomerationHandler<dim, spacedim>::volume(
     {
       // Standard deal.II way to get the measure of a cell.
       return cell->measure();
+    }
+}
+
+
+
+template <int dim, int spacedim>
+double
+AgglomerationHandler<dim, spacedim>::diameter(
+  const typename Triangulation<dim>::active_cell_iterator &cell) const
+{
+  Assert(!is_slave_cell(cell),
+         ExcMessage("The present function cannot be called for slave cells."));
+
+  if (is_master_cell(cell))
+    {
+      // Get the bounding box associated with the master cell
+      const auto &bdary_pts =
+        bboxes[cell->active_cell_index()].get_boundary_points();
+      return (bdary_pts.second - bdary_pts.first).norm();
+    }
+  else
+    {
+      // Standard deal.II way to get the measure of a cell.
+      return cell->diameter();
     }
 }
 

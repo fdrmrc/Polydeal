@@ -271,9 +271,9 @@ public:
     for (const auto &f : cell->face_indices())
       {
         const auto &neighboring_cell = cell->neighbor(f);
-        if ((neighboring_cell.state() == IteratorState::valid &&
-             !are_cells_agglomerated(cell, neighboring_cell)) ||
-            cell->face(f)->at_boundary())
+        if ((cell->face(f)->at_boundary()) ||
+            (neighboring_cell->is_active() &&
+             !are_cells_agglomerated(cell, neighboring_cell)))
           {
             ++n_neighbors;
           }
@@ -603,7 +603,24 @@ public:
   double
   volume(const typename Triangulation<dim>::active_cell_iterator &cell) const;
 
-private:
+  /*
+   * Compute the diameter $h_K$ for a given agglomerate $K$. If $K$ is a
+   * standard cell, this is equivalent to call cell->diameter(). Otherwise, this
+   * function computes the diameter of the bounding box associated with $K$.
+   */
+  double
+  diameter(const typename Triangulation<dim>::active_cell_iterator &cell) const;
+
+  /**
+   * Vector of indices such that v[cell->active_cell_index()] returns
+   * { -1 if `cell` is a master cell
+   * { -2 if `cell` is a standard deal.II cell
+   * { `cell_master->active_cell_index()`, i.e. the index of the master cell if
+   * `cell` is a slave cell.
+   */
+  std::vector<long int> master_slave_relationships;
+
+
   using ScratchData = MeshWorker::ScratchData<dim, spacedim>;
 
   // In order to enumerate the faces of an agglomeration, we consider a map
@@ -640,14 +657,6 @@ private:
   mutable std::map<MasterAndNeighborAndFace, types::global_cell_index>
     shared_face_agglomeration_idx;
 
-  /**
-   * Vector of indices such that v[cell->active_cell_index()] returns
-   * { -1 if `cell` is a master cell
-   * { -2 if `cell` is a standard deal.II cell
-   * { `cell_master->active_cell_index()`, i.e. the index of the master cell if
-   * `cell` is a slave cell.
-   */
-  std::vector<long int> master_slave_relationships;
 
   /**
    *  Same as the one above, but storing cell iterators rather than indices.
@@ -894,6 +903,18 @@ private:
       }
   }
 
+
+  inline types::global_cell_index
+  get_master_idx_of_cell(
+    const typename Triangulation<dim, spacedim>::active_cell_iterator &cell)
+    const
+  {
+    auto idx = master_slave_relationships[cell->active_cell_index()];
+    if ((idx == -1) || (idx == -2))
+      return cell->active_cell_index();
+    else
+      return idx;
+  }
   /**
    * Returns true if the two given cells are agglomerated together.
    */
@@ -903,14 +924,24 @@ private:
     const typename Triangulation<dim, spacedim>::active_cell_iterator
       &other_cell) const
   {
+    // todo: Is active
     // check if they refer to same master, OR if it's a master with its slave
     // (and viceversa)
-    return master_slave_relationships[cell->active_cell_index()] ==
-             master_slave_relationships[other_cell->active_cell_index()] ||
-           master_slave_relationships[cell->active_cell_index()] ==
-             other_cell->active_cell_index() ||
-           master_slave_relationships[other_cell->active_cell_index()] ==
-             cell->active_cell_index();
+    // const bool same_relationship =
+    //   master_slave_relationships[cell->active_cell_index()] ==
+    //   master_slave_relationships[other_cell->active_cell_index()];
+    // const bool other_cell_is_master_of_cell =
+    //   master_slave_relationships[cell->active_cell_index()] ==
+    //   other_cell->active_cell_index();
+    // const bool cell_is_master_of_other_cell =
+    //   master_slave_relationships[other_cell->active_cell_index()] ==
+    //   cell->active_cell_index();
+
+    // bool cell_is_slave       = is_slave_cell(cell);
+    // bool other_cell_is_slave = is_slave_cell(other_cell);
+    // return (cell_is_slave && !other);
+
+    return (get_master_idx_of_cell(cell) == get_master_idx_of_cell(other_cell));
   }
 
 
