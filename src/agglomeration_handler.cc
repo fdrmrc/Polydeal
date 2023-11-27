@@ -340,6 +340,7 @@ AgglomerationHandler<dim, spacedim>::reinit_master(
       // boundary face of a boundary cell.
       no_values.reinit(neighboring_cell, local_face_idx);
 
+      // TODO: check if *mapping or *euler_mapping
       standard_scratch_face_bdary =
         std::make_unique<ScratchData>(*mapping,
                                       fe_collection[2],
@@ -428,6 +429,7 @@ AgglomerationHandler<dim, spacedim>::reinit_interface(
   else if (is_standard_cell(neigh_cell) && is_master_cell(cell_in))
     {
       const auto &fe_in = reinit(cell_in, local_in);
+      // TODO: check if euler or mapping
       standard_scratch_face_std_another =
         std::make_unique<ScratchData>(*mapping,
                                       fe_collection[2],
@@ -674,6 +676,64 @@ AgglomerationHandler<dim, spacedim>::setup_output_interpolation_matrix()
         }
     }
 }
+
+
+
+template <int dim, int spacedim>
+double
+AgglomerationHandler<dim, spacedim>::volume(
+  const typename Triangulation<dim>::active_cell_iterator &cell) const
+{
+  Assert(!is_slave_cell(cell),
+         ExcMessage("The present function cannot be called for slave cells."));
+
+  if (is_master_cell(cell))
+    {
+      // Get the agglomerate
+      std::vector<typename Triangulation<dim, spacedim>::active_cell_iterator>
+        agglo_cells = get_slaves_of_idx(cell->active_cell_index());
+      // Push back master cell
+      agglo_cells.push_back(cell);
+
+      Quadrature<dim> quad =
+        agglomerated_quadrature(agglo_cells, QGauss<dim>{2 * fe->degree + 1});
+
+      return std::accumulate(quad.get_weights().begin(),
+                             quad.get_weights().end(),
+                             0.);
+    }
+  else
+    {
+      // Standard deal.II way to get the measure of a cell.
+      return cell->measure();
+    }
+}
+
+
+
+template <int dim, int spacedim>
+double
+AgglomerationHandler<dim, spacedim>::diameter(
+  const typename Triangulation<dim>::active_cell_iterator &cell) const
+{
+  Assert(!is_slave_cell(cell),
+         ExcMessage("The present function cannot be called for slave cells."));
+
+  if (is_master_cell(cell))
+    {
+      // Get the bounding box associated with the master cell
+      const auto &bdary_pts =
+        bboxes[cell->active_cell_index()].get_boundary_points();
+      return (bdary_pts.second - bdary_pts.first).norm();
+    }
+  else
+    {
+      // Standard deal.II way to get the measure of a cell.
+      return cell->diameter();
+    }
+}
+
+
 
 template class AgglomerationHandler<1>;
 template class AgglomerationHandler<2>;
