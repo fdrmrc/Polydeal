@@ -128,9 +128,6 @@ AgglomerationHandler<dim, spacedim>::agglomerated_quadrature(
   Assert(quadrature_type.size() > 0,
          ExcMessage("Invalid size for the given Quadrature object"));
   FE_Nothing<dim, spacedim> dummy_fe;
-  DoFHandler<dim, spacedim> dummy_dh(*tria);
-  dummy_dh.distribute_dofs(dummy_fe);
-
 
   FEValues<dim, spacedim> no_values(*mapping,
                                     dummy_fe,
@@ -272,8 +269,6 @@ AgglomerationHandler<dim, spacedim>::reinit_master(
   const auto &neighboring_cell = std::get<3>(info_neighbors);
 
   FE_Nothing<dim, spacedim> dummy_fe;
-  DoFHandler<dim, spacedim> dummy_dh(*tria);
-  dummy_dh.distribute_dofs(dummy_fe);
 
   FEFaceValues<dim, spacedim> no_values(
     *mapping,
