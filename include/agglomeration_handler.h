@@ -403,8 +403,11 @@ public:
             const auto &agglo_neigh =
               agglomerated_neighbor(cell,
                                     f); // returns the neighboring master
+            const unsigned int n_faces_agglomerated_neighbor =
+              n_faces(agglo_neigh);
             // Loop over all cells of neighboring agglomerate
-            for (unsigned int f_out = 0; f_out < n_faces(agglo_neigh); ++f_out)
+            for (unsigned int f_out = 0; f_out < n_faces_agglomerated_neighbor;
+                 ++f_out)
               {
                 if (agglomerated_neighbor(agglo_neigh, f_out).state() ==
                       IteratorState::valid &&
