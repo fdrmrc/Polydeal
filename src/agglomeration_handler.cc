@@ -66,12 +66,19 @@ AgglomerationHandler<dim, spacedim>::agglomerate_cells(
           cell; // set iterator to master cell
     }
 
+  std::vector<typename Triangulation<dim, spacedim>::active_cell_iterator>
+    slaves;
+  slaves.reserve(vec_of_cells.size() - 1);
   for (const auto &cell : vec_of_cells)
     {
       if (cell->active_cell_index() != master_idx)
-        master_slave_relationships_iterators[cell->active_cell_index()] =
-          master_slave_relationships_iterators[master_idx];
+        {
+          master_slave_relationships_iterators[cell->active_cell_index()] =
+            master_slave_relationships_iterators[master_idx];
+          slaves.push_back(cell);
+        }
     }
+  master2slaves[master_idx] = slaves;
 
   for (const types::global_cell_index idx : global_indices)
     {
@@ -87,22 +94,11 @@ AgglomerationHandler<dim, spacedim>::agglomerate_cells(
 
 
 template <int dim, int spacedim>
-std::vector<typename Triangulation<dim, spacedim>::active_cell_iterator>
-AgglomerationHandler<dim, spacedim>::get_slaves_of_idx(const int idx) const
+inline std::vector<typename Triangulation<dim, spacedim>::active_cell_iterator>
+AgglomerationHandler<dim, spacedim>::get_slaves_of_idx(
+  const types::global_cell_index idx) const
 {
-  std::vector<typename Triangulation<dim, spacedim>::active_cell_iterator>
-    slaves;
-
-  // Loop over the tria, and check if a each cell is a slave of master cell
-  // idx If no slave is found, return an empty vector.
-  for (const auto &cell : tria->active_cell_iterators())
-    {
-      if (master_slave_relationships[cell->active_cell_index()] == idx)
-        {
-          slaves.push_back(cell);
-        }
-    }
-  return slaves;
+  return master2slaves.at(idx);
 }
 
 

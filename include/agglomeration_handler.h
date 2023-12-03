@@ -523,7 +523,7 @@ public:
    * is as it can be equal to -1 (meaning that the cell is a master one).
    */
   std::vector<typename Triangulation<dim, spacedim>::active_cell_iterator>
-  get_slaves_of_idx(const int idx) const;
+  get_slaves_of_idx(types::global_cell_index idx) const;
 
 
 
@@ -775,6 +775,12 @@ private:
   Quadrature<dim> agglomeration_quad;
 
   Quadrature<dim - 1> agglomeration_face_quad;
+
+  // Associate the master cell to the slaves.
+  std::unordered_map<
+    types::global_cell_index,
+    std::vector<typename Triangulation<dim, spacedim>::active_cell_iterator>>
+    master2slaves;
 
 
   /**
