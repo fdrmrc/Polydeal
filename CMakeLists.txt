@@ -16,7 +16,7 @@ IF(NOT ${deal.II_FOUND})
 ENDIF()
 
 DEAL_II_INITIALIZE_CACHED_VARIABLES()
-PROJECT(Agglomeration_suite)
+PROJECT(polydeal)
 
 # Enable testing and descent into tests/ subdirectory:
 ENABLE_TESTING()
@@ -24,6 +24,6 @@ INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/include)
 
 ADD_SUBDIRECTORY(src)
 ADD_SUBDIRECTORY(examples)
-ADD_SUBDIRECTORY(test/agglomeration)
+ADD_SUBDIRECTORY(test/polydeal)
 
 # ADD_SUBDIRECTORY(tests/step)

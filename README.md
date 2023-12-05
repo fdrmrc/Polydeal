@@ -3,7 +3,7 @@
 ![GitHub CI](https://github.com/fdrmrc/AggloDeal/actions/workflows/tests.yml/badge.svg)
 ![GitHub CI](https://github.com/fdrmrc/AggloDeal/actions/workflows/indentation.yml/badge.svg)
 
-***PolyDEAL*** is an open source project in C++ which aims to provide building block for Polygonal Discontinuous Galerkin methods, within the Finite Element library [**deal.II**](https:dealii.org).
+***PolyDEAL*** is an open source project in C++ which aims to provide building blocks for the implementation of Polygonal Discontinuous Galerkin methods, within the Finite Element library [**deal.II**](https:dealii.org).
 
 
 ## Getting started

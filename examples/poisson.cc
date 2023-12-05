@@ -241,7 +241,7 @@ Poisson<dim>::make_grid()
   const auto                            csr_and_agglomerates =
     extract_children_of_level(tree, extraction_level);
 
-  boost::geometry::index::detail::rtree::utilities::print(std::cout, tree);
+  // boost::geometry::index::detail::rtree::utilities::print(std::cout, tree);
 
   const auto &agglomerates   = csr_and_agglomerates.second; // vec<vec<>>
   [[maybe_unused]] auto csrs = csr_and_agglomerates.first;
