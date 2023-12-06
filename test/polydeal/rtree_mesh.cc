@@ -12,7 +12,7 @@
 #include <deal.II/numerics/vector_tools_interpolate.h>
 
 #include <agglomeration_handler.h>
-#include <rtree_visitor.h>
+#include <poly_utils.h>
 
 #include <algorithm>
 

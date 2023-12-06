@@ -15,8 +15,8 @@
  */
 
 
-#ifndef rtree_visitor_h
-#define rtree_visitor_h
+#ifndef poly_utils_h
+#define poly_utils_h
 
 
 #include <deal.II/base/config.h>
