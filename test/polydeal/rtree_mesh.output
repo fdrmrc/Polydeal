@@ -1,0 +1,99 @@
+Extraction level = 1
+Size of fine triangulation: 1024
+Total number of available levels: 4
+N subdomains = 4
+256 cells have subdomain id = 0
+256 cells have subdomain id = 1
+256 cells have subdomain id = 2
+256 cells have subdomain id = 3
+
+Extraction level = 2
+Size of fine triangulation: 1024
+Total number of available levels: 4
+N subdomains = 16
+64 cells have subdomain id = 0
+64 cells have subdomain id = 1
+64 cells have subdomain id = 2
+64 cells have subdomain id = 3
+64 cells have subdomain id = 4
+64 cells have subdomain id = 5
+64 cells have subdomain id = 6
+64 cells have subdomain id = 7
+64 cells have subdomain id = 8
+64 cells have subdomain id = 9
+64 cells have subdomain id = 10
+64 cells have subdomain id = 11
+64 cells have subdomain id = 12
+64 cells have subdomain id = 13
+64 cells have subdomain id = 14
+64 cells have subdomain id = 15
+
+Extraction level = 3
+Size of fine triangulation: 1024
+Total number of available levels: 4
+N subdomains = 64
+16 cells have subdomain id = 0
+16 cells have subdomain id = 1
+16 cells have subdomain id = 2
+16 cells have subdomain id = 3
+16 cells have subdomain id = 4
+16 cells have subdomain id = 5
+16 cells have subdomain id = 6
+16 cells have subdomain id = 7
+16 cells have subdomain id = 8
+16 cells have subdomain id = 9
+16 cells have subdomain id = 10
+16 cells have subdomain id = 11
+16 cells have subdomain id = 12
+16 cells have subdomain id = 13
+16 cells have subdomain id = 14
+16 cells have subdomain id = 15
+16 cells have subdomain id = 16
+16 cells have subdomain id = 17
+16 cells have subdomain id = 18
+16 cells have subdomain id = 19
+16 cells have subdomain id = 20
+16 cells have subdomain id = 21
+16 cells have subdomain id = 22
+16 cells have subdomain id = 23
+16 cells have subdomain id = 24
+16 cells have subdomain id = 25
+16 cells have subdomain id = 26
+16 cells have subdomain id = 27
+16 cells have subdomain id = 28
+16 cells have subdomain id = 29
+16 cells have subdomain id = 30
+16 cells have subdomain id = 31
+16 cells have subdomain id = 32
+16 cells have subdomain id = 33
+16 cells have subdomain id = 34
+16 cells have subdomain id = 35
+16 cells have subdomain id = 36
+16 cells have subdomain id = 37
+16 cells have subdomain id = 38
+16 cells have subdomain id = 39
+16 cells have subdomain id = 40
+16 cells have subdomain id = 41
+16 cells have subdomain id = 42
+16 cells have subdomain id = 43
+16 cells have subdomain id = 44
+16 cells have subdomain id = 45
+16 cells have subdomain id = 46
+16 cells have subdomain id = 47
+16 cells have subdomain id = 48
+16 cells have subdomain id = 49
+16 cells have subdomain id = 50
+16 cells have subdomain id = 51
+16 cells have subdomain id = 52
+16 cells have subdomain id = 53
+16 cells have subdomain id = 54
+16 cells have subdomain id = 55
+16 cells have subdomain id = 56
+16 cells have subdomain id = 57
+16 cells have subdomain id = 58
+16 cells have subdomain id = 59
+16 cells have subdomain id = 60
+16 cells have subdomain id = 61
+16 cells have subdomain id = 62
+16 cells have subdomain id = 63
+

@@ -12,6 +12,7 @@
 #include <deal.II/numerics/vector_tools_interpolate.h>
 
 #include <agglomeration_handler.h>
+#include <poly_utils.h>
 
 #include <algorithm>
 
@@ -239,7 +240,7 @@ Poisson<dim>::make_grid()
                                         cells_to_agglomerate;
   std::vector<types::global_cell_index> idxs_to_agglomerate;
   const auto                            csr_and_agglomerates =
-    extract_children_of_level(tree, extraction_level);
+    PolyUtils::extract_children_of_level(tree, extraction_level);
 
   // boost::geometry::index::detail::rtree::utilities::print(std::cout, tree);
 
