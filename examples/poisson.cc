@@ -17,10 +17,17 @@
 #include <algorithm>
 
 #include "../tests.h"
-enum class GridTypes
+
+enum class GridType
 {
   grid_generator,
   unstructured
+};
+
+enum class PartitionerType
+{
+  metis,
+  rtree
 };
 
 template <int dim>
@@ -45,9 +52,11 @@ RightHandSide<dim>::value_list(const std::vector<Point<dim>> &points,
                                const unsigned int /*component*/) const
 {
   for (unsigned int i = 0; i < values.size(); ++i)
-    values[i] = 8. * numbers::PI * numbers::PI *
-                std::sin(2. * numbers::PI * points[i][0]) *
-                std::sin(2. * numbers::PI * points[i][1]);
+    values[i] = -2. * points[i][0] * (points[i][0] - 1.) -
+                2. * points[i][1] * (points[i][1] - 1.); // square
+  // values[i] = 8. * numbers::PI * numbers::PI *
+  //             std::sin(2. * numbers::PI * points[i][0]) *
+  //             std::sin(2. * numbers::PI * points[i][1]);
 }
 
 template <int dim>
@@ -75,7 +84,9 @@ template <int dim>
 double
 Solution<dim>::value(const Point<dim> &p, const unsigned int) const
 {
-  return std::sin(2. * numbers::PI * p[0]) * std::sin(2. * numbers::PI * p[1]);
+  return p[0] * (p[0] - 1.) * p[1] * (p[1] - 1.); // square
+  // return std::sin(2. * numbers::PI * p[0]) * std::sin(2. * numbers::PI *
+  // p[1]);
 }
 
 template <int dim>
@@ -147,29 +158,33 @@ private:
   std::unique_ptr<const Function<dim>>   rhs_function;
 
 public:
-  Poisson(const GridTypes &grid_type   = GridTypes::grid_generator,
-          const unsigned int           = 0,
-          const unsigned int           = 0,
-          const unsigned int fe_degree = 1);
+  Poisson(const GridType &       grid_type        = GridType::grid_generator,
+          const PartitionerType &partitioner_type = PartitionerType::rtree,
+          const unsigned int                      = 0,
+          const unsigned int                      = 0,
+          const unsigned int fe_degree            = 1);
   void
   run();
 
-  double    penalty_constant = 10.; // =1 => bad; = 10 => 4e-2; // 100 => 4e-1
-  GridTypes grid_type;
-  unsigned int extraction_level;
-  unsigned int n_subdomains;
+  double          penalty_constant = 10.;
+  GridType        grid_type;
+  PartitionerType partitioner_type;
+  unsigned int    extraction_level;
+  unsigned int    n_subdomains;
 };
 
 
 
 template <int dim>
-Poisson<dim>::Poisson(const GridTypes &  grid_type,
-                      const unsigned int extraction_level,
-                      const unsigned int n_subdomains,
-                      const unsigned int fe_degree)
+Poisson<dim>::Poisson(const GridType &       grid_type,
+                      const PartitionerType &partitioner_type,
+                      const unsigned int     extraction_level,
+                      const unsigned int     n_subdomains,
+                      const unsigned int     fe_degree)
   : mapping(1)
   , dg_fe(fe_degree)
   , grid_type(grid_type)
+  , partitioner_type(partitioner_type)
   , extraction_level(extraction_level)
   , n_subdomains(n_subdomains)
 {}
@@ -179,10 +194,10 @@ void
 Poisson<dim>::make_grid()
 {
   GridIn<dim> grid_in;
-  if (grid_type == GridTypes::unstructured)
+  if (grid_type == GridType::unstructured)
     {
       grid_in.attach_triangulation(tria);
-      std::ifstream gmsh_file("../../meshes/t2.msh");
+      std::ifstream gmsh_file("../../meshes/t2.msh"); // rectangular domain
       grid_in.read_msh(gmsh_file);
       tria.refine_global(4);
     }
@@ -191,75 +206,90 @@ Poisson<dim>::make_grid()
       GridGenerator::hyper_ball(tria);
       tria.refine_global(6); // 6
       // GridGenerator::hyper_cube(tria, 0., 1.);
-      // tria.refine_global(6); // 7
+      // tria.refine_global(5); //
+      // {
+      //   std::vector<unsigned int> holes(dim);
+      //   holes[0] = 3;
+      //   holes[1] = 2;
+      //   GridGenerator::cheese(tria, holes); // 3 holes
+      //   tria.refine_global(3);
+      // }
+      // GridGenerator::hyper_rectangle(tria, {0., 0.}, {1.25, 1.});
+      // tria.refine_global(7); //
     }
   std::cout << "Size of tria: " << tria.n_active_cells() << std::endl;
   cached_tria  = std::make_unique<GridTools::Cache<dim>>(tria, mapping);
   rhs_function = std::make_unique<const RightHandSide<dim>>();
-  /*
-  // Partition the triangulation with graph partitioner.
-  GridTools::partition_triangulation(n_subdomains,
-                                     tria,
-                                     SparsityTools::Partitioner::metis);
-  std::cout << "N subdomains: " << n_subdomains << std::endl;
-  */
 
-
-  // Partition with Rtree
-
-  namespace bgi = boost::geometry::index;
-  // const unsigned int            extraction_level  = 4; // 3 okay too
-  static constexpr unsigned int max_elem_per_node = 4;
-  std::vector<std::pair<BoundingBox<dim>,
-                        typename Triangulation<dim>::active_cell_iterator>>
-               boxes(tria.n_active_cells());
-  unsigned int i = 0;
-  for (const auto &cell : tria.active_cell_iterators())
+  if (partitioner_type == PartitionerType::metis)
     {
-      boxes[i++] = std::make_pair(mapping.get_bounding_box(cell), cell);
-      std::cout << cell->active_cell_index() << std::endl;
+      // Partition the triangulation with graph partitioner.
+      GridTools::partition_triangulation(n_subdomains,
+                                         tria,
+                                         SparsityTools::Partitioner::metis);
+      std::cout << "N subdomains: " << n_subdomains << std::endl;
     }
-
-  // const auto tree = pack_rtree<bgi::rstar<max_elem_per_node>>(boxes);
-  const auto tree = pack_rtree<bgi::rstar<max_elem_per_node>>(boxes);
-  // const auto tree = pack_rtree<bgi::rstar<max_elem_per_node>>(tria_cells);
-
-  Assert(n_levels(tree) >= 2, ExcMessage("At least two levels are needed."));
-  std::cout << "Total number of available levels: " << n_levels(tree)
-            << std::endl;
-  // Rough description of the tria with a tree of BBoxes
-  const auto vec_boxes = extract_rtree_level(tree, extraction_level);
-  std::vector<BoundingBox<dim>> bboxes;
-  for (const auto &box : vec_boxes)
-    bboxes.push_back(box);
-
-  std::vector<std::pair<BoundingBox<dim>,
-                        typename Triangulation<dim, dim>::active_cell_iterator>>
-    cells;
-  std::vector<typename Triangulation<dim, dim>::active_cell_iterator>
-                                        cells_to_agglomerate;
-  std::vector<types::global_cell_index> idxs_to_agglomerate;
-  const auto                            csr_and_agglomerates =
-    PolyUtils::extract_children_of_level(tree, extraction_level);
-
-  // boost::geometry::index::detail::rtree::utilities::print(std::cout, tree);
-
-  const auto &agglomerates   = csr_and_agglomerates.second; // vec<vec<>>
-  [[maybe_unused]] auto csrs = csr_and_agglomerates.first;
-
-  std::size_t agglo_index = 0;
-  for (std::size_t i = 0; i < agglomerates.size(); ++i)
+  else if (partitioner_type == PartitionerType::rtree)
     {
-      std::cout << "AGGLO " + std::to_string(i) << std::endl;
-      const auto &agglo = agglomerates[i];
-      for (const auto &el : agglo)
+      // Partition with Rtree
+
+      namespace bgi = boost::geometry::index;
+      // const unsigned int            extraction_level  = 4; // 3 okay too
+      static constexpr unsigned int max_elem_per_node = 8; // 2
+      std::vector<std::pair<BoundingBox<dim>,
+                            typename Triangulation<dim>::active_cell_iterator>>
+                   boxes(tria.n_active_cells());
+      unsigned int i = 0;
+      for (const auto &cell : tria.active_cell_iterators())
+        boxes[i++] = std::make_pair(mapping.get_bounding_box(cell), cell);
+
+
+      // const auto tree = pack_rtree<bgi::rstar<max_elem_per_node>>(boxes);
+      const auto tree = pack_rtree<bgi::rstar<max_elem_per_node>>(boxes);
+
+      boost::geometry::index::detail::rtree::utilities::print(std::cout, tree);
+
+      Assert(n_levels(tree) >= 2,
+             ExcMessage("At least two levels are needed."));
+      std::cout << "Total number of available levels: " << n_levels(tree)
+                << std::endl;
+      // Rough description of the tria with a tree of BBoxes
+      const auto vec_boxes = extract_rtree_level(tree, extraction_level);
+      std::vector<BoundingBox<dim>> bboxes;
+      for (const auto &box : vec_boxes)
+        bboxes.push_back(box);
+
+      std::vector<
+        std::pair<BoundingBox<dim>,
+                  typename Triangulation<dim, dim>::active_cell_iterator>>
+        cells;
+      std::vector<typename Triangulation<dim, dim>::active_cell_iterator>
+                                            cells_to_agglomerate;
+      std::vector<types::global_cell_index> idxs_to_agglomerate;
+      const auto &                          csr_and_agglomerates =
+        PolyUtils::extract_children_of_level(tree, extraction_level);
+
+
+      const auto &agglomerates   = csr_and_agglomerates.second; // vec<vec<>>
+      [[maybe_unused]] auto csrs = csr_and_agglomerates.first;
+
+      std::size_t agglo_index = 0;
+      for (std::size_t i = 0; i < agglomerates.size(); ++i)
         {
-          el->set_subdomain_id(agglo_index);
-          // std::cout << el->active_cell_index() << std::endl;
+          // std::cout << "AGGLO " + std::to_string(i) << std::endl;
+          const auto &agglo = agglomerates[i];
+          for (const auto &el : agglo)
+            {
+              el->set_subdomain_id(agglo_index);
+              // std::cout << el->active_cell_index() << std::endl;
+            }
+          ++agglo_index; // one agglomerate has been processed, increment
+                         // counter
         }
-      ++agglo_index; // one agglomerate has been processed, increment counter
+      n_subdomains = agglo_index;
+
+      std::cout << "N subdomains = " << n_subdomains << std::endl;
     }
-  n_subdomains = agglo_index;
 
 
   constraints.close();
@@ -267,13 +297,19 @@ Poisson<dim>::make_grid()
 
   // Check number of agglomerates
   {
+#ifdef AGGLO_DEBUG
     for (unsigned int j = 0; j < n_subdomains; ++j)
       std::cout << GridTools::count_cells_with_subdomain_association(tria, j)
                 << " cells have subdomain " + std::to_string(j) << std::endl;
+#endif
     GridOut           grid_out_svg;
     GridOutFlags::Svg svg_flags;
-    svg_flags.label_subdomain_id = true;
-    svg_flags.coloring           = GridOutFlags::Svg::subdomain_id;
+    svg_flags.background     = GridOutFlags::Svg::Background::transparent;
+    svg_flags.line_thickness = 1;
+    svg_flags.boundary_line_thickness = 1;
+    svg_flags.label_subdomain_id      = true;
+    svg_flags.coloring =
+      GridOutFlags::Svg::subdomain_id; // GridOutFlags::Svg::none
     grid_out_svg.set_flags(svg_flags);
     std::string   grid_type = "agglomerated_grid";
     std::ofstream out(grid_type + ".svg");
@@ -293,17 +329,12 @@ Poisson<dim>::setup_agglomeration()
   std::vector<std::vector<typename Triangulation<dim>::active_cell_iterator>>
     cells_per_subdomain(n_subdomains);
   for (const auto &cell : tria.active_cell_iterators())
-    {
-      // if (cell->subdomain_id() == 264)
-      //     std::cout << "Element 264 is made by cells: "
-      //               << cell->active_cell_index() << std::endl;
-      cells_per_subdomain[cell->subdomain_id()].push_back(cell);
-    }
+    cells_per_subdomain[cell->subdomain_id()].push_back(cell);
 
   // For every subdomain, agglomerate elements together
   for (std::size_t i = 0; i < cells_per_subdomain.size(); ++i)
     {
-      std::cout << "Subdomain " << i << std::endl;
+      // std::cout << "Subdomain " << i << std::endl;
       std::vector<types::global_cell_index> idxs_to_be_agglomerated;
       std::vector<typename Triangulation<dim>::active_cell_iterator>
         cells_to_be_agglomerated;
@@ -324,7 +355,9 @@ Poisson<dim>::setup_agglomeration()
 
 
 
-  /* {
+  /*
+  #ifdef AGGLO_DEBUG
+  {
      for (const auto &cell : ah->agglomeration_cell_iterators())
        {
          std::cout << "Cell with idx: " << cell->active_cell_index()
@@ -351,7 +384,9 @@ Poisson<dim>::setup_agglomeration()
              std::cout << std::endl;
            }
        }
-   }*/
+   }
+   #endif
+   */
 }
 
 
@@ -385,13 +420,13 @@ Poisson<dim>::assemble_system()
   FullMatrix<double> M22(dofs_per_cell, dofs_per_cell);
 
   std::vector<types::global_dof_index> local_dof_indices(dofs_per_cell);
-  // const auto &                         bboxes = ah->get_bboxes();
 
   Solution<dim> analytical_solution;
 
   for (const auto &cell : ah->agglomeration_cell_iterators())
     {
-      std::cout << "Cell with idx: " << cell->active_cell_index() << std::endl;
+      // std::cout << "Cell with idx: " << cell->active_cell_index() <<
+      // std::endl;
       cell_matrix              = 0;
       cell_rhs                 = 0;
       const auto &agglo_values = ah->reinit(cell);
@@ -425,7 +460,8 @@ Poisson<dim>::assemble_system()
       AssertThrow(n_faces >= 4,
                   ExcMessage(
                     "Invalid element: at least 4 faces are required."));
-      std::cout << "Number of (generalized) faces: " << n_faces << std::endl;
+      // std::cout << "Number of (generalized) faces: " << n_faces <<
+      // std::endl;
 
 
       // const double agglo_measure =
@@ -440,12 +476,12 @@ Poisson<dim>::assemble_system()
 
           if (ah->at_boundary(cell, f))
             {
-              std::cout << "at boundary!" << std::endl;
+              // std::cout << "at boundary!" << std::endl;
               const auto &fe_face = ah->reinit(cell, f);
 
               const unsigned int dofs_per_cell = fe_face.dofs_per_cell;
-              std::cout << "With dofs_per_cell =" << fe_face.dofs_per_cell
-                        << std::endl;
+              // std::cout << "With dofs_per_cell =" << fe_face.dofs_per_cell
+              //           << std::endl;
               std::vector<types::global_dof_index> local_dof_indices_bdary_cell(
                 dofs_per_cell);
 
@@ -540,20 +576,16 @@ Poisson<dim>::assemble_system()
                             << " and " << neigh_cell->active_cell_index()
                             << std::endl;
                   {
-                    std::cout << "Dalla prima i qpoints sono: " << std::endl;
+                    std::cout << "Quadrature points from first cell: "
+                              << std::endl;
                     for (const auto &q : fe_faces0.get_quadrature_points())
                       std::cout << q << std::endl;
-                    std::cout << "Dalla seconda i qpoints sono: " << std::endl;
+                    std::cout << "Quadrature points from second cell: "
+                              << std::endl;
                     for (const auto &q : fe_faces1.get_quadrature_points())
                       std::cout << q << std::endl;
                   }
 #endif
-                  // Assert(std::fabs(
-                  //          std::accumulate(fe_faces0.get_JxW_values().begin(),
-                  //                          fe_faces0.get_JxW_values().end(),
-                  //                          0.) -
-                  //          .125) < 1e-15,
-                  //        ExcMessage("Just testing!"));
 
                   std::vector<types::global_dof_index>
                     local_dof_indices_neighbor(dofs_per_cell);
@@ -625,8 +657,6 @@ Poisson<dim>::assemble_system()
                     }
 
                   // distribute DoFs accordingly
-                  std::cout << "Neighbor is " << neigh_cell->active_cell_index()
-                            << std::endl;
                   // Retrieve DoFs info from the cell iterator.
                   typename DoFHandler<dim>::cell_iterator neigh_dh(
                     *neigh_cell, &(ah->agglo_dh));
@@ -690,11 +720,13 @@ Poisson<dim>::output_results()
     data_out.write_vtu(output);
   }
 
-
-
   {
-    const std::string filename = "interpolated_solution_ball_metis.vtu";
-    std::ofstream     output(filename);
+    const std::string &partitioner =
+      (partitioner_type == PartitionerType::metis) ? "metis" : "rtree";
+
+    const std::string filename = "interpolated_solution_" + partitioner + "_" +
+                                 std::to_string(n_subdomains) + ".vtu";
+    std::ofstream output(filename);
 
     DataOut<dim> data_out;
     ah->setup_output_interpolation_matrix();
@@ -741,24 +773,6 @@ Poisson<dim>::output_results()
 
     std::cout << "L2 error:" << L2_error << std::endl;
   }
-
-  {
-    // Sanity check: v(x,y)=x
-    Vector<double>  interpx(ah->get_dof_handler().n_dofs());
-    Vector<double>  interpone(ah->get_dof_handler().n_dofs());
-    MyFunction<dim> xfunction{};
-    VectorTools::interpolate(*(ah->euler_mapping),
-                             ah->get_dof_handler(),
-                             xfunction,
-                             interpx);
-    double value = system_matrix.matrix_scalar_product(interpx, interpx);
-    std::cout << "Test with f(x,y)=x:" << value << std::endl;
-
-    interpone = 1.;
-    double value_one =
-      system_matrix.matrix_scalar_product(interpone, interpone);
-    std::cout << "Test with 1: " << value_one << std::endl;
-  }
 }
 
 template <int dim>
@@ -775,12 +789,34 @@ Poisson<dim>::run()
 int
 main()
 {
-  // Convergence test for Rtree (ball) {5,6}
-  for (const unsigned int extraction_level : {5})
-    {
-      Poisson<2> poisson_problem{GridTypes::unstructured, extraction_level};
-      poisson_problem.run();
-    }
+  {
+    Poisson<2> poisson_problem{GridType::grid_generator,
+                               PartitionerType::rtree,
+                               3}; // 2,3
+    poisson_problem.run();
+  }
+  {
+    Poisson<2> poisson_problem{GridType::grid_generator,
+                               PartitionerType::metis,
+                               0,
+                               320}; // 16, 64
+    poisson_problem.run();
+  }
+  // for (const unsigned int extraction_level : {2, 3, 4, 5})
+  //   {
+  //     Poisson<2> poisson_problem{GridType::unstructured,
+  //                                PartitionerType::rtree,
+  //                                extraction_level};
+  //     poisson_problem.run();
+  //   }
+  // for (const unsigned int n_subdomains : {6, 22, 85, 340})
+  //   {
+  //     Poisson<2> poisson_problem{GridType::unstructured,
+  //                                PartitionerType::metis,
+  //                                0,
+  //                                n_subdomains};
+  //     poisson_problem.run();
+  //   }
 
 
 
