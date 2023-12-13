@@ -55,9 +55,9 @@ namespace dealii::PolyUtils
     inline Rtree_visitor(
       const Translator &translator,
       unsigned int      target_level,
-      std::vector<std::vector<typename Triangulation<2>::active_cell_iterator>>
-        &                                     boxes,
-      std::vector<std::vector<unsigned int>> &csr);
+      std::vector<std::vector<typename Triangulation<
+        boost::geometry::dimension<Box>::value>::active_cell_iterator>> &boxes,
+      std::vector<std::vector<unsigned int>> &                           csr);
 
 
     /**
@@ -122,7 +122,8 @@ namespace dealii::PolyUtils
      * vector v has the following property: v[i] = vector with all
      * of the BoundingBox bounded by the i-th node of the Rtree.
      */
-    std::vector<std::vector<typename Triangulation<2>::active_cell_iterator>>
+    std::vector<std::vector<typename Triangulation<
+      boost::geometry::dimension<Box>::value>::active_cell_iterator>>
       &agglomerates;
 
     std::vector<std::vector<unsigned int>> &row_ptr;
@@ -138,7 +139,8 @@ namespace dealii::PolyUtils
   Rtree_visitor<Value, Options, Translator, Box, Allocators>::Rtree_visitor(
     const Translator & translator,
     const unsigned int target_level,
-    std::vector<std::vector<typename Triangulation<2>::active_cell_iterator>>
+    std::vector<std::vector<typename Triangulation<
+      boost::geometry::dimension<Box>::value>::active_cell_iterator>>
       &                                     bb_in_boxes,
     std::vector<std::vector<unsigned int>> &csr)
     : translator(translator)
@@ -250,7 +252,8 @@ namespace dealii::PolyUtils
   template <typename Rtree>
   inline std::pair<
     std::vector<std::vector<unsigned int>>,
-    std::vector<std::vector<typename Triangulation<2>::active_cell_iterator>>>
+    std::vector<std::vector<typename Triangulation<boost::geometry::dimension<
+      typename Rtree::indexable_type>::value>::active_cell_iterator>>>
   extract_children_of_level(const Rtree &tree, const unsigned int level)
   {
     using RtreeView =
@@ -258,7 +261,8 @@ namespace dealii::PolyUtils
     RtreeView rtv(tree);
 
     std::vector<std::vector<unsigned int>> csrs;
-    std::vector<std::vector<typename Triangulation<2>::active_cell_iterator>>
+    std::vector<std::vector<typename Triangulation<boost::geometry::dimension<
+      typename Rtree::indexable_type>::value>::active_cell_iterator>>
       agglomerates;
 
     if (rtv.depth() == 0)
