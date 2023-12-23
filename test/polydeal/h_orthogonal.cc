@@ -31,6 +31,11 @@ test()
     Point<2> p4{0., 1.};
 
     std::pair<Point<2>, Point<2>> face{p2, p3};
+    // dx = x2 - x1 and dy = y2 - y1, then the normals are (-dy, dx) and (dy,
+    // -dx).
+    const double dx = p3[0] - p2[0];
+    const double dy = p3[1] - p2[1];
+    Tensor<1, 2> normal({dy, -dx});
 
     std::vector<std::pair<Point<2>, Point<2>>> polygon_boundary;
     polygon_boundary.push_back({p0, p1});
@@ -39,30 +44,63 @@ test()
     polygon_boundary.push_back({p3, p4});
     polygon_boundary.push_back({p4, p0});
     std::cout << "Pentagon, h_f = "
-              << PolyUtils::compute_h_orthogonal(face, polygon_boundary)
+              << PolyUtils::compute_h_orthogonal(face, polygon_boundary, normal)
               << std::endl;
   }
 
   {
-    // Lshape element
+    // p1                p3
+    // |      0.25       |
+    // |<--------------->|
+    // |                 |
+    // p0                p2
     Point<2> p0{0., 0.};
-    Point<2> p1{1., 0.};
-    Point<2> p2{1., .5};
-    Point<2> p3{.5, .5};
-    Point<2> p4{5., 1.};
-    Point<2> p5{0., 1.};
+    Point<2> p1{0., 0.0625};
+    Point<2> p2{0.25, 0.};
+    Point<2> p3{0.25, 0.0625};
 
-    std::pair<Point<2>, Point<2>> face{p2, p3};
+
+
+    std::pair<Point<2>, Point<2>> face{p1, p0};
+    const double                  dx = p3[0] - p2[0];
+    const double                  dy = p3[1] - p2[1];
+    Tensor<1, 2>                  normal({-dy, dx});
 
     std::vector<std::pair<Point<2>, Point<2>>> polygon_boundary;
     polygon_boundary.push_back({p0, p1});
-    polygon_boundary.push_back({p1, p2});
     polygon_boundary.push_back({p2, p3});
-    polygon_boundary.push_back({p3, p4});
-    polygon_boundary.push_back({p4, p5});
-    polygon_boundary.push_back({p5, p0});
+
     std::cout << "Lshape, h_f = "
-              << PolyUtils::compute_h_orthogonal(face, polygon_boundary)
+              << PolyUtils::compute_h_orthogonal(face, polygon_boundary, normal)
+              << std::endl;
+  }
+
+  {
+    // General polygon created with METIS
+    std::pair<Point<2>, Point<2>> face{{0.625, 0.75}, {0.625, 0.875}};
+    Tensor<1, 2>                  normal({1, 0});
+
+    std::vector<std::pair<Point<2>, Point<2>>> polygon_boundary;
+    polygon_boundary.push_back({{0.25, 0.5}, {0.25, 0.625}});
+    polygon_boundary.push_back({{0.25, 0.5}, {0.375, 0.5}});
+    polygon_boundary.push_back({{0.25, 0.625}, {0.375, 0.625}});
+    polygon_boundary.push_back({{0.25, 0.625}, {0.375, 0.625}});
+    polygon_boundary.push_back({{0.375, 0.5}, {0.5, 0.5}});
+    polygon_boundary.push_back({{0.375, 0.625}, {0.375, 0.75}});
+    polygon_boundary.push_back({{0.375, 0.75}, {0.375, 0.875}});
+    polygon_boundary.push_back({{0.375, 0.875}, {0.375, 1}});
+    polygon_boundary.push_back({{0.375, 1}, {0.5, 1}});
+    polygon_boundary.push_back({{0.5, 0.5}, {0.625, 0.5}});
+    polygon_boundary.push_back({{0.75, 0.5}, {0.75, 0.625}});
+    polygon_boundary.push_back({{0.625, 0.5}, {0.75, 0.5}});
+    polygon_boundary.push_back({{0.75, 0.625}, {0.75, 0.75}});
+    polygon_boundary.push_back({{0.625, 0.75}, {0.75, 0.75}});
+    polygon_boundary.push_back({{0.625, 0.75}, {0.625, 0.875}});
+    polygon_boundary.push_back({{0.625, 0.875}, {0.625, 1}});
+    polygon_boundary.push_back({{0.5, 1}, {0.625, 1}});
+
+    std::cout << "Generic poly, h_f = "
+              << PolyUtils::compute_h_orthogonal(face, polygon_boundary, normal)
               << std::endl;
   }
 }

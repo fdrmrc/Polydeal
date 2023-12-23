@@ -636,6 +636,19 @@ public:
   double
   diameter(const typename Triangulation<dim>::active_cell_iterator &cell) const;
 
+  /**
+   * Return the collection of vertices describing the boundary of the polygon
+   * associated to `cell`. The return type is meant to describe a sequence of
+   * edges (in 2D), hence it is a `vector<pair<Point,Point>>`.
+   */
+  inline decltype(auto)
+  polytope_boundary(
+    const typename Triangulation<dim>::active_cell_iterator &cell)
+  {
+    Assert(is_master_cell(cell), ExcInternalError());
+    return polygon_boundary[cell];
+  }
+
 private:
   /**
    * Vector of indices such that v[cell->active_cell_index()] returns
@@ -646,6 +659,13 @@ private:
    */
   std::vector<long int> master_slave_relationships;
 
+
+  /**
+   *  Same as the one above, but storing cell iterators rather than indices.
+   *
+   */
+  std::vector<typename Triangulation<dim, spacedim>::active_cell_iterator>
+    master_slave_relationships_iterators;
 
   using ScratchData = MeshWorker::ScratchData<dim, spacedim>;
 
@@ -684,16 +704,21 @@ private:
    */
   mutable std::map<CellAndFace, MasterNeighborInfo> master_neighbors;
 
+  /**
+   * Associate a master cell (hence the associated polygon) to its boundary.
+   * This is implemented in 2D only, hence the boundary is identified as a
+   * vector of edges.
+   *
+   */
+  mutable std::map<
+    const typename Triangulation<dim, spacedim>::active_cell_iterator,
+    std::vector<std::pair<Point<dim>, Point<dim>>>>
+    polygon_boundary;
+
   mutable std::map<MasterAndNeighborAndFace, types::global_cell_index>
     shared_face_agglomeration_idx;
 
 
-  /**
-   *  Same as the one above, but storing cell iterators rather than indices.
-   *
-   */
-  std::vector<typename Triangulation<dim, spacedim>::active_cell_iterator>
-    master_slave_relationships_iterators;
 
   /**
    * Vector of `BoundingBoxes` s.t. `bboxes[idx]` equals BBOx associated to the
@@ -1010,6 +1035,9 @@ private:
                   CellAndFace(master_cell, n_agglo_faces);      //(agglo,f)
                 const auto nof = cell->neighbor_of_neighbor(f); // loc(f')
 
+                polygon_boundary[master_cell].emplace_back(
+                  cell->face(f)->vertex(0), cell->face(f)->vertex(1));
+
 
                 if (is_slave_cell(neighboring_cell))
                   master_neighbors.emplace(
@@ -1042,6 +1070,10 @@ private:
                 // Note that the neighboring cell must be invalid.
                 const auto &cell_and_face =
                   CellAndFace(master_cell, n_agglo_faces);
+
+                polygon_boundary[master_cell].emplace_back(
+                  cell->face(f)->vertex(0), cell->face(f)->vertex(1));
+
                 master_neighbors.emplace(
                   cell_and_face,
                   std::make_tuple(f,

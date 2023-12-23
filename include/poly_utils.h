@@ -44,6 +44,7 @@ typedef CGAL::Exact_predicates_exact_constructions_kernel Kernel;
 typedef Kernel::Point_2                                   Point_2;
 typedef Kernel::Segment_2                                 Segment_2;
 typedef Kernel::Ray_2                                     Ray_2;
+typedef Kernel::Vector_2                                  Vector_2;
 
 #endif
 
@@ -313,19 +314,22 @@ namespace dealii::PolyUtils
   Number
   compute_h_orthogonal(
     const std::pair<Point<dim>, Point<dim>> &             face,
-    const std::vector<std::pair<Point<dim>, Point<dim>>> &polygon_boundary)
+    const std::vector<std::pair<Point<dim>, Point<dim>>> &polygon_boundary,
+    const Tensor<1, dim> &                                deal_normal)
   {
     Assert(dim == 2, ExcNotImplemented());
 
 #ifdef DEAL_II_WITH_CGAL
-
+    // std::cout << "Computing segment: " << std::endl;
     Segment_2 face_segm({face.first[0], face.first[1]},
                         {face.second[0], face.second[1]});
 
     // Shoot a ray from the midpoint of the face in the orthogonal direction
+    // given by deal.II normals
     const auto &midpoint = CGAL::midpoint(face_segm);
-    Ray_2       ray(midpoint,
-              face_segm.supporting_line().perpendicular(midpoint).direction());
+    // deal.II normal is always outward, flip the direction
+    Vector_2 orthogonal_direction{-deal_normal[0], -deal_normal[1]};
+    Ray_2    ray(midpoint, orthogonal_direction);
 
     std::vector<double> candidates;
     for (unsigned int i = 0; i < polygon_boundary.size(); ++i)
