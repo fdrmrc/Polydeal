@@ -47,7 +47,7 @@ LinearFunction<dim>::value(const Point<dim> &p, const unsigned int) const
 
 
 template <int dim>
-class Poisson
+class LaplaceOperator
 {
 private:
   void
@@ -76,7 +76,7 @@ private:
   std::unique_ptr<GridTools::Cache<dim>> cached_tria;
 
 public:
-  Poisson(const unsigned int, const unsigned int fe_degree = 1);
+  LaplaceOperator(const unsigned int, const unsigned int fe_degree = 1);
   void
   run();
 
@@ -87,8 +87,8 @@ public:
 
 
 template <int dim>
-Poisson<dim>::Poisson(const unsigned int n_subdomains,
-                      const unsigned int fe_degree)
+LaplaceOperator<dim>::LaplaceOperator(const unsigned int n_subdomains,
+                                      const unsigned int fe_degree)
   : mapping(1)
   , dg_fe(fe_degree)
   , n_subdomains(n_subdomains)
@@ -96,7 +96,7 @@ Poisson<dim>::Poisson(const unsigned int n_subdomains,
 
 template <int dim>
 void
-Poisson<dim>::make_grid()
+LaplaceOperator<dim>::make_grid()
 {
   // GridGenerator::hyper_ball(tria);
   // tria.refine_global(5); // 4
@@ -129,7 +129,7 @@ Poisson<dim>::make_grid()
 
 template <int dim>
 void
-Poisson<dim>::setup_agglomeration()
+LaplaceOperator<dim>::setup_agglomeration()
 {
   ah = std::make_unique<AgglomerationHandler<dim>>(*cached_tria);
 
@@ -198,7 +198,7 @@ Poisson<dim>::setup_agglomeration()
 
 template <int dim>
 void
-Poisson<dim>::assemble_system()
+LaplaceOperator<dim>::assemble_system()
 {
   system_matrix.reinit(sparsity);
   solution.reinit(ah->n_dofs());
@@ -450,7 +450,7 @@ Poisson<dim>::assemble_system()
 
 template <int dim>
 void
-Poisson<dim>::perform_sanity_check()
+LaplaceOperator<dim>::perform_sanity_check()
 {
   {
     // Sanity check: v(x,y)=x
@@ -482,7 +482,7 @@ Poisson<dim>::perform_sanity_check()
 
 template <int dim>
 void
-Poisson<dim>::run()
+LaplaceOperator<dim>::run()
 {
   make_grid();
   setup_agglomeration();
@@ -493,9 +493,9 @@ Poisson<dim>::run()
 int
 main()
 {
-  for (const unsigned int n_agglomerates : {50,100,120})
+  for (const unsigned int n_agglomerates : {50, 100, 120})
     {
-      Poisson<2> sanity_check{n_agglomerates};
+      LaplaceOperator<2> sanity_check{n_agglomerates};
       sanity_check.run();
     }
 

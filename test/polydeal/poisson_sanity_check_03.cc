@@ -1,10 +1,12 @@
 #include <deal.II/grid/grid_generator.h>
+#include <deal.II/grid/grid_in.h>
 #include <deal.II/grid/grid_out.h>
 #include <deal.II/grid/grid_tools.h>
 #include <deal.II/grid/reference_cell.h>
 
-#include <deal.II/lac/linear_operator.h>
-#include <deal.II/lac/linear_operator_tools.h>
+#include <deal.II/lac/precondition.h>
+#include <deal.II/lac/solver_cg.h>
+#include <deal.II/lac/solver_gmres.h>
 #include <deal.II/lac/sparse_direct.h>
 #include <deal.II/lac/sparse_matrix.h>
 
@@ -12,55 +14,41 @@
 #include <deal.II/numerics/vector_tools_integrate_difference.h>
 #include <deal.II/numerics/vector_tools_interpolate.h>
 
+#include <agglomeration_handler.h>
+#include <poly_utils.h>
+
 #include <algorithm>
+#include <chrono>
 
 #include "../tests.h"
 
-#include "../include/agglomeration_handler.h"
-
-// Agglomerate a 2x2 mesh in the following way:
-// |------------|-------------|
-// |------------|-------------|
-// |---- K0-----|------K1-----|
-// |------------|-------------|
-// x=1         x=0.5        x=1
-// Test the result of v^T A v, where A is the DG matrix (without boundary terms)
-// and v the interpolant of:
-// - StepFunction (0) in K0, (1) in K1,
-// - Vfunction: f(x,y)=|x-.5|
+using namespace dealii;
 
 
 template <int dim>
-class Vfunction : public Function<dim>
+class LinearFunction : public Function<dim>
 {
 public:
-  Vfunction() = default;
+  LinearFunction(const std::vector<int> &coeffs)
+  {
+    Assert(coeffs.size() <= dim, ExcMessage("Wrong size!"));
+    coefficients.resize(coeffs.size());
+    for (size_t i = 0; i < coeffs.size(); i++)
+      coefficients[i] = coeffs[i];
+  }
   virtual double
   value(const Point<dim> &p, const unsigned int component = 0) const override;
+  std::vector<int> coefficients;
 };
 
 template <int dim>
 double
-Vfunction<dim>::value(const Point<dim> &p, const unsigned int) const
+LinearFunction<dim>::value(const Point<dim> &p, const unsigned int) const
 {
-  // |x-.5|
-  return (p[0] - .5) > 0 ? p[0] - .5 : .5 - p[0];
-}
-
-template <int dim>
-class StepFunction : public Function<dim>
-{
-public:
-  StepFunction() = default;
-  virtual double
-  value(const Point<dim> &p, const unsigned int component = 0) const override;
-};
-
-template <int dim>
-double
-StepFunction<dim>::value(const Point<dim> &p, const unsigned int) const
-{
-  return (p[0] < 0.5) ? 0. : 1.;
+  double value = 0.;
+  for (size_t i = 0; i < coefficients.size(); i++)
+    value += coefficients[i] * p[i];
+  return value;
 }
 
 
@@ -84,14 +72,12 @@ private:
   MappingQ<dim>                              mapping;
   FE_DGQ<dim>                                dg_fe;
   std::unique_ptr<AgglomerationHandler<dim>> ah;
-  // no hanging node in DG discretization, we define an AffineConstraints object
-  // so we can use the distribute_local_to_global() directly.
-  AffineConstraints<double>              constraints;
-  SparsityPattern                        sparsity;
-  SparseMatrix<double>                   system_matrix;
-  Vector<double>                         solution;
-  Vector<double>                         system_rhs;
-  std::unique_ptr<GridTools::Cache<dim>> cached_tria;
+  AffineConstraints<double>                  constraints;
+  SparsityPattern                            sparsity;
+  SparseMatrix<double>                       system_matrix;
+  Vector<double>                             solution;
+  Vector<double>                             system_rhs;
+  std::unique_ptr<GridTools::Cache<dim>>     cached_tria;
 
 public:
   LaplaceOperator(const unsigned int, const unsigned int fe_degree = 1);
@@ -106,7 +92,7 @@ public:
 
 template <int dim>
 LaplaceOperator<dim>::LaplaceOperator(const unsigned int n_subdomains,
-                      const unsigned int fe_degree)
+                                      const unsigned int fe_degree)
   : mapping(1)
   , dg_fe(fe_degree)
   , n_subdomains(n_subdomains)
@@ -116,11 +102,19 @@ template <int dim>
 void
 LaplaceOperator<dim>::make_grid()
 {
-  // GridGenerator::hyper_ball(tria);
-  // tria.refine_global(5); // 4
-  GridGenerator::hyper_cube(tria, 0., 1.);
-  tria.refine_global(1);
+  GridIn<dim> grid_in;
+  grid_in.attach_triangulation(tria);
+  std::ifstream gmsh_file(
+    "../../../../meshes/t3.msh"); // unstructured square [0,1]^2
+  grid_in.read_msh(gmsh_file);
+  tria.refine_global(3);
   cached_tria = std::make_unique<GridTools::Cache<dim>>(tria, mapping);
+  // Partition the triangulation with graph partitioner.
+
+  GridTools::partition_triangulation(n_subdomains,
+                                     tria,
+                                     SparsityTools::Partitioner::metis);
+  std::cout << "N subdomains: " << n_subdomains << std::endl;
   constraints.close();
 }
 
@@ -132,23 +126,27 @@ LaplaceOperator<dim>::setup_agglomeration()
 {
   ah = std::make_unique<AgglomerationHandler<dim>>(*cached_tria);
 
-  std::vector<types::global_cell_index> idxs_to_be_agglomerated = {0, 2};
+  std::vector<std::vector<typename Triangulation<dim>::active_cell_iterator>>
+    cells_per_subdomain(n_subdomains);
+  for (const auto &cell : tria.active_cell_iterators())
+    cells_per_subdomain[cell->subdomain_id()].push_back(cell);
 
-  std::vector<typename Triangulation<2>::active_cell_iterator>
-    cells_to_be_agglomerated;
-  Tests::collect_cells_for_agglomeration(tria,
-                                         idxs_to_be_agglomerated,
-                                         cells_to_be_agglomerated);
-  ah->agglomerate_cells(cells_to_be_agglomerated);
-
-  std::vector<types::global_cell_index> idxs_to_be_agglomerated2 = {1, 3};
-
-  std::vector<typename Triangulation<2>::active_cell_iterator>
-    cells_to_be_agglomerated2;
-  Tests::collect_cells_for_agglomeration(tria,
-                                         idxs_to_be_agglomerated2,
-                                         cells_to_be_agglomerated2);
-  ah->agglomerate_cells(cells_to_be_agglomerated2);
+  for (std::size_t i = 0; i < cells_per_subdomain.size(); ++i)
+    {
+      std::vector<types::global_cell_index> idxs_to_be_agglomerated;
+      std::vector<typename Triangulation<dim>::active_cell_iterator>
+        cells_to_be_agglomerated;
+      // Get all the elements associated with the present subdomain_id
+      for (const auto element : cells_per_subdomain[i])
+        {
+          idxs_to_be_agglomerated.push_back(element->active_cell_index());
+        }
+      Tests::collect_cells_for_agglomeration(tria,
+                                             idxs_to_be_agglomerated,
+                                             cells_to_be_agglomerated);
+      // Agglomerate the cells just stored
+      ah->agglomerate_cells(cells_to_be_agglomerated);
+    }
 
   ah->distribute_agglomerated_dofs(dg_fe);
   ah->create_agglomeration_sparsity_pattern(sparsity);
@@ -189,6 +187,8 @@ LaplaceOperator<dim>::assemble_system()
 
   for (const auto &cell : ah->agglomeration_cell_iterators())
     {
+      // std::cout << "Cell with idx: " << cell->active_cell_index() <<
+      // std::endl;
       cell_matrix              = 0;
       cell_rhs                 = 0;
       const auto &agglo_values = ah->reinit(cell);
@@ -227,8 +227,6 @@ LaplaceOperator<dim>::assemble_system()
       // unsigned int n_jumps = 0;
       for (unsigned int f = 0; f < n_faces; ++f)
         {
-          // double       hf                   = cell->face(0)->measure();
-          // const double current_element_size = std::fabs(ah->volume(cell));
           const double current_element_diameter = std::fabs(ah->diameter(cell));
           // const double penalty =
           //   penalty_constant * (1. / current_element_diameter);
@@ -352,7 +350,10 @@ LaplaceOperator<dim>::assemble_system()
                         }
                     }
 
-
+                  // distribute DoFs accordingly
+                  // std::cout << "Neighbor is " <<
+                  // neigh_cell->active_cell_index()
+                  //           << std::endl;
                   // Retrieve DoFs info from the cell iterator.
                   typename DoFHandler<dim>::cell_iterator neigh_dh(
                     *neigh_cell, &(ah->agglo_dh));
@@ -385,28 +386,33 @@ template <int dim>
 void
 LaplaceOperator<dim>::perform_sanity_check()
 {
-  std::vector<std::unique_ptr<Function<dim>>> functions;
-  functions.emplace_back(
-    new StepFunction<dim>{});                   // v(x,y)= 1 on left, 0 on right
-  functions.emplace_back(new Vfunction<dim>{}); // v(x,y)= |x-.5|
-  std::array<std::string, 2> names_lookup{{"Step function", "V function"}};
+  {
+    // Sanity check: v(x,y)=x
+    Vector<double>      interpx(ah->get_dof_handler().n_dofs());
+    Vector<double>      interpxplusy(ah->get_dof_handler().n_dofs());
+    Vector<double>      interpone(ah->get_dof_handler().n_dofs());
+    LinearFunction<dim> xfunction{{1, 0}};
+    LinearFunction<dim> xplusfunction{{1, 1}};
+    VectorTools::interpolate(*(ah->euler_mapping),
+                             ah->get_dof_handler(),
+                             xfunction,
+                             interpx);
+    VectorTools::interpolate(*(ah->euler_mapping),
+                             ah->get_dof_handler(),
+                             xplusfunction,
+                             interpxplusy);
+    const double valuex = system_matrix.matrix_scalar_product(interpx, interpx);
+    const double valuexplusy =
+      system_matrix.matrix_scalar_product(interpxplusy, interpxplusy);
+    std::cout << "Test with f(x,y)=x:" << valuex << std::endl;
+    std::cout << "Test with f(x,y)=x+y:" << valuexplusy << std::endl;
 
-  unsigned int fcts = 0;
-  for (const auto &func : functions)
-    {
-      Vector<double> interp_vector(ah->get_dof_handler().n_dofs());
-      VectorTools::interpolate(*(ah->euler_mapping),
-                               ah->get_dof_handler(),
-                               *func,
-                               interp_vector);
-      const double value =
-        system_matrix.matrix_scalar_product(interp_vector, interp_vector);
-      std::cout << "Test with " << names_lookup[fcts] << " = " << value
-                << std::endl;
-      ++fcts;
-    }
+    interpone = 1.;
+    double value_one =
+      system_matrix.matrix_scalar_product(interpone, interpone);
+    std::cout << "Test with 1: " << value_one << std::endl;
+  }
 }
-
 
 template <int dim>
 void
@@ -421,7 +427,7 @@ LaplaceOperator<dim>::run()
 int
 main()
 {
-  for (const unsigned int n_agglomerates : {50})
+  for (const unsigned int n_agglomerates : {50, 100, 120, 300, 400, 800})
     {
       LaplaceOperator<2> sanity_check{n_agglomerates};
       sanity_check.run();

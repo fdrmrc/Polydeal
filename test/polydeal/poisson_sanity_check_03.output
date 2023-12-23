@@ -1,0 +1,24 @@
+N subdomains: 50
+Test with f(x,y)=x:1
+Test with f(x,y)=x+y:2
+Test with 1: 2.41388e-14
+N subdomains: 100
+Test with f(x,y)=x:1
+Test with f(x,y)=x+y:2
+Test with 1: 2.29183e-15
+N subdomains: 120
+Test with f(x,y)=x:1
+Test with f(x,y)=x+y:2
+Test with 1: 2.95038e-14
+N subdomains: 300
+Test with f(x,y)=x:1
+Test with f(x,y)=x+y:2
+Test with 1: -2.31987e-14
+N subdomains: 400
+Test with f(x,y)=x:1
+Test with f(x,y)=x+y:2
+Test with 1: 4.88451e-14
+N subdomains: 800
+Test with f(x,y)=x:1
+Test with f(x,y)=x+y:2
+Test with 1: -2.32324e-14
