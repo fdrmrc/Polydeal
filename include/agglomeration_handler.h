@@ -516,7 +516,9 @@ public:
   agglomerated_quadrature(
     const std::vector<
       typename Triangulation<dim, spacedim>::active_cell_iterator> &cells,
-    const Quadrature<dim> &quadrature_type) const;
+    const Quadrature<dim> &quadrature_type,
+    const typename Triangulation<dim, spacedim>::active_cell_iterator
+      &master_cell) const;
 
   /**
    * Find (if any) the cells that have the given master index. Note that `idx`
