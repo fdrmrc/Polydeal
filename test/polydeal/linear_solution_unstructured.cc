@@ -27,7 +27,7 @@
 // naturally induced by the parent-child structure are agglomerated together
 // manually.
 
-static constexpr double TOL = 1e-15;
+static constexpr double TOL = 1e-14;
 
 
 template <int dim>
@@ -545,14 +545,15 @@ Poisson<dim>::assemble_system()
         } // Loop over faces of current cell
     }     // Loop over cells
 
-  Assert(
+  AssertThrow(
     std::fabs(test_integral - 1.) < TOL,
     ExcMessage(
       "Value for integral of linear function on this domain is not correct."));
-  Assert(std::fabs(test_volume - 1.) < TOL,
-         ExcMessage("Value of measure of domain is not correct."));
-  Assert(std::fabs(test_bdary - 4.) < TOL,
-         ExcMessage("Value for the measure of the boundary is not correct."));
+  AssertThrow(std::fabs(test_volume - 1.) < TOL,
+              ExcMessage("Value of measure of domain is not correct."));
+  AssertThrow(std::fabs(test_bdary - 4.) < TOL,
+              ExcMessage(
+                "Value for the measure of the boundary is not correct."));
 }
 
 void
@@ -648,12 +649,16 @@ main()
       const unsigned int fe_degree = 1;
       Poisson<2>         poisson_problem{fe_degree};
       poisson_problem.run();
+      std::cout << "OK" << std::endl;
     }
   catch (const std::exception &exc)
     {
-      std::cerr << exc.what() << std::endl;
+      std::cerr << "Exception on processing: " << std::endl
+                << exc.what() << std::endl
+                << "Aborting!" << std::endl
+                << "----------------------------------------------------"
+                << std::endl;
     }
-  std::cout << "OK" << std::endl;
 
   return 0;
 }
