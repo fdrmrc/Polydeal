@@ -16,97 +16,72 @@
 
 // Compute the h_orthogonal quantity for a some polygonal shapes.
 
+#include <deal.II/fe/fe_values.h>
+
+#include <deal.II/grid/grid_generator.h>
+
 #include <agglomeration_handler.h>
 #include <poly_utils.h>
 
-
+template <int dim>
 void
 test()
 {
-  { // Pentagon
-    Point<2> p0{0., 0.};
-    Point<2> p1{1., 0.};
-    Point<2> p2{1., 1.};
-    Point<2> p3{0.5, 2.};
-    Point<2> p4{0., 1.};
-
-    std::pair<Point<2>, Point<2>> face{p2, p3};
-    // dx = x2 - x1 and dy = y2 - y1, then the normals are (-dy, dx) and (dy,
-    // -dx).
-    const double dx = p3[0] - p2[0];
-    const double dy = p3[1] - p2[1];
-    Tensor<1, 2> normal({dy, -dx});
-
-    std::vector<std::pair<Point<2>, Point<2>>> polygon_boundary;
-    polygon_boundary.push_back({p0, p1});
-    polygon_boundary.push_back({p1, p2});
-    polygon_boundary.push_back({p2, p3});
-    polygon_boundary.push_back({p3, p4});
-    polygon_boundary.push_back({p4, p0});
-    std::cout << "Pentagon, h_f = "
-              << PolyUtils::compute_h_orthogonal(face, polygon_boundary, normal)
-              << std::endl;
-  }
-
-  {
-    // p1                p3
-    // |      0.25       |
-    // |<--------------->|
-    // |                 |
-    // p0                p2
-    Point<2> p0{0., 0.};
-    Point<2> p1{0., 0.0625};
-    Point<2> p2{0.25, 0.};
-    Point<2> p3{0.25, 0.0625};
+  if constexpr (dim == 2)
+    {
+      std::vector<std::pair<std::string, std::string>> names_and_args{
+        {"hyper_cube", "0.0 : 1.0 : false"},
+        {"hyper_ball", "0.,0. : 1. : false"},
+        {"hyper_L", "0.0 : 1.0 : false"}};
 
 
+      for (const auto &[name, arg] : names_and_args)
+        {
+          Triangulation<dim> tria;
+          GridGenerator::generate_from_name_and_arguments(tria, name, arg);
+          FE_Nothing<dim> dummy_fe;
+          DoFHandler<dim> dh(tria);
+          dh.distribute_dofs(dummy_fe);
+          FEFaceValues<dim> face_values(dummy_fe,
+                                        QGauss<dim - 1>{1},
+                                        update_normal_vectors);
 
-    std::pair<Point<2>, Point<2>> face{p1, p0};
-    const double                  dx = p3[0] - p2[0];
-    const double                  dy = p3[1] - p2[1];
-    Tensor<1, 2>                  normal({-dy, dx});
+          auto                           face_it = tria.begin_active_face();
+          Tensor<1, dim>                 normal;
+          std::vector<decltype(face_it)> polygon_boundary;
 
-    std::vector<std::pair<Point<2>, Point<2>>> polygon_boundary;
-    polygon_boundary.push_back({p0, p1});
-    polygon_boundary.push_back({p2, p3});
+          auto first_cell = dh.begin_active();
+          for (unsigned int f : first_cell->face_indices())
+            {
+              if (first_cell->face(f)->at_boundary())
+                {
+                  face_values.reinit(first_cell, f);
+                  normal  = face_values.normal_vector(0);
+                  face_it = first_cell->face(f);
+                  break;
+                }
+            }
 
-    std::cout << "Lshape, h_f = "
-              << PolyUtils::compute_h_orthogonal(face, polygon_boundary, normal)
-              << std::endl;
-  }
+          for (const auto &cell : tria.active_cell_iterators())
+            {
+              for (unsigned int f : cell->face_indices())
+                {
+                  if (cell->face(f)->at_boundary())
+                    polygon_boundary.push_back(cell->face(f));
+                }
+            }
 
-  {
-    // General polygon created with METIS
-    std::pair<Point<2>, Point<2>> face{{0.625, 0.75}, {0.625, 0.875}};
-    Tensor<1, 2>                  normal({1, 0});
-
-    std::vector<std::pair<Point<2>, Point<2>>> polygon_boundary;
-    polygon_boundary.push_back({{0.25, 0.5}, {0.25, 0.625}});
-    polygon_boundary.push_back({{0.25, 0.5}, {0.375, 0.5}});
-    polygon_boundary.push_back({{0.25, 0.625}, {0.375, 0.625}});
-    polygon_boundary.push_back({{0.25, 0.625}, {0.375, 0.625}});
-    polygon_boundary.push_back({{0.375, 0.5}, {0.5, 0.5}});
-    polygon_boundary.push_back({{0.375, 0.625}, {0.375, 0.75}});
-    polygon_boundary.push_back({{0.375, 0.75}, {0.375, 0.875}});
-    polygon_boundary.push_back({{0.375, 0.875}, {0.375, 1}});
-    polygon_boundary.push_back({{0.375, 1}, {0.5, 1}});
-    polygon_boundary.push_back({{0.5, 0.5}, {0.625, 0.5}});
-    polygon_boundary.push_back({{0.75, 0.5}, {0.75, 0.625}});
-    polygon_boundary.push_back({{0.625, 0.5}, {0.75, 0.5}});
-    polygon_boundary.push_back({{0.75, 0.625}, {0.75, 0.75}});
-    polygon_boundary.push_back({{0.625, 0.75}, {0.75, 0.75}});
-    polygon_boundary.push_back({{0.625, 0.75}, {0.625, 0.875}});
-    polygon_boundary.push_back({{0.625, 0.875}, {0.625, 1}});
-    polygon_boundary.push_back({{0.5, 1}, {0.625, 1}});
-
-    std::cout << "Generic poly, h_f = "
-              << PolyUtils::compute_h_orthogonal(face, polygon_boundary, normal)
-              << std::endl;
-  }
+          std::cout << "h_f for " + name + " = "
+                    << PolyUtils::compute_h_orthogonal(face_it,
+                                                       polygon_boundary,
+                                                       normal)
+                    << std::endl;
+        }
+    }
 }
 
 int
 main()
 {
-  test();
+  test<2>();
 }

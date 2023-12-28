@@ -313,16 +313,19 @@ namespace dealii::PolyUtils
   template <int dim, typename Number = double>
   Number
   compute_h_orthogonal(
-    const std::pair<Point<dim>, Point<dim>> &             face,
-    const std::vector<std::pair<Point<dim>, Point<dim>>> &polygon_boundary,
-    const Tensor<1, dim> &                                deal_normal)
+    /*const std::pair<Point<dim>, Point<dim>> &face,*/
+    const typename Triangulation<dim>::active_face_iterator &face,
+    const std::vector<typename Triangulation<dim>::active_face_iterator>
+      &polygon_boundary,
+    /*const std::vector<std::pair<Point<dim>, Point<dim>>> &polygon_boundary,*/
+    const Tensor<1, dim> &deal_normal)
   {
     Assert(dim == 2, ExcNotImplemented());
 
 #ifdef DEAL_II_WITH_CGAL
-    // std::cout << "Computing segment: " << std::endl;
-    Segment_2 face_segm({face.first[0], face.first[1]},
-                        {face.second[0], face.second[1]});
+
+    Segment_2 face_segm({face->vertex(0)[0], face->vertex(0)[1]},
+                        {face->vertex(1)[0], face->vertex(1)[1]});
 
     // Shoot a ray from the midpoint of the face in the orthogonal direction
     // given by deal.II normals
@@ -334,9 +337,10 @@ namespace dealii::PolyUtils
     std::vector<double> candidates;
     for (unsigned int i = 0; i < polygon_boundary.size(); ++i)
       {
-        Segment_2 segm(
-          {polygon_boundary[i].first[0], polygon_boundary[i].first[1]},
-          {polygon_boundary[i].second[0], polygon_boundary[i].second[1]});
+        Segment_2 segm({polygon_boundary[i]->vertex(0)[0],
+                        polygon_boundary[i]->vertex(0)[1]},
+                       {polygon_boundary[i]->vertex(1)[0],
+                        polygon_boundary[i]->vertex(1)[1]});
 
         if (CGAL::do_intersect(ray, segm))
           {
