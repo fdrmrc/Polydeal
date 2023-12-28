@@ -302,34 +302,35 @@ AgglomerationHandler<dim, spacedim>::reinit_master(
 
       // Weights must be scaled with det(J)*|J^-t n| for each quadrature point.
       // Use the fact that we are using a BBox, so the jacobi entries are the
-      // side_length in each direction and normals are already available at this
-      // point.
-      std::vector<double> scale_factors(q_points.size());
-      std::vector<double> scaled_weights(q_points.size());
-
-      Tensor<1, spacedim> scale;
+      // side_length in each direction.
+      // Unfortunately, normal vectors will be scaled internally by deal.II by
+      // using a covariant transformation. In order not to change the normals,
+      // we multiply by the correct factors in order to obtain the original
+      // normal after the call to `reinit(cell)`.
+      std::vector<double>         scale_factors(q_points.size());
+      std::vector<double>         scaled_weights(q_points.size());
+      std::vector<Tensor<1, dim>> scaled_normals(q_points.size());
 
       for (unsigned int q = 0; q < q_points.size(); ++q)
         {
-          // for (unsigned int direction = 0; direction < spacedim; ++direction)
-          //   {
-          //     scale[direction] =
-          //       normals[q][direction] / (bbox.side_length(direction));
-          //     // scaled_normals[q][direction] =
-          //     //   normals[q][direction] * (bbox.side_length(direction));
-          //   }
+          for (unsigned int direction = 0; direction < spacedim; ++direction)
+            scaled_normals[q][direction] =
+              normals[q][direction] * (bbox.side_length(direction));
 
-          // scaled_normals[q] /= scaled_normals[q].norm();
-          // scale_factors[q]  = bbox_measure * scale.norm();
-          scaled_weights[q] = JxWs[q] / (bbox_measure * normals[q].norm());
+          scaled_weights[q] =
+            (JxWs[q] * scaled_normals[q].norm()) / bbox_measure;
+          scaled_normals[q] /= scaled_normals[q].norm();
         }
 
       NonMatching::ImmersedSurfaceQuadrature<dim, spacedim> surface_quad(
-        unit_q_points, scaled_weights, normals);
+        unit_q_points, scaled_weights, scaled_normals);
 
       agglo_isv_ptr =
         std::make_unique<NonMatching::FEImmersedSurfaceValues<spacedim>>(
-          *euler_mapping, *fe, surface_quad, agglomeration_face_flags);
+          *euler_mapping,
+          *fe,
+          surface_quad,
+          agglomeration_face_flags);
 
       agglo_isv_ptr->reinit(cell);
 
