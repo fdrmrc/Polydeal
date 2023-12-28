@@ -559,6 +559,9 @@ template <int dim, int spacedim>
 void
 AgglomerationHandler<dim, spacedim>::setup_output_interpolation_matrix()
 {
+  Assert(fe->has_generalized_support_points(),
+         ExcMessage("The present FiniteElement is not interpolatory."));
+
   // Setup an auxiliary DoFHandler for output purposes
   output_dh.reinit(*tria);
   output_dh.distribute_dofs(*fe);
@@ -570,7 +573,6 @@ AgglomerationHandler<dim, spacedim>::setup_output_interpolation_matrix()
   std::vector<types::global_dof_index> output_dof_indices(fe->dofs_per_cell);
 
   Quadrature<dim> quad(fe->get_unit_support_points());
-
   FEValues<dim, spacedim> output_fe_values(*fe, quad, update_quadrature_points);
 
   for (const auto &cell : agglo_dh.active_cell_iterators())

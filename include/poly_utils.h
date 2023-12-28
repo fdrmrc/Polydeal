@@ -33,6 +33,21 @@
 #include <boost/geometry/index/rtree.hpp>
 #include <boost/geometry/strategies/strategies.hpp>
 
+#include <deal.II/cgal/point_conversion.h>
+
+#ifdef DEAL_II_WITH_CGAL
+
+#  include <CGAL/Exact_predicates_exact_constructions_kernel.h>
+#  include <CGAL/intersections.h>
+#  include <CGAL/squared_distance_2.h>
+typedef CGAL::Exact_predicates_exact_constructions_kernel Kernel;
+typedef Kernel::Point_2                                   Point_2;
+typedef Kernel::Segment_2                                 Segment_2;
+typedef Kernel::Ray_2                                     Ray_2;
+typedef Kernel::Vector_2                                  Vector_2;
+
+#endif
+
 #include <memory>
 
 
@@ -292,7 +307,60 @@ namespace dealii::PolyUtils
 
     return {csrs, agglomerates};
   }
-} // namespace dealii::PolyUtils
 
+
+
+  template <int dim, typename Number = double>
+  Number
+  compute_h_orthogonal(
+    const std::pair<Point<dim>, Point<dim>> &             face,
+    const std::vector<std::pair<Point<dim>, Point<dim>>> &polygon_boundary,
+    const Tensor<1, dim> &                                deal_normal)
+  {
+    Assert(dim == 2, ExcNotImplemented());
+
+#ifdef DEAL_II_WITH_CGAL
+    // std::cout << "Computing segment: " << std::endl;
+    Segment_2 face_segm({face.first[0], face.first[1]},
+                        {face.second[0], face.second[1]});
+
+    // Shoot a ray from the midpoint of the face in the orthogonal direction
+    // given by deal.II normals
+    const auto &midpoint = CGAL::midpoint(face_segm);
+    // deal.II normal is always outward, flip the direction
+    Vector_2 orthogonal_direction{-deal_normal[0], -deal_normal[1]};
+    Ray_2    ray(midpoint, orthogonal_direction);
+
+    std::vector<double> candidates;
+    for (unsigned int i = 0; i < polygon_boundary.size(); ++i)
+      {
+        Segment_2 segm(
+          {polygon_boundary[i].first[0], polygon_boundary[i].first[1]},
+          {polygon_boundary[i].second[0], polygon_boundary[i].second[1]});
+
+        if (CGAL::do_intersect(ray, segm))
+          {
+            const auto result = CGAL::intersection(ray, segm);
+            if (const Point_2 *p = boost::get<Point_2>(&*result))
+              {
+                const double distance =
+                  CGAL::to_double(CGAL::squared_distance(midpoint, *p));
+                if (distance > 0)
+                  candidates.push_back(distance);
+              }
+          }
+      }
+
+    return std::sqrt(*std::min_element(candidates.cbegin(), candidates.cend()));
+
+#else
+
+    Assert(false, ExcNeedsCGAL());
+    (void)face;
+    (void)polygon_boundary;
+    return {};
+#endif
+  }
+} // namespace dealii::PolyUtils
 
 #endif
