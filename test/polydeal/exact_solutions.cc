@@ -26,8 +26,16 @@
 // grid used in this test is a 4x4 grid "randomly distorted". Then, the 4 blocks
 // naturally induced by the parent-child structure are agglomerated together
 // manually.
+// Then, the same is done but with a quadratic solution u(x,y)=x^2+y^2-1 and a
+// quadratic discontinuous finite element space.
 
 static constexpr double TOL = 1e-14;
+
+enum class SolutionType
+{
+  LinearSolution,
+  QuadraticSolution
+};
 
 
 template <int dim>
@@ -75,19 +83,22 @@ LinearFunction<dim>::value_list(const std::vector<Point<dim>> &points,
 }
 
 
-
 template <int dim>
 class RightHandSide : public Function<dim>
 {
 public:
-  RightHandSide()
+  RightHandSide(const SolutionType &solution_type)
     : Function<dim>()
-  {}
+  {
+    sol_type = solution_type;
+  }
 
   virtual void
   value_list(const std::vector<Point<dim>> &points,
              std::vector<double> &          values,
              const unsigned int /*component*/) const override;
+
+  SolutionType sol_type;
 };
 
 
@@ -97,15 +108,24 @@ RightHandSide<dim>::value_list(const std::vector<Point<dim>> &points,
                                std::vector<double> &          values,
                                const unsigned int /*component*/) const
 {
-  for (unsigned int i = 0; i < values.size(); ++i)
-    values[i] = 0.; //-4.; // ball, radial solution
+  (void)points;
+  if (sol_type == SolutionType::LinearSolution)
+    {
+      for (unsigned int i = 0; i < values.size(); ++i)
+        values[i] = 0.; //-4.; // ball, radial solution
+    }
+  else
+    {
+      for (unsigned int i = 0; i < values.size(); ++i)
+        values[i] = -4.; // quadratic solution
+    }
 }
 
 template <int dim>
-class Solution : public Function<dim>
+class SolutionLinear : public Function<dim>
 {
 public:
-  Solution()
+  SolutionLinear()
     : Function<dim>()
   {}
 
@@ -124,15 +144,14 @@ public:
 
 template <int dim>
 double
-Solution<dim>::value(const Point<dim> &p, const unsigned int) const
+SolutionLinear<dim>::value(const Point<dim> &p, const unsigned int) const
 {
-  return p[0] + p[1] - 1; // linear, testing.
-  // return p[0] * p[0] + p[1] * p[1] - 1; // ball, radial solution
+  return p[0] + p[1] - 1; // linear
 }
 
 template <int dim>
 Tensor<1, dim>
-Solution<dim>::gradient(const Point<dim> &p, const unsigned int) const
+SolutionLinear<dim>::gradient(const Point<dim> &p, const unsigned int) const
 {
   Assert(dim == 2, ExcMessage("This test only works in 2D."));
   (void)p;
@@ -145,13 +164,68 @@ Solution<dim>::gradient(const Point<dim> &p, const unsigned int) const
 
 template <int dim>
 void
-Solution<dim>::value_list(const std::vector<Point<dim>> &points,
-                          std::vector<double> &          values,
-                          const unsigned int /*component*/) const
+SolutionLinear<dim>::value_list(const std::vector<Point<dim>> &points,
+                                std::vector<double> &          values,
+                                const unsigned int /*component*/) const
 {
   for (unsigned int i = 0; i < values.size(); ++i)
     values[i] = this->value(points[i]);
 }
+
+
+
+template <int dim>
+class SolutionQuadratic : public Function<dim>
+{
+public:
+  SolutionQuadratic()
+    : Function<dim>()
+  {}
+
+  virtual double
+  value(const Point<dim> &p, const unsigned int component = 0) const override;
+
+  virtual void
+  value_list(const std::vector<Point<dim>> &points,
+             std::vector<double> &          values,
+             const unsigned int /*component*/) const override;
+
+  virtual Tensor<1, dim>
+  gradient(const Point<dim> & p,
+           const unsigned int component = 0) const override;
+};
+
+template <int dim>
+double
+SolutionQuadratic<dim>::value(const Point<dim> &p, const unsigned int) const
+{
+  return p[0] * p[0] + p[1] * p[1] - 1;
+}
+
+template <int dim>
+Tensor<1, dim>
+SolutionQuadratic<dim>::gradient(const Point<dim> &p, const unsigned int) const
+{
+  Assert(dim == 2, ExcMessage("This test only works in 2D."));
+  (void)p;
+  Tensor<1, dim> return_value;
+  return_value[0] = 2 * p[0];
+  return_value[1] = 2 * p[1];
+  return return_value;
+}
+
+
+
+template <int dim>
+void
+SolutionQuadratic<dim>::value_list(const std::vector<Point<dim>> &points,
+                                   std::vector<double> &          values,
+                                   const unsigned int /*component*/) const
+{
+  for (unsigned int i = 0; i < values.size(); ++i)
+    values[i] = this->value(points[i]);
+}
+
 
 
 template <int dim>
@@ -172,7 +246,7 @@ private:
 
   Triangulation<dim>                         tria;
   MappingQ<dim>                              mapping;
-  FE_DGQ<dim>                                dg_fe;
+  FE_DGQ<dim> *                              dg_fe;
   std::unique_ptr<AgglomerationHandler<dim>> ah;
   // no hanging node in DG discretization, we define an AffineConstraints
   // object
@@ -184,22 +258,48 @@ private:
   Vector<double>                         system_rhs;
   std::unique_ptr<GridTools::Cache<dim>> cached_tria;
   std::unique_ptr<const Function<dim>>   rhs_function;
+  Function<dim> *                        analytical_solution;
 
 public:
-  Poisson(const unsigned int fe_degree = 1);
+  Poisson(const SolutionType &solution_type);
+  ~Poisson();
+
   void
   run();
 
-  double penalty_constant = 50; // 10*(p+1)(p+d) for p = 1 and d = 2 => 60
+  double       penalty_constant = 10;
+  SolutionType sol_type;
 };
 
 
 
 template <int dim>
-Poisson<dim>::Poisson(const unsigned int fe_degree)
+Poisson<dim>::Poisson(const SolutionType &solution_type)
   : mapping(1)
-  , dg_fe(fe_degree)
-{}
+  , sol_type(solution_type)
+{
+  if (sol_type == SolutionType::LinearSolution)
+    {
+      dg_fe               = new FE_DGQ<dim>{1};
+      analytical_solution = new SolutionLinear<dim>();
+    }
+  else
+    {
+      dg_fe               = new FE_DGQ<dim>{2};
+      analytical_solution = new SolutionQuadratic<dim>();
+    }
+}
+
+
+
+template <int dim>
+Poisson<dim>::~Poisson()
+{
+  delete dg_fe;
+  delete analytical_solution;
+}
+
+
 
 template <int dim>
 void
@@ -212,7 +312,7 @@ Poisson<dim>::make_grid()
 
   std::cout << "Size of tria: " << tria.n_active_cells() << std::endl;
   cached_tria  = std::make_unique<GridTools::Cache<dim>>(tria, mapping);
-  rhs_function = std::make_unique<const RightHandSide<dim>>();
+  rhs_function = std::make_unique<const RightHandSide<dim>>(sol_type);
 
   constraints.close();
 }
@@ -273,7 +373,7 @@ Poisson<dim>::setup_agglomeration()
                    cells_to_be_agglomerated3,
                    cells_to_be_agglomerated4};
 
-  ah->distribute_agglomerated_dofs(dg_fe);
+  ah->distribute_agglomerated_dofs(*dg_fe);
   ah->create_agglomeration_sparsity_pattern(sparsity);
 }
 
@@ -287,8 +387,8 @@ Poisson<dim>::assemble_system()
   solution.reinit(ah->n_dofs());
   system_rhs.reinit(ah->n_dofs());
 
-  const unsigned int quadrature_degree      = 2 * dg_fe.get_degree() + 1;
-  const unsigned int face_quadrature_degree = 2 * dg_fe.get_degree() + 1;
+  const unsigned int quadrature_degree      = 2 * dg_fe->get_degree() + 1;
+  const unsigned int face_quadrature_degree = 2 * dg_fe->get_degree() + 1;
   ah->initialize_fe_values(QGauss<dim>(quadrature_degree),
                            update_gradients | update_JxW_values |
                              update_quadrature_points | update_JxW_values |
@@ -309,7 +409,7 @@ Poisson<dim>::assemble_system()
 
   std::vector<types::global_dof_index> local_dof_indices(dofs_per_cell);
 
-  Solution<dim>       analytical_solution;
+
   LinearFunction<dim> linear_func{{1, 1}};
   double              test_integral = 0.;
   double              test_bdary    = 0.;
@@ -372,9 +472,9 @@ Poisson<dim>::assemble_system()
               const auto &face_q_points = fe_face.get_quadrature_points();
               std::vector<double> analytical_solution_values(
                 face_q_points.size());
-              analytical_solution.value_list(face_q_points,
-                                             analytical_solution_values,
-                                             1);
+              analytical_solution->value_list(face_q_points,
+                                              analytical_solution_values,
+                                              1);
 
               // Get normal vectors seen from each agglomeration.
               const auto &normals = fe_face.get_normal_vectors();
@@ -586,13 +686,13 @@ Poisson<dim>::output_results()
 
   // L2 error
   Vector<float> difference_per_cell(tria.n_active_cells());
-  Solution<dim> analytical_solution;
+
   VectorTools::integrate_difference(mapping,
                                     ah->output_dh,
                                     interpolated_solution,
-                                    analytical_solution,
+                                    *analytical_solution,
                                     difference_per_cell,
-                                    QGauss<dim>(dg_fe.degree),
+                                    QGauss<dim>(dg_fe->degree + 1),
                                     VectorTools::L2_norm);
 
   const double L2_error =
@@ -611,9 +711,9 @@ Poisson<dim>::output_results()
   VectorTools::integrate_difference(mapping,
                                     ah->output_dh,
                                     interpolated_solution,
-                                    analytical_solution,
+                                    *analytical_solution,
                                     difference_per_cell_H1_semi,
-                                    QGauss<dim>(dg_fe.degree + 1),
+                                    QGauss<dim>(dg_fe->degree + 1),
                                     VectorTools::H1_seminorm);
 
   const double H1_seminorm =
@@ -646,10 +746,13 @@ main()
 
   try
     {
-      const unsigned int fe_degree = 1;
-      Poisson<2>         poisson_problem{fe_degree};
-      poisson_problem.run();
-      std::cout << "OK" << std::endl;
+      Poisson<2> poisson_problem_linear_sol{SolutionType::LinearSolution};
+      poisson_problem_linear_sol.run();
+      std::cout << "Linear: OK" << std::endl;
+
+      Poisson<2> poisson_problem_quadratic_sol{SolutionType::QuadraticSolution};
+      poisson_problem_quadratic_sol.run();
+      std::cout << "Quadratic: OK" << std::endl;
     }
   catch (const std::exception &exc)
     {
