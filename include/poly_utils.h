@@ -374,7 +374,7 @@ namespace dealii::PolyUtils
         Vector_3 orthogonal_direction{-deal_normal[0],
                                       -deal_normal[1],
                                       -deal_normal[2]};
-        Ray_3    ray({center[0], center[1], center[2]}, orthogonal_direction);
+        Ray_3    ray(center, orthogonal_direction);
 
         std::vector<double> candidates;
         for (unsigned int i = 0; i < polygon_boundary.size(); ++i)
