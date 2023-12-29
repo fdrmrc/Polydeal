@@ -5,3 +5,4 @@ h_f for hyper_L = 1
 Testing with dim = 3
 h_f for hyper_cube = 1
 h_f for hyper_L = 1
+h_f for hyper_ball = 1.1547

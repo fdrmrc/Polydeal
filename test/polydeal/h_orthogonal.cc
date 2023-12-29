@@ -40,6 +40,7 @@ test()
     {
       names_and_args.emplace_back("hyper_cube", "0.0 : 1.0 : false");
       names_and_args.emplace_back("hyper_L", "0.0 : 1.0 : false");
+      names_and_args.emplace_back("hyper_ball", "0.,0.,0. : 1. : false");
     }
 
 
@@ -62,7 +63,12 @@ test()
       Tensor<1, dim>                 normal;
       std::vector<decltype(face_it)> polygon_boundary;
 
+
       auto first_cell = dh.begin_active();
+      //  0-th cell of the hyper ball is not on the boundary
+      if (name.compare("hyper_ball") == 0 && dim == 3)
+        ++first_cell;
+
       for (unsigned int f : first_cell->face_indices())
         {
           if (first_cell->face(f)->at_boundary())
