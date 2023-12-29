@@ -707,9 +707,8 @@ private:
   mutable std::map<CellAndFace, MasterNeighborInfo> master_neighbors;
 
   /**
-   * Associate a master cell (hence the associated polygon) to its boundary.
-   * This is implemented in 2D only, hence the boundary is identified as a
-   * vector of edges.
+   * Associate a master cell (hence, a given polygon) to its boundary faces. The
+   * boundary is described through a vector of face iterators.
    *
    */
   mutable std::map<
@@ -719,8 +718,6 @@ private:
 
   mutable std::map<MasterAndNeighborAndFace, types::global_cell_index>
     shared_face_agglomeration_idx;
-
-
 
   /**
    * Vector of `BoundingBoxes` s.t. `bboxes[idx]` equals BBOx associated to the

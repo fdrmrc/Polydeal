@@ -19,6 +19,7 @@
 #include <deal.II/fe/fe_values.h>
 
 #include <deal.II/grid/grid_generator.h>
+#include <deal.II/grid/grid_out.h>
 
 #include <agglomeration_handler.h>
 #include <poly_utils.h>
@@ -27,56 +28,66 @@ template <int dim>
 void
 test()
 {
+  std::cout << "Testing with dim = " << dim << std::endl;
+  std::vector<std::pair<std::string, std::string>> names_and_args;
   if constexpr (dim == 2)
     {
-      std::vector<std::pair<std::string, std::string>> names_and_args{
-        {"hyper_cube", "0.0 : 1.0 : false"},
-        {"hyper_ball", "0.,0. : 1. : false"},
-        {"hyper_L", "0.0 : 1.0 : false"}};
+      names_and_args.emplace_back("hyper_cube", "0.0 : 1.0 : false");
+      names_and_args.emplace_back("hyper_ball", "0.,0. : 1. : false");
+      names_and_args.emplace_back("hyper_L", "0.0 : 1.0 : false");
+    }
+  else
+    {
+      names_and_args.emplace_back("hyper_cube", "0.0 : 1.0 : false");
+      names_and_args.emplace_back("hyper_L", "0.0 : 1.0 : false");
+    }
 
 
-      for (const auto &[name, arg] : names_and_args)
+
+  for (const auto &[name, arg] : names_and_args)
+    {
+      Triangulation<dim> tria;
+      GridGenerator::generate_from_name_and_arguments(tria, name, arg);
+      std::ofstream out(name + ".vtk");
+      GridOut       grid_out;
+      grid_out.write_vtk(tria, out);
+      FE_Nothing<dim> dummy_fe;
+      DoFHandler<dim> dh(tria);
+      dh.distribute_dofs(dummy_fe);
+      FEFaceValues<dim> face_values(dummy_fe,
+                                    QGauss<dim - 1>{1},
+                                    update_normal_vectors);
+
+      auto                           face_it = tria.begin_active_face();
+      Tensor<1, dim>                 normal;
+      std::vector<decltype(face_it)> polygon_boundary;
+
+      auto first_cell = dh.begin_active();
+      for (unsigned int f : first_cell->face_indices())
         {
-          Triangulation<dim> tria;
-          GridGenerator::generate_from_name_and_arguments(tria, name, arg);
-          FE_Nothing<dim> dummy_fe;
-          DoFHandler<dim> dh(tria);
-          dh.distribute_dofs(dummy_fe);
-          FEFaceValues<dim> face_values(dummy_fe,
-                                        QGauss<dim - 1>{1},
-                                        update_normal_vectors);
-
-          auto                           face_it = tria.begin_active_face();
-          Tensor<1, dim>                 normal;
-          std::vector<decltype(face_it)> polygon_boundary;
-
-          auto first_cell = dh.begin_active();
-          for (unsigned int f : first_cell->face_indices())
+          if (first_cell->face(f)->at_boundary())
             {
-              if (first_cell->face(f)->at_boundary())
-                {
-                  face_values.reinit(first_cell, f);
-                  normal  = face_values.normal_vector(0);
-                  face_it = first_cell->face(f);
-                  break;
-                }
+              face_values.reinit(first_cell, f);
+              normal  = face_values.normal_vector(0);
+              face_it = first_cell->face(f);
+              break;
             }
-
-          for (const auto &cell : tria.active_cell_iterators())
-            {
-              for (unsigned int f : cell->face_indices())
-                {
-                  if (cell->face(f)->at_boundary())
-                    polygon_boundary.push_back(cell->face(f));
-                }
-            }
-
-          std::cout << "h_f for " + name + " = "
-                    << PolyUtils::compute_h_orthogonal(face_it,
-                                                       polygon_boundary,
-                                                       normal)
-                    << std::endl;
         }
+
+      for (const auto &cell : tria.active_cell_iterators())
+        {
+          for (unsigned int f : cell->face_indices())
+            {
+              if (cell->face(f)->at_boundary())
+                polygon_boundary.push_back(cell->face(f));
+            }
+        }
+
+      std::cout << "h_f for " + name + " = "
+                << PolyUtils::compute_h_orthogonal(face_it,
+                                                   polygon_boundary,
+                                                   normal)
+                << std::endl;
     }
 }
 
@@ -84,4 +95,5 @@ int
 main()
 {
   test<2>();
+  test<3>();
 }

@@ -40,11 +40,21 @@
 #  include <CGAL/Exact_predicates_exact_constructions_kernel.h>
 #  include <CGAL/intersections.h>
 #  include <CGAL/squared_distance_2.h>
+#  include <CGAL/squared_distance_3.h>
 typedef CGAL::Exact_predicates_exact_constructions_kernel Kernel;
 typedef Kernel::Point_2                                   Point_2;
 typedef Kernel::Segment_2                                 Segment_2;
 typedef Kernel::Ray_2                                     Ray_2;
 typedef Kernel::Vector_2                                  Vector_2;
+
+// 3D types
+typedef Kernel::Plane_3    Plane_3;
+typedef Kernel::Point_3    Point_3;
+typedef Kernel::Ray_3      Ray_3;
+typedef Kernel::Vector_3   Vector_3;
+typedef Kernel::Triangle_3 Triangle_3;
+
+
 
 #endif
 
@@ -313,49 +323,110 @@ namespace dealii::PolyUtils
   template <int dim, typename Number = double>
   Number
   compute_h_orthogonal(
-    /*const std::pair<Point<dim>, Point<dim>> &face,*/
     const typename Triangulation<dim>::active_face_iterator &face,
     const std::vector<typename Triangulation<dim>::active_face_iterator>
-      &polygon_boundary,
-    /*const std::vector<std::pair<Point<dim>, Point<dim>>> &polygon_boundary,*/
+      &                   polygon_boundary,
     const Tensor<1, dim> &deal_normal)
   {
-    Assert(dim == 2, ExcNotImplemented());
-
 #ifdef DEAL_II_WITH_CGAL
-
-    Segment_2 face_segm({face->vertex(0)[0], face->vertex(0)[1]},
-                        {face->vertex(1)[0], face->vertex(1)[1]});
-
-    // Shoot a ray from the midpoint of the face in the orthogonal direction
-    // given by deal.II normals
-    const auto &midpoint = CGAL::midpoint(face_segm);
-    // deal.II normal is always outward, flip the direction
-    Vector_2 orthogonal_direction{-deal_normal[0], -deal_normal[1]};
-    Ray_2    ray(midpoint, orthogonal_direction);
-
-    std::vector<double> candidates;
-    for (unsigned int i = 0; i < polygon_boundary.size(); ++i)
+    if constexpr (dim == 2)
       {
-        Segment_2 segm({polygon_boundary[i]->vertex(0)[0],
-                        polygon_boundary[i]->vertex(0)[1]},
-                       {polygon_boundary[i]->vertex(1)[0],
-                        polygon_boundary[i]->vertex(1)[1]});
+        Segment_2 face_segm({face->vertex(0)[0], face->vertex(0)[1]},
+                            {face->vertex(1)[0], face->vertex(1)[1]});
 
-        if (CGAL::do_intersect(ray, segm))
+        // Shoot a ray from the midpoint of the face in the orthogonal direction
+        // given by deal.II normals
+        const auto &midpoint = CGAL::midpoint(face_segm);
+        // deal.II normal is always outward, flip the direction
+        Vector_2 orthogonal_direction{-deal_normal[0], -deal_normal[1]};
+        Ray_2    ray(midpoint, orthogonal_direction);
+
+        std::vector<double> candidates;
+        for (unsigned int i = 0; i < polygon_boundary.size(); ++i)
           {
-            const auto result = CGAL::intersection(ray, segm);
-            if (const Point_2 *p = boost::get<Point_2>(&*result))
+            Segment_2 segm({polygon_boundary[i]->vertex(0)[0],
+                            polygon_boundary[i]->vertex(0)[1]},
+                           {polygon_boundary[i]->vertex(1)[0],
+                            polygon_boundary[i]->vertex(1)[1]});
+
+            if (CGAL::do_intersect(ray, segm))
               {
-                const double distance =
-                  CGAL::to_double(CGAL::squared_distance(midpoint, *p));
-                if (distance > 0)
-                  candidates.push_back(distance);
+                const auto result = CGAL::intersection(ray, segm);
+                if (const Point_2 *p = boost::get<Point_2>(&*result))
+                  {
+                    const double distance =
+                      CGAL::to_double(CGAL::squared_distance(midpoint, *p));
+                    if (distance > 0)
+                      candidates.push_back(distance);
+                  }
               }
           }
-      }
 
-    return std::sqrt(*std::min_element(candidates.cbegin(), candidates.cend()));
+        return std::sqrt(
+          *std::min_element(candidates.cbegin(), candidates.cend()));
+      }
+    else if constexpr (dim == 3)
+      {
+        const Point_3 &center{face->center()[0],
+                              face->center()[1],
+                              face->center()[2]};
+        // deal.II normal is always outward, flip the direction
+        Vector_3 orthogonal_direction{-deal_normal[0],
+                                      -deal_normal[1],
+                                      -deal_normal[2]};
+        Ray_3    ray({center[0], center[1], center[2]}, orthogonal_direction);
+
+        std::vector<double> candidates;
+        for (unsigned int i = 0; i < polygon_boundary.size(); ++i)
+          {
+            // split the face into 2 triangles and compute distances
+            Triangle_3 first_triangle({polygon_boundary[i]->vertex(0)[0],
+                                       polygon_boundary[i]->vertex(0)[1],
+                                       polygon_boundary[i]->vertex(0)[2]},
+                                      {polygon_boundary[i]->vertex(1)[0],
+                                       polygon_boundary[i]->vertex(1)[1],
+                                       polygon_boundary[i]->vertex(1)[2]},
+                                      {polygon_boundary[i]->vertex(3)[0],
+                                       polygon_boundary[i]->vertex(3)[1],
+                                       polygon_boundary[i]->vertex(3)[2]});
+            Triangle_3 second_triangle({polygon_boundary[i]->vertex(0)[0],
+                                        polygon_boundary[i]->vertex(0)[1],
+                                        polygon_boundary[i]->vertex(0)[2]},
+                                       {polygon_boundary[i]->vertex(3)[0],
+                                        polygon_boundary[i]->vertex(3)[1],
+                                        polygon_boundary[i]->vertex(3)[2]},
+                                       {polygon_boundary[i]->vertex(2)[0],
+                                        polygon_boundary[i]->vertex(2)[1],
+                                        polygon_boundary[i]->vertex(2)[2]});
+
+            // compute point-triangle distance only if the orthogonal ray hits
+            // the triangle
+            if (CGAL::do_intersect(ray, first_triangle))
+              {
+                const double first_distance = CGAL::to_double(
+                  CGAL::squared_distance(center, first_triangle));
+                if (first_distance > 0)
+                  candidates.push_back(first_distance);
+              }
+            if (CGAL::do_intersect(ray, second_triangle))
+              {
+                const double second_distance = CGAL::to_double(
+                  CGAL::squared_distance(center, second_triangle));
+                if (second_distance > 0)
+                  candidates.push_back(second_distance);
+              }
+          }
+
+        return std::sqrt(
+          *std::min_element(candidates.cbegin(), candidates.cend()));
+      }
+    else
+      {
+        Assert(false, ExcImpossibleInDim(dim));
+        (void)face;
+        (void)polygon_boundary;
+        return {};
+      }
 
 #else
 
