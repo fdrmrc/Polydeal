@@ -69,6 +69,8 @@ test()
       if (name.compare("hyper_ball") == 0 && dim == 3)
         ++first_cell;
 
+      unsigned int face_index =
+        0; // the face number of the triangulations seen as a polygon.
       for (unsigned int f : first_cell->face_indices())
         {
           if (first_cell->face(f)->at_boundary())
@@ -90,7 +92,7 @@ test()
         }
 
       std::cout << "h_f for " + name + " = "
-                << PolyUtils::compute_h_orthogonal(face_it,
+                << PolyUtils::compute_h_orthogonal(face_index,
                                                    polygon_boundary,
                                                    normal)
                 << std::endl;
