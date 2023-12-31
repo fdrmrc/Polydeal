@@ -119,28 +119,27 @@ Quadrature<dim>
 AgglomerationHandler<dim, spacedim>::agglomerated_quadrature(
   const std::vector<typename Triangulation<dim, spacedim>::active_cell_iterator>
     &                    cells,
-  const Quadrature<dim> &quadrature_type) const
+  const Quadrature<dim> &quadrature_type,
+  const typename Triangulation<dim, spacedim>::active_cell_iterator
+    &master_cell) const
 {
+  Assert(is_master_cell(master_cell),
+         ExcMessage("This must be a master cell."));
   Assert(quadrature_type.size() > 0,
          ExcMessage("Invalid size for the given Quadrature object"));
   FE_Nothing<dim, spacedim> dummy_fe;
-
-  FEValues<dim, spacedim> no_values(*mapping,
+  FEValues<dim, spacedim>   no_values(*mapping,
                                     dummy_fe,
                                     quadrature_type,
                                     update_quadrature_points |
                                       update_JxW_values); // only for quadrature
-  std::vector<Point<dim>> vec_pts;
-  std::vector<double>     vec_JxWs;
+  std::vector<Point<dim>>   vec_pts;
+  std::vector<double>       vec_JxWs;
   for (const auto &dummy_cell : cells)
     {
       no_values.reinit(dummy_cell);
-      auto        q_points = no_values.get_quadrature_points();
+      auto        q_points = no_values.get_quadrature_points(); // real qpoints
       const auto &JxWs     = no_values.get_JxW_values();
-
-      typename DoFHandler<dim, spacedim>::cell_iterator cell(*dummy_cell,
-                                                             &euler_dh);
-      mapping->transform_points_real_to_unit_cell(cell, q_points, q_points);
 
       std::transform(q_points.begin(),
                      q_points.end(),
@@ -152,7 +151,15 @@ AgglomerationHandler<dim, spacedim>::agglomerated_quadrature(
                      [&](const double w) { return w; });
     }
 
-  return Quadrature<dim>(vec_pts, vec_JxWs);
+  // Map back each point in real space by using the map associated to the
+  // bounding box.
+  std::vector<Point<dim>> unit_points(vec_pts.size());
+  euler_mapping->transform_points_real_to_unit_cell(master_cell,
+                                                    vec_pts,
+                                                    unit_points);
+
+
+  return Quadrature<dim>(unit_points, vec_JxWs);
 }
 
 
@@ -205,7 +212,7 @@ AgglomerationHandler<dim, spacedim>::reinit(
               &c) { return c; });
 
       Quadrature<dim> agglo_quad =
-        agglomerated_quadrature(agglo_cells, agglomeration_quad);
+        agglomerated_quadrature(agglo_cells, agglomeration_quad, cell);
 
       const double bbox_measure = bboxes[cell->active_cell_index()].volume();
 
@@ -295,30 +302,35 @@ AgglomerationHandler<dim, spacedim>::reinit_master(
 
       // Weights must be scaled with det(J)*|J^-t n| for each quadrature point.
       // Use the fact that we are using a BBox, so the jacobi entries are the
-      // side_length in each direction and normals are already available at this
-      // point.
-      std::vector<double> scale_factors(q_points.size());
-      std::vector<double> scaled_weights(q_points.size());
-      Tensor<1, spacedim> scale;
+      // side_length in each direction.
+      // Unfortunately, normal vectors will be scaled internally by deal.II by
+      // using a covariant transformation. In order not to change the normals,
+      // we multiply by the correct factors in order to obtain the original
+      // normal after the call to `reinit(cell)`.
+      std::vector<double>         scale_factors(q_points.size());
+      std::vector<double>         scaled_weights(q_points.size());
+      std::vector<Tensor<1, dim>> scaled_normals(q_points.size());
 
       for (unsigned int q = 0; q < q_points.size(); ++q)
         {
           for (unsigned int direction = 0; direction < spacedim; ++direction)
-            {
-              scale[direction] =
-                normals[q][direction] / (bbox.side_length(direction));
-            }
+            scaled_normals[q][direction] =
+              normals[q][direction] * (bbox.side_length(direction));
 
-          // scale_factors[q]  = bbox_measure * scale.norm();
-          scaled_weights[q] = JxWs[q] / (bbox_measure * scale.norm());
+          scaled_weights[q] =
+            (JxWs[q] * scaled_normals[q].norm()) / bbox_measure;
+          scaled_normals[q] /= scaled_normals[q].norm();
         }
 
       NonMatching::ImmersedSurfaceQuadrature<dim, spacedim> surface_quad(
-        unit_q_points, scaled_weights, normals);
+        unit_q_points, scaled_weights, scaled_normals);
 
       agglo_isv_ptr =
         std::make_unique<NonMatching::FEImmersedSurfaceValues<spacedim>>(
-          *euler_mapping, *fe, surface_quad, agglomeration_face_flags);
+          *euler_mapping,
+          *fe,
+          surface_quad,
+          agglomeration_face_flags);
 
       agglo_isv_ptr->reinit(cell);
 
@@ -333,7 +345,7 @@ AgglomerationHandler<dim, spacedim>::reinit_master(
 
       // TODO: check if *mapping or *euler_mapping
       standard_scratch_face_bdary =
-        std::make_unique<ScratchData>(*mapping,
+        std::make_unique<ScratchData>(*euler_mapping,
                                       fe_collection[2],
                                       agglomeration_quad,
                                       agglomeration_flags,
@@ -572,7 +584,7 @@ AgglomerationHandler<dim, spacedim>::setup_output_interpolation_matrix()
   std::vector<types::global_dof_index> standard_dof_indices(fe->dofs_per_cell);
   std::vector<types::global_dof_index> output_dof_indices(fe->dofs_per_cell);
 
-  Quadrature<dim> quad(fe->get_unit_support_points());
+  Quadrature<dim>         quad(fe->get_unit_support_points());
   FEValues<dim, spacedim> output_fe_values(*fe, quad, update_quadrature_points);
 
   for (const auto &cell : agglo_dh.active_cell_iterators())
@@ -689,7 +701,9 @@ AgglomerationHandler<dim, spacedim>::volume(
       agglo_cells.push_back(cell);
 
       Quadrature<dim> quad =
-        agglomerated_quadrature(agglo_cells, QGauss<dim>{2 * fe->degree + 1});
+        agglomerated_quadrature(agglo_cells,
+                                QGauss<dim>{2 * fe->degree + 1},
+                                cell);
 
       return std::accumulate(quad.get_weights().begin(),
                              quad.get_weights().end(),

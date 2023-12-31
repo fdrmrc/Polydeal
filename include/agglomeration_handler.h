@@ -516,7 +516,9 @@ public:
   agglomerated_quadrature(
     const std::vector<
       typename Triangulation<dim, spacedim>::active_cell_iterator> &cells,
-    const Quadrature<dim> &quadrature_type) const;
+    const Quadrature<dim> &quadrature_type,
+    const typename Triangulation<dim, spacedim>::active_cell_iterator
+      &master_cell) const;
 
   /**
    * Find (if any) the cells that have the given master index. Note that `idx`
@@ -641,7 +643,7 @@ public:
    * associated to `cell`. The return type is meant to describe a sequence of
    * edges (in 2D), hence it is a `vector<pair<Point,Point>>`.
    */
-  inline decltype(auto)
+  inline std::vector<typename Triangulation<dim>::active_face_iterator>
   polytope_boundary(
     const typename Triangulation<dim>::active_cell_iterator &cell)
   {
@@ -705,20 +707,17 @@ private:
   mutable std::map<CellAndFace, MasterNeighborInfo> master_neighbors;
 
   /**
-   * Associate a master cell (hence the associated polygon) to its boundary.
-   * This is implemented in 2D only, hence the boundary is identified as a
-   * vector of edges.
+   * Associate a master cell (hence, a given polygon) to its boundary faces. The
+   * boundary is described through a vector of face iterators.
    *
    */
   mutable std::map<
     const typename Triangulation<dim, spacedim>::active_cell_iterator,
-    std::vector<std::pair<Point<dim>, Point<dim>>>>
+    std::vector<typename Triangulation<dim>::active_face_iterator>>
     polygon_boundary;
 
   mutable std::map<MasterAndNeighborAndFace, types::global_cell_index>
     shared_face_agglomeration_idx;
-
-
 
   /**
    * Vector of `BoundingBoxes` s.t. `bboxes[idx]` equals BBOx associated to the
@@ -1031,13 +1030,11 @@ private:
                 !are_cells_agglomerated(cell, neighboring_cell))
               {
                 // a new face of the agglomeration has been discovered.
+                polygon_boundary[master_cell].push_back(cell->face(f));
+
                 const auto &cell_and_face =
                   CellAndFace(master_cell, n_agglo_faces);      //(agglo,f)
                 const auto nof = cell->neighbor_of_neighbor(f); // loc(f')
-
-                polygon_boundary[master_cell].emplace_back(
-                  cell->face(f)->vertex(0), cell->face(f)->vertex(1));
-
 
                 if (is_slave_cell(neighboring_cell))
                   master_neighbors.emplace(
@@ -1071,8 +1068,7 @@ private:
                 const auto &cell_and_face =
                   CellAndFace(master_cell, n_agglo_faces);
 
-                polygon_boundary[master_cell].emplace_back(
-                  cell->face(f)->vertex(0), cell->face(f)->vertex(1));
+                polygon_boundary[master_cell].push_back(cell->face(f));
 
                 master_neighbors.emplace(
                   cell_and_face,
