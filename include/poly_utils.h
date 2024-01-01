@@ -353,10 +353,7 @@ namespace dealii::PolyUtils
                                                1)[1]});
 
             if (CGAL::do_intersect(ray, segm))
-              {
-                ;
-                candidates.push_back(CGAL::squared_distance(midpoint, segm));
-              }
+              candidates.push_back(CGAL::squared_distance(midpoint, segm));
           }
         return std::sqrt(CGAL::to_double(
           *std::min_element(candidates.cbegin(), candidates.cend())));
@@ -400,17 +397,11 @@ namespace dealii::PolyUtils
             // compute point-triangle distance only if the orthogonal ray
             // hits the triangle
             if (CGAL::do_intersect(ray, first_triangle))
-              {
-                const auto first_distance =
-                  CGAL::squared_distance(center, first_triangle);
-                candidates.push_back(first_distance);
-              }
+              candidates.push_back(
+                CGAL::squared_distance(center, first_triangle));
             if (CGAL::do_intersect(ray, second_triangle))
-              {
-                const auto second_distance = CGAL::to_double(
-                  CGAL::squared_distance(center, second_triangle));
-                candidates.push_back(second_distance);
-              }
+              candidates.push_back(
+                CGAL::squared_distance(center, second_triangle));
           }
 
         return std::sqrt(CGAL::to_double(
