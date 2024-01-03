@@ -376,12 +376,12 @@ public:
   void
   run();
 
-  double   penalty_constant = 60.; // 10*(p+1)(p+d) for p = 1 and d = 2 => 60
-  GridType grid_type;
+  GridType        grid_type;
   PartitionerType partitioner_type;
   SolutionType    solution_type;
   unsigned int    extraction_level;
   unsigned int    n_subdomains;
+  double penalty_constant = 60.; // 10*(p+1)(p+d) for p = 1 and d = 2 => 60
 };
 
 
@@ -400,6 +400,7 @@ Poisson<dim>::Poisson(const GridType &       grid_type,
   , solution_type(solution_type)
   , extraction_level(extraction_level)
   , n_subdomains(n_subdomains)
+  , penalty_constant(10. * (fe_degree + 1) * (fe_degree + dim))
 {}
 
 template <int dim>
