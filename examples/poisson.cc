@@ -35,8 +35,8 @@ constexpr_pow(T num, unsigned int pow)
 
 enum class GridType
 {
-  grid_generator,
-  unstructured
+  grid_generator, // hyper_cube or hyper_ball
+  unstructured    // square generated with gmsh, unstructured
 };
 
 
@@ -51,9 +51,10 @@ enum class PartitionerType
 
 enum SolutionType
 {
-  linear,    // x+y-1
-  quadratic, // x^2+y^2-1
-  product    // xy(x-1)(y-1)
+  linear,      // x+y-1
+  quadratic,   // x^2+y^2-1
+  product,     // xy(x-1)(y-1)
+  product_sine // sin(pi*x)*sin(pi*y)
 };
 
 
@@ -101,10 +102,17 @@ RightHandSide<dim>::value_list(const std::vector<Point<dim>> &points,
         values[i] = -2. * points[i][0] * (points[i][0] - 1.) -
                     2. * points[i][1] * (points[i][1] - 1.);
     }
-  else
+  else if (solution_type == SolutionType::product_sine)
     {
-      Assert(false, ExcNotImplemented());
+      // 2pi^2*sin(pi*x)*sin(pi*y)
+      for (unsigned int i = 0; i < values.size(); ++i)
+        values[i] = 2. * numbers::PI * numbers::PI *
+                    std::sin(numbers::PI * points[i][0]) *
+                    std::sin(numbers::PI * points[i][1]);
     }
+  {
+    Assert(false, ExcNotImplemented());
+  }
 }
 
 
@@ -147,6 +155,7 @@ template <int dim>
 Tensor<1, dim>
 SolutionLinear<dim>::gradient(const Point<dim> &p, const unsigned int) const
 {
+  (void)p;
   Tensor<1, dim> return_value;
   for (unsigned int d = 0; d < dim; ++d)
     return_value[d] = 0.;
@@ -273,6 +282,62 @@ SolutionProduct<dim>::value_list(const std::vector<Point<dim>> &points,
 
 
 template <int dim>
+class SolutionProductSine : public Function<dim>
+{
+public:
+  SolutionProductSine()
+    : Function<dim>()
+  {
+    Assert(dim == 2, ExcNotImplemented());
+  }
+
+  virtual double
+  value(const Point<dim> &p, const unsigned int component = 0) const override;
+
+  virtual void
+  value_list(const std::vector<Point<dim>> &points,
+             std::vector<double> &          values,
+             const unsigned int /*component*/) const override;
+
+  virtual Tensor<1, dim>
+  gradient(const Point<dim> & p,
+           const unsigned int component = 0) const override;
+};
+
+template <int dim>
+double
+SolutionProductSine<dim>::value(const Point<dim> &p, const unsigned int) const
+{
+  return std::sin(numbers::PI * p[0]) * std::sin(numbers::PI * p[1]);
+}
+
+template <int dim>
+Tensor<1, dim>
+SolutionProductSine<dim>::gradient(const Point<dim> &p,
+                                   const unsigned int) const
+{
+  Tensor<1, dim> return_value;
+  return_value[0] =
+    numbers::PI * std::cos(numbers::PI * p[0]) * std::sin(numbers::PI * p[1]);
+  return_value[1] =
+    numbers::PI * std::cos(numbers::PI * p[1]) * std::sin(numbers::PI * p[0]);
+  return return_value;
+}
+
+
+template <int dim>
+void
+SolutionProductSine<dim>::value_list(const std::vector<Point<dim>> &points,
+                                     std::vector<double> &          values,
+                                     const unsigned int /*component*/) const
+{
+  for (unsigned int i = 0; i < values.size(); ++i)
+    values[i] = this->value(points[i]);
+}
+
+
+
+template <int dim>
 class Poisson
 {
 private:
@@ -311,7 +376,7 @@ public:
   void
   run();
 
-  double   penalty_constant = 40; // 10*(p+1)(p+d) for p = 1 and d = 2 => 60
+  double   penalty_constant = 60.; // 10*(p+1)(p+d) for p = 1 and d = 2 => 60
   GridType grid_type;
   PartitionerType partitioner_type;
   SolutionType    solution_type;
@@ -382,6 +447,8 @@ Poisson<dim>::make_grid()
     analytical_solution = std::make_unique<SolutionQuadratic<dim>>();
   else if (solution_type == SolutionType::product)
     analytical_solution = std::make_unique<SolutionProduct<dim>>();
+  else if (solution_type == SolutionType::product_sine)
+    analytical_solution = std::make_unique<SolutionProductSine<dim>>();
 
   rhs_function = std::make_unique<const RightHandSide<dim>>(solution_type);
 
@@ -879,6 +946,8 @@ Poisson<dim>::assemble_system()
     } // Loop over cells
 }
 
+
+
 void
 output_double_number(double input, const std::string &text)
 {
@@ -1024,41 +1093,77 @@ Poisson<dim>::run()
   output_results();
 }
 
+
+
 int
 main()
 {
   std::cout << "Benchmarking with Rtree:" << std::endl;
 
   const unsigned int fe_degree = 1;
-  for (const unsigned int extraction_level : {2, 3, 4, 5, 6, 7})
-    {
-      std::cout << "Level " << extraction_level << std::endl;
-      Poisson<2> poisson_problem{GridType::unstructured,
-                                 PartitionerType::rtree,
-                                 SolutionType::product,
-                                 extraction_level,
-                                 0,
-                                 fe_degree};
-      poisson_problem.run();
-    }
-  std::cout << std::endl;
+  // for (const unsigned int extraction_level : {2, 3})
+  // for (const unsigned int extraction_level : {2, 3, 4, 5, 6, 7})
+  //   {
+  //     std::cout << "Level " << extraction_level << std::endl;
+  //     Poisson<2> poisson_problem{GridType::unstructured,
+  //                                PartitionerType::rtree,
+  //                                SolutionType::product,
+  //                                extraction_level,
+  //                                0,
+  //                                fe_degree};
+  //     poisson_problem.run();
+  //   }
 
+  // Testing p-convergence
+  std::cout << "Testing p-convergence" << std::endl;
+  {
+    for (unsigned int fe_degree : {1, 2, 3, 4, 5})
+      {
+        std::cout << "Fe degree: " << fe_degree << std::endl;
+        Poisson<2> poisson_problem{GridType::unstructured,
+                                   PartitionerType::rtree,
+                                   SolutionType::product_sine,
+                                   5 /*extaction_level*/,
+                                   0,
+                                   fe_degree};
+        poisson_problem.run();
+      }
+  }
+
+
+  std::cout << std::endl;
   return 0;
 
-  std::cout << "Benchmarking with METIS:" << std::endl;
-  for (const unsigned int target_partitions :
-       {5, 20, 80, 320, 1280, 5120}) // ball
-                                     //  {6, 23, 91, 364, 1456, 5824}) //
-                                     //  unstructured {16, 64, 256, 1024,
-                                     //  4096})
-                                     //  // structured square
-    {
-      Poisson<2> poisson_problem{GridType::unstructured,
-                                 PartitionerType::metis,
-                                 SolutionType::linear,
-                                 0,
-                                 target_partitions,
-                                 fe_degree};
-      poisson_problem.run();
-    }
+  // std::cout << "Benchmarking with METIS:" << std::endl;
+  // for (const unsigned int target_partitions :
+  //      {16, 64, 256, 1024, 4096}) // ball
+  //                                 //  {6, 23, 91, 364, 1456, 5824}) //
+  //                                 //  unstructured {16, 64, 256, 1024,
+  //                                 //  4096})
+  //                                 //  // structured square
+  //   {
+  //     Poisson<2> poisson_problem{GridType::grid_generator,
+  //                                PartitionerType::metis,
+  //                                SolutionType::product,
+  //                                0,
+  //                                target_partitions,
+  //                                fe_degree};
+  //     poisson_problem.run();
+  //   }
+
+  // Testing p-convergence
+  // std::cout << "Testing p-convergence" << std::endl;
+  // {
+  //   for (unsigned int fe_degree : {1, 2, 3, 4, 5})
+  //     {
+  //       std::cout << "Fe degree: " << fe_degree << std::endl;
+  //       Poisson<2> poisson_problem{GridType::grid_generator,
+  //                                  PartitionerType::metis,
+  //                                  SolutionType::product_sine,
+  //                                  0 /*extaction_level*/,
+  //                                  1024,
+  //                                  fe_degree};
+  //       poisson_problem.run();
+  //     }
+  // }
 }
