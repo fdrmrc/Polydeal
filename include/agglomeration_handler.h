@@ -524,7 +524,8 @@ public:
    * Find (if any) the cells that have the given master index. Note that `idx`
    * is as it can be equal to -1 (meaning that the cell is a master one).
    */
-  std::vector<typename Triangulation<dim, spacedim>::active_cell_iterator>
+  inline std::vector<
+    typename Triangulation<dim, spacedim>::active_cell_iterator> 
   get_slaves_of_idx(types::global_cell_index idx) const;
 
 
@@ -805,6 +806,9 @@ private:
     std::vector<typename Triangulation<dim, spacedim>::active_cell_iterator>>
     master2slaves;
 
+  // Map the master cell index with the polygon index
+  std::unordered_map<types::global_cell_index, types::global_cell_index>
+    master2polygon;
 
   /**
    * Initialize connectivity informations
@@ -831,7 +835,7 @@ private:
                 -2); // identify all the tria with standard deal.II cells.
 
     master_neighbors.clear();
-    bboxes.resize(tria->n_active_cells());
+    // bboxes.resize(tria->n_active_cells());
 
     // First, update the pointer
     cached_tria = std::make_unique<GridTools::Cache<dim, spacedim>>(
@@ -892,10 +896,12 @@ private:
           pts.push_back(cell->vertex(i));
       }
 
-    bboxes[master_idx] = BoundingBox<spacedim>(pts);
+    bboxes.emplace_back(pts);
 
-    const auto &p0 = bboxes[master_idx].get_boundary_points().first;
-    const auto &p1 = bboxes[master_idx].get_boundary_points().second;
+    const auto &p0 =
+      bboxes[master2polygon.at(master_idx)].get_boundary_points().first;
+    const auto &p1 =
+      bboxes[master2polygon.at(master_idx)].get_boundary_points().second;
     if constexpr (dim == 2)
       {
         euler_vector[dof_indices[0]] = p0[0];

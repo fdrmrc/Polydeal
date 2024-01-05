@@ -87,6 +87,7 @@ AgglomerationHandler<dim, spacedim>::agglomerate_cells(
 
   master_slave_relationships[master_idx] = -1;
 
+  master2polygon[master_idx] = n_agglomerations;
   ++n_agglomerations; // agglomeration has been performed, record it
   create_bounding_box(vec_of_cells, master_idx); // fill the vector of bboxes
 }
@@ -94,7 +95,7 @@ AgglomerationHandler<dim, spacedim>::agglomerate_cells(
 
 
 template <int dim, int spacedim>
-inline std::vector<typename Triangulation<dim, spacedim>::active_cell_iterator>
+std::vector<typename Triangulation<dim, spacedim>::active_cell_iterator>
 AgglomerationHandler<dim, spacedim>::get_slaves_of_idx(
   const types::global_cell_index idx) const
 {
@@ -214,7 +215,8 @@ AgglomerationHandler<dim, spacedim>::reinit(
       Quadrature<dim> agglo_quad =
         agglomerated_quadrature(agglo_cells, agglomeration_quad, cell);
 
-      const double bbox_measure = bboxes[cell->active_cell_index()].volume();
+      const double bbox_measure =
+        bboxes[master2polygon.at(cell->active_cell_index())].volume();
 
       // Scale weights with the volume of the BBox. This way, the euler_mapping
       // defining the BBOx doesn't alter them.
@@ -288,16 +290,15 @@ AgglomerationHandler<dim, spacedim>::reinit_master(
       const auto &JxWs    = no_values.get_JxW_values();
       const auto &normals = no_values.get_normal_vectors();
 
-      const auto &                 bbox = bboxes[cell->active_cell_index()];
-      const double                 bbox_measure = bbox.volume();
+      const auto & bbox = bboxes[master2polygon.at(cell->active_cell_index())];
+      const double bbox_measure = bbox.volume();
       std::vector<Point<spacedim>> unit_q_points;
 
       std::transform(q_points.begin(),
                      q_points.end(),
                      std::back_inserter(unit_q_points),
                      [&](const Point<spacedim> &p) {
-                       return euler_mapping->transform_real_to_unit_cell(cell,
-                                                                         p);
+                       return bbox.real_to_unit(p);
                      });
 
       // Weights must be scaled with det(J)*|J^-t n| for each quadrature point.
@@ -327,10 +328,7 @@ AgglomerationHandler<dim, spacedim>::reinit_master(
 
       agglo_isv_ptr =
         std::make_unique<NonMatching::FEImmersedSurfaceValues<spacedim>>(
-          *euler_mapping,
-          *fe,
-          surface_quad,
-          agglomeration_face_flags);
+          *euler_mapping, *fe, surface_quad, agglomeration_face_flags);
 
       agglo_isv_ptr->reinit(cell);
 
@@ -650,7 +648,8 @@ AgglomerationHandler<dim, spacedim>::setup_output_interpolation_matrix()
               for (const auto i : output_fe_values.dof_indices())
                 {
                   const auto &p =
-                    bboxes[cell->active_cell_index()].real_to_unit(q_points[i]);
+                    bboxes[master2polygon.at(cell->active_cell_index())]
+                      .real_to_unit(q_points[i]);
                   for (const auto j : output_fe_values.dof_indices())
                     {
                       local_matrix(i, j) = fe->shape_value(j, p);
@@ -695,19 +694,21 @@ AgglomerationHandler<dim, spacedim>::volume(
   if (is_master_cell(cell))
     {
       // Get the agglomerate
-      std::vector<typename Triangulation<dim, spacedim>::active_cell_iterator>
-        agglo_cells = get_slaves_of_idx(cell->active_cell_index());
-      // Push back master cell
-      agglo_cells.push_back(cell);
+      // std::vector<typename Triangulation<dim,
+      // spacedim>::active_cell_iterator>
+      //   agglo_cells = get_slaves_of_idx(cell->active_cell_index());
+      // // Push back master cell
+      // agglo_cells.push_back(cell);
 
-      Quadrature<dim> quad =
-        agglomerated_quadrature(agglo_cells,
-                                QGauss<dim>{2 * fe->degree + 1},
-                                cell);
+      // Quadrature<dim> quad =
+      //   agglomerated_quadrature(agglo_cells,
+      //                           QGauss<dim>{2 * fe->degree + 1},
+      //                           cell);
 
-      return std::accumulate(quad.get_weights().begin(),
-                             quad.get_weights().end(),
-                             0.);
+      return bboxes[master2polygon.at(cell->active_cell_index())].volume();
+      // return std::accumulate(quad.get_weights().begin(),
+      //                        quad.get_weights().end(),
+      //                        0.);
     }
   else
     {
@@ -730,7 +731,8 @@ AgglomerationHandler<dim, spacedim>::diameter(
     {
       // Get the bounding box associated with the master cell
       const auto &bdary_pts =
-        bboxes[cell->active_cell_index()].get_boundary_points();
+        bboxes[master2polygon.at(cell->active_cell_index())]
+          .get_boundary_points();
       return (bdary_pts.second - bdary_pts.first).norm();
     }
   else

@@ -50,7 +50,7 @@ test()
 
       ah.agglomerate_cells(cells_to_be_agglomerated);
       const auto &bbox_agglomeration_pts =
-        ah.get_bboxes()[13].get_boundary_points();
+        ah.get_bboxes()[0].get_boundary_points();
       std::cout << "p0: =" << bbox_agglomeration_pts.first << std::endl;
       std::cout << "p1: =" << bbox_agglomeration_pts.second << std::endl;
     }
@@ -65,7 +65,7 @@ test()
 
       ah.agglomerate_cells(cells_to_be_agglomerated);
       const auto &bbox_agglomeration_pts =
-        ah.get_bboxes()[58].get_boundary_points();
+        ah.get_bboxes()[0].get_boundary_points();
       std::cout << "p0: =" << bbox_agglomeration_pts.first << std::endl;
       std::cout << "p1: =" << bbox_agglomeration_pts.second << std::endl;
 
