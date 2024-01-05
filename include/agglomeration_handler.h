@@ -166,8 +166,8 @@ public:
    */
   void
   initialize_fe_values(
-    const Quadrature<dim> &    cell_quadrature,
-    const UpdateFlags &        flags,
+    const Quadrature<dim> &    cell_quadrature = QGauss<dim>(1),
+    const UpdateFlags &        flags           = UpdateFlags::update_default,
     const Quadrature<dim - 1> &face_quadrature = QGauss<dim - 1>(1),
     const UpdateFlags &        face_flags      = UpdateFlags::update_default)
   {
@@ -175,6 +175,19 @@ public:
     agglomeration_flags      = flags;
     agglomeration_face_quad  = face_quadrature;
     agglomeration_face_flags = face_flags | internal_agglomeration_face_flags;
+
+
+    no_values = std::make_unique<FEValues<dim>>(
+      *mapping,
+      dummy_fe,
+      agglomeration_quad,
+      update_quadrature_points | update_JxW_values); // only for quadrature
+    no_face_values = std::make_unique<FEFaceValues<dim>>(
+      *mapping,
+      dummy_fe,
+      agglomeration_face_quad,
+      update_quadrature_points | update_JxW_values |
+        update_normal_vectors); // only for quadrature
   }
 
   /**
@@ -516,7 +529,6 @@ public:
   agglomerated_quadrature(
     const std::vector<
       typename Triangulation<dim, spacedim>::active_cell_iterator> &cells,
-    const Quadrature<dim> &quadrature_type,
     const typename Triangulation<dim, spacedim>::active_cell_iterator
       &master_cell) const;
 
@@ -814,6 +826,23 @@ private:
   // Map the master cell index with the polygon index
   std::unordered_map<types::global_cell_index, types::global_cell_index>
     master2polygon;
+
+  // Dummy FiniteElement objects needed only to generate quadratures
+
+  /**
+   * Dummy FE_Nothing
+   */
+  FE_Nothing<dim, spacedim> dummy_fe;
+
+  /**
+   * Dummy FEValues, needed for cell quadratures.
+   */
+  std::unique_ptr<FEValues<dim, spacedim>> no_values;
+
+  /**
+   * Dummy FEFaceValues, needed for face quadratures.
+   */
+  std::unique_ptr<FEFaceValues<dim, spacedim>> no_face_values;
 
   /**
    * Initialize connectivity informations

@@ -110,27 +110,19 @@ Quadrature<dim>
 AgglomerationHandler<dim, spacedim>::agglomerated_quadrature(
   const std::vector<typename Triangulation<dim, spacedim>::active_cell_iterator>
     &                    cells,
-  const Quadrature<dim> &quadrature_type,
   const typename Triangulation<dim, spacedim>::active_cell_iterator
     &master_cell) const
 {
   Assert(is_master_cell(master_cell),
          ExcMessage("This must be a master cell."));
-  Assert(quadrature_type.size() > 0,
-         ExcMessage("Invalid size for the given Quadrature object"));
-  FE_Nothing<dim, spacedim> dummy_fe;
-  FEValues<dim, spacedim>   no_values(*mapping,
-                                    dummy_fe,
-                                    quadrature_type,
-                                    update_quadrature_points |
-                                      update_JxW_values); // only for quadrature
-  std::vector<Point<dim>>   vec_pts;
-  std::vector<double>       vec_JxWs;
+
+  std::vector<Point<dim>> vec_pts;
+  std::vector<double>     vec_JxWs;
   for (const auto &dummy_cell : cells)
     {
-      no_values.reinit(dummy_cell);
-      auto        q_points = no_values.get_quadrature_points(); // real qpoints
-      const auto &JxWs     = no_values.get_JxW_values();
+      no_values->reinit(dummy_cell);
+      auto        q_points = no_values->get_quadrature_points(); // real qpoints
+      const auto &JxWs     = no_values->get_JxW_values();
 
       std::transform(q_points.begin(),
                      q_points.end(),
@@ -203,7 +195,7 @@ AgglomerationHandler<dim, spacedim>::reinit(
               &c) { return c; });
 
       Quadrature<dim> agglo_quad =
-        agglomerated_quadrature(agglo_cells, agglomeration_quad, cell);
+        agglomerated_quadrature(agglo_cells, cell);
 
       const double bbox_measure =
         bboxes[master2polygon.at(cell->active_cell_index())].volume();
@@ -263,22 +255,13 @@ AgglomerationHandler<dim, spacedim>::reinit_master(
   const auto &local_face_idx   = std::get<0>(info_neighbors);
   const auto &neighboring_cell = std::get<3>(info_neighbors);
 
-  FE_Nothing<dim, spacedim> dummy_fe;
-
-  FEFaceValues<dim, spacedim> no_values(
-    *mapping,
-    dummy_fe,
-    agglomeration_face_quad,
-    update_quadrature_points | update_JxW_values |
-      update_normal_vectors); // only for quadrature
-
   if (neighboring_cell.state() == IteratorState::valid)
     {
-      no_values.reinit(neighboring_cell, local_face_idx);
-      auto q_points = no_values.get_quadrature_points();
+      no_face_values->reinit(neighboring_cell, local_face_idx);
+      auto q_points = no_face_values->get_quadrature_points();
 
-      const auto &JxWs    = no_values.get_JxW_values();
-      const auto &normals = no_values.get_normal_vectors();
+      const auto &JxWs    = no_face_values->get_JxW_values();
+      const auto &normals = no_face_values->get_normal_vectors();
 
       const auto & bbox = bboxes[master2polygon.at(cell->active_cell_index())];
       const double bbox_measure = bbox.volume();
@@ -329,7 +312,7 @@ AgglomerationHandler<dim, spacedim>::reinit_master(
       // Then it's a boundary face of an agglomeration living on the
       // boundary of the tria. You need to return an FEFaceValues on the
       // boundary face of a boundary cell.
-      no_values.reinit(neighboring_cell, local_face_idx);
+      no_face_values->reinit(neighboring_cell, local_face_idx);
 
       // TODO: check if *mapping or *euler_mapping
       standard_scratch_face_bdary =
