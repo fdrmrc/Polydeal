@@ -153,13 +153,14 @@ AgglomerationHandler<dim, spacedim>::agglomerated_quadrature(
 
   // Map back each point in real space by using the map associated to the
   // bounding box.
-  std::vector<Point<dim>> unit_points(vec_pts.size());
-  euler_mapping->transform_points_real_to_unit_cell(master_cell,
-                                                    vec_pts,
-                                                    unit_points);
+  std::vector<Point<dim>> unit_points;
+  unit_points.reserve(vec_pts.size());
+  for (const auto &p : vec_pts)
+    unit_points.push_back(
+      bboxes[master_cell->active_cell_index()].real_to_unit(p));
 
 
-  return Quadrature<dim>(unit_points, vec_JxWs);
+  return {unit_points, vec_JxWs};
 }
 
 
