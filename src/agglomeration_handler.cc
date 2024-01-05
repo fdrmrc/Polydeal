@@ -96,16 +96,6 @@ AgglomerationHandler<dim, spacedim>::agglomerate_cells(
 
 template <int dim, int spacedim>
 std::vector<typename Triangulation<dim, spacedim>::active_cell_iterator>
-AgglomerationHandler<dim, spacedim>::get_slaves_of_idx(
-  const types::global_cell_index idx) const
-{
-  return master2slaves.at(idx);
-}
-
-
-
-template <int dim, int spacedim>
-std::vector<typename Triangulation<dim, spacedim>::active_cell_iterator>
 AgglomerationHandler<dim, spacedim>::get_agglomerated_cells(
   const typename Triangulation<dim, spacedim>::active_cell_iterator &cell) const
 {

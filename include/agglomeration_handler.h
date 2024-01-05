@@ -520,13 +520,18 @@ public:
     const typename Triangulation<dim, spacedim>::active_cell_iterator
       &master_cell) const;
 
+
+
   /**
    * Find (if any) the cells that have the given master index. Note that `idx`
    * is as it can be equal to -1 (meaning that the cell is a master one).
    */
-  inline std::vector<
-    typename Triangulation<dim, spacedim>::active_cell_iterator> 
-  get_slaves_of_idx(types::global_cell_index idx) const;
+  inline const std::vector<
+    typename Triangulation<dim, spacedim>::active_cell_iterator> &
+  get_slaves_of_idx(types::global_cell_index idx) const
+  {
+    return master2slaves.at(idx);
+  }
 
 
 
