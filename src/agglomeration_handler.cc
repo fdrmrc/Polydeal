@@ -109,7 +109,7 @@ template <int dim, int spacedim>
 Quadrature<dim>
 AgglomerationHandler<dim, spacedim>::agglomerated_quadrature(
   const std::vector<typename Triangulation<dim, spacedim>::active_cell_iterator>
-    &                    cells,
+    &cells,
   const typename Triangulation<dim, spacedim>::active_cell_iterator
     &master_cell) const
 {
@@ -137,9 +137,12 @@ AgglomerationHandler<dim, spacedim>::agglomerated_quadrature(
   // Map back each point in real space by using the map associated to the
   // bounding box.
   std::vector<Point<dim>> unit_points(vec_pts.size());
-  euler_mapping->transform_points_real_to_unit_cell(master_cell,
-                                                    vec_pts,
-                                                    unit_points);
+  unit_points.reserve(vec_pts.size());
+
+  for (unsigned int i = 0; i < vec_pts.size(); i++)
+    unit_points[i] =
+      bboxes[master2polygon.at(master_cell->active_cell_index())].real_to_unit(
+        vec_pts[i]);
 
 
   return Quadrature<dim>(unit_points, vec_JxWs);
@@ -194,8 +197,7 @@ AgglomerationHandler<dim, spacedim>::reinit(
         [&](const typename Triangulation<dim, spacedim>::active_cell_iterator
               &c) { return c; });
 
-      Quadrature<dim> agglo_quad =
-        agglomerated_quadrature(agglo_cells, cell);
+      Quadrature<dim> agglo_quad = agglomerated_quadrature(agglo_cells, cell);
 
       const double bbox_measure =
         bboxes[master2polygon.at(cell->active_cell_index())].volume();
