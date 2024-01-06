@@ -44,7 +44,8 @@ enum class GridType
 enum class PartitionerType
 {
   metis,
-  rtree
+  rtree,
+  no_partition
 };
 
 
@@ -91,7 +92,7 @@ RightHandSide<dim>::value_list(const std::vector<Point<dim>> &points,
       for (unsigned int i = 0; i < values.size(); ++i)
         values[i] = 0.; // Laplacian of linear function
     }
-  if (solution_type == SolutionType::quadratic)
+  else if (solution_type == SolutionType::quadratic)
     {
       for (unsigned int i = 0; i < values.size(); ++i)
         values[i] = -4.; // quadratic (radial) solution
@@ -110,9 +111,10 @@ RightHandSide<dim>::value_list(const std::vector<Point<dim>> &points,
                     std::sin(numbers::PI * points[i][0]) *
                     std::sin(numbers::PI * points[i][1]);
     }
-  {
-    Assert(false, ExcNotImplemented());
-  }
+  else
+    {
+      Assert(false, ExcNotImplemented());
+    }
 }
 
 
@@ -147,8 +149,6 @@ SolutionLinear<dim>::value(const Point<dim> &p, const unsigned int) const
     sum += p[d];
 
   return sum - 1; // p[0]+p[1]+p[2]-1
-  // return std::sin(2. * numbers::PI * p[0]) * std::sin(2. * numbers::PI *
-  // p[1]); //sin*sin
 }
 
 template <int dim>
@@ -401,7 +401,19 @@ Poisson<dim>::Poisson(const GridType &       grid_type,
   , extraction_level(extraction_level)
   , n_subdomains(n_subdomains)
   , penalty_constant(10. * (fe_degree + 1) * (fe_degree + dim))
-{}
+{
+  // Initialize manufactured solution
+  if (solution_type == SolutionType::linear)
+    analytical_solution = std::make_unique<SolutionLinear<dim>>();
+  else if (solution_type == SolutionType::quadratic)
+    analytical_solution = std::make_unique<SolutionQuadratic<dim>>();
+  else if (solution_type == SolutionType::product)
+    analytical_solution = std::make_unique<SolutionProduct<dim>>();
+  else if (solution_type == SolutionType::product_sine)
+    analytical_solution = std::make_unique<SolutionProductSine<dim>>();
+
+  rhs_function = std::make_unique<const RightHandSide<dim>>(solution_type);
+}
 
 template <int dim>
 void
@@ -417,7 +429,6 @@ Poisson<dim>::make_grid()
             "../../meshes/t3.msh"); // unstructured square [0,1]^2
           grid_in.read_msh(gmsh_file);
           tria.refine_global(5); // 4
-          // tria.refine_global(6); // 4
         }
       else if constexpr (dim == 3)
         {
@@ -441,17 +452,6 @@ Poisson<dim>::make_grid()
     }
   std::cout << "Size of tria: " << tria.n_active_cells() << std::endl;
   cached_tria = std::make_unique<GridTools::Cache<dim>>(tria, mapping);
-
-  if (solution_type == SolutionType::linear)
-    analytical_solution = std::make_unique<SolutionLinear<dim>>();
-  else if (solution_type == SolutionType::quadratic)
-    analytical_solution = std::make_unique<SolutionQuadratic<dim>>();
-  else if (solution_type == SolutionType::product)
-    analytical_solution = std::make_unique<SolutionProduct<dim>>();
-  else if (solution_type == SolutionType::product_sine)
-    analytical_solution = std::make_unique<SolutionProductSine<dim>>();
-
-  rhs_function = std::make_unique<const RightHandSide<dim>>(solution_type);
 
   if (partitioner_type == PartitionerType::metis)
     {
@@ -518,8 +518,6 @@ Poisson<dim>::make_grid()
       std::cout << "N subdomains = " << n_subdomains << std::endl;
 
 
-      constraints.close();
-
 
       // Check number of agglomerates
       if constexpr (dim == 2)
@@ -545,46 +543,70 @@ Poisson<dim>::make_grid()
           grid_out_svg.write_svg(tria, out);
         }
     }
+  else if (partitioner_type == PartitionerType::no_partition)
+    {}
+  else
+    {
+      Assert(false, ExcMessage("Wrong partitioning."));
+    }
+
+
+  constraints.close();
 }
 
 template <int dim>
 void
 Poisson<dim>::setup_agglomeration()
-
 {
   ah = std::make_unique<AgglomerationHandler<dim>>(*cached_tria);
 
-  std::vector<std::vector<typename Triangulation<dim>::active_cell_iterator>>
-    cells_per_subdomain(n_subdomains);
-  for (const auto &cell : tria.active_cell_iterators())
-    cells_per_subdomain[cell->subdomain_id()].push_back(cell);
-
-  // For every subdomain, agglomerate elements together
-  for (std::size_t i = 0; i < cells_per_subdomain.size(); ++i)
+  if (partitioner_type != PartitionerType::no_partition)
     {
-      // std::cout << "Subdomain " << i << std::endl;
-      std::vector<types::global_cell_index> idxs_to_be_agglomerated;
-      std::vector<typename Triangulation<dim>::active_cell_iterator>
-        cells_to_be_agglomerated;
-      // Get all the elements associated with the present subdomain_id
-      for (const auto element : cells_per_subdomain[i])
+      std::vector<
+        std::vector<typename Triangulation<dim>::active_cell_iterator>>
+        cells_per_subdomain(n_subdomains);
+      for (const auto &cell : tria.active_cell_iterators())
+        cells_per_subdomain[cell->subdomain_id()].push_back(cell);
+
+      // For every subdomain, agglomerate elements together
+      for (std::size_t i = 0; i < cells_per_subdomain.size(); ++i)
         {
-          idxs_to_be_agglomerated.push_back(element->active_cell_index());
+          // std::cout << "Subdomain " << i << std::endl;
+          std::vector<types::global_cell_index> idxs_to_be_agglomerated;
+          std::vector<typename Triangulation<dim>::active_cell_iterator>
+            cells_to_be_agglomerated;
+          // Get all the elements associated with the present subdomain_id
+          for (const auto element : cells_per_subdomain[i])
+            {
+              idxs_to_be_agglomerated.push_back(element->active_cell_index());
+            }
+          Tests::collect_cells_for_agglomeration(tria,
+                                                 idxs_to_be_agglomerated,
+                                                 cells_to_be_agglomerated);
+          // Agglomerate the cells just stored
+          ah->agglomerate_cells(cells_to_be_agglomerated);
         }
-      Tests::collect_cells_for_agglomeration(tria,
-                                             idxs_to_be_agglomerated,
-                                             cells_to_be_agglomerated);
-      // Agglomerate the cells just stored
-      ah->agglomerate_cells(cells_to_be_agglomerated);
+    }
+  else
+    {
+      // No partitioning means that each cell is a master cell
+      for (const auto &cell : tria.active_cell_iterators())
+        {
+          ah->agglomerate_cells({cell});
+        }
     }
 
   ah->distribute_agglomerated_dofs(dg_fe);
   ah->create_agglomeration_sparsity_pattern(sparsity);
 
-
   {
-    const std::string &partitioner =
-      (partitioner_type == PartitionerType::metis) ? "metis" : "rtree";
+    std::string partitioner;
+    if (partitioner_type == PartitionerType::metis)
+      partitioner = "metis";
+    else if (partitioner_type == PartitionerType::rtree)
+      partitioner = "rtree";
+    else
+      partitioner = "no_partitioning";
 
     const std::string filename =
       "grid" + partitioner + "_" + std::to_string(n_subdomains) + ".vtu";
@@ -592,7 +614,6 @@ Poisson<dim>::setup_agglomeration()
 
     DataOut<dim> data_out;
     data_out.attach_dof_handler(ah->agglo_dh);
-    // data_out.attach_dof_handler(ah->output_dh);
 
     Vector<float> agglomerated(tria.n_active_cells());
     Vector<float> agglo_idx(tria.n_active_cells());
@@ -962,16 +983,6 @@ Poisson<dim>::solve()
   SparseDirectUMFPACK A_direct;
   A_direct.initialize(system_matrix);
   A_direct.vmult(solution, system_rhs);
-  // SolverControl solver_control(8000, 1e-8);
-  // // SolverGMRES<> solver_gmres(solver_control);
-  // SolverCG<> solver_cg(solver_control);
-  // solver_cg.connect_condition_number_slot(std::bind(output_double_number,
-  //                                                   std::placeholders::_1,
-  //                                                   "Condition number:"));
-
-  // solver_cg.solve(system_matrix, solution, system_rhs,
-  // PreconditionIdentity()); std::cout << "   " << solver_control.last_step()
-  //           << " CG iterations needed to obtain convergence." << std::endl;
 }
 
 
@@ -1002,8 +1013,13 @@ Poisson<dim>::output_results()
   }
 
   {
-    const std::string &partitioner =
-      (partitioner_type == PartitionerType::metis) ? "metis" : "rtree";
+    std::string partitioner;
+    if (partitioner_type == PartitionerType::metis)
+      partitioner = "metis";
+    else if (partitioner_type == PartitionerType::rtree)
+      partitioner = "rtree";
+    else
+      partitioner = "no_partitioning";
 
     const std::string filename = "interpolated_solution_" + partitioner + "_" +
                                  std::to_string(n_subdomains) + ".vtu";
