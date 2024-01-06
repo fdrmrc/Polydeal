@@ -639,15 +639,14 @@ public:
   diameter(const typename Triangulation<dim>::active_cell_iterator &cell) const;
 
   /**
-   * Return the collection of vertices describing the boundary of the polygon
-   * associated to `cell`. The return type is meant to describe a sequence of
-   * edges (in 2D), hence it is a `vector<pair<Point,Point>>`.
+   * Return the collection of vertices describing the boundary of the polytope
+   * associated to the master cell `cell`. The return type is meant to describe
+   * a sequence of edges (in 2D) or faces (in 3D).
    */
-  inline std::vector<typename Triangulation<dim>::active_face_iterator>
+  inline const std::vector<typename Triangulation<dim>::active_face_iterator> &
   polytope_boundary(
     const typename Triangulation<dim>::active_cell_iterator &cell)
   {
-    Assert(is_master_cell(cell), ExcInternalError());
     return polygon_boundary[cell];
   }
 

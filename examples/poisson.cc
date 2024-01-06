@@ -4,6 +4,9 @@
 #include <deal.II/grid/grid_tools.h>
 #include <deal.II/grid/reference_cell.h>
 
+#include <deal.II/lac/precondition.h>
+#include <deal.II/lac/solver_cg.h>
+#include <deal.II/lac/solver_gmres.h>
 #include <deal.II/lac/sparse_direct.h>
 #include <deal.II/lac/sparse_matrix.h>
 
@@ -15,34 +18,67 @@
 #include <poly_utils.h>
 
 #include <algorithm>
+#include <chrono>
 
 #include "../tests.h"
 
+template <typename T>
+constexpr T
+constexpr_pow(T num, unsigned int pow)
+{
+  return (pow >= sizeof(unsigned int) * 8) ? 0 :
+         pow == 0                          ? 1 :
+                                             num * constexpr_pow(num, pow - 1);
+}
+
+
+
 enum class GridType
 {
-  grid_generator,
-  unstructured
+  grid_generator, // hyper_cube or hyper_ball
+  unstructured    // square generated with gmsh, unstructured
 };
+
+
 
 enum class PartitionerType
 {
   metis,
-  rtree
+  rtree,
+  no_partition
 };
+
+
+
+enum SolutionType
+{
+  linear,      // x+y-1
+  quadratic,   // x^2+y^2-1
+  product,     // xy(x-1)(y-1)
+  product_sine // sin(pi*x)*sin(pi*y)
+};
+
+
 
 template <int dim>
 class RightHandSide : public Function<dim>
 {
 public:
-  RightHandSide()
+  RightHandSide(const SolutionType &sol_type = SolutionType::linear)
     : Function<dim>()
-  {}
+  {
+    solution_type = sol_type;
+  }
 
   virtual void
   value_list(const std::vector<Point<dim>> &points,
              std::vector<double> &          values,
              const unsigned int /*component*/) const override;
+
+private:
+  SolutionType solution_type;
 };
+
 
 
 template <int dim>
@@ -51,19 +87,43 @@ RightHandSide<dim>::value_list(const std::vector<Point<dim>> &points,
                                std::vector<double> &          values,
                                const unsigned int /*component*/) const
 {
-  for (unsigned int i = 0; i < values.size(); ++i)
-    values[i] = -2. * points[i][0] * (points[i][0] - 1.) -
-                2. * points[i][1] * (points[i][1] - 1.); // square
-  // values[i] = 8. * numbers::PI * numbers::PI *
-  //             std::sin(2. * numbers::PI * points[i][0]) *
-  //             std::sin(2. * numbers::PI * points[i][1]);
+  if (solution_type == SolutionType::linear)
+    {
+      for (unsigned int i = 0; i < values.size(); ++i)
+        values[i] = 0.; // Laplacian of linear function
+    }
+  else if (solution_type == SolutionType::quadratic)
+    {
+      for (unsigned int i = 0; i < values.size(); ++i)
+        values[i] = -4.; // quadratic (radial) solution
+    }
+  else if (solution_type == SolutionType::product)
+    {
+      for (unsigned int i = 0; i < values.size(); ++i)
+        values[i] = -2. * points[i][0] * (points[i][0] - 1.) -
+                    2. * points[i][1] * (points[i][1] - 1.);
+    }
+  else if (solution_type == SolutionType::product_sine)
+    {
+      // 2pi^2*sin(pi*x)*sin(pi*y)
+      for (unsigned int i = 0; i < values.size(); ++i)
+        values[i] = 2. * numbers::PI * numbers::PI *
+                    std::sin(numbers::PI * points[i][0]) *
+                    std::sin(numbers::PI * points[i][1]);
+    }
+  else
+    {
+      Assert(false, ExcNotImplemented());
+    }
 }
 
+
+
 template <int dim>
-class Solution : public Function<dim>
+class SolutionLinear : public Function<dim>
 {
 public:
-  Solution()
+  SolutionLinear()
     : Function<dim>()
   {}
 
@@ -82,49 +142,199 @@ public:
 
 template <int dim>
 double
-Solution<dim>::value(const Point<dim> &p, const unsigned int) const
+SolutionLinear<dim>::value(const Point<dim> &p, const unsigned int) const
 {
-  return p[0] * (p[0] - 1.) * p[1] * (p[1] - 1.); // square
-  // return std::sin(2. * numbers::PI * p[0]) * std::sin(2. * numbers::PI *
-  // p[1]);
+  double sum = 0;
+  for (unsigned int d = 0; d < dim; ++d)
+    sum += p[d];
+
+  return sum - 1; // p[0]+p[1]+p[2]-1
 }
 
 template <int dim>
 Tensor<1, dim>
-Solution<dim>::gradient(const Point<dim> &p, const unsigned int) const
+SolutionLinear<dim>::gradient(const Point<dim> &p, const unsigned int) const
 {
-  Tensor<1, dim> return_value;
   (void)p;
-  Assert(false, ExcNotImplemented());
+  Tensor<1, dim> return_value;
+  for (unsigned int d = 0; d < dim; ++d)
+    return_value[d] = 0.;
   return return_value;
 }
 
 
 template <int dim>
 void
-Solution<dim>::value_list(const std::vector<Point<dim>> &points,
-                          std::vector<double> &          values,
-                          const unsigned int /*component*/) const
+SolutionLinear<dim>::value_list(const std::vector<Point<dim>> &points,
+                                std::vector<double> &          values,
+                                const unsigned int /*component*/) const
 {
   for (unsigned int i = 0; i < values.size(); ++i)
     values[i] = this->value(points[i]);
 }
 
 
+
 template <int dim>
-class MyFunction : public Function<dim>
+class SolutionQuadratic : public Function<dim>
 {
 public:
+  SolutionQuadratic()
+    : Function<dim>()
+  {
+    Assert(dim == 2, ExcNotImplemented());
+  }
+
   virtual double
   value(const Point<dim> &p, const unsigned int component = 0) const override;
+
+  virtual void
+  value_list(const std::vector<Point<dim>> &points,
+             std::vector<double> &          values,
+             const unsigned int /*component*/) const override;
+
+  virtual Tensor<1, dim>
+  gradient(const Point<dim> & p,
+           const unsigned int component = 0) const override;
 };
 
 template <int dim>
 double
-MyFunction<dim>::value(const Point<dim> &p, const unsigned int) const
+SolutionQuadratic<dim>::value(const Point<dim> &p, const unsigned int) const
 {
-  return p[0];
+  return p[0] * p[0] + p[1] * p[1] - 1; // ball, radial solution
 }
+
+template <int dim>
+Tensor<1, dim>
+SolutionQuadratic<dim>::gradient(const Point<dim> &p, const unsigned int) const
+{
+  Tensor<1, dim> return_value;
+  return_value[0] = 2. * p[0];
+  return_value[1] = 2. * p[1];
+  return return_value;
+}
+
+
+template <int dim>
+void
+SolutionQuadratic<dim>::value_list(const std::vector<Point<dim>> &points,
+                                   std::vector<double> &          values,
+                                   const unsigned int /*component*/) const
+{
+  for (unsigned int i = 0; i < values.size(); ++i)
+    values[i] = this->value(points[i]);
+}
+
+
+
+template <int dim>
+class SolutionProduct : public Function<dim>
+{
+public:
+  SolutionProduct()
+    : Function<dim>()
+  {
+    Assert(dim == 2, ExcNotImplemented());
+  }
+
+  virtual double
+  value(const Point<dim> &p, const unsigned int component = 0) const override;
+
+  virtual void
+  value_list(const std::vector<Point<dim>> &points,
+             std::vector<double> &          values,
+             const unsigned int /*component*/) const override;
+
+  virtual Tensor<1, dim>
+  gradient(const Point<dim> & p,
+           const unsigned int component = 0) const override;
+};
+
+template <int dim>
+double
+SolutionProduct<dim>::value(const Point<dim> &p, const unsigned int) const
+{
+  return p[0] * (p[0] - 1.) * p[1] * (p[1] - 1.); // square
+}
+
+template <int dim>
+Tensor<1, dim>
+SolutionProduct<dim>::gradient(const Point<dim> &p, const unsigned int) const
+{
+  Tensor<1, dim> return_value;
+  return_value[0] = (-1 + 2 * p[0]) * (-1 + p[1]) * p[1];
+  return_value[1] = (-1 + 2 * p[1]) * (-1 + p[0]) * p[0];
+  return return_value;
+}
+
+
+template <int dim>
+void
+SolutionProduct<dim>::value_list(const std::vector<Point<dim>> &points,
+                                 std::vector<double> &          values,
+                                 const unsigned int /*component*/) const
+{
+  for (unsigned int i = 0; i < values.size(); ++i)
+    values[i] = this->value(points[i]);
+}
+
+
+
+template <int dim>
+class SolutionProductSine : public Function<dim>
+{
+public:
+  SolutionProductSine()
+    : Function<dim>()
+  {
+    Assert(dim == 2, ExcNotImplemented());
+  }
+
+  virtual double
+  value(const Point<dim> &p, const unsigned int component = 0) const override;
+
+  virtual void
+  value_list(const std::vector<Point<dim>> &points,
+             std::vector<double> &          values,
+             const unsigned int /*component*/) const override;
+
+  virtual Tensor<1, dim>
+  gradient(const Point<dim> & p,
+           const unsigned int component = 0) const override;
+};
+
+template <int dim>
+double
+SolutionProductSine<dim>::value(const Point<dim> &p, const unsigned int) const
+{
+  return std::sin(numbers::PI * p[0]) * std::sin(numbers::PI * p[1]);
+}
+
+template <int dim>
+Tensor<1, dim>
+SolutionProductSine<dim>::gradient(const Point<dim> &p,
+                                   const unsigned int) const
+{
+  Tensor<1, dim> return_value;
+  return_value[0] =
+    numbers::PI * std::cos(numbers::PI * p[0]) * std::sin(numbers::PI * p[1]);
+  return_value[1] =
+    numbers::PI * std::cos(numbers::PI * p[1]) * std::sin(numbers::PI * p[0]);
+  return return_value;
+}
+
+
+template <int dim>
+void
+SolutionProductSine<dim>::value_list(const std::vector<Point<dim>> &points,
+                                     std::vector<double> &          values,
+                                     const unsigned int /*component*/) const
+{
+  for (unsigned int i = 0; i < values.size(); ++i)
+    values[i] = this->value(points[i]);
+}
+
 
 
 template <int dim>
@@ -147,30 +357,31 @@ private:
   MappingQ<dim>                              mapping;
   FE_DGQ<dim>                                dg_fe;
   std::unique_ptr<AgglomerationHandler<dim>> ah;
-  // no hanging node in DG discretization, we define an AffineConstraints object
-  // so we can use the distribute_local_to_global() directly.
-  AffineConstraints<double>              constraints;
-  SparsityPattern                        sparsity;
-  SparseMatrix<double>                   system_matrix;
-  Vector<double>                         solution;
-  Vector<double>                         system_rhs;
-  std::unique_ptr<GridTools::Cache<dim>> cached_tria;
-  std::unique_ptr<const Function<dim>>   rhs_function;
+  AffineConstraints<double>                  constraints;
+  SparsityPattern                            sparsity;
+  SparseMatrix<double>                       system_matrix;
+  Vector<double>                             solution;
+  Vector<double>                             system_rhs;
+  std::unique_ptr<GridTools::Cache<dim>>     cached_tria;
+  std::unique_ptr<const Function<dim>>       rhs_function;
+  std::unique_ptr<const Function<dim>>       analytical_solution;
 
 public:
   Poisson(const GridType &       grid_type        = GridType::grid_generator,
           const PartitionerType &partitioner_type = PartitionerType::rtree,
+          const SolutionType &   solution_type    = SolutionType::linear,
           const unsigned int                      = 0,
           const unsigned int                      = 0,
           const unsigned int fe_degree            = 1);
   void
   run();
 
-  double          penalty_constant = 10.;
   GridType        grid_type;
   PartitionerType partitioner_type;
+  SolutionType    solution_type;
   unsigned int    extraction_level;
   unsigned int    n_subdomains;
+  double penalty_constant = 60.; // 10*(p+1)(p+d) for p = 1 and d = 2 => 60
 };
 
 
@@ -178,6 +389,7 @@ public:
 template <int dim>
 Poisson<dim>::Poisson(const GridType &       grid_type,
                       const PartitionerType &partitioner_type,
+                      const SolutionType &   solution_type,
                       const unsigned int     extraction_level,
                       const unsigned int     n_subdomains,
                       const unsigned int     fe_degree)
@@ -185,9 +397,23 @@ Poisson<dim>::Poisson(const GridType &       grid_type,
   , dg_fe(fe_degree)
   , grid_type(grid_type)
   , partitioner_type(partitioner_type)
+  , solution_type(solution_type)
   , extraction_level(extraction_level)
   , n_subdomains(n_subdomains)
-{}
+  , penalty_constant(10. * (fe_degree + 1) * (fe_degree + dim))
+{
+  // Initialize manufactured solution
+  if (solution_type == SolutionType::linear)
+    analytical_solution = std::make_unique<SolutionLinear<dim>>();
+  else if (solution_type == SolutionType::quadratic)
+    analytical_solution = std::make_unique<SolutionQuadratic<dim>>();
+  else if (solution_type == SolutionType::product)
+    analytical_solution = std::make_unique<SolutionProduct<dim>>();
+  else if (solution_type == SolutionType::product_sine)
+    analytical_solution = std::make_unique<SolutionProductSine<dim>>();
+
+  rhs_function = std::make_unique<const RightHandSide<dim>>(solution_type);
+}
 
 template <int dim>
 void
@@ -196,37 +422,48 @@ Poisson<dim>::make_grid()
   GridIn<dim> grid_in;
   if (grid_type == GridType::unstructured)
     {
-      grid_in.attach_triangulation(tria);
-      std::ifstream gmsh_file("../../meshes/t2.msh"); // rectangular domain
-      grid_in.read_msh(gmsh_file);
-      tria.refine_global(4);
+      if constexpr (dim == 2)
+        {
+          grid_in.attach_triangulation(tria);
+          std::ifstream gmsh_file(
+            "../../meshes/t3.msh"); // unstructured square [0,1]^2
+          grid_in.read_msh(gmsh_file);
+          tria.refine_global(5); // 4
+        }
+      else if constexpr (dim == 3)
+        {
+          // {
+          //   grid_in.attach_triangulation(tria);
+          //   std::ifstream gmsh_file("../../meshes/piston_3.inp"); //
+          // piston
+          //   mesh grid_in.read_abaqus(gmsh_file); tria.refine_global(1);
+          // }
+          grid_in.attach_triangulation(tria);
+          std::ifstream mesh_file(
+            "../../meshes/csf_brain_filled_centered_UCD.inp"); // piston mesh
+          grid_in.read_ucd(mesh_file);
+          tria.refine_global(1);
+        }
     }
   else
     {
-      GridGenerator::hyper_ball(tria);
-      tria.refine_global(6); // 6
-      // GridGenerator::hyper_cube(tria, 0., 1.);
-      // tria.refine_global(5); //
-      // {
-      //   std::vector<unsigned int> holes(dim);
-      //   holes[0] = 3;
-      //   holes[1] = 2;
-      //   GridGenerator::cheese(tria, holes); // 3 holes
-      //   tria.refine_global(3);
-      // }
-      // GridGenerator::hyper_rectangle(tria, {0., 0.}, {1.25, 1.});
-      // tria.refine_global(7); //
+      GridGenerator::hyper_cube(tria, 0., 1.);
+      tria.refine_global(9);
     }
   std::cout << "Size of tria: " << tria.n_active_cells() << std::endl;
-  cached_tria  = std::make_unique<GridTools::Cache<dim>>(tria, mapping);
-  rhs_function = std::make_unique<const RightHandSide<dim>>();
+  cached_tria = std::make_unique<GridTools::Cache<dim>>(tria, mapping);
 
   if (partitioner_type == PartitionerType::metis)
     {
       // Partition the triangulation with graph partitioner.
+      auto start = std::chrono::system_clock::now();
       GridTools::partition_triangulation(n_subdomains,
                                          tria,
                                          SparsityTools::Partitioner::metis);
+      std::chrono::duration<double> wctduration =
+        (std::chrono::system_clock::now() - start);
+      std::cout << "METIS built in " << wctduration.count()
+                << " seconds [Wall Clock]" << std::endl;
       std::cout << "N subdomains: " << n_subdomains << std::endl;
     }
   else if (partitioner_type == PartitionerType::rtree)
@@ -234,8 +471,8 @@ Poisson<dim>::make_grid()
       // Partition with Rtree
 
       namespace bgi = boost::geometry::index;
-      // const unsigned int            extraction_level  = 4; // 3 okay too
-      static constexpr unsigned int max_elem_per_node = 8; // 2
+      static constexpr unsigned int max_elem_per_node =
+        constexpr_pow(2, dim); // 2^dim
       std::vector<std::pair<BoundingBox<dim>,
                             typename Triangulation<dim>::active_cell_iterator>>
                    boxes(tria.n_active_cells());
@@ -243,35 +480,21 @@ Poisson<dim>::make_grid()
       for (const auto &cell : tria.active_cell_iterators())
         boxes[i++] = std::make_pair(mapping.get_bounding_box(cell), cell);
 
-
-      // const auto tree = pack_rtree<bgi::rstar<max_elem_per_node>>(boxes);
-      const auto tree = pack_rtree<bgi::rstar<max_elem_per_node>>(boxes);
-
-      boost::geometry::index::detail::rtree::utilities::print(std::cout, tree);
-
-      Assert(n_levels(tree) >= 2,
-             ExcMessage("At least two levels are needed."));
+      auto       start = std::chrono::system_clock::now();
+      const auto tree  = pack_rtree<bgi::rstar<max_elem_per_node>>(boxes);
       std::cout << "Total number of available levels: " << n_levels(tree)
                 << std::endl;
-      // Rough description of the tria with a tree of BBoxes
-      const auto vec_boxes = extract_rtree_level(tree, extraction_level);
-      std::vector<BoundingBox<dim>> bboxes;
-      for (const auto &box : vec_boxes)
-        bboxes.push_back(box);
 
-      std::vector<
-        std::pair<BoundingBox<dim>,
-                  typename Triangulation<dim, dim>::active_cell_iterator>>
-        cells;
-      std::vector<typename Triangulation<dim, dim>::active_cell_iterator>
-                                            cells_to_agglomerate;
-      std::vector<types::global_cell_index> idxs_to_agglomerate;
-      const auto &                          csr_and_agglomerates =
+#ifdef AGGLO_DEBUG
+      // boost::geometry::index::detail::rtree::utilities::print(std::cout,
+      // tree);
+      Assert(n_levels(tree) >= 2,
+             ExcMessage("At least two levels are needed."));
+#endif
+
+      const auto &csr_and_agglomerates =
         PolyUtils::extract_children_of_level(tree, extraction_level);
-
-
-      const auto &agglomerates   = csr_and_agglomerates.second; // vec<vec<>>
-      [[maybe_unused]] auto csrs = csr_and_agglomerates.first;
+      const auto &agglomerates = csr_and_agglomerates.second; // vec<vec<>>
 
       std::size_t agglo_index = 0;
       for (std::size_t i = 0; i < agglomerates.size(); ++i)
@@ -286,72 +509,129 @@ Poisson<dim>::make_grid()
           ++agglo_index; // one agglomerate has been processed, increment
                          // counter
         }
+      std::chrono::duration<double> wctduration =
+        (std::chrono::system_clock::now() - start);
+      std::cout << "R-tree agglomerates built in " << wctduration.count()
+                << " seconds [Wall Clock]" << std::endl;
       n_subdomains = agglo_index;
 
       std::cout << "N subdomains = " << n_subdomains << std::endl;
+
+
+
+      // Check number of agglomerates
+      if constexpr (dim == 2)
+        {
+#ifdef AGGLO_DEBUG
+          for (unsigned int j = 0; j < n_subdomains; ++j)
+            std::cout << GridTools::count_cells_with_subdomain_association(tria,
+                                                                           j)
+                      << " cells have subdomain " + std::to_string(j)
+                      << std::endl;
+#endif
+          GridOut           grid_out_svg;
+          GridOutFlags::Svg svg_flags;
+          svg_flags.background     = GridOutFlags::Svg::Background::transparent;
+          svg_flags.line_thickness = 1;
+          svg_flags.boundary_line_thickness = 1;
+          svg_flags.label_subdomain_id      = true;
+          svg_flags.coloring =
+            GridOutFlags::Svg::subdomain_id; // GridOutFlags::Svg::none
+          grid_out_svg.set_flags(svg_flags);
+          std::string   grid_type = "agglomerated_grid";
+          std::ofstream out(grid_type + ".svg");
+          grid_out_svg.write_svg(tria, out);
+        }
+    }
+  else if (partitioner_type == PartitionerType::no_partition)
+    {}
+  else
+    {
+      Assert(false, ExcMessage("Wrong partitioning."));
     }
 
 
   constraints.close();
-
-
-  // Check number of agglomerates
-  {
-#ifdef AGGLO_DEBUG
-    for (unsigned int j = 0; j < n_subdomains; ++j)
-      std::cout << GridTools::count_cells_with_subdomain_association(tria, j)
-                << " cells have subdomain " + std::to_string(j) << std::endl;
-#endif
-    GridOut           grid_out_svg;
-    GridOutFlags::Svg svg_flags;
-    svg_flags.background     = GridOutFlags::Svg::Background::transparent;
-    svg_flags.line_thickness = 1;
-    svg_flags.boundary_line_thickness = 1;
-    svg_flags.label_subdomain_id      = true;
-    svg_flags.coloring =
-      GridOutFlags::Svg::subdomain_id; // GridOutFlags::Svg::none
-    grid_out_svg.set_flags(svg_flags);
-    std::string   grid_type = "agglomerated_grid";
-    std::ofstream out(grid_type + ".svg");
-    grid_out_svg.write_svg(tria, out);
-  }
 }
-
-
 
 template <int dim>
 void
 Poisson<dim>::setup_agglomeration()
-
 {
   ah = std::make_unique<AgglomerationHandler<dim>>(*cached_tria);
 
-  std::vector<std::vector<typename Triangulation<dim>::active_cell_iterator>>
-    cells_per_subdomain(n_subdomains);
-  for (const auto &cell : tria.active_cell_iterators())
-    cells_per_subdomain[cell->subdomain_id()].push_back(cell);
-
-  // For every subdomain, agglomerate elements together
-  for (std::size_t i = 0; i < cells_per_subdomain.size(); ++i)
+  if (partitioner_type != PartitionerType::no_partition)
     {
-      // std::cout << "Subdomain " << i << std::endl;
-      std::vector<types::global_cell_index> idxs_to_be_agglomerated;
-      std::vector<typename Triangulation<dim>::active_cell_iterator>
-        cells_to_be_agglomerated;
-      // Get all the elements associated with the present subdomain_id
-      for (const auto element : cells_per_subdomain[i])
+      std::vector<
+        std::vector<typename Triangulation<dim>::active_cell_iterator>>
+        cells_per_subdomain(n_subdomains);
+      for (const auto &cell : tria.active_cell_iterators())
+        cells_per_subdomain[cell->subdomain_id()].push_back(cell);
+
+      // For every subdomain, agglomerate elements together
+      for (std::size_t i = 0; i < cells_per_subdomain.size(); ++i)
         {
-          idxs_to_be_agglomerated.push_back(element->active_cell_index());
+          // std::cout << "Subdomain " << i << std::endl;
+          std::vector<types::global_cell_index> idxs_to_be_agglomerated;
+          std::vector<typename Triangulation<dim>::active_cell_iterator>
+            cells_to_be_agglomerated;
+          // Get all the elements associated with the present subdomain_id
+          for (const auto element : cells_per_subdomain[i])
+            {
+              idxs_to_be_agglomerated.push_back(element->active_cell_index());
+            }
+          Tests::collect_cells_for_agglomeration(tria,
+                                                 idxs_to_be_agglomerated,
+                                                 cells_to_be_agglomerated);
+          // Agglomerate the cells just stored
+          ah->agglomerate_cells(cells_to_be_agglomerated);
         }
-      Tests::collect_cells_for_agglomeration(tria,
-                                             idxs_to_be_agglomerated,
-                                             cells_to_be_agglomerated);
-      // Agglomerate the cells just stored
-      ah->agglomerate_cells(cells_to_be_agglomerated);
+    }
+  else
+    {
+      // No partitioning means that each cell is a master cell
+      for (const auto &cell : tria.active_cell_iterators())
+        {
+          ah->agglomerate_cells({cell});
+        }
     }
 
   ah->distribute_agglomerated_dofs(dg_fe);
   ah->create_agglomeration_sparsity_pattern(sparsity);
+
+  {
+    std::string partitioner;
+    if (partitioner_type == PartitionerType::metis)
+      partitioner = "metis";
+    else if (partitioner_type == PartitionerType::rtree)
+      partitioner = "rtree";
+    else
+      partitioner = "no_partitioning";
+
+    const std::string filename =
+      "grid" + partitioner + "_" + std::to_string(n_subdomains) + ".vtu";
+    std::ofstream output(filename);
+
+    DataOut<dim> data_out;
+    data_out.attach_dof_handler(ah->agglo_dh);
+
+    Vector<float> agglomerated(tria.n_active_cells());
+    Vector<float> agglo_idx(tria.n_active_cells());
+    for (const auto &cell : tria.active_cell_iterators())
+      {
+        agglomerated[cell->active_cell_index()] =
+          ah->get_relationships()[cell->active_cell_index()];
+        agglo_idx[cell->active_cell_index()] = cell->subdomain_id();
+      }
+    data_out.add_data_vector(agglomerated,
+                             "agglo_relationships",
+                             DataOut<dim>::type_cell_data);
+    data_out.add_data_vector(agglo_idx,
+                             "agglomerated_idx",
+                             DataOut<dim>::type_cell_data);
+    data_out.build_patches(mapping);
+    data_out.write_vtu(output);
+  }
 
 
 
@@ -374,7 +654,8 @@ Poisson<dim>::setup_agglomeration()
                std::cout << "Face idx: " << local_face_idx << std::endl;
                if (neigh.state() == IteratorState::valid)
                  {
-                   std::cout << "Neighbor idx: " << neigh->active_cell_index()
+                   std::cout << "Neighbor idx: " <<
+                   neigh->active_cell_index()
                              << std::endl;
                  }
 
@@ -421,15 +702,15 @@ Poisson<dim>::assemble_system()
 
   std::vector<types::global_dof_index> local_dof_indices(dofs_per_cell);
 
-  Solution<dim> analytical_solution;
-
   for (const auto &cell : ah->agglomeration_cell_iterators())
     {
-      // std::cout << "Cell with idx: " << cell->active_cell_index() <<
-      // std::endl;
+#ifdef AGGLO_DEBUG
+      std::cout << "Cell with idx: " << cell->active_cell_index() << std::endl;
+#endif
       cell_matrix              = 0;
       cell_rhs                 = 0;
       const auto &agglo_values = ah->reinit(cell);
+      cell->get_dof_indices(local_dof_indices);
 
       const auto &        q_points  = agglo_values.get_quadrature_points();
       const unsigned int  n_qpoints = q_points.size();
@@ -451,29 +732,22 @@ Poisson<dim>::assemble_system()
             }
         }
 
-      cell->get_dof_indices(local_dof_indices);
-      constraints.distribute_local_to_global(
-        cell_matrix, cell_rhs, local_dof_indices, system_matrix, system_rhs);
 
       // Face terms
       const unsigned int n_faces = ah->n_faces(cell);
       AssertThrow(n_faces >= 4,
                   ExcMessage(
                     "Invalid element: at least 4 faces are required."));
-      // std::cout << "Number of (generalized) faces: " << n_faces <<
-      // std::endl;
 
 
-      // const double agglo_measure =
-      // bboxes[cell->active_cell_index()].volume();
+#ifdef AGGLO_DEBUG
+      std::cout << "Face loop for " << cell->active_cell_index() << std::endl;
+      std::cout << "n faces = " << n_faces << std::endl;
+#endif
+
+      auto polygon_boundary_vertices = ah->polytope_boundary(cell);
       for (unsigned int f = 0; f < n_faces; ++f)
         {
-          // double       hf                   = cell->face(0)->measure();
-          // const double current_element_size = std::fabs(ah->volume(cell));
-          const double current_element_diameter = std::fabs(ah->diameter(cell));
-          const double penalty =
-            penalty_constant * (1. / current_element_diameter);
-
           if (ah->at_boundary(cell, f))
             {
               // std::cout << "at boundary!" << std::endl;
@@ -482,20 +756,24 @@ Poisson<dim>::assemble_system()
               const unsigned int dofs_per_cell = fe_face.dofs_per_cell;
               // std::cout << "With dofs_per_cell =" << fe_face.dofs_per_cell
               //           << std::endl;
-              std::vector<types::global_dof_index> local_dof_indices_bdary_cell(
-                dofs_per_cell);
 
               const auto &face_q_points = fe_face.get_quadrature_points();
               std::vector<double> analytical_solution_values(
                 face_q_points.size());
-              analytical_solution.value_list(face_q_points,
-                                             analytical_solution_values,
-                                             1);
+              analytical_solution->value_list(face_q_points,
+                                              analytical_solution_values,
+                                              1);
 
               // Get normal vectors seen from each agglomeration.
               const auto &normals = fe_face.get_normal_vectors();
-              cell_matrix         = 0.;
-              cell_rhs            = 0.;
+
+              const double penalty =
+                penalty_constant / PolyUtils::compute_h_orthogonal(
+                                     f, polygon_boundary_vertices, normals[0]);
+
+              // const double penalty =
+              //   penalty_constant / std::fabs(ah->diameter(cell));
+
               for (unsigned int q_index : fe_face.quadrature_point_indices())
                 {
                   for (unsigned int i = 0; i < dofs_per_cell; ++i)
@@ -520,16 +798,6 @@ Poisson<dim>::assemble_system()
                         fe_face.JxW(q_index);
                     }
                 }
-
-              // distribute DoFs
-              cell->get_dof_indices(local_dof_indices_bdary_cell);
-              constraints.distribute_local_to_global(cell_matrix,
-                                                     cell_rhs,
-                                                     local_dof_indices,
-                                                     system_matrix,
-                                                     system_rhs);
-              // constraints.distribute_local_to_global(
-              //   cell_matrix, local_dof_indices_bdary_cell, system_matrix);
             }
           else
             {
@@ -538,19 +806,7 @@ Poisson<dim>::assemble_system()
               std::cout << "Neighbor is " << neigh_cell->active_cell_index()
                         << std::endl;
 #endif
-              // const double neigh_element_size =
-              //   std::fabs(ah->volume(neigh_cell));
-              const double neigh_element_diameter =
-                std::fabs(ah->diameter(neigh_cell));
 
-              // const double penalty =
-              //   penalty_constant *
-              //   std::max(hf / current_element_size,
-              //            hf / neigh_element_size); // Cinv still missing
-              const double penalty =
-                penalty_constant *
-                std::max(1. / current_element_diameter,
-                         1. / neigh_element_diameter); // Cinv still missing
 
               // This is necessary to loop over internal faces only once.
               if (cell->active_cell_index() < neigh_cell->active_cell_index())
@@ -584,6 +840,22 @@ Poisson<dim>::assemble_system()
                               << std::endl;
                     for (const auto &q : fe_faces1.get_quadrature_points())
                       std::cout << q << std::endl;
+
+
+                    std::cout << "Check: " << std::endl;
+                    const auto &points0 = fe_faces0.get_quadrature_points();
+                    const auto &points1 = fe_faces1.get_quadrature_points();
+                    for (size_t i = 0;
+                         i < fe_faces1.get_quadrature_points().size();
+                         ++i)
+                      {
+                        double d = (points0[i] - points1[i]).norm();
+                        Assert(
+                          d < 1e-15,
+                          ExcMessage(
+                            "Face qpoints at the interface do not match!"));
+                        std::cout << d << std::endl;
+                      }
                   }
 #endif
 
@@ -596,6 +868,15 @@ Poisson<dim>::assemble_system()
                   M22 = 0.;
 
                   const auto &normals = fe_faces0.get_normal_vectors();
+
+                  const double penalty =
+                    penalty_constant /
+                    PolyUtils::compute_h_orthogonal(f,
+                                                    polygon_boundary_vertices,
+                                                    normals[0]);
+                  // const double penalty =
+                  //   penalty_constant / std::fabs(ah->diameter(cell));
+
                   // M11
                   for (unsigned int q_index :
                        fe_faces0.quadrature_point_indices())
@@ -680,9 +961,20 @@ Poisson<dim>::assemble_system()
                 } // Loop only once trough internal faces
             }
         } // Loop over faces of current cell
-    }     // Loop over cells
+
+      // distribute DoFs
+      constraints.distribute_local_to_global(
+        cell_matrix, cell_rhs, local_dof_indices, system_matrix, system_rhs);
+    } // Loop over cells
 }
 
+
+
+void
+output_double_number(double input, const std::string &text)
+{
+  std::cout << text << input << std::endl;
+}
 
 template <int dim>
 void
@@ -721,8 +1013,13 @@ Poisson<dim>::output_results()
   }
 
   {
-    const std::string &partitioner =
-      (partitioner_type == PartitionerType::metis) ? "metis" : "rtree";
+    std::string partitioner;
+    if (partitioner_type == PartitionerType::metis)
+      partitioner = "metis";
+    else if (partitioner_type == PartitionerType::rtree)
+      partitioner = "rtree";
+    else
+      partitioner = "no_partitioning";
 
     const std::string filename = "interpolated_solution_" + partitioner + "_" +
                                  std::to_string(n_subdomains) + ".vtu";
@@ -751,27 +1048,54 @@ Poisson<dim>::output_results()
     data_out.add_data_vector(agglo_idx,
                              "agglo_idx",
                              DataOut<dim>::type_cell_data);
-    data_out.build_patches(mapping);
-    data_out.write_vtu(output);
 
 
-
-    Vector<float> difference_per_cell(tria.n_active_cells());
-    Solution<dim> analytical_solution;
-    VectorTools::integrate_difference(mapping,
-                                      ah->output_dh,
-                                      interpolated_solution,
-                                      analytical_solution,
-                                      difference_per_cell,
-                                      QGauss<dim>(dg_fe.degree),
-                                      VectorTools::L2_norm);
-
-    const double L2_error =
-      VectorTools::compute_global_error(tria,
+    {
+      // L2 error
+      Vector<float> difference_per_cell(tria.n_active_cells());
+      VectorTools::integrate_difference(mapping,
+                                        ah->output_dh,
+                                        interpolated_solution,
+                                        *analytical_solution,
                                         difference_per_cell,
+                                        QGauss<dim>(dg_fe.degree),
                                         VectorTools::L2_norm);
 
-    std::cout << "L2 error:" << L2_error << std::endl;
+      // Plot the error per cell
+
+      data_out.add_data_vector(difference_per_cell,
+                               "error_per_cell",
+                               DataOut<dim>::type_cell_data);
+
+      const double L2_error =
+        VectorTools::compute_global_error(tria,
+                                          difference_per_cell,
+                                          VectorTools::L2_norm);
+
+      std::cout << "L2 error:" << L2_error << std::endl;
+    }
+
+    {
+      // H1 seminorm
+      Vector<float> difference_per_cell(tria.n_active_cells());
+      VectorTools::integrate_difference(mapping,
+                                        ah->output_dh,
+                                        interpolated_solution,
+                                        *analytical_solution,
+                                        difference_per_cell,
+                                        QGauss<dim>(dg_fe.degree + 1),
+                                        VectorTools::H1_seminorm);
+
+      const double H1_seminorm =
+        VectorTools::compute_global_error(tria,
+                                          difference_per_cell,
+                                          VectorTools::H1_seminorm);
+
+      std::cout << "H1 seminorm:" << H1_seminorm << std::endl;
+    }
+
+    data_out.build_patches(mapping);
+    data_out.write_vtu(output);
   }
 }
 
@@ -786,39 +1110,77 @@ Poisson<dim>::run()
   output_results();
 }
 
+
+
 int
 main()
 {
-  {
-    Poisson<2> poisson_problem{GridType::grid_generator,
-                               PartitionerType::rtree,
-                               3}; // 2,3
-    poisson_problem.run();
-  }
-  {
-    Poisson<2> poisson_problem{GridType::grid_generator,
-                               PartitionerType::metis,
-                               0,
-                               320}; // 16, 64
-    poisson_problem.run();
-  }
-  // for (const unsigned int extraction_level : {2, 3, 4, 5})
+  std::cout << "Benchmarking with Rtree:" << std::endl;
+
+  const unsigned int fe_degree = 1;
+  // for (const unsigned int extraction_level : {2, 3})
+  // for (const unsigned int extraction_level : {2, 3, 4, 5, 6, 7})
   //   {
+  //     std::cout << "Level " << extraction_level << std::endl;
   //     Poisson<2> poisson_problem{GridType::unstructured,
   //                                PartitionerType::rtree,
-  //                                extraction_level};
-  //     poisson_problem.run();
-  //   }
-  // for (const unsigned int n_subdomains : {6, 22, 85, 340})
-  //   {
-  //     Poisson<2> poisson_problem{GridType::unstructured,
-  //                                PartitionerType::metis,
+  //                                SolutionType::product,
+  //                                extraction_level,
   //                                0,
-  //                                n_subdomains};
+  //                                fe_degree};
   //     poisson_problem.run();
   //   }
 
+  // Testing p-convergence
+  std::cout << "Testing p-convergence" << std::endl;
+  {
+    for (unsigned int fe_degree : {1, 2, 3, 4, 5})
+      {
+        std::cout << "Fe degree: " << fe_degree << std::endl;
+        Poisson<2> poisson_problem{GridType::unstructured,
+                                   PartitionerType::rtree,
+                                   SolutionType::product_sine,
+                                   5 /*extaction_level*/,
+                                   0,
+                                   fe_degree};
+        poisson_problem.run();
+      }
+  }
 
 
+  std::cout << std::endl;
   return 0;
+
+  // std::cout << "Benchmarking with METIS:" << std::endl;
+  // for (const unsigned int target_partitions :
+  //      {16, 64, 256, 1024, 4096}) // ball
+  //                                 //  {6, 23, 91, 364, 1456, 5824}) //
+  //                                 //  unstructured {16, 64, 256, 1024,
+  //                                 //  4096})
+  //                                 //  // structured square
+  //   {
+  //     Poisson<2> poisson_problem{GridType::grid_generator,
+  //                                PartitionerType::metis,
+  //                                SolutionType::product,
+  //                                0,
+  //                                target_partitions,
+  //                                fe_degree};
+  //     poisson_problem.run();
+  //   }
+
+  // Testing p-convergence
+  // std::cout << "Testing p-convergence" << std::endl;
+  // {
+  //   for (unsigned int fe_degree : {1, 2, 3, 4, 5})
+  //     {
+  //       std::cout << "Fe degree: " << fe_degree << std::endl;
+  //       Poisson<2> poisson_problem{GridType::grid_generator,
+  //                                  PartitionerType::metis,
+  //                                  SolutionType::product_sine,
+  //                                  0 /*extaction_level*/,
+  //                                  1024,
+  //                                  fe_degree};
+  //       poisson_problem.run();
+  //     }
+  // }
 }
