@@ -137,13 +137,12 @@ AgglomerationHandler<dim, spacedim>::agglomerated_quadrature(
   // Map back each point in real space by using the map associated to the
   // bounding box.
   std::vector<Point<dim>> unit_points(vec_pts.size());
+  const auto &            bbox =
+    bboxes[master2polygon.at(master_cell->active_cell_index())];
   unit_points.reserve(vec_pts.size());
 
   for (unsigned int i = 0; i < vec_pts.size(); i++)
-    unit_points[i] =
-      bboxes[master2polygon.at(master_cell->active_cell_index())].real_to_unit(
-        vec_pts[i]);
-
+    unit_points[i] = bbox.real_to_unit(vec_pts[i]);
 
   return Quadrature<dim>(unit_points, vec_JxWs);
 }
