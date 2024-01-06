@@ -327,10 +327,7 @@ AgglomerationHandler<dim, spacedim>::reinit_master(
 
       agglo_isv_ptr =
         std::make_unique<NonMatching::FEImmersedSurfaceValues<spacedim>>(
-          *euler_mapping,
-          *fe,
-          surface_quad,
-          agglomeration_face_flags);
+          *euler_mapping, *fe, surface_quad, agglomeration_face_flags);
 
       agglo_isv_ptr->reinit(cell);
 
@@ -693,27 +690,10 @@ AgglomerationHandler<dim, spacedim>::volume(
          ExcMessage("The present function cannot be called for slave cells."));
 
   if (is_master_cell(cell))
-    {
-      // Get the agglomerate
-      std::vector<typename Triangulation<dim, spacedim>::active_cell_iterator>
-        agglo_cells = get_slaves_of_idx(cell->active_cell_index());
-      // Push back master cell
-      agglo_cells.push_back(cell);
-
-      Quadrature<dim> quad =
-        agglomerated_quadrature(agglo_cells,
-                                QGauss<dim>{2 * fe->degree + 1},
-                                cell);
-
-      return std::accumulate(quad.get_weights().begin(),
-                             quad.get_weights().end(),
-                             0.);
-    }
+    return bboxes[cell->active_cell_index()].volume();
   else
-    {
-      // Standard deal.II way to get the measure of a cell.
-      return cell->measure();
-    }
+    // Standard deal.II way to get the measure of a cell.
+    return cell->measure();
 }
 
 

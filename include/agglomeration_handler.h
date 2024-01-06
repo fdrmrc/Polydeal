@@ -622,8 +622,9 @@ public:
 
   /**
    *
-   * Compute the volume of an agglomerate. This @p cell argument takes the
-   * deal.II cell that identifies an agglomerate. If it's a standard cell,
+   * Compute the volume of an agglomerate by computing the volume of the
+   * bounding box enclosing the agglomerate. This @p cell argument takes
+   * the deal.II cell that identifies an agglomerate. If it's a standard cell,
    * than the this function is equivalent to cell->volume(). An exception is
    * thrown is the given cell is a slave cell.
    */
