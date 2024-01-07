@@ -6,11 +6,10 @@
 
 #include <deal.II/numerics/data_out.h>
 
+#include <agglomeration_handler.h>
+
 #include <algorithm>
 
-#include "../tests.h"
-
-#include "../include/agglomeration_handler.h"
 
 template <int dim>
 class RightHandSide : public Function<dim>

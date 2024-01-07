@@ -15,7 +15,6 @@
 #include <algorithm>
 #include <chrono>
 
-#include "../tests.h"
 
 template <typename T>
 constexpr T

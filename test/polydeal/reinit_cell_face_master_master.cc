@@ -31,7 +31,8 @@
 
 #include <deal.II/grid/grid_generator.h>
 
-#include "../tests.h"
+#include <agglomeration_handler.h>
+#include <poly_utils.h>
 
 static MappingQ<2> mapping(1);
 
@@ -49,33 +50,33 @@ test_q_points_agglomerated_face(Triangulation<dim> &tria)
 
   std::vector<typename Triangulation<2>::active_cell_iterator>
     cells_to_be_agglomerated;
-  Tests::collect_cells_for_agglomeration(tria,
-                                         idxs_to_be_agglomerated,
-                                         cells_to_be_agglomerated);
+  PolyUtils::collect_cells_for_agglomeration(tria,
+                                             idxs_to_be_agglomerated,
+                                             cells_to_be_agglomerated);
 
   std::vector<types::global_cell_index> idxs_to_be_agglomerated2 = {15, 36, 37};
 
   std::vector<typename Triangulation<2>::active_cell_iterator>
     cells_to_be_agglomerated2;
-  Tests::collect_cells_for_agglomeration(tria,
-                                         idxs_to_be_agglomerated2,
-                                         cells_to_be_agglomerated2);
+  PolyUtils::collect_cells_for_agglomeration(tria,
+                                             idxs_to_be_agglomerated2,
+                                             cells_to_be_agglomerated2);
 
   std::vector<types::global_cell_index> idxs_to_be_agglomerated3 = {57, 60, 54};
 
   std::vector<typename Triangulation<2>::active_cell_iterator>
     cells_to_be_agglomerated3;
-  Tests::collect_cells_for_agglomeration(tria,
-                                         idxs_to_be_agglomerated3,
-                                         cells_to_be_agglomerated3);
+  PolyUtils::collect_cells_for_agglomeration(tria,
+                                             idxs_to_be_agglomerated3,
+                                             cells_to_be_agglomerated3);
 
   std::vector<types::global_cell_index> idxs_to_be_agglomerated4 = {25, 19, 22};
 
   std::vector<typename Triangulation<2>::active_cell_iterator>
     cells_to_be_agglomerated4;
-  Tests::collect_cells_for_agglomeration(tria,
-                                         idxs_to_be_agglomerated4,
-                                         cells_to_be_agglomerated4);
+  PolyUtils::collect_cells_for_agglomeration(tria,
+                                             idxs_to_be_agglomerated4,
+                                             cells_to_be_agglomerated4);
 
   // Agglomerate the cells just stored
   ah.agglomerate_cells(cells_to_be_agglomerated);
@@ -99,7 +100,7 @@ test_q_points_agglomerated_face(Triangulation<dim> &tria)
             {
               if (!ah.at_boundary(cell, f))
                 {
-                  const auto  &neigh_cell = ah.agglomerated_neighbor(cell, f);
+                  const auto & neigh_cell = ah.agglomerated_neighbor(cell, f);
                   unsigned int nofn =
                     ah.neighbor_of_agglomerated_neighbor(cell, f);
                   std::cout

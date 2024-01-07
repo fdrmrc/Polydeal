@@ -7,11 +7,10 @@
 #include <deal.II/numerics/data_out.h>
 #include <deal.II/numerics/vector_tools_integrate_difference.h>
 
+#include <agglomeration_handler.h>
+#include <poly_utils.h>
+
 #include <algorithm>
-
-#include "../tests.h"
-
-#include "../include/agglomeration_handler.h"
 
 template <int dim>
 class RightHandSide : public Function<dim>
@@ -141,9 +140,9 @@ Poisson<dim>::setup_agglomeration()
 
   std::vector<typename Triangulation<dim>::active_cell_iterator>
     cells_to_be_agglomerated;
-  Tests::collect_cells_for_agglomeration(tria,
-                                         idxs_to_be_agglomerated,
-                                         cells_to_be_agglomerated);
+  PolyUtils::collect_cells_for_agglomeration(tria,
+                                             idxs_to_be_agglomerated,
+                                             cells_to_be_agglomerated);
 
 
   std::vector<types::global_cell_index> idxs_to_be_agglomerated2 = {
@@ -151,49 +150,49 @@ Poisson<dim>::setup_agglomeration()
 
   std::vector<typename Triangulation<dim>::active_cell_iterator>
     cells_to_be_agglomerated2;
-  Tests::collect_cells_for_agglomeration(tria,
-                                         idxs_to_be_agglomerated2,
-                                         cells_to_be_agglomerated2);
+  PolyUtils::collect_cells_for_agglomeration(tria,
+                                             idxs_to_be_agglomerated2,
+                                             cells_to_be_agglomerated2);
 
 
   std::vector<types::global_cell_index> idxs_to_be_agglomerated3 = {1226, 1227};
   std::vector<typename Triangulation<dim>::active_cell_iterator>
     cells_to_be_agglomerated3;
-  Tests::collect_cells_for_agglomeration(tria,
-                                         idxs_to_be_agglomerated3,
-                                         cells_to_be_agglomerated3);
+  PolyUtils::collect_cells_for_agglomeration(tria,
+                                             idxs_to_be_agglomerated3,
+                                             cells_to_be_agglomerated3);
 
 
   std::vector<types::global_cell_index> idxs_to_be_agglomerated4 = {
     2279, 2278}; //{36,37}
   std::vector<typename Triangulation<dim>::active_cell_iterator>
     cells_to_be_agglomerated4;
-  Tests::collect_cells_for_agglomeration(tria,
-                                         idxs_to_be_agglomerated4,
-                                         cells_to_be_agglomerated4);
+  PolyUtils::collect_cells_for_agglomeration(tria,
+                                             idxs_to_be_agglomerated4,
+                                             cells_to_be_agglomerated4);
 
 
   std::vector<types::global_cell_index> idxs_to_be_agglomerated5 = {
     3760, 3761}; //{3772,3773}
   std::vector<typename Triangulation<dim>::active_cell_iterator>
     cells_to_be_agglomerated5;
-  Tests::collect_cells_for_agglomeration(tria,
-                                         idxs_to_be_agglomerated5,
-                                         cells_to_be_agglomerated5);
+  PolyUtils::collect_cells_for_agglomeration(tria,
+                                             idxs_to_be_agglomerated5,
+                                             cells_to_be_agglomerated5);
 
   std::vector<types::global_cell_index> idxs_to_be_agglomerated6 = {3648, 3306};
   std::vector<typename Triangulation<dim>::active_cell_iterator>
     cells_to_be_agglomerated6;
-  Tests::collect_cells_for_agglomeration(tria,
-                                         idxs_to_be_agglomerated6,
-                                         cells_to_be_agglomerated6);
+  PolyUtils::collect_cells_for_agglomeration(tria,
+                                             idxs_to_be_agglomerated6,
+                                             cells_to_be_agglomerated6);
 
   std::vector<types::global_cell_index> idxs_to_be_agglomerated7 = {3765, 3764};
   std::vector<typename Triangulation<dim>::active_cell_iterator>
     cells_to_be_agglomerated7;
-  Tests::collect_cells_for_agglomeration(tria,
-                                         idxs_to_be_agglomerated7,
-                                         cells_to_be_agglomerated7);
+  PolyUtils::collect_cells_for_agglomeration(tria,
+                                             idxs_to_be_agglomerated7,
+                                             cells_to_be_agglomerated7);
 
 
   // Agglomerate the cells just stored

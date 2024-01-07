@@ -19,7 +19,6 @@
 #include <algorithm>
 #include <chrono>
 
-#include "../tests.h"
 
 // This test checks that the solution u(x,y)= x+y-1 is computed exactly when
 // the polygonal mesh is made by polygons whose faces are not axis-aligned. The
@@ -327,7 +326,7 @@ Poisson<dim>::setup_agglomeration()
 
   std::vector<typename Triangulation<2>::active_cell_iterator>
     cells_to_be_agglomerated;
-  Tests::collect_cells_for_agglomeration(tria,
+  PolyUtils::collect_cells_for_agglomeration(tria,
                                          idxs_to_be_agglomerated,
                                          cells_to_be_agglomerated);
 
@@ -335,7 +334,7 @@ Poisson<dim>::setup_agglomeration()
 
   std::vector<typename Triangulation<2>::active_cell_iterator>
     cells_to_be_agglomerated2;
-  Tests::collect_cells_for_agglomeration(tria,
+  PolyUtils::collect_cells_for_agglomeration(tria,
                                          idxs_to_be_agglomerated2,
                                          cells_to_be_agglomerated2);
 
@@ -346,7 +345,7 @@ Poisson<dim>::setup_agglomeration()
 
   std::vector<typename Triangulation<2>::active_cell_iterator>
     cells_to_be_agglomerated3;
-  Tests::collect_cells_for_agglomeration(tria,
+  PolyUtils::collect_cells_for_agglomeration(tria,
                                          idxs_to_be_agglomerated3,
                                          cells_to_be_agglomerated3);
 
@@ -357,7 +356,7 @@ Poisson<dim>::setup_agglomeration()
 
   std::vector<typename Triangulation<2>::active_cell_iterator>
     cells_to_be_agglomerated4;
-  Tests::collect_cells_for_agglomeration(tria,
+  PolyUtils::collect_cells_for_agglomeration(tria,
                                          idxs_to_be_agglomerated4,
                                          cells_to_be_agglomerated4);
 

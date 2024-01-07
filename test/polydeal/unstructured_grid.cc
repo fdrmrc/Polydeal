@@ -21,7 +21,8 @@
 #include <deal.II/grid/grid_in.h>
 #include <deal.II/grid/grid_out.h>
 
-#include "../tests.h"
+#include <agglomeration_handler.h>
+#include <poly_utils.h>
 
 template <int dim>
 void
@@ -37,9 +38,9 @@ test_internal_grid(Triangulation<dim> &tria)
 
   std::vector<typename Triangulation<2>::active_cell_iterator>
     cells_to_be_agglomerated;
-  Tests::collect_cells_for_agglomeration(tria,
-                                         idxs_to_be_agglomerated,
-                                         cells_to_be_agglomerated);
+  PolyUtils::collect_cells_for_agglomeration(tria,
+                                             idxs_to_be_agglomerated,
+                                             cells_to_be_agglomerated);
   // For debugging purposes only
   // double sum = 0.;
   // for (const auto &cell : tria.active_cell_iterators())
@@ -110,9 +111,9 @@ test_external_grid(Triangulation<2> &tria)
 
   std::vector<typename Triangulation<2>::active_cell_iterator>
     cells_to_be_agglomerated;
-  Tests::collect_cells_for_agglomeration(tria,
-                                         idxs_to_be_agglomerated,
-                                         cells_to_be_agglomerated);
+  PolyUtils::collect_cells_for_agglomeration(tria,
+                                             idxs_to_be_agglomerated,
+                                             cells_to_be_agglomerated);
 
   // Agglomerate the cells just stored
   ah.agglomerate_cells(cells_to_be_agglomerated);

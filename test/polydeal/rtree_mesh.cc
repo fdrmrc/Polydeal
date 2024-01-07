@@ -16,7 +16,6 @@
 
 #include <algorithm>
 
-#include "../tests.h"
 enum class GridTypes
 {
   grid_generator,
