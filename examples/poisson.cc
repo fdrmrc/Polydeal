@@ -570,22 +570,7 @@ Poisson<dim>::setup_agglomeration()
 
       // For every subdomain, agglomerate elements together
       for (std::size_t i = 0; i < cells_per_subdomain.size(); ++i)
-        {
-          // std::cout << "Subdomain " << i << std::endl;
-          std::vector<types::global_cell_index> idxs_to_be_agglomerated;
-          std::vector<typename Triangulation<dim>::active_cell_iterator>
-            cells_to_be_agglomerated;
-          // Get all the elements associated with the present subdomain_id
-          for (const auto element : cells_per_subdomain[i])
-            {
-              idxs_to_be_agglomerated.push_back(element->active_cell_index());
-            }
-          Tests::collect_cells_for_agglomeration(tria,
-                                                 idxs_to_be_agglomerated,
-                                                 cells_to_be_agglomerated);
-          // Agglomerate the cells just stored
-          ah->agglomerate_cells(cells_to_be_agglomerated);
-        }
+        ah->agglomerate_cells(cells_per_subdomain[i]);
     }
   else
     {

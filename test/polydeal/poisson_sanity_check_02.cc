@@ -136,7 +136,7 @@ LaplaceOperator<dim>::setup_agglomeration()
 
   std::vector<typename Triangulation<2>::active_cell_iterator>
     cells_to_be_agglomerated;
-  Tests::collect_cells_for_agglomeration(tria,
+  PolyUtils::collect_cells_for_agglomeration(tria,
                                          idxs_to_be_agglomerated,
                                          cells_to_be_agglomerated);
   ah->agglomerate_cells(cells_to_be_agglomerated);
@@ -145,7 +145,7 @@ LaplaceOperator<dim>::setup_agglomeration()
 
   std::vector<typename Triangulation<2>::active_cell_iterator>
     cells_to_be_agglomerated2;
-  Tests::collect_cells_for_agglomeration(tria,
+  PolyUtils::collect_cells_for_agglomeration(tria,
                                          idxs_to_be_agglomerated2,
                                          cells_to_be_agglomerated2);
   ah->agglomerate_cells(cells_to_be_agglomerated2);
