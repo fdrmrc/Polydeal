@@ -24,7 +24,7 @@
 */
 var NAVTREE =
 [
-  [ "Template Deal.II Application", "index.html", [
+  [ "PolyDEAL", "index.html", [
     [ "Coding conventions used throughout deal.II", "http://www.dealii.org/developer/doxygen/deal.II/CodingConventions.html", null ],
     [ "When to use types::global_dof_index instead of unsigned int", "http://www.dealii.org/developer/doxygen/deal.II/GlobalDoFIndex.html", null ],
     [ "Glossary", "http://www.dealii.org/developer/doxygen/deal.II/DEALGlossary.html", null ],
