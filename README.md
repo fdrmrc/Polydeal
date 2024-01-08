@@ -5,7 +5,7 @@
 [![Doxygen](https://github.com/fdrmrc/Polydeal/actions/workflows/doxygen.yml/badge.svg)](https://github.com/fdrmrc/Polydeal/actions/workflows/doxygen.yml)
 
 
-***PolyDEAL*** is an open source project in C++ which aims to provide building blocks for the implementation of Polygonal Discontinuous Galerkin methods, within the Finite Element library [**deal.II**](https://dealii.org).
+***PolyDEAL*** is an open source project written in C++ which aims to provide building blocks for the implementation of Polygonal Discontinuous Galerkin methods, within the Finite Element library [**deal.II**](https://dealii.org).
 
 
 ## Getting started
@@ -19,13 +19,12 @@ make -j<N>
 ```
 
 
-
-
-
 ## Documentation
-
-## Examples
-
+A Doxygen generated documentation is built and deployed at each merge to the main branch. You can find the latest documentation here: [https://fdrmrc.github.io/Polydeal/](https://fdrmrc.github.io/Polydeal/).
 
 ## Authors
 
+This project is maintained by:
+- [Marco Feder](https://www.math.sissa.it/users/marco-feder) ([@fdrmrc](https://github.com/fdrmrc)), SISSA, IT
+- [Luca Heltai](http://people.sissa.it/~heltai) ([@luca-heltai](https://github.com/luca-heltai)), SISSA, IT
+- [Andrea Cangiani](https://people.sissa.it/~acangian/) ([@andreacangiani](https://github.com/andreacangiani)), SISSA, IT
