@@ -513,10 +513,33 @@ $(function(){initNavTree('poly__utils_8h_source.html',''); initResizable(); });
 <div class="line"><a id="l00424" name="l00424"></a><span class="lineno">  424</span><span class="preprocessor">#endif</span></div>
 <div class="line"><a id="l00425" name="l00425"></a><span class="lineno">  425</span>  }</div>
 </div>
-<div class="line"><a id="l00426" name="l00426"></a><span class="lineno">  426</span>} <span class="comment">// namespace dealii::PolyUtils</span></div>
-</div>
+<div class="line"><a id="l00426" name="l00426"></a><span class="lineno">  426</span> </div>
 <div class="line"><a id="l00427" name="l00427"></a><span class="lineno">  427</span> </div>
-<div class="line"><a id="l00428" name="l00428"></a><span class="lineno">  428</span><span class="preprocessor">#endif</span></div>
+<div class="line"><a id="l00432" name="l00432"></a><span class="lineno">  432</span>  <span class="keyword">template</span> &lt;<span class="keywordtype">int</span> dim, <span class="keywordtype">int</span> spacedim = dim&gt;</div>
+<div class="line"><a id="l00433" name="l00433"></a><span class="lineno">  433</span>  <span class="keywordtype">void</span></div>
+<div class="foldopen" id="foldopen00434" data-start="{" data-end="}">
+<div class="line"><a id="l00434" name="l00434"></a><span class="lineno"><a class="line" href="namespacedealii_1_1_poly_utils.html#a9b1f017e9d2cedf0e4362bf8a7d62419">  434</a></span>  <a class="code hl_function" href="namespacedealii_1_1_poly_utils.html#a9b1f017e9d2cedf0e4362bf8a7d62419">collect_cells_for_agglomeration</a>(</div>
+<div class="line"><a id="l00435" name="l00435"></a><span class="lineno">  435</span>    <span class="keyword">const</span> <a class="code hl_classRef" href="http://www.dealii.org/developer/doxygen/deal.II/classTriangulation.html">Triangulation&lt;dim, spacedim&gt;</a> &amp;         tria,</div>
+<div class="line"><a id="l00436" name="l00436"></a><span class="lineno">  436</span>    <span class="keyword">const</span> std::vector&lt;types::global_cell_index&gt; &amp;cell_idxs,</div>
+<div class="line"><a id="l00437" name="l00437"></a><span class="lineno">  437</span>    std::vector&lt;<span class="keyword">typename</span> <a class="code hl_classRef" href="http://www.dealii.org/developer/doxygen/deal.II/classTriangulation.html">Triangulation&lt;dim, spacedim&gt;::active_cell_iterator</a>&gt;</div>
+<div class="line"><a id="l00438" name="l00438"></a><span class="lineno">  438</span>      &amp;cells_to_be_agglomerated)</div>
+<div class="line"><a id="l00439" name="l00439"></a><span class="lineno">  439</span>  {</div>
+<div class="line"><a id="l00440" name="l00440"></a><span class="lineno">  440</span>    Assert(cells_to_be_agglomerated.size() == 0,</div>
+<div class="line"><a id="l00441" name="l00441"></a><span class="lineno">  441</span>           ExcMessage(</div>
+<div class="line"><a id="l00442" name="l00442"></a><span class="lineno">  442</span>             <span class="stringliteral">&quot;The vector of cells is supposed to be filled by this function.&quot;</span>));</div>
+<div class="line"><a id="l00443" name="l00443"></a><span class="lineno">  443</span>    <span class="keywordflow">for</span> (<span class="keyword">const</span> <span class="keyword">auto</span> &amp;cell : tria.<a class="code hl_functionRef" href="http://www.dealii.org/developer/doxygen/deal.II/group__CPP11.html#ga9bd9f259f5b6c617c9ed88aa8b140ee8">active_cell_iterators</a>())</div>
+<div class="line"><a id="l00444" name="l00444"></a><span class="lineno">  444</span>      <span class="keywordflow">if</span> (std::find(cell_idxs.begin(),</div>
+<div class="line"><a id="l00445" name="l00445"></a><span class="lineno">  445</span>                    cell_idxs.end(),</div>
+<div class="line"><a id="l00446" name="l00446"></a><span class="lineno">  446</span>                    cell-&gt;active_cell_index()) != cell_idxs.end())</div>
+<div class="line"><a id="l00447" name="l00447"></a><span class="lineno">  447</span>        {</div>
+<div class="line"><a id="l00448" name="l00448"></a><span class="lineno">  448</span>          cells_to_be_agglomerated.push_back(cell);</div>
+<div class="line"><a id="l00449" name="l00449"></a><span class="lineno">  449</span>        }</div>
+<div class="line"><a id="l00450" name="l00450"></a><span class="lineno">  450</span>  }</div>
+</div>
+<div class="line"><a id="l00451" name="l00451"></a><span class="lineno">  451</span>} <span class="comment">// namespace dealii::PolyUtils</span></div>
+</div>
+<div class="line"><a id="l00452" name="l00452"></a><span class="lineno">  452</span> </div>
+<div class="line"><a id="l00453" name="l00453"></a><span class="lineno">  453</span><span class="preprocessor">#endif</span></div>
 <div class="ttc" id="abase_2point_8h_html"><div class="ttname"><a href="http://www.dealii.org/developer/doxygen/deal.II/base_2point_8h.html">point.h</a></div></div>
 <div class="ttc" id="aboost__adaptors_2bounding__box_8h_html"><div class="ttname"><a href="http://www.dealii.org/developer/doxygen/deal.II/boost__adaptors_2bounding__box_8h.html">bounding_box.h</a></div></div>
 <div class="ttc" id="aboost__adaptors_2point_8h_html"><div class="ttname"><a href="http://www.dealii.org/developer/doxygen/deal.II/boost__adaptors_2point_8h.html">point.h</a></div></div>
@@ -525,11 +548,13 @@ $(function(){initNavTree('poly__utils_8h_source.html',''); initResizable(); });
 <div class="ttc" id="aconfig_8h_html"><div class="ttname"><a href="http://www.dealii.org/developer/doxygen/deal.II/config_8h.html">config.h</a></div></div>
 <div class="ttc" id="adata__out__base_8cc_html_a8188ef4709fc9a4cc076d37447783ba1"><div class="ttname"><a href="http://www.dealii.org/developer/doxygen/deal.II/data__out__base_8cc.html#a8188ef4709fc9a4cc076d37447783ba1">center</a></div><div class="ttdeci">Point&lt; 3 &gt; center</div></div>
 <div class="ttc" id="agrid__out_8cc_html_a9082f945c1d289684d0bcd51ee08e11e"><div class="ttname"><a href="http://www.dealii.org/developer/doxygen/deal.II/grid__out_8cc.html#a9082f945c1d289684d0bcd51ee08e11e">level</a></div><div class="ttdeci">unsigned int level</div></div>
+<div class="ttc" id="agroup__CPP11_html_ga9bd9f259f5b6c617c9ed88aa8b140ee8"><div class="ttname"><a href="http://www.dealii.org/developer/doxygen/deal.II/group__CPP11.html#ga9bd9f259f5b6c617c9ed88aa8b140ee8">Triangulation::active_cell_iterators</a></div><div class="ttdeci">IteratorRange&lt; active_cell_iterator &gt; active_cell_iterators() const</div></div>
 <div class="ttc" id="agroup__Exceptions_html_ga9442b63275c9ef3fab29bc222831c49c"><div class="ttname"><a href="http://www.dealii.org/developer/doxygen/deal.II/group__Exceptions.html#ga9442b63275c9ef3fab29bc222831c49c">AssertDimension</a></div><div class="ttdeci">#define AssertDimension(dim1, dim2)</div></div>
 <div class="ttc" id="aiota__view_8h_html"><div class="ttname"><a href="http://www.dealii.org/developer/doxygen/deal.II/iota__view_8h.html">iota_view.h</a></div></div>
 <div class="ttc" id="anamespacedealii_1_1_poly_utils_html"><div class="ttname"><a href="namespacedealii_1_1_poly_utils.html">dealii::PolyUtils</a></div><div class="ttdef"><b>Definition</b> <a href="#l00052">poly_utils.h:53</a></div></div>
 <div class="ttc" id="anamespacedealii_1_1_poly_utils_html_a36f50c815c9532815b4fc1c11a14f5b1"><div class="ttname"><a href="namespacedealii_1_1_poly_utils.html#a36f50c815c9532815b4fc1c11a14f5b1">dealii::PolyUtils::extract_children_of_level</a></div><div class="ttdeci">std::pair&lt; std::vector&lt; std::vector&lt; unsigned int &gt; &gt;, std::vector&lt; std::vector&lt; typename Triangulation&lt; boost::geometry::dimension&lt; typename Rtree::indexable_type &gt;::value &gt;::active_cell_iterator &gt; &gt; &gt; extract_children_of_level(const Rtree &amp;tree, const unsigned int level)</div><div class="ttdef"><b>Definition</b> <a href="#l00269">poly_utils.h:269</a></div></div>
 <div class="ttc" id="anamespacedealii_1_1_poly_utils_html_a4bbefeeca37b82d5391b9002f6a4db3f"><div class="ttname"><a href="namespacedealii_1_1_poly_utils.html#a4bbefeeca37b82d5391b9002f6a4db3f">dealii::PolyUtils::compute_h_orthogonal</a></div><div class="ttdeci">Number compute_h_orthogonal(const unsigned int face_index, const std::vector&lt; typename Triangulation&lt; dim &gt;::active_face_iterator &gt; &amp;polygon_boundary, const Tensor&lt; 1, dim &gt; &amp;deal_normal)</div><div class="ttdef"><b>Definition</b> <a href="#l00314">poly_utils.h:314</a></div></div>
+<div class="ttc" id="anamespacedealii_1_1_poly_utils_html_a9b1f017e9d2cedf0e4362bf8a7d62419"><div class="ttname"><a href="namespacedealii_1_1_poly_utils.html#a9b1f017e9d2cedf0e4362bf8a7d62419">dealii::PolyUtils::collect_cells_for_agglomeration</a></div><div class="ttdeci">void collect_cells_for_agglomeration(const Triangulation&lt; dim, spacedim &gt; &amp;tria, const std::vector&lt; types::global_cell_index &gt; &amp;cell_idxs, std::vector&lt; typename Triangulation&lt; dim, spacedim &gt;::active_cell_iterator &gt; &amp;cells_to_be_agglomerated)</div><div class="ttdef"><b>Definition</b> <a href="#l00434">poly_utils.h:434</a></div></div>
 <div class="ttc" id="anamespacestd_html_aa2def4dc0bd5b6d07af7aff83feba9b2"><div class="ttname"><a href="http://www.dealii.org/developer/doxygen/deal.II/namespacestd.html#aa2def4dc0bd5b6d07af7aff83feba9b2">std::sqrt</a></div><div class="ttdeci">::VectorizedArray&lt; Number, width &gt; sqrt(const ::VectorizedArray&lt; Number, width &gt; &amp;)</div></div>
 <div class="ttc" id="apoint__conversion_8h_html"><div class="ttname"><a href="http://www.dealii.org/developer/doxygen/deal.II/point__conversion_8h.html">point_conversion.h</a></div></div>
 <div class="ttc" id="asegment_8h_html"><div class="ttname"><a href="http://www.dealii.org/developer/doxygen/deal.II/segment_8h.html">segment.h</a></div></div>
@@ -552,7 +577,7 @@ $(function(){initNavTree('poly__utils_8h_source.html',''); initResizable(); });
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="dir_aa394cd1d9abb8ffe941d9aaafca8d03.html">github</a></li><li class="navelem"><a class="el" href="dir_c52569aa89a7adbb6029022c2fa60a11.html">workspace</a></li><li class="navelem"><a class="el" href="dir_7a95a9cc00fcc7af5a429eec361b64d1.html">include</a></li><li class="navelem"><a class="el" href="poly__utils_8h.html">poly_utils.h</a></li>
-    <li class="footer">Generated on Mon Jan 8 2024 10:12:17 for PolyDEAL by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.10.0 </li>
+    <li class="footer">Generated on Mon Jan 8 2024 10:20:08 for PolyDEAL by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.10.0 </li>
   </ul>
 </div>
 </body>
