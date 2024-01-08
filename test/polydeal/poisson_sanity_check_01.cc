@@ -12,10 +12,9 @@
 #include <deal.II/numerics/vector_tools_integrate_difference.h>
 #include <deal.II/numerics/vector_tools_interpolate.h>
 
-#include <algorithm>
-
-
 #include <agglomeration_handler.h>
+
+#include <algorithm>
 
 template <int dim>
 class LinearFunction : public Function<dim>
