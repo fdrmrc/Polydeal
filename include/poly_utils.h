@@ -423,6 +423,31 @@ namespace dealii::PolyUtils
     return {};
 #endif
   }
+
+
+  /**
+   * Agglomerate cells together based on their global index. This function is
+   * **not** efficient and should be used for testing purposes only.
+   */
+  template <int dim, int spacedim = dim>
+  void
+  collect_cells_for_agglomeration(
+    const Triangulation<dim, spacedim> &         tria,
+    const std::vector<types::global_cell_index> &cell_idxs,
+    std::vector<typename Triangulation<dim, spacedim>::active_cell_iterator>
+      &cells_to_be_agglomerated)
+  {
+    Assert(cells_to_be_agglomerated.size() == 0,
+           ExcMessage(
+             "The vector of cells is supposed to be filled by this function."));
+    for (const auto &cell : tria.active_cell_iterators())
+      if (std::find(cell_idxs.begin(),
+                    cell_idxs.end(),
+                    cell->active_cell_index()) != cell_idxs.end())
+        {
+          cells_to_be_agglomerated.push_back(cell);
+        }
+  }
 } // namespace dealii::PolyUtils
 
 #endif

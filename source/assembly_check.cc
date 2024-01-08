@@ -6,11 +6,10 @@
 
 #include <deal.II/numerics/data_out.h>
 
+#include <agglomeration_handler.h>
+
 #include <algorithm>
 
-#include "../tests.h"
-
-#include "../include/agglomeration_handler.h"
 
 template <int dim>
 class RightHandSide : public Function<dim>
@@ -22,7 +21,7 @@ public:
 
   virtual void
   value_list(const std::vector<Point<dim>> &points,
-             std::vector<double>           &values,
+             std::vector<double> &          values,
              const unsigned int /*component*/) const override;
 };
 
@@ -30,7 +29,7 @@ public:
 template <int dim>
 void
 RightHandSide<dim>::value_list(const std::vector<Point<dim>> &points,
-                               std::vector<double>           &values,
+                               std::vector<double> &          values,
                                const unsigned int /*component*/) const
 {
   for (unsigned int i = 0; i < values.size(); ++i)
@@ -50,8 +49,8 @@ private:
   setup_agglomeration();
   void
   distribute_jumps_and_averages(
-    FEFaceValues<dim>                                    &fe_face,
-    FEFaceValues<dim>                                    &fe_face1,
+    FEFaceValues<dim> &                                   fe_face,
+    FEFaceValues<dim> &                                   fe_face1,
     const typename DoFHandler<dim>::active_cell_iterator &cell,
     const unsigned int                                    f);
   void
@@ -114,17 +113,17 @@ Poisson<dim>::setup_agglomeration()
   std::vector<typename Triangulation<dim>::active_cell_iterator>
     cells_to_be_agglomerated;
 
-  Tests::collect_cells_for_agglomeration(tria,
-                                         idxs_to_be_agglomerated,
-                                         cells_to_be_agglomerated);
+  PolyUtils::collect_cells_for_agglomeration(tria,
+                                             idxs_to_be_agglomerated,
+                                             cells_to_be_agglomerated);
 
   std::vector<types::global_cell_index> idxs_to_be_agglomerated2 = {4, 5, 6, 7};
 
   std::vector<typename Triangulation<dim>::active_cell_iterator>
     cells_to_be_agglomerated2;
-  Tests::collect_cells_for_agglomeration(tria,
-                                         idxs_to_be_agglomerated2,
-                                         cells_to_be_agglomerated2);
+  PolyUtils::collect_cells_for_agglomeration(tria,
+                                             idxs_to_be_agglomerated2,
+                                             cells_to_be_agglomerated2);
 
   std::vector<types::global_cell_index> idxs_to_be_agglomerated3 = {8,
                                                                     9,
@@ -133,9 +132,9 @@ Poisson<dim>::setup_agglomeration()
 
   std::vector<typename Triangulation<dim>::active_cell_iterator>
     cells_to_be_agglomerated3;
-  Tests::collect_cells_for_agglomeration(tria,
-                                         idxs_to_be_agglomerated3,
-                                         cells_to_be_agglomerated3);
+  PolyUtils::collect_cells_for_agglomeration(tria,
+                                             idxs_to_be_agglomerated3,
+                                             cells_to_be_agglomerated3);
 
   std::vector<types::global_cell_index> idxs_to_be_agglomerated4 = {12,
                                                                     13,
@@ -144,9 +143,9 @@ Poisson<dim>::setup_agglomeration()
 
   std::vector<typename Triangulation<dim>::active_cell_iterator>
     cells_to_be_agglomerated4;
-  Tests::collect_cells_for_agglomeration(tria,
-                                         idxs_to_be_agglomerated4,
-                                         cells_to_be_agglomerated4);
+  PolyUtils::collect_cells_for_agglomeration(tria,
+                                             idxs_to_be_agglomerated4,
+                                             cells_to_be_agglomerated4);
   // Agglomerate the cells just stored
   ah = std::make_unique<AgglomerationHandler<dim>>(*cached_tria);
   ah->agglomerate_cells(cells_to_be_agglomerated);
@@ -174,8 +173,8 @@ Poisson<dim>::setup_agglomeration()
 template <int dim>
 void
 Poisson<dim>::distribute_jumps_and_averages(
-  FEFaceValues<dim>                                    &fe_face,
-  FEFaceValues<dim>                                    &fe_face1,
+  FEFaceValues<dim> &                                   fe_face,
+  FEFaceValues<dim> &                                   fe_face1,
   const typename DoFHandler<dim>::active_cell_iterator &cell,
   const unsigned int                                    f)
 {
@@ -557,7 +556,7 @@ Poisson<dim>::assemble_system()
       // const auto &agglo_values = ah->reinit(cell);
       fe_values.reinit(cell);
 
-      const auto         &q_points  = fe_values.get_quadrature_points();
+      const auto &        q_points  = fe_values.get_quadrature_points();
       const unsigned int  n_qpoints = q_points.size();
       std::vector<double> rhs(n_qpoints);
       rhs_function->value_list(q_points, rhs);

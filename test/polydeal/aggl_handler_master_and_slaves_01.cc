@@ -20,7 +20,8 @@
 
 #include <deal.II/grid/grid_generator.h>
 
-#include "../tests.h"
+#include <agglomeration_handler.h>
+#include <poly_utils.h>
 
 int
 main()
@@ -35,9 +36,9 @@ main()
   std::vector<unsigned int> idxs_to_be_agglomerated = {3, 6, 9, 12, 13};
   std::vector<typename Triangulation<2>::active_cell_iterator>
     cells_to_be_agglomerated;
-  Tests::collect_cells_for_agglomeration(tria,
-                                         idxs_to_be_agglomerated,
-                                         cells_to_be_agglomerated);
+  PolyUtils::collect_cells_for_agglomeration(tria,
+                                             idxs_to_be_agglomerated,
+                                             cells_to_be_agglomerated);
 
   // Agglomerate the cells just stored
   ah.agglomerate_cells(cells_to_be_agglomerated);

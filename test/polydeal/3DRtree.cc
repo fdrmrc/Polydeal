@@ -16,8 +16,6 @@
 
 #include <algorithm>
 
-#include "../tests.h"
-
 // Check that the R-tree based agglomeration works also in 3D.
 
 
@@ -202,9 +200,9 @@ Poisson<dim>::setup_agglomeration()
         {
           idxs_to_be_agglomerated.push_back(element->active_cell_index());
         }
-      Tests::collect_cells_for_agglomeration(tria,
-                                             idxs_to_be_agglomerated,
-                                             cells_to_be_agglomerated);
+      PolyUtils::collect_cells_for_agglomeration(tria,
+                                                 idxs_to_be_agglomerated,
+                                                 cells_to_be_agglomerated);
       // Agglomerate the cells just stored
       ah->agglomerate_cells(cells_to_be_agglomerated);
     }

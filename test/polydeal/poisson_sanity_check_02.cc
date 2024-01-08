@@ -12,11 +12,10 @@
 #include <deal.II/numerics/vector_tools_integrate_difference.h>
 #include <deal.II/numerics/vector_tools_interpolate.h>
 
+#include <agglomeration_handler.h>
+#include <poly_utils.h>
+
 #include <algorithm>
-
-#include "../tests.h"
-
-#include "../include/agglomeration_handler.h"
 
 // Agglomerate a 2x2 mesh in the following way:
 // |------------|-------------|
@@ -106,7 +105,7 @@ public:
 
 template <int dim>
 LaplaceOperator<dim>::LaplaceOperator(const unsigned int n_subdomains,
-                      const unsigned int fe_degree)
+                                      const unsigned int fe_degree)
   : mapping(1)
   , dg_fe(fe_degree)
   , n_subdomains(n_subdomains)
@@ -136,18 +135,18 @@ LaplaceOperator<dim>::setup_agglomeration()
 
   std::vector<typename Triangulation<2>::active_cell_iterator>
     cells_to_be_agglomerated;
-  Tests::collect_cells_for_agglomeration(tria,
-                                         idxs_to_be_agglomerated,
-                                         cells_to_be_agglomerated);
+  PolyUtils::collect_cells_for_agglomeration(tria,
+                                             idxs_to_be_agglomerated,
+                                             cells_to_be_agglomerated);
   ah->agglomerate_cells(cells_to_be_agglomerated);
 
   std::vector<types::global_cell_index> idxs_to_be_agglomerated2 = {1, 3};
 
   std::vector<typename Triangulation<2>::active_cell_iterator>
     cells_to_be_agglomerated2;
-  Tests::collect_cells_for_agglomeration(tria,
-                                         idxs_to_be_agglomerated2,
-                                         cells_to_be_agglomerated2);
+  PolyUtils::collect_cells_for_agglomeration(tria,
+                                             idxs_to_be_agglomerated2,
+                                             cells_to_be_agglomerated2);
   ah->agglomerate_cells(cells_to_be_agglomerated2);
 
   ah->distribute_agglomerated_dofs(dg_fe);
