@@ -1,14 +1,35 @@
+#include <deal.II/base/config.h>
+
+#include <deal.II/base/function.h>
+
+#include <deal.II/dofs/dof_tools.h>
+
+#include <deal.II/fe/fe_dgq.h>
+#include <deal.II/fe/fe_face.h>
+#include <deal.II/fe/fe_values.h>
+#include <deal.II/fe/mapping.h>
+
 #include <deal.II/grid/grid_generator.h>
 #include <deal.II/grid/grid_out.h>
+#include <deal.II/grid/tria.h>
 
 #include <deal.II/lac/sparse_direct.h>
 #include <deal.II/lac/sparse_matrix.h>
 
 #include <deal.II/numerics/data_out.h>
 
-#include <agglomeration_handler.h>
-
 #include <algorithm>
+
+
+/**
+ * The following example program solves the simplest elliptic problem with DG on
+ * standard quad-hex meshes in parallel **without** employing the MeshWorker
+ * framework of deal.II
+ *
+ */
+
+
+using namespace dealii;
 
 
 template <int dim>
@@ -71,7 +92,7 @@ private:
   std::unique_ptr<const Function<dim>> rhs_function;
 
 public:
-  Poisson();
+  Poisson(const unsigned int fe_degree);
   void
   run();
 
@@ -81,9 +102,9 @@ public:
 
 
 template <int dim>
-Poisson<dim>::Poisson()
+Poisson<dim>::Poisson(const unsigned int fe_degree)
   : mapping(1)
-  , dg_fe(1)
+  , dg_fe(fe_degree)
   , classical_dh(tria)
 {}
 
@@ -115,7 +136,7 @@ Poisson<dim>::assemble_system()
 
   AffineConstraints<double> constraints;
   constraints.close();
-  const unsigned int quadrature_degree = 3;
+  const unsigned int quadrature_degree = 2 * dg_fe.degree + 1;
   FEFaceValues<dim>  fe_face0(mapping,
                              dg_fe,
                              QGauss<dim - 1>(quadrature_degree),
@@ -364,7 +385,8 @@ Poisson<dim>::run()
 int
 main()
 {
-  Poisson<2> poisson_problem;
+  const unsigned int fe_degree = 1;
+  Poisson<2>         poisson_problem(fe_degree);
   poisson_problem.run();
   return 0;
 }
