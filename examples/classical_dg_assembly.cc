@@ -2,6 +2,8 @@
 
 #include <deal.II/base/function.h>
 
+#include <deal.II/distributed/tria.h>
+
 #include <deal.II/dofs/dof_tools.h>
 
 #include <deal.II/fe/fe_dgq.h>
@@ -15,8 +17,17 @@
 
 #include <deal.II/lac/sparse_direct.h>
 #include <deal.II/lac/sparse_matrix.h>
+#include <deal.II/lac/sparsity_tools.h>
 
 #include <deal.II/numerics/data_out.h>
+
+
+// Trilinos linear algebra is employed for parallel computations
+#include <deal.II/base/conditional_ostream.h>
+
+#include <deal.II/lac/trilinos_solver.h>
+#include <deal.II/lac/trilinos_sparse_matrix.h>
+#include <deal.II/lac/trilinos_vector.h>
 
 #include <algorithm>
 
@@ -81,31 +92,39 @@ private:
   output_results();
 
 
-  Triangulation<dim>                   tria;
-  MappingQ<dim>                        mapping;
-  FE_DGQ<dim>                          dg_fe;
-  DoFHandler<dim>                      classical_dh;
-  SparsityPattern                      sparsity;
-  SparseMatrix<double>                 system_matrix;
-  Vector<double>                       solution;
-  Vector<double>                       system_rhs;
-  std::unique_ptr<const Function<dim>> rhs_function;
+  parallel::distributed::Triangulation<dim> tria;
+  MappingQ<dim>                             mapping;
+  FE_DGQ<dim>                               dg_fe;
+  DoFHandler<dim>                           classical_dh;
+  ConditionalOStream                        pcout;
+  SparsityPattern                           sparsity;
+  AffineConstraints<double>                 constraints;
+  TrilinosWrappers::SparseMatrix            system_matrix;
+  TrilinosWrappers::MPI::Vector             locally_relevant_solution;
+  TrilinosWrappers::MPI::Vector             system_rhs;
+  SolverControl                             solver_control;
+  TrilinosWrappers::SolverDirect            solver;
+  std::unique_ptr<const Function<dim>>      rhs_function;
 
 public:
   Poisson(const unsigned int fe_degree);
   void
   run();
 
-  double penalty = 100.;
+  double penalty = 50.;
 };
 
 
 
 template <int dim>
 Poisson<dim>::Poisson(const unsigned int fe_degree)
-  : mapping(1)
+  : tria(MPI_COMM_WORLD)
+  , mapping(1)
   , dg_fe(fe_degree)
   , classical_dh(tria)
+  , pcout(std::cout, Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
+  , solver_control(1)
+  , solver(solver_control)
 {}
 
 template <int dim>
@@ -114,9 +133,29 @@ Poisson<dim>::make_grid()
 {
   GridGenerator::hyper_cube(tria, -1, 1);
   tria.refine_global(6);
-  std::cout << "Number of faces for the tria: " << tria.n_active_faces()
-            << std::endl;
+
   classical_dh.distribute_dofs(dg_fe);
+  const IndexSet &locally_owned_dofs = classical_dh.locally_owned_dofs();
+  const IndexSet  locally_relevant_dofs =
+    DoFTools::extract_locally_relevant_dofs(classical_dh);
+
+  constraints.clear();
+  constraints.close();
+
+  DynamicSparsityPattern dsp(classical_dh.n_dofs());
+  DoFTools::make_flux_sparsity_pattern(classical_dh, dsp);
+  SparsityTools::distribute_sparsity_pattern(dsp,
+                                             classical_dh.locally_owned_dofs(),
+                                             MPI_COMM_WORLD,
+                                             locally_relevant_dofs);
+
+  system_matrix.reinit(locally_owned_dofs,
+                       locally_owned_dofs,
+                       dsp,
+                       MPI_COMM_WORLD);
+  locally_relevant_solution.reinit(locally_relevant_dofs, MPI_COMM_WORLD);
+  system_rhs.reinit(locally_owned_dofs, MPI_COMM_WORLD);
+
   rhs_function = std::make_unique<const RightHandSide<dim>>();
 }
 
@@ -126,16 +165,6 @@ template <int dim>
 void
 Poisson<dim>::assemble_system()
 {
-  DynamicSparsityPattern dsp(classical_dh.n_dofs());
-  DoFTools::make_flux_sparsity_pattern(classical_dh, dsp);
-  sparsity.copy_from(dsp);
-
-  system_matrix.reinit(sparsity);
-  solution.reinit(classical_dh.n_dofs());
-  system_rhs.reinit(classical_dh.n_dofs());
-
-  AffineConstraints<double> constraints;
-  constraints.close();
   const unsigned int quadrature_degree = 2 * dg_fe.degree + 1;
   FEFaceValues<dim>  fe_face0(mapping,
                              dg_fe,
@@ -169,181 +198,205 @@ Poisson<dim>::assemble_system()
   // Loop over standard deal.II cells
   for (const auto &cell : classical_dh.active_cell_iterators())
     {
-      cell_matrix = 0.;
-      cell_rhs    = 0.;
-
-      fe_values.reinit(cell);
-
-      const auto &        q_points  = fe_values.get_quadrature_points();
-      const unsigned int  n_qpoints = q_points.size();
-      std::vector<double> rhs(n_qpoints);
-      rhs_function->value_list(q_points, rhs);
-
-      for (unsigned int q_index : fe_values.quadrature_point_indices())
+      if (cell->is_locally_owned())
         {
-          for (unsigned int i = 0; i < dofs_per_cell; ++i)
+          cell_matrix = 0.;
+          cell_rhs    = 0.;
+
+          fe_values.reinit(cell);
+
+          const auto &        q_points  = fe_values.get_quadrature_points();
+          const unsigned int  n_qpoints = q_points.size();
+          std::vector<double> rhs(n_qpoints);
+          rhs_function->value_list(q_points, rhs);
+
+          for (unsigned int q_index : fe_values.quadrature_point_indices())
             {
-              for (unsigned int j = 0; j < dofs_per_cell; ++j)
+              for (unsigned int i = 0; i < dofs_per_cell; ++i)
                 {
-                  cell_matrix(i, j) += fe_values.shape_grad(i, q_index) *
-                                       fe_values.shape_grad(j, q_index) *
-                                       fe_values.JxW(q_index);
+                  for (unsigned int j = 0; j < dofs_per_cell; ++j)
+                    {
+                      cell_matrix(i, j) += fe_values.shape_grad(i, q_index) *
+                                           fe_values.shape_grad(j, q_index) *
+                                           fe_values.JxW(q_index);
+                    }
+                  cell_rhs(i) += fe_values.shape_value(i, q_index) *
+                                 rhs[q_index] * fe_values.JxW(q_index);
                 }
-              cell_rhs(i) += fe_values.shape_value(i, q_index) * rhs[q_index] *
-                             fe_values.JxW(q_index);
             }
+
+          // distribute volumetric DoFs
+          cell->get_dof_indices(local_dof_indices);
+
+          for (const auto f : cell->face_indices())
+            {
+              const double hf = cell->face(f)->measure();
+              if (cell->face(f)->at_boundary())
+                {
+                  visited_boundary_faces.push_back(cell->face_index(f));
+                  fe_face0.reinit(cell, f);
+
+                  const auto &normals = fe_face0.get_normal_vectors();
+                  for (unsigned int q_index :
+                       fe_face0.quadrature_point_indices())
+                    {
+                      for (unsigned int i = 0; i < dofs_per_cell; ++i)
+                        {
+                          for (unsigned int j = 0; j < dofs_per_cell; ++j)
+                            {
+                              cell_matrix(i, j) +=
+                                (-fe_face0.shape_value(i, q_index) *
+                                   fe_face0.shape_grad(j, q_index) *
+                                   normals[q_index] -
+                                 fe_face0.shape_grad(i, q_index) *
+                                   normals[q_index] *
+                                   fe_face0.shape_value(j, q_index) +
+                                 (penalty / hf) *
+                                   fe_face0.shape_value(i, q_index) *
+                                   fe_face0.shape_value(j, q_index)) *
+                                fe_face0.JxW(q_index);
+                            }
+                        }
+                    }
+                }
+              else if (cell->active_cell_index() <
+                       cell->neighbor(f)->active_cell_index())
+                {
+                  visited_internal_faces.push_back(cell->face_index(f));
+
+                  fe_face0.reinit(cell, f);
+                  fe_face1.reinit(cell->neighbor(f),
+                                  cell->neighbor_of_neighbor(f));
+
+                  std::vector<types::global_dof_index>
+                    local_dof_indices_neighbor(dofs_per_cell);
+
+                  FullMatrix<double> M11(dofs_per_cell, dofs_per_cell);
+                  FullMatrix<double> M12(dofs_per_cell, dofs_per_cell);
+                  FullMatrix<double> M21(dofs_per_cell, dofs_per_cell);
+                  FullMatrix<double> M22(dofs_per_cell, dofs_per_cell);
+
+                  const auto &normals = fe_face1.get_normal_vectors();
+                  // M11
+                  for (unsigned int q_index :
+                       fe_face0.quadrature_point_indices())
+                    {
+#ifdef AGGLO_DEBUG
+                      pcout << normals[q_index] << std::endl;
+#endif
+                      for (unsigned int i = 0; i < dofs_per_cell; ++i)
+                        {
+                          for (unsigned int j = 0; j < dofs_per_cell; ++j)
+                            {
+                              M11(i, j) +=
+                                (-0.5 * fe_face0.shape_grad(i, q_index) *
+                                   normals[q_index] *
+                                   fe_face0.shape_value(j, q_index) -
+                                 0.5 * fe_face0.shape_grad(j, q_index) *
+                                   normals[q_index] *
+                                   fe_face0.shape_value(i, q_index) +
+                                 (penalty / hf) *
+                                   fe_face0.shape_value(i, q_index) *
+                                   fe_face0.shape_value(j, q_index)) *
+                                fe_face0.JxW(q_index);
+                            }
+                        }
+                    }
+                  // M12
+                  for (unsigned int q_index :
+                       fe_face0.quadrature_point_indices())
+                    {
+                      for (unsigned int i = 0; i < dofs_per_cell; ++i)
+                        {
+                          for (unsigned int j = 0; j < dofs_per_cell; ++j)
+                            {
+                              M12(i, j) +=
+                                (0.5 * fe_face0.shape_grad(i, q_index) *
+                                   normals[q_index] *
+                                   fe_face1.shape_value(j, q_index) -
+                                 0.5 * fe_face1.shape_grad(j, q_index) *
+                                   normals[q_index] *
+                                   fe_face0.shape_value(i, q_index) -
+                                 (penalty / hf) *
+                                   fe_face0.shape_value(i, q_index) *
+                                   fe_face1.shape_value(j, q_index)) *
+                                fe_face1.JxW(q_index);
+                            }
+                        }
+                    }
+                  // A10
+                  for (unsigned int q_index :
+                       fe_face0.quadrature_point_indices())
+                    {
+                      for (unsigned int i = 0; i < dofs_per_cell; ++i)
+                        {
+                          for (unsigned int j = 0; j < dofs_per_cell; ++j)
+                            {
+                              M21(i, j) +=
+                                (-0.5 * fe_face1.shape_grad(i, q_index) *
+                                   normals[q_index] *
+                                   fe_face0.shape_value(j, q_index) +
+                                 0.5 * fe_face0.shape_grad(j, q_index) *
+                                   normals[q_index] *
+                                   fe_face1.shape_value(i, q_index) -
+                                 (penalty / hf) *
+                                   fe_face1.shape_value(i, q_index) *
+                                   fe_face0.shape_value(j, q_index)) *
+                                fe_face1.JxW(q_index);
+                            }
+                        }
+                    }
+                  // A11
+                  for (unsigned int q_index :
+                       fe_face0.quadrature_point_indices())
+                    {
+                      for (unsigned int i = 0; i < dofs_per_cell; ++i)
+                        {
+                          for (unsigned int j = 0; j < dofs_per_cell; ++j)
+                            {
+                              M22(i, j) +=
+                                (0.5 * fe_face1.shape_grad(i, q_index) *
+                                   normals[q_index] *
+                                   fe_face1.shape_value(j, q_index) +
+                                 0.5 * fe_face1.shape_grad(j, q_index) *
+                                   normals[q_index] *
+                                   fe_face1.shape_value(i, q_index) +
+                                 (penalty / hf) *
+                                   fe_face1.shape_value(i, q_index) *
+                                   fe_face1.shape_value(j, q_index)) *
+                                fe_face1.JxW(q_index);
+                            }
+                        }
+                    }
+
+// distribute DoFs accordingly
+#ifdef AGGLO_DEBUG
+                  pcout << "Neighbor is " << cell->neighbor(f) << std::endl;
+#endif
+                  cell->neighbor(f)->get_dof_indices(
+                    local_dof_indices_neighbor);
+
+                  system_matrix.add(local_dof_indices, M11);
+                  system_matrix.add(local_dof_indices,
+                                    local_dof_indices_neighbor,
+                                    M12);
+                  system_matrix.add(local_dof_indices_neighbor,
+                                    local_dof_indices,
+                                    M21);
+                  system_matrix.add(local_dof_indices_neighbor, M22);
+
+                } // check idx neighbors
+            }     // over faces
+
+          constraints.distribute_local_to_global(cell_matrix,
+                                                 cell_rhs,
+                                                 local_dof_indices,
+                                                 system_matrix,
+                                                 system_rhs);
         }
-
-      // distribute volumetric DoFs
-      cell->get_dof_indices(local_dof_indices);
-
-      for (const auto f : cell->face_indices())
-        {
-          const double hf = cell->face(f)->measure();
-          if (cell->face(f)->at_boundary())
-            {
-              visited_boundary_faces.push_back(cell->face_index(f));
-              fe_face0.reinit(cell, f);
-
-              const auto &normals = fe_face0.get_normal_vectors();
-              for (unsigned int q_index : fe_face0.quadrature_point_indices())
-                {
-                  for (unsigned int i = 0; i < dofs_per_cell; ++i)
-                    {
-                      for (unsigned int j = 0; j < dofs_per_cell; ++j)
-                        {
-                          cell_matrix(i, j) +=
-                            (-fe_face0.shape_value(i, q_index) *
-                               fe_face0.shape_grad(j, q_index) *
-                               normals[q_index] -
-                             fe_face0.shape_grad(i, q_index) *
-                               normals[q_index] *
-                               fe_face0.shape_value(j, q_index) +
-                             (penalty / hf) * fe_face0.shape_value(i, q_index) *
-                               fe_face0.shape_value(j, q_index)) *
-                            fe_face0.JxW(q_index);
-                        }
-                    }
-                }
-            }
-          else if (cell->active_cell_index() <
-                   cell->neighbor(f)->active_cell_index())
-            {
-              visited_internal_faces.push_back(cell->face_index(f));
-
-              fe_face0.reinit(cell, f);
-              fe_face1.reinit(cell->neighbor(f), cell->neighbor_of_neighbor(f));
-
-              std::vector<types::global_dof_index> local_dof_indices_neighbor(
-                dofs_per_cell);
-
-              FullMatrix<double> M11(dofs_per_cell, dofs_per_cell);
-              FullMatrix<double> M12(dofs_per_cell, dofs_per_cell);
-              FullMatrix<double> M21(dofs_per_cell, dofs_per_cell);
-              FullMatrix<double> M22(dofs_per_cell, dofs_per_cell);
-
-              const auto &normals = fe_face1.get_normal_vectors();
-              // M11
-              for (unsigned int q_index : fe_face0.quadrature_point_indices())
-                {
-                  std::cout << normals[q_index] << std::endl;
-                  for (unsigned int i = 0; i < dofs_per_cell; ++i)
-                    {
-                      for (unsigned int j = 0; j < dofs_per_cell; ++j)
-                        {
-                          M11(i, j) +=
-                            (-0.5 * fe_face0.shape_grad(i, q_index) *
-                               normals[q_index] *
-                               fe_face0.shape_value(j, q_index) -
-                             0.5 * fe_face0.shape_grad(j, q_index) *
-                               normals[q_index] *
-                               fe_face0.shape_value(i, q_index) +
-                             (penalty / hf) * fe_face0.shape_value(i, q_index) *
-                               fe_face0.shape_value(j, q_index)) *
-                            fe_face0.JxW(q_index);
-                        }
-                    }
-                }
-              // M12
-              for (unsigned int q_index : fe_face0.quadrature_point_indices())
-                {
-                  for (unsigned int i = 0; i < dofs_per_cell; ++i)
-                    {
-                      for (unsigned int j = 0; j < dofs_per_cell; ++j)
-                        {
-                          M12(i, j) +=
-                            (0.5 * fe_face0.shape_grad(i, q_index) *
-                               normals[q_index] *
-                               fe_face1.shape_value(j, q_index) -
-                             0.5 * fe_face1.shape_grad(j, q_index) *
-                               normals[q_index] *
-                               fe_face0.shape_value(i, q_index) -
-                             (penalty / hf) * fe_face0.shape_value(i, q_index) *
-                               fe_face1.shape_value(j, q_index)) *
-                            fe_face1.JxW(q_index);
-                        }
-                    }
-                }
-              // A10
-              for (unsigned int q_index : fe_face0.quadrature_point_indices())
-                {
-                  for (unsigned int i = 0; i < dofs_per_cell; ++i)
-                    {
-                      for (unsigned int j = 0; j < dofs_per_cell; ++j)
-                        {
-                          M21(i, j) +=
-                            (-0.5 * fe_face1.shape_grad(i, q_index) *
-                               normals[q_index] *
-                               fe_face0.shape_value(j, q_index) +
-                             0.5 * fe_face0.shape_grad(j, q_index) *
-                               normals[q_index] *
-                               fe_face1.shape_value(i, q_index) -
-                             (penalty / hf) * fe_face1.shape_value(i, q_index) *
-                               fe_face0.shape_value(j, q_index)) *
-                            fe_face1.JxW(q_index);
-                        }
-                    }
-                }
-              // A11
-              for (unsigned int q_index : fe_face0.quadrature_point_indices())
-                {
-                  for (unsigned int i = 0; i < dofs_per_cell; ++i)
-                    {
-                      for (unsigned int j = 0; j < dofs_per_cell; ++j)
-                        {
-                          M22(i, j) +=
-                            (0.5 * fe_face1.shape_grad(i, q_index) *
-                               normals[q_index] *
-                               fe_face1.shape_value(j, q_index) +
-                             0.5 * fe_face1.shape_grad(j, q_index) *
-                               normals[q_index] *
-                               fe_face1.shape_value(i, q_index) +
-                             (penalty / hf) * fe_face1.shape_value(i, q_index) *
-                               fe_face1.shape_value(j, q_index)) *
-                            fe_face1.JxW(q_index);
-                        }
-                    }
-                }
-
-              // distribute DoFs accordingly
-              std::cout << "Neighbor is " << cell->neighbor(f) << std::endl;
-              cell->neighbor(f)->get_dof_indices(local_dof_indices_neighbor);
-
-              system_matrix.add(local_dof_indices, M11);
-              system_matrix.add(local_dof_indices,
-                                local_dof_indices_neighbor,
-                                M12);
-              system_matrix.add(local_dof_indices_neighbor,
-                                local_dof_indices,
-                                M21);
-              system_matrix.add(local_dof_indices_neighbor, M22);
-
-            } // check idx neighbors
-        }     // over faces
-
-      constraints.distribute_local_to_global(
-        cell_matrix, cell_rhs, local_dof_indices, system_matrix, system_rhs);
     }
+  system_matrix.compress(VectorOperation::add);
+  system_rhs.compress(VectorOperation::add);
 }
 
 
@@ -351,9 +404,10 @@ template <int dim>
 void
 Poisson<dim>::solve()
 {
-  SparseDirectUMFPACK A_direct;
-  A_direct.initialize(system_matrix);
-  A_direct.vmult(solution, system_rhs);
+  TrilinosWrappers::MPI::Vector completely_distributed_solution(system_rhs);
+  solver.solve(system_matrix, completely_distributed_solution, system_rhs);
+  constraints.distribute(completely_distributed_solution);
+  locally_relevant_solution = completely_distributed_solution;
 }
 
 
@@ -362,14 +416,41 @@ template <int dim>
 void
 Poisson<dim>::output_results()
 {
-  const std::string filename = "agglomerated_Poisson_classic_DG.vtu";
-  std::ofstream     output(filename);
-
   DataOut<dim> data_out;
   data_out.attach_dof_handler(classical_dh);
-  data_out.add_data_vector(solution, "u", DataOut<dim>::type_dof_data);
+  data_out.add_data_vector(locally_relevant_solution,
+                           "u",
+                           DataOut<dim>::type_dof_data);
+
+  Vector<float> subdomain(tria.n_active_cells());
+
+  for (unsigned int i = 0; i < subdomain.size(); ++i)
+    subdomain(i) = tria.locally_owned_subdomain();
+
+  data_out.add_data_vector(subdomain, "subdomain");
+
   data_out.build_patches(mapping);
+
+  const std::string filename =
+    ("agglomerated_Poisson_classic_DG." +
+     Utilities::int_to_string(tria.locally_owned_subdomain(), 4));
+
+  std::ofstream output((filename + ".vtu").c_str());
   data_out.write_vtu(output);
+
+  if (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
+    {
+      std::vector<std::string> filenames;
+      for (unsigned int i = 0;
+           i < Utilities::MPI::n_mpi_processes(MPI_COMM_WORLD);
+           i++)
+        {
+          filenames.push_back("solution." + Utilities::int_to_string(i, 4) +
+                              ".vtu");
+        }
+      std::ofstream master_output("solution.pvtu");
+      data_out.write_pvtu_record(master_output, filenames);
+    }
 }
 
 template <int dim>
@@ -383,10 +464,11 @@ Poisson<dim>::run()
 }
 
 int
-main()
+main(int argc, char *argv[])
 {
-  const unsigned int fe_degree = 1;
-  Poisson<2>         poisson_problem(fe_degree);
+  const unsigned int               fe_degree = 1;
+  Utilities::MPI::MPI_InitFinalize mpi_initialization(argc, argv, 1);
+  Poisson<2>                       poisson_problem(fe_degree);
   poisson_problem.run();
   return 0;
 }
