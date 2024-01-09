@@ -20,6 +20,7 @@
 #include <deal.II/lac/sparsity_tools.h>
 
 #include <deal.II/numerics/data_out.h>
+#include <deal.II/numerics/vector_tools_integrate_difference.h>
 
 
 // Trilinos linear algebra is employed for parallel computations
@@ -41,6 +42,65 @@
 
 
 using namespace dealii;
+
+
+template <int dim>
+class Solution : public Function<dim>
+{
+public:
+  Solution()
+    : Function<dim>()
+  {}
+
+  virtual double
+  value(const Point<dim> &p, const unsigned int component = 0) const override;
+
+  virtual void
+  value_list(const std::vector<Point<dim>> &points,
+             std::vector<double> &          values,
+             const unsigned int /*component*/) const override;
+
+  virtual Tensor<1, dim>
+  gradient(const Point<dim> & p,
+           const unsigned int component = 0) const override;
+};
+
+
+
+template <int dim>
+double
+Solution<dim>::value(const Point<dim> &p, const unsigned int) const
+{
+  return std::sin(2. * numbers::PI * p[0]) *
+         std::sin(2. * numbers::PI * p[1]); // sin*sin
+}
+
+
+
+template <int dim>
+Tensor<1, dim>
+Solution<dim>::gradient(const Point<dim> &p, const unsigned int) const
+{
+  Tensor<1, dim> return_value;
+  return_value[0] =
+    numbers::PI * std::cos(numbers::PI * p[0]) * std::sin(numbers::PI * p[1]);
+  return_value[1] =
+    numbers::PI * std::cos(numbers::PI * p[1]) * std::sin(numbers::PI * p[0]);
+  return return_value;
+}
+
+
+
+template <int dim>
+void
+Solution<dim>::value_list(const std::vector<Point<dim>> &points,
+                          std::vector<double> &          values,
+                          const unsigned int /*component*/) const
+{
+  for (unsigned int i = 0; i < values.size(); ++i)
+    values[i] = this->value(points[i]);
+}
+
 
 
 template <int dim>
@@ -77,19 +137,14 @@ class Poisson
 private:
   void
   make_grid();
-
-  void
-  distribute_jumps_and_averages(
-    FEFaceValues<dim> &                                   fe_face0,
-    FEFaceValues<dim> &                                   fe_face1,
-    const typename DoFHandler<dim>::active_cell_iterator &cell,
-    const unsigned int                                    f);
   void
   assemble_system();
   void
   solve();
   void
   output_results();
+  void
+  compute_error() const;
 
 
   parallel::distributed::Triangulation<dim> tria;
@@ -111,7 +166,7 @@ public:
   void
   run();
 
-  double penalty = 50.;
+  double penalty = 100.;
 };
 
 
@@ -131,9 +186,6 @@ template <int dim>
 void
 Poisson<dim>::make_grid()
 {
-  GridGenerator::hyper_cube(tria, -1, 1);
-  tria.refine_global(6);
-
   classical_dh.distribute_dofs(dg_fe);
   const IndexSet &locally_owned_dofs = classical_dh.locally_owned_dofs();
   const IndexSet  locally_relevant_dofs =
@@ -142,7 +194,7 @@ Poisson<dim>::make_grid()
   constraints.clear();
   constraints.close();
 
-  DynamicSparsityPattern dsp(classical_dh.n_dofs());
+  DynamicSparsityPattern dsp(locally_relevant_dofs);
   DoFTools::make_flux_sparsity_pattern(classical_dh, dsp);
   SparsityTools::distribute_sparsity_pattern(dsp,
                                              classical_dh.locally_owned_dofs(),
@@ -166,12 +218,12 @@ void
 Poisson<dim>::assemble_system()
 {
   const unsigned int quadrature_degree = 2 * dg_fe.degree + 1;
-  FEFaceValues<dim>  fe_face0(mapping,
-                             dg_fe,
-                             QGauss<dim - 1>(quadrature_degree),
-                             update_values | update_JxW_values |
-                               update_gradients | update_quadrature_points |
-                               update_normal_vectors);
+  FEFaceValues<dim>  fe_faces0(mapping,
+                              dg_fe,
+                              QGauss<dim - 1>(quadrature_degree),
+                              update_values | update_JxW_values |
+                                update_gradients | update_quadrature_points |
+                                update_normal_vectors);
 
 
   FEValues<dim> fe_values(mapping,
@@ -180,20 +232,23 @@ Poisson<dim>::assemble_system()
                           update_values | update_JxW_values | update_gradients |
                             update_quadrature_points);
 
-  FEFaceValues<dim>  fe_face1(mapping,
-                             dg_fe,
-                             QGauss<dim - 1>(quadrature_degree),
-                             update_values | update_JxW_values |
-                               update_gradients | update_quadrature_points |
-                               update_normal_vectors);
+  FEFaceValues<dim>  fe_faces1(mapping,
+                              dg_fe,
+                              QGauss<dim - 1>(quadrature_degree),
+                              update_values | update_JxW_values |
+                                update_gradients | update_quadrature_points |
+                                update_normal_vectors);
   const unsigned int dofs_per_cell = dg_fe.n_dofs_per_cell();
 
   FullMatrix<double> cell_matrix(dofs_per_cell, dofs_per_cell);
   Vector<double>     cell_rhs(dofs_per_cell);
 
+  FullMatrix<double> M11(dofs_per_cell, dofs_per_cell);
+  FullMatrix<double> M12(dofs_per_cell, dofs_per_cell);
+  FullMatrix<double> M21(dofs_per_cell, dofs_per_cell);
+  FullMatrix<double> M22(dofs_per_cell, dofs_per_cell);
+
   std::vector<types::global_dof_index> local_dof_indices(dofs_per_cell);
-  std::vector<unsigned int>            visited_internal_faces;
-  std::vector<unsigned int>            visited_boundary_faces;
 
   // Loop over standard deal.II cells
   for (const auto &cell : classical_dh.active_cell_iterators())
@@ -233,161 +288,140 @@ Poisson<dim>::assemble_system()
               const double hf = cell->face(f)->measure();
               if (cell->face(f)->at_boundary())
                 {
-                  visited_boundary_faces.push_back(cell->face_index(f));
-                  fe_face0.reinit(cell, f);
+                  fe_faces0.reinit(cell, f);
 
-                  const auto &normals = fe_face0.get_normal_vectors();
+                  const auto &normals = fe_faces0.get_normal_vectors();
                   for (unsigned int q_index :
-                       fe_face0.quadrature_point_indices())
+                       fe_faces0.quadrature_point_indices())
                     {
                       for (unsigned int i = 0; i < dofs_per_cell; ++i)
                         {
                           for (unsigned int j = 0; j < dofs_per_cell; ++j)
                             {
                               cell_matrix(i, j) +=
-                                (-fe_face0.shape_value(i, q_index) *
-                                   fe_face0.shape_grad(j, q_index) *
+                                (-fe_faces0.shape_value(i, q_index) *
+                                   fe_faces0.shape_grad(j, q_index) *
                                    normals[q_index] -
-                                 fe_face0.shape_grad(i, q_index) *
+                                 fe_faces0.shape_grad(i, q_index) *
                                    normals[q_index] *
-                                   fe_face0.shape_value(j, q_index) +
+                                   fe_faces0.shape_value(j, q_index) +
                                  (penalty / hf) *
-                                   fe_face0.shape_value(i, q_index) *
-                                   fe_face0.shape_value(j, q_index)) *
-                                fe_face0.JxW(q_index);
+                                   fe_faces0.shape_value(i, q_index) *
+                                   fe_faces0.shape_value(j, q_index)) *
+                                fe_faces0.JxW(q_index);
                             }
                         }
                     }
                 }
-              else if (cell->active_cell_index() <
-                       cell->neighbor(f)->active_cell_index())
+              else
                 {
-                  visited_internal_faces.push_back(cell->face_index(f));
+                  const auto &neigh_cell = cell->neighbor(f);
 
-                  fe_face0.reinit(cell, f);
-                  fe_face1.reinit(cell->neighbor(f),
-                                  cell->neighbor_of_neighbor(f));
-
-                  std::vector<types::global_dof_index>
-                    local_dof_indices_neighbor(dofs_per_cell);
-
-                  FullMatrix<double> M11(dofs_per_cell, dofs_per_cell);
-                  FullMatrix<double> M12(dofs_per_cell, dofs_per_cell);
-                  FullMatrix<double> M21(dofs_per_cell, dofs_per_cell);
-                  FullMatrix<double> M22(dofs_per_cell, dofs_per_cell);
-
-                  const auto &normals = fe_face1.get_normal_vectors();
-                  // M11
-                  for (unsigned int q_index :
-                       fe_face0.quadrature_point_indices())
+                  if (cell->active_cell_index() <
+                      neigh_cell->active_cell_index())
                     {
+                      fe_faces0.reinit(cell, f);
+                      fe_faces1.reinit(neigh_cell,
+                                       cell->neighbor_of_neighbor(f));
+
+                      std::vector<types::global_dof_index>
+                        local_dof_indices_neighbor(dofs_per_cell);
+
+                      M11 = 0.;
+                      M12 = 0.;
+                      M21 = 0.;
+                      M22 = 0.;
+
+                      const auto &normals = fe_faces0.get_normal_vectors();
+                      // M11
+                      for (unsigned int q_index :
+                           fe_faces0.quadrature_point_indices())
+                        {
 #ifdef AGGLO_DEBUG
-                      pcout << normals[q_index] << std::endl;
+                          std::cout << normals[q_index] << std::endl;
 #endif
-                      for (unsigned int i = 0; i < dofs_per_cell; ++i)
-                        {
-                          for (unsigned int j = 0; j < dofs_per_cell; ++j)
+                          for (unsigned int i = 0; i < dofs_per_cell; ++i)
                             {
-                              M11(i, j) +=
-                                (-0.5 * fe_face0.shape_grad(i, q_index) *
-                                   normals[q_index] *
-                                   fe_face0.shape_value(j, q_index) -
-                                 0.5 * fe_face0.shape_grad(j, q_index) *
-                                   normals[q_index] *
-                                   fe_face0.shape_value(i, q_index) +
-                                 (penalty / hf) *
-                                   fe_face0.shape_value(i, q_index) *
-                                   fe_face0.shape_value(j, q_index)) *
-                                fe_face0.JxW(q_index);
+                              for (unsigned int j = 0; j < dofs_per_cell; ++j)
+                                {
+                                  M11(i, j) +=
+                                    (-0.5 * fe_faces0.shape_grad(i, q_index) *
+                                       normals[q_index] *
+                                       fe_faces0.shape_value(j, q_index) -
+                                     0.5 * fe_faces0.shape_grad(j, q_index) *
+                                       normals[q_index] *
+                                       fe_faces0.shape_value(i, q_index) +
+                                     (penalty)*fe_faces0.shape_value(i,
+                                                                     q_index) *
+                                       fe_faces0.shape_value(j, q_index)) *
+                                    fe_faces0.JxW(q_index);
+
+                                  M12(i, j) +=
+                                    (0.5 * fe_faces0.shape_grad(i, q_index) *
+                                       normals[q_index] *
+                                       fe_faces1.shape_value(j, q_index) -
+                                     0.5 * fe_faces1.shape_grad(j, q_index) *
+                                       normals[q_index] *
+                                       fe_faces0.shape_value(i, q_index) -
+                                     (penalty)*fe_faces0.shape_value(i,
+                                                                     q_index) *
+                                       fe_faces1.shape_value(j, q_index)) *
+                                    fe_faces1.JxW(q_index);
+
+                                  // A10
+                                  M21(i, j) +=
+                                    (-0.5 * fe_faces1.shape_grad(i, q_index) *
+                                       normals[q_index] *
+                                       fe_faces0.shape_value(j, q_index) +
+                                     0.5 * fe_faces0.shape_grad(j, q_index) *
+                                       normals[q_index] *
+                                       fe_faces1.shape_value(i, q_index) -
+                                     (penalty)*fe_faces1.shape_value(i,
+                                                                     q_index) *
+                                       fe_faces0.shape_value(j, q_index)) *
+                                    fe_faces1.JxW(q_index);
+
+                                  // A11
+                                  M22(i, j) +=
+                                    (0.5 * fe_faces1.shape_grad(i, q_index) *
+                                       normals[q_index] *
+                                       fe_faces1.shape_value(j, q_index) +
+                                     0.5 * fe_faces1.shape_grad(j, q_index) *
+                                       normals[q_index] *
+                                       fe_faces1.shape_value(i, q_index) +
+                                     (penalty)*fe_faces1.shape_value(i,
+                                                                     q_index) *
+                                       fe_faces1.shape_value(j, q_index)) *
+                                    fe_faces1.JxW(q_index);
+                                }
                             }
                         }
-                    }
-                  // M12
-                  for (unsigned int q_index :
-                       fe_face0.quadrature_point_indices())
-                    {
-                      for (unsigned int i = 0; i < dofs_per_cell; ++i)
-                        {
-                          for (unsigned int j = 0; j < dofs_per_cell; ++j)
-                            {
-                              M12(i, j) +=
-                                (0.5 * fe_face0.shape_grad(i, q_index) *
-                                   normals[q_index] *
-                                   fe_face1.shape_value(j, q_index) -
-                                 0.5 * fe_face1.shape_grad(j, q_index) *
-                                   normals[q_index] *
-                                   fe_face0.shape_value(i, q_index) -
-                                 (penalty / hf) *
-                                   fe_face0.shape_value(i, q_index) *
-                                   fe_face1.shape_value(j, q_index)) *
-                                fe_face1.JxW(q_index);
-                            }
-                        }
-                    }
-                  // A10
-                  for (unsigned int q_index :
-                       fe_face0.quadrature_point_indices())
-                    {
-                      for (unsigned int i = 0; i < dofs_per_cell; ++i)
-                        {
-                          for (unsigned int j = 0; j < dofs_per_cell; ++j)
-                            {
-                              M21(i, j) +=
-                                (-0.5 * fe_face1.shape_grad(i, q_index) *
-                                   normals[q_index] *
-                                   fe_face0.shape_value(j, q_index) +
-                                 0.5 * fe_face0.shape_grad(j, q_index) *
-                                   normals[q_index] *
-                                   fe_face1.shape_value(i, q_index) -
-                                 (penalty / hf) *
-                                   fe_face1.shape_value(i, q_index) *
-                                   fe_face0.shape_value(j, q_index)) *
-                                fe_face1.JxW(q_index);
-                            }
-                        }
-                    }
-                  // A11
-                  for (unsigned int q_index :
-                       fe_face0.quadrature_point_indices())
-                    {
-                      for (unsigned int i = 0; i < dofs_per_cell; ++i)
-                        {
-                          for (unsigned int j = 0; j < dofs_per_cell; ++j)
-                            {
-                              M22(i, j) +=
-                                (0.5 * fe_face1.shape_grad(i, q_index) *
-                                   normals[q_index] *
-                                   fe_face1.shape_value(j, q_index) +
-                                 0.5 * fe_face1.shape_grad(j, q_index) *
-                                   normals[q_index] *
-                                   fe_face1.shape_value(i, q_index) +
-                                 (penalty / hf) *
-                                   fe_face1.shape_value(i, q_index) *
-                                   fe_face1.shape_value(j, q_index)) *
-                                fe_face1.JxW(q_index);
-                            }
-                        }
-                    }
 
 // distribute DoFs accordingly
 #ifdef AGGLO_DEBUG
-                  pcout << "Neighbor is " << cell->neighbor(f) << std::endl;
+                      pcout << "Neighbor is " << neigh_cell << std::endl;
 #endif
-                  cell->neighbor(f)->get_dof_indices(
-                    local_dof_indices_neighbor);
+                      neigh_cell->get_dof_indices(local_dof_indices_neighbor);
 
-                  system_matrix.add(local_dof_indices, M11);
-                  system_matrix.add(local_dof_indices,
-                                    local_dof_indices_neighbor,
-                                    M12);
-                  system_matrix.add(local_dof_indices_neighbor,
-                                    local_dof_indices,
-                                    M21);
-                  system_matrix.add(local_dof_indices_neighbor, M22);
+                      constraints.distribute_local_to_global(M11,
+                                                             local_dof_indices,
+                                                             system_matrix);
+                      constraints.distribute_local_to_global(
+                        M12,
+                        local_dof_indices,
+                        local_dof_indices_neighbor,
+                        system_matrix);
+                      constraints.distribute_local_to_global(
+                        M21,
+                        local_dof_indices_neighbor,
+                        local_dof_indices,
+                        system_matrix);
+                      constraints.distribute_local_to_global(
+                        M22, local_dof_indices_neighbor, system_matrix);
 
-                } // check idx neighbors
-            }     // over faces
-
+                    } // check idx neighbors
+                }     // over faces
+            }
           constraints.distribute_local_to_global(cell_matrix,
                                                  cell_rhs,
                                                  local_dof_indices,
@@ -398,6 +432,7 @@ Poisson<dim>::assemble_system()
   system_matrix.compress(VectorOperation::add);
   system_rhs.compress(VectorOperation::add);
 }
+
 
 
 template <int dim>
@@ -453,14 +488,63 @@ Poisson<dim>::output_results()
     }
 }
 
+
+template <int dim>
+void
+Poisson<dim>::compute_error() const
+{
+  pcout << "Computing error: " << std::endl;
+  Vector<double> cellwise_error(locally_relevant_solution.size());
+  VectorTools::integrate_difference(mapping,
+                                    classical_dh,
+                                    locally_relevant_solution,
+                                    Solution<dim>(),
+                                    cellwise_error,
+                                    QGauss<dim>(2 * dg_fe.degree + 1),
+                                    VectorTools::NormType::L2_norm);
+  const double error =
+    VectorTools::compute_global_error(tria,
+                                      cellwise_error,
+                                      VectorTools::NormType::L2_norm);
+
+  pcout << "L2 norm of error: " << error << std::endl;
+}
+
 template <int dim>
 void
 Poisson<dim>::run()
 {
-  make_grid();
-  assemble_system();
-  solve();
-  output_results();
+  pcout << "Running on " << Utilities::MPI::n_mpi_processes(MPI_COMM_WORLD)
+        << " MPI rank(s)." << std::endl;
+
+  const unsigned int n_cycles = 4;
+  for (unsigned int cycle = 0; cycle < n_cycles; ++cycle)
+    {
+      pcout << "Cycle " << cycle << ':' << std::endl;
+
+      if (cycle == 0)
+        {
+          GridGenerator::hyper_cube(tria, 0., 1.);
+          tria.refine_global(5);
+        }
+      else
+        tria.refine_global(1);
+
+      make_grid();
+
+      pcout << "   Number of active cells:       "
+            << tria.n_global_active_cells() << std::endl
+            << "   Number of degrees of freedom: " << classical_dh.n_dofs()
+            << std::endl;
+
+      assemble_system();
+      solve();
+      if (cycle < 3)
+        output_results();
+      compute_error();
+
+      pcout << std::endl;
+    }
 }
 
 int
@@ -468,7 +552,9 @@ main(int argc, char *argv[])
 {
   const unsigned int               fe_degree = 1;
   Utilities::MPI::MPI_InitFinalize mpi_initialization(argc, argv, 1);
-  Poisson<2>                       poisson_problem(fe_degree);
+
+  Poisson<2> poisson_problem(fe_degree);
   poisson_problem.run();
+
   return 0;
 }
