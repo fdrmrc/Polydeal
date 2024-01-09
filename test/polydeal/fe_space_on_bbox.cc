@@ -79,10 +79,10 @@ test()
                                                  cells_to_be_agglomerated4);
 
       // Agglomerate the cells just stored
-      ah.agglomerate_cells(cells_to_be_agglomerated);
-      ah.agglomerate_cells(cells_to_be_agglomerated2);
-      ah.agglomerate_cells(cells_to_be_agglomerated3);
-      ah.agglomerate_cells(cells_to_be_agglomerated4);
+      ah.insert_agglomerate(cells_to_be_agglomerated);
+      ah.insert_agglomerate(cells_to_be_agglomerated2);
+      ah.insert_agglomerate(cells_to_be_agglomerated3);
+      ah.insert_agglomerate(cells_to_be_agglomerated4);
     }
   else if constexpr (dim == 3)
     {
@@ -94,7 +94,7 @@ test()
                                                  idxs_to_be_agglomerated,
                                                  cells_to_be_agglomerated);
 
-      ah.agglomerate_cells(cells_to_be_agglomerated);
+      ah.insert_agglomerate(cells_to_be_agglomerated);
     }
 
   FE_DGQ<dim> fe_dg(1);

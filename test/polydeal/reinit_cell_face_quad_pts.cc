@@ -69,9 +69,9 @@ test_q_points_agglomerated_face(Triangulation<dim> &tria)
                                              cells_to_be_agglomerated3);
 
   // Agglomerate the cells just stored
-  ah.agglomerate_cells(cells_to_be_agglomerated);
-  ah.agglomerate_cells(cells_to_be_agglomerated2);
-  ah.agglomerate_cells(cells_to_be_agglomerated3);
+  ah.insert_agglomerate(cells_to_be_agglomerated);
+  ah.insert_agglomerate(cells_to_be_agglomerated2);
+  ah.insert_agglomerate(cells_to_be_agglomerated3);
 
 
   FE_DGQ<2> fe_dg(1);

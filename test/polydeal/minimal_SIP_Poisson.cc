@@ -199,10 +199,10 @@ Poisson<dim>::setup_agglomeration()
 
 
           // Agglomerate the cells just stored
-          ah->agglomerate_cells(cells_to_be_agglomerated);
-          ah->agglomerate_cells(cells_to_be_agglomerated2);
-          ah->agglomerate_cells(cells_to_be_agglomerated3);
-          ah->agglomerate_cells(cells_to_be_agglomerated4);
+          ah->insert_agglomerate(cells_to_be_agglomerated);
+          ah->insert_agglomerate(cells_to_be_agglomerated2);
+          ah->insert_agglomerate(cells_to_be_agglomerated3);
+          ah->insert_agglomerate(cells_to_be_agglomerated4);
         }
       else if constexpr (dim == 3)
         {
@@ -216,7 +216,7 @@ Poisson<dim>::setup_agglomeration()
                                                      cells_to_be_agglomerated);
 
           // Agglomerate the cells just stored
-          ah->agglomerate_cells(cells_to_be_agglomerated);
+          ah->insert_agglomerate(cells_to_be_agglomerated);
         }
     }
 

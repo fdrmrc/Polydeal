@@ -55,7 +55,7 @@ test_internal_grid(Triangulation<dim> &tria)
   //   }
 
   // Agglomerate the cells just stored
-  ah.agglomerate_cells(cells_to_be_agglomerated);
+  ah.insert_agglomerate(cells_to_be_agglomerated);
 
   FE_DGQ<2> fe_dg(1);
   ah.distribute_agglomerated_dofs(fe_dg);
@@ -116,7 +116,7 @@ test_external_grid(Triangulation<2> &tria)
                                              cells_to_be_agglomerated);
 
   // Agglomerate the cells just stored
-  ah.agglomerate_cells(cells_to_be_agglomerated);
+  ah.insert_agglomerate(cells_to_be_agglomerated);
 
   FE_DGQ<2> fe_dg(1);
   ah.distribute_agglomerated_dofs(fe_dg);

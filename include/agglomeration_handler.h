@@ -48,6 +48,8 @@
 
 #include <deal.II/numerics/data_out.h>
 
+#include <agglomeration_iterator.h>
+
 #include <fstream>
 #include <utility>
 
@@ -94,6 +96,12 @@ template <int dim, int spacedim = dim>
 class AgglomerationHandler : public Subscriptor
 {
 public:
+  using agglomeration_iterator = AgglomerationIterator<dim, spacedim>;
+
+  using agglomeration_container =
+    typename AgglomerationIterator<dim, spacedim>::agglomeration_container;
+
+
   enum CellAgglomerationType
   {
     master   = 0,
@@ -136,6 +144,36 @@ public:
     // disconnect the signal
     tria_listener.disconnect();
   }
+
+  /**
+   * Iterator to the first polygon.
+   */
+  agglomeration_iterator
+  begin() const;
+
+  /**
+   * Iterator to the first polygon.
+   */
+  agglomeration_iterator
+  begin();
+
+  /**
+   * Iterator to one past the last polygonal element.
+   */
+  agglomeration_iterator
+  end() const;
+
+  /**
+   * Iterator to one past the last polygonal element.
+   */
+  agglomeration_iterator
+  end();
+
+  template <int, int>
+  friend class AgglomerationIterator;
+
+  template <int, int>
+  friend class AgglomerationAccessor;
 
   /**
    * Distribute degrees of freedom on a grid where some cells have been
@@ -206,12 +244,13 @@ public:
    * -1: cell is a master cell
    *
    * @note Cells are assumed to be adjacent one to each other, and no check
-   * about this is done. TODO
+   * about this is done.
    */
   void
-  agglomerate_cells(const std::vector<
-                    typename Triangulation<dim, spacedim>::active_cell_iterator>
-                      &vec_of_cells);
+  insert_agglomerate(
+    const std::vector<
+      typename Triangulation<dim, spacedim>::active_cell_iterator>
+      &vec_of_cells);
 
   /**
    * Get cells agglomerated with the given cell iterator. Return an empty vector
@@ -613,7 +652,8 @@ public:
   decltype(auto)
   agglomeration_cell_iterators()
   {
-    return agglo_dh.active_cell_iterators() | IteratorFilters::IsNotSlave(this);
+    return agglo_dh.active_cell_iterators() |
+           IteratorFilters::IsNotSlave(this); // iterator range
   }
 
   std::unique_ptr<MappingFEField<dim, spacedim> /*, Vector<double>*/>
@@ -843,6 +883,12 @@ private:
    * Dummy FEFaceValues, needed for face quadratures.
    */
   std::unique_ptr<FEFaceValues<dim, spacedim>> no_face_values;
+
+  /**
+   * A contiguous container for all of the master cells.
+   */
+  std::vector<typename Triangulation<dim, spacedim>::active_cell_iterator>
+    master_cells_container;
 
   /**
    * Initialize connectivity informations
@@ -1141,5 +1187,45 @@ private:
       }
   }
 };
+
+
+
+template <int dim, int spacedim>
+AgglomerationIterator<dim, spacedim>
+AgglomerationHandler<dim, spacedim>::begin() const
+{
+  Assert(n_agglomerations > 0,
+         ExcMessage("No agglomeration has been performed."));
+
+  return {*master_cells_container.begin(), this};
+}
+
+template <int dim, int spacedim>
+AgglomerationIterator<dim, spacedim>
+AgglomerationHandler<dim, spacedim>::begin()
+{
+  Assert(n_agglomerations > 0,
+         ExcMessage("No agglomeration has been performed."));
+
+  return {*master_cells_container.begin(), this};
+}
+
+template <int dim, int spacedim>
+AgglomerationIterator<dim, spacedim>
+AgglomerationHandler<dim, spacedim>::end() const
+{
+  Assert(n_agglomerations > 0,
+         ExcMessage("No agglomeration has been performed."));
+  return {*master_cells_container.end(), this};
+}
+
+template <int dim, int spacedim>
+AgglomerationIterator<dim, spacedim>
+AgglomerationHandler<dim, spacedim>::end()
+{
+  Assert(n_agglomerations > 0,
+         ExcMessage("No agglomeration has been performed."));
+  return {*master_cells_container.end(), this};
+}
 
 #endif
