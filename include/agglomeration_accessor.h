@@ -105,9 +105,21 @@ public:
   agglomeration_container
   get_agglomerate() const;
 
+  /**
+   * Move to the next cell in the polygonal mesh.
+   */
   void
   next();
 
+  /**
+   * Move to the previous cell in the polygonal mesh.
+   */
+  void
+  prev();
+
+  /**
+   * Return the index of the present polygon.
+   */
   types::global_cell_index
   index() const;
 
@@ -130,12 +142,12 @@ private:
 
 
   /**
-   * The actual polytope.
+   * The unique deal.II cell associated to the present polytope.
    */
   typename Triangulation<dim, spacedim>::active_cell_iterator master_cell;
 
   /**
-   * The index of the polytope
+   * The index of the present polytope.
    */
   types::global_cell_index present_index;
 
@@ -344,12 +356,17 @@ inline AgglomerationAccessor<dim, spacedim>::AgglomerationAccessor(
   const typename Triangulation<dim, spacedim>::active_cell_iterator &cell,
   const AgglomerationHandler<dim, spacedim> *                        ah)
 {
-  master_cell = cell;
-  handler     = const_cast<AgglomerationHandler<dim, spacedim> *>(ah);
+  handler = const_cast<AgglomerationHandler<dim, spacedim> *>(ah);
   if (cell.state() == IteratorState::invalid)
-    present_index = handler->master_cells_container.size();
+    {
+      present_index = handler->master_cells_container.size();
+      master_cell   = handler->master_cells_container[present_index];
+    }
   else
-    present_index = handler->master2polygon.at(cell->active_cell_index());
+    {
+      present_index = handler->master2polygon.at(cell->active_cell_index());
+      master_cell   = cell;
+    }
 }
 
 
@@ -412,15 +429,23 @@ AgglomerationAccessor<dim, spacedim>::polytope_boundary() const
 
 
 
-/**
- * Move to the next polygonal element
- */
 template <int dim, int spacedim>
 inline void
 AgglomerationAccessor<dim, spacedim>::next()
 {
   // Increment the present index and update the polygon
   ++present_index;
+  master_cell = handler->master_cells_container[present_index];
+}
+
+
+
+template <int dim, int spacedim>
+inline void
+AgglomerationAccessor<dim, spacedim>::prev()
+{
+  // Decrement the present index and update the polygon
+  --present_index;
   master_cell = handler->master_cells_container[present_index];
 }
 

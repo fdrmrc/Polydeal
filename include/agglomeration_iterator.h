@@ -103,21 +103,21 @@ public:
   AgglomerationIterator
   operator++(int);
 
-  // /**
-  //  * Prefix <tt>\--</tt> operator: <tt>\--iterator</tt>. This operator moves
-  //  * the iterator to the previous element and returns a reference to
-  //  * <tt>*this</tt>.
-  //  */
-  // AgglomerationIterator &
-  // operator--();
+  /**
+   * Prefix <tt>\--</tt> operator: <tt>\--iterator</tt>. This operator moves
+   * the iterator to the previous element and returns a reference to
+   * <tt>*this</tt>.
+   */
+  AgglomerationIterator &
+  operator--();
 
-  // /**
-  //  * Postfix <tt>\--</tt> operator: <tt>iterator\--</tt>. This operator moves
-  //  * the iterator to the previous element, but returns an iterator to the
-  //  * element previously pointed to.
-  //  */
-  // AgglomerationIterator
-  // operator--(int);
+  /**
+   * Postfix <tt>\--</tt> operator: <tt>iterator\--</tt>. This operator moves
+   * the iterator to the previous element, but returns an iterator to the
+   * element previously pointed to.
+   */
+  AgglomerationIterator
+  operator--(int);
 
   /**
    * Mark the class as bidirectional iterator and declare some alias which
@@ -229,25 +229,25 @@ AgglomerationIterator<dim, spacedim>::operator++(int)
 
 
 
-// template <int dim, int spacedim>
-// inline AgglomerationIterator<dim, spacedim> &
-// AgglomerationIterator<dim, spacedim>::operator--()
-// {
-//   accessor.prev();
-//   return *this;
-// }
+template <int dim, int spacedim>
+inline AgglomerationIterator<dim, spacedim> &
+AgglomerationIterator<dim, spacedim>::operator--()
+{
+  accessor.prev();
+  return *this;
+}
 
 
 
-// template <int dim, int spacedim>
-// inline AgglomerationIterator<dim, spacedim>
-// AgglomerationIterator<dim, spacedim>::operator--(int)
-// {
-//   AgglomerationIterator tmp(*this);
-//                         operator--();
+template <int dim, int spacedim>
+inline AgglomerationIterator<dim, spacedim>
+AgglomerationIterator<dim, spacedim>::operator--(int)
+{
+  AgglomerationIterator tmp(*this);
+                        operator--();
 
-//   return tmp;
-// }
+  return tmp;
+}
 
 
 
