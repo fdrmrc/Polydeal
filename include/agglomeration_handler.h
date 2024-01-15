@@ -17,6 +17,7 @@
 #define agglomeration_handler_h
 
 #include <deal.II/base/bounding_box_data_out.h>
+#include <deal.II/base/iterator_range.h>
 #include <deal.II/base/quadrature.h>
 #include <deal.II/base/subscriptor.h>
 
@@ -45,8 +46,6 @@
 
 #include <deal.II/non_matching/fe_immersed_values.h>
 #include <deal.II/non_matching/immersed_surface_quadrature.h>
-
-#include <deal.II/numerics/data_out.h>
 
 #include <agglomeration_iterator.h>
 
@@ -170,10 +169,17 @@ public:
   end();
 
   /**
-   * Iterator to the last cell.
+   * Iterator to the last polygonal element.
    */
   agglomeration_iterator
   last();
+
+  /**
+   * Returns an IteratorRange that makes up all the polygonal elements in the
+   * mesh.
+   */
+  IteratorRange<agglomeration_iterator>
+  polytope_iterators() const;
 
   template <int, int>
   friend class AgglomerationIterator;
@@ -1248,5 +1254,18 @@ AgglomerationHandler<dim, spacedim>::last()
          ExcMessage("No agglomeration has been performed."));
   return {master_cells_container.back(), this};
 }
+
+
+
+template <int dim, int spacedim>
+IteratorRange<
+  typename AgglomerationHandler<dim, spacedim>::agglomeration_iterator>
+AgglomerationHandler<dim, spacedim>::polytope_iterators() const
+{
+  return IteratorRange<
+    typename AgglomerationHandler<dim, spacedim>::agglomeration_iterator>(
+    begin(), end());
+}
+
 
 #endif

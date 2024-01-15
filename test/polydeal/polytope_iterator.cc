@@ -78,6 +78,8 @@ private:
   setup_agglomeration();
   void
   test1();
+  void
+  test2();
 
 
 
@@ -214,7 +216,8 @@ TestIterator<dim>::test1()
           std::cout << idx << std::endl;
       } // Loop over polytopes
   }
-
+  std::cout << std::endl;
+  std::cout << "Looping backwards: " << std::endl;
   {
     // Looping from the end
     auto polytope = ah->last();
@@ -232,6 +235,27 @@ TestIterator<dim>::test1()
 }
 
 
+template <int dim>
+void
+TestIterator<dim>::test2()
+{
+  std::cout << "Test with IteratorRange" << std::endl;
+
+  const unsigned int                   dofs_per_cell = ah->n_dofs_per_cell();
+  std::vector<types::global_dof_index> local_dof_indices(dofs_per_cell);
+  for (const auto &polytope : ah->polytope_iterators())
+    {
+      const unsigned int n_faces = polytope->n_faces();
+      std::cout << "n_faces =" << n_faces << std::endl;
+      polytope->get_dof_indices(local_dof_indices);
+      std::cout << "Global DoF indices for polytope " << polytope->index()
+                << std::endl;
+      for (const types::global_dof_index idx : local_dof_indices)
+        std::cout << idx << std::endl;
+    }
+}
+
+
 
 template <int dim>
 void
@@ -240,6 +264,7 @@ TestIterator<dim>::run()
   make_grid();
   setup_agglomeration();
   test1();
+  test2();
 }
 
 int
