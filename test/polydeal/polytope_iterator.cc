@@ -202,16 +202,33 @@ TestIterator<dim>::test1()
   const unsigned int                   dofs_per_cell = ah->n_dofs_per_cell();
   std::vector<types::global_dof_index> local_dof_indices(dofs_per_cell);
   auto                                 polytope = ah->begin();
-  for (; polytope != ah->end(); ++polytope)
-    {
-      const unsigned int n_faces = polytope->n_faces();
-      std::cout << "n_faces =" << n_faces << std::endl;
-      polytope->get_dof_indices(local_dof_indices);
-      std::cout << "Global DoF indices for polytope " << polytope->index()
-                << std::endl;
-      for (const types::global_dof_index idx : local_dof_indices)
-        std::cout << idx << std::endl;
-    } // Loop over polytopes
+  {
+    for (; polytope != ah->end(); ++polytope)
+      {
+        const unsigned int n_faces = polytope->n_faces();
+        std::cout << "n_faces =" << n_faces << std::endl;
+        polytope->get_dof_indices(local_dof_indices);
+        std::cout << "Global DoF indices for polytope " << polytope->index()
+                  << std::endl;
+        for (const types::global_dof_index idx : local_dof_indices)
+          std::cout << idx << std::endl;
+      } // Loop over polytopes
+  }
+
+  {
+    // Looping from the end
+    auto polytope = ah->last();
+    for (; polytope != ah->begin(); --polytope)
+      {
+        const unsigned int n_faces = polytope->n_faces();
+        std::cout << "n_faces =" << n_faces << std::endl;
+        polytope->get_dof_indices(local_dof_indices);
+        std::cout << "Global DoF indices for polytope " << polytope->index()
+                  << std::endl;
+        for (const types::global_dof_index idx : local_dof_indices)
+          std::cout << idx << std::endl;
+      } // Loop over polytopes
+  }
 }
 
 
