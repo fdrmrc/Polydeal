@@ -2,7 +2,6 @@ var hierarchy =
 [
     [ "FunctionTime< typename Number >", "http://www.dealii.org/developer/doxygen/deal.II/classFunctionTime.html", [
       [ "Function< dim >", "http://www.dealii.org/developer/doxygen/deal.II/classFunction.html", [
-        [ "RightHandSide< dim >", "class_right_hand_side.html", null ],
         [ "RightHandSide< dim >", "class_right_hand_side.html", null ]
       ] ]
     ] ],
