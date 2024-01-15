@@ -169,6 +169,12 @@ public:
   agglomeration_iterator
   end();
 
+  /**
+   * Iterator to the last cell.
+   */
+  agglomeration_iterator
+  last();
+
   template <int, int>
   friend class AgglomerationIterator;
 
@@ -1196,9 +1202,10 @@ AgglomerationHandler<dim, spacedim>::begin() const
 {
   Assert(n_agglomerations > 0,
          ExcMessage("No agglomeration has been performed."));
-
   return {*master_cells_container.begin(), this};
 }
+
+
 
 template <int dim, int spacedim>
 AgglomerationIterator<dim, spacedim>
@@ -1206,9 +1213,10 @@ AgglomerationHandler<dim, spacedim>::begin()
 {
   Assert(n_agglomerations > 0,
          ExcMessage("No agglomeration has been performed."));
-
   return {*master_cells_container.begin(), this};
 }
+
+
 
 template <int dim, int spacedim>
 AgglomerationIterator<dim, spacedim>
@@ -1219,6 +1227,8 @@ AgglomerationHandler<dim, spacedim>::end() const
   return {*master_cells_container.end(), this};
 }
 
+
+
 template <int dim, int spacedim>
 AgglomerationIterator<dim, spacedim>
 AgglomerationHandler<dim, spacedim>::end()
@@ -1226,6 +1236,17 @@ AgglomerationHandler<dim, spacedim>::end()
   Assert(n_agglomerations > 0,
          ExcMessage("No agglomeration has been performed."));
   return {*master_cells_container.end(), this};
+}
+
+
+
+template <int dim, int spacedim>
+AgglomerationIterator<dim, spacedim>
+AgglomerationHandler<dim, spacedim>::last()
+{
+  Assert(n_agglomerations > 0,
+         ExcMessage("No agglomeration has been performed."));
+  return {master_cells_container.back(), this};
 }
 
 #endif
