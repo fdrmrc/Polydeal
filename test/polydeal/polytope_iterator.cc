@@ -80,6 +80,8 @@ private:
   test1();
   void
   test2();
+  void
+  test3();
 
 
 
@@ -235,6 +237,7 @@ TestIterator<dim>::test1()
 }
 
 
+
 template <int dim>
 void
 TestIterator<dim>::test2()
@@ -259,12 +262,39 @@ TestIterator<dim>::test2()
 
 template <int dim>
 void
+TestIterator<dim>::test3()
+{
+  std::cout << "Test polytope_boundary()" << std::endl;
+
+  const unsigned int                   dofs_per_cell = ah->n_dofs_per_cell();
+  std::vector<types::global_dof_index> local_dof_indices(dofs_per_cell);
+  for (const auto &polytope : ah->polytope_iterators())
+    {
+      std::cout << "Polytope number: " << polytope->index() << std::endl;
+      const auto & boundary   = polytope->polytope_boundary();
+      unsigned int face_index = 0;
+      for (const auto &face : boundary)
+        {
+          std::cout << "Face index: " << ++face_index << std::endl;
+          for (unsigned int vertex_index :
+               GeometryInfo<dim - 1>::vertex_indices())
+            std::cout << face->vertex(vertex_index) << std::endl;
+        }
+      std::cout << std::endl;
+    }
+}
+
+
+
+template <int dim>
+void
 TestIterator<dim>::run()
 {
   make_grid();
   setup_agglomeration();
   test1();
   test2();
+  test3();
 }
 
 int
