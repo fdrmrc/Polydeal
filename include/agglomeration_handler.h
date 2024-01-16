@@ -530,14 +530,18 @@ public:
       }
   }
 
-
-
   /**
    * Construct a finite element space on the agglomeration.
    */
   const FEValues<dim, spacedim> &
   reinit(
     const typename DoFHandler<dim, spacedim>::active_cell_iterator &cell) const;
+
+  /**
+   * Construct a finite element space on the agglomeration.
+   */
+  const FEValues<dim, spacedim> &
+  reinit(const AgglomerationIterator<dim, spacedim> &polytope) const;
 
   /**
    * For a given master cell `cell` and agglomerated face

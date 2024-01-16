@@ -101,15 +101,15 @@ test()
   ah.distribute_agglomerated_dofs(fe_dg);
   ah.initialize_fe_values(QGauss<dim>(1), update_JxW_values);
 
-  for (const auto &cell : ah.agglomeration_cell_iterators())
-    if (ah.is_master_cell(cell))
-      {
-        const auto &fev = ah.reinit(cell);
-        double      sum = 0.;
-        for (const auto weight : fev.get_JxW_values())
-          sum += weight;
-        std::cout << "Sum is: " << sum << std::endl;
-      }
+  // Variant using iterators
+  for (const auto &polytope : ah.polytope_iterators())
+    {
+      const auto &fev = ah.reinit(polytope);
+      double      sum = 0.;
+      for (const auto weight : fev.get_JxW_values())
+        sum += weight;
+      std::cout << "Sum is: " << sum << std::endl;
+    }
 }
 
 
