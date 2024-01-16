@@ -39,7 +39,7 @@ class AgglomerationIterator;
 
 
 /**
- * Accessor class used by PolygonIterator to access agglomeration data.
+ * Accessor class used by AgglomerationIterator to access agglomeration data.
  */
 template <int dim, int spacedim = dim>
 class AgglomerationAccessor
@@ -74,7 +74,7 @@ public:
   neighbor(const unsigned int f) const;
 
   /**
-   * Return the present the index (seen from the neighboring agglomerate) of the
+   * Return the present index (seen from the neighboring agglomerate) of the
    * present face f.
    */
   unsigned int
@@ -95,7 +95,7 @@ public:
   /**
    * Return a vector of face iterators describing the boundary of agglomerate.
    */
-  const agglomeration_container &
+  const std::vector<typename Triangulation<dim>::active_face_iterator> &
   polytope_boundary() const;
 
 
@@ -115,7 +115,7 @@ public:
 private:
   /**
    * Private constructor for an agglomerate. This is meant to be invoked by
-   * the PolygonIterator class. It takes as input the master cell of the
+   * the AgglomerationIterator class. It takes as input the master cell of the
    * agglomerate and a pointer to the handler.
    */
   AgglomerationAccessor(
@@ -428,8 +428,7 @@ AgglomerationAccessor<dim, spacedim>::at_boundary(const unsigned int f) const
  * a sequence of edges (in 2D) or faces (in 3D).
  */
 template <int dim, int spacedim>
-inline const typename AgglomerationAccessor<dim,
-                                            spacedim>::agglomeration_container &
+inline const std::vector<typename Triangulation<dim>::active_face_iterator> &
 AgglomerationAccessor<dim, spacedim>::polytope_boundary() const
 {
   return handler->polygon_boundary[master_cell];
