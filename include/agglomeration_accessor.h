@@ -127,8 +127,8 @@ public:
 private:
   /**
    * Private constructor for an agglomerate. This is meant to be invoked by
-   * the PolygonIterator class. It takes as input a vector of cells composing
-   * the agglomerate.
+   * the PolygonIterator class. It takes as input the master cell of the
+   * agglomerate and a pointer to the handler.
    */
   AgglomerationAccessor(
     const typename Triangulation<dim, spacedim>::active_cell_iterator
