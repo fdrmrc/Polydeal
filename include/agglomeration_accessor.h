@@ -106,18 +106,6 @@ public:
   get_agglomerate() const;
 
   /**
-   * Move to the next cell in the polygonal mesh.
-   */
-  void
-  next();
-
-  /**
-   * Move to the previous cell in the polygonal mesh.
-   */
-  void
-  prev();
-
-  /**
    * Return the index of the present polygon.
    */
   types::global_cell_index
@@ -164,11 +152,31 @@ private:
     const typename Triangulation<dim, spacedim>::active_cell_iterator &cell)
     const;
 
+  /**
+   * Comparison operator for Accessor. Two accessors are equal if they refer to
+   * the same polygonal element.
+   */
   bool
   operator==(const AgglomerationAccessor<dim, spacedim> &other) const;
 
+  /**
+   * Compare for inequality.
+   */
   bool
   operator!=(const AgglomerationAccessor<dim, spacedim> &other) const;
+
+  /**
+   * Move to the next cell in the polygonal mesh.
+   */
+  void
+  next();
+
+  /**
+   * Move to the previous cell in the polygonal mesh.
+   */
+  void
+  prev();
+
 
   template <int, int>
   friend class AgglomerationIterator;
