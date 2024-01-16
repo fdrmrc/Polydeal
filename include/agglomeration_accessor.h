@@ -111,6 +111,15 @@ public:
   types::global_cell_index
   index() const;
 
+  /**
+   * Returns an active cell iterator for the dof_handler, matching the polytope
+   * referenced by the input iterator. The type of the returned object is a
+   * DoFHandler::active_cell_iterator which can be used to initialize
+   * FiniteElement data.
+   */
+  typename DoFHandler<dim, spacedim>::active_cell_iterator
+  as_dof_handler_iterator(const DoFHandler<dim, spacedim> &dof_handler) const;
+
 
 private:
   /**
@@ -365,7 +374,7 @@ inline AgglomerationAccessor<dim, spacedim>::AgglomerationAccessor(
   const AgglomerationHandler<dim, spacedim> *                        ah)
 {
   handler = const_cast<AgglomerationHandler<dim, spacedim> *>(ah);
-  if (cell.state() == IteratorState::invalid)
+  if (&(*handler->master_cells_container.end()) == std::addressof(cell))
     {
       present_index = handler->master_cells_container.size();
       master_cell   = handler->master_cells_container[present_index];
@@ -411,9 +420,9 @@ template <int dim, int spacedim>
 bool
 AgglomerationAccessor<dim, spacedim>::at_boundary(const unsigned int f) const
 {
-  Assert(!is_slave_cell(master_cell),
+  Assert(!handler->is_slave_cell(master_cell),
          ExcMessage("This function should not be called for a slave cell."));
-  if (is_standard_cell(master_cell))
+  if (handler->is_standard_cell(master_cell))
     return master_cell->face(f)->at_boundary();
   else
     return std::get<2>(handler->master_neighbors[{master_cell, f}]) ==
@@ -480,6 +489,17 @@ inline types::global_cell_index
 AgglomerationAccessor<dim, spacedim>::index() const
 {
   return present_index;
+}
+
+
+
+template <int dim, int spacedim>
+typename DoFHandler<dim, spacedim>::active_cell_iterator
+AgglomerationAccessor<dim, spacedim>::as_dof_handler_iterator(
+  const DoFHandler<dim, spacedim> &dof_handler) const
+{
+  // Forward the call to the master cell using the right DoFHandler.
+  return master_cell->as_dof_handler_iterator(dof_handler);
 }
 
 
