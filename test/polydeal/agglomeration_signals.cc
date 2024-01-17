@@ -71,10 +71,10 @@ main()
                                              cells_to_be_agglomerated4);
 
   // Agglomerate the cells just stored
-  ah.agglomerate_cells(cells_to_be_agglomerated);
-  ah.agglomerate_cells(cells_to_be_agglomerated2);
-  ah.agglomerate_cells(cells_to_be_agglomerated3);
-  ah.agglomerate_cells(cells_to_be_agglomerated4);
+  ah.insert_agglomerate(cells_to_be_agglomerated);
+  ah.insert_agglomerate(cells_to_be_agglomerated2);
+  ah.insert_agglomerate(cells_to_be_agglomerated3);
+  ah.insert_agglomerate(cells_to_be_agglomerated4);
 
   // Refine the triangulation, and check that the internal data structure for
   // connectivity is empty now.

@@ -197,13 +197,13 @@ Poisson<dim>::setup_agglomeration()
 
   // Agglomerate the cells just stored
   ah = std::make_unique<AgglomerationHandler<dim>>(*cached_tria);
-  ah->agglomerate_cells(cells_to_be_agglomerated);
-  ah->agglomerate_cells(cells_to_be_agglomerated2);
-  ah->agglomerate_cells(cells_to_be_agglomerated3);
-  ah->agglomerate_cells(cells_to_be_agglomerated4);
-  ah->agglomerate_cells(cells_to_be_agglomerated5);
-  ah->agglomerate_cells(cells_to_be_agglomerated6);
-  ah->agglomerate_cells(cells_to_be_agglomerated7);
+  ah->insert_agglomerate(cells_to_be_agglomerated);
+  ah->insert_agglomerate(cells_to_be_agglomerated2);
+  ah->insert_agglomerate(cells_to_be_agglomerated3);
+  ah->insert_agglomerate(cells_to_be_agglomerated4);
+  ah->insert_agglomerate(cells_to_be_agglomerated5);
+  ah->insert_agglomerate(cells_to_be_agglomerated6);
+  ah->insert_agglomerate(cells_to_be_agglomerated7);
   ah->distribute_agglomerated_dofs(dg_fe);
   ah->create_agglomeration_sparsity_pattern(sparsity);
 }

@@ -314,22 +314,22 @@ Poisson<dim>::setup_agglomeration()
 
 
           // Agglomerate the cells just stored
-          ah->agglomerate_cells(cells_to_be_agglomerated);
-          ah->agglomerate_cells(cells_to_be_agglomerated2);
-          ah->agglomerate_cells(cells_to_be_agglomerated3);
-          ah->agglomerate_cells(cells_to_be_agglomerated4);
-          ah->agglomerate_cells(cells_to_be_agglomerated5);
-          ah->agglomerate_cells(cells_to_be_agglomerated6);
-          ah->agglomerate_cells(cells_to_be_agglomerated7);
-          ah->agglomerate_cells(cells_to_be_agglomerated8);
-          ah->agglomerate_cells(cells_to_be_agglomerated9);
-          ah->agglomerate_cells(cells_to_be_agglomerated10);
-          ah->agglomerate_cells(cells_to_be_agglomerated11);
-          ah->agglomerate_cells(cells_to_be_agglomerated12);
-          ah->agglomerate_cells(cells_to_be_agglomerated13);
-          ah->agglomerate_cells(cells_to_be_agglomerated14);
-          ah->agglomerate_cells(cells_to_be_agglomerated15);
-          ah->agglomerate_cells(cells_to_be_agglomerated16);
+          ah->insert_agglomerate(cells_to_be_agglomerated);
+          ah->insert_agglomerate(cells_to_be_agglomerated2);
+          ah->insert_agglomerate(cells_to_be_agglomerated3);
+          ah->insert_agglomerate(cells_to_be_agglomerated4);
+          ah->insert_agglomerate(cells_to_be_agglomerated5);
+          ah->insert_agglomerate(cells_to_be_agglomerated6);
+          ah->insert_agglomerate(cells_to_be_agglomerated7);
+          ah->insert_agglomerate(cells_to_be_agglomerated8);
+          ah->insert_agglomerate(cells_to_be_agglomerated9);
+          ah->insert_agglomerate(cells_to_be_agglomerated10);
+          ah->insert_agglomerate(cells_to_be_agglomerated11);
+          ah->insert_agglomerate(cells_to_be_agglomerated12);
+          ah->insert_agglomerate(cells_to_be_agglomerated13);
+          ah->insert_agglomerate(cells_to_be_agglomerated14);
+          ah->insert_agglomerate(cells_to_be_agglomerated15);
+          ah->insert_agglomerate(cells_to_be_agglomerated16);
         }
       else if constexpr (dim == 3)
         {
@@ -343,7 +343,7 @@ Poisson<dim>::setup_agglomeration()
                                                      cells_to_be_agglomerated);
 
           // Agglomerate the cells just stored
-          ah->agglomerate_cells(cells_to_be_agglomerated);
+          ah->insert_agglomerate(cells_to_be_agglomerated);
         }
     }
   ah->distribute_agglomerated_dofs(dg_fe);

@@ -38,7 +38,7 @@ AgglomerationHandler<dim, spacedim>::AgglomerationHandler(
 
 template <int dim, int spacedim>
 void
-AgglomerationHandler<dim, spacedim>::agglomerate_cells(
+AgglomerationHandler<dim, spacedim>::insert_agglomerate(
   const std::vector<typename Triangulation<dim, spacedim>::active_cell_iterator>
     &vec_of_cells)
 {
@@ -62,8 +62,11 @@ AgglomerationHandler<dim, spacedim>::agglomerate_cells(
   for (const auto &cell : vec_of_cells)
     {
       if (cell->active_cell_index() == master_idx)
-        master_slave_relationships_iterators[cell->active_cell_index()] =
-          cell; // set iterator to master cell
+        {
+          master_slave_relationships_iterators[cell->active_cell_index()] =
+            cell; // set iterator to master cell
+          master_cells_container.push_back(cell);
+        }
     }
 
   std::vector<typename Triangulation<dim, spacedim>::active_cell_iterator>

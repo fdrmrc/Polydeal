@@ -131,7 +131,7 @@ LaplaceOperator<dim>::setup_agglomeration()
     cells_per_subdomain[cell->subdomain_id()].push_back(cell);
 
   for (std::size_t i = 0; i < cells_per_subdomain.size(); ++i)
-    ah->agglomerate_cells(cells_per_subdomain[i]);
+    ah->insert_agglomerate(cells_per_subdomain[i]);
 
   ah->distribute_agglomerated_dofs(dg_fe);
   ah->create_agglomeration_sparsity_pattern(sparsity);
