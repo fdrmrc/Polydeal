@@ -20,6 +20,7 @@
 
 #include <deal.II/base/config.h>
 
+#include <deal.II/base/bounding_box.h>
 #include <deal.II/base/iterator_range.h>
 
 #include <deal.II/grid/filtered_iterator.h>
@@ -116,6 +117,12 @@ public:
    */
   agglomeration_container
   get_agglomerate() const;
+
+  /**
+   * Return the BoundingBox which bounds the present polytope.
+   */
+  const BoundingBox<dim> &
+  get_bounding_box() const;
 
   /**
    * Return the index of the present polygon.
@@ -486,6 +493,15 @@ AgglomerationAccessor<dim, spacedim>::diameter() const
       // Standard deal.II way to get the measure of a cell.
       return master_cell->diameter();
     }
+}
+
+
+
+template <int dim, int spacedim>
+inline const BoundingBox<dim> &
+AgglomerationAccessor<dim, spacedim>::get_bounding_box() const
+{
+  return handler->bboxes[present_index];
 }
 
 
