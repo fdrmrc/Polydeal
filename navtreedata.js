@@ -42,7 +42,8 @@ var NAVTREE =
         [ "Variables", "functions_vars.html", null ],
         [ "Typedefs", "functions_type.html", null ],
         [ "Enumerations", "functions_enum.html", null ],
-        [ "Enumerator", "functions_eval.html", null ]
+        [ "Enumerator", "functions_eval.html", null ],
+        [ "Related Symbols", "functions_rela.html", null ]
       ] ]
     ] ],
     [ "Files", "files.html", [
@@ -57,7 +58,7 @@ var NAVTREE =
 
 var NAVTREEINDEX =
 [
-"agglomeration__handler_8cc.html"
+"agglomeration__accessor_8h.html"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

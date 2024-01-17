@@ -8,7 +8,9 @@ var annotated_dup =
         [ "Rtree_visitor", "structdealii_1_1_poly_utils_1_1_rtree__visitor.html", "structdealii_1_1_poly_utils_1_1_rtree__visitor" ]
       ] ]
     ] ],
+    [ "AgglomerationAccessor", "class_agglomeration_accessor.html", "class_agglomeration_accessor" ],
     [ "AgglomerationHandler", "class_agglomeration_handler.html", "class_agglomeration_handler" ],
+    [ "AgglomerationIterator", "class_agglomeration_iterator.html", "class_agglomeration_iterator" ],
     [ "Poisson", "class_poisson.html", "class_poisson" ],
     [ "RightHandSide", "class_right_hand_side.html", "class_right_hand_side" ]
 ];
