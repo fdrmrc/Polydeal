@@ -99,6 +99,13 @@ public:
   polytope_boundary() const;
 
   /**
+   *
+   * Return the volume of a polytope.
+   */
+  double
+  volume() const;
+
+  /**
    * Return the diameter of the present polytopal element.
    */
   double
@@ -478,6 +485,25 @@ AgglomerationAccessor<dim, spacedim>::diameter() const
     {
       // Standard deal.II way to get the measure of a cell.
       return master_cell->diameter();
+    }
+}
+
+
+
+template <int dim, int spacedim>
+inline double
+AgglomerationAccessor<dim, spacedim>::volume() const
+{
+  Assert(!handler->is_slave_cell(master_cell),
+         ExcMessage("The present function cannot be called for slave cells."));
+
+  if (handler->is_master_cell(master_cell))
+    {
+      return handler->bboxes[present_index].volume();
+    }
+  else
+    {
+      return master_cell->measure();
     }
 }
 

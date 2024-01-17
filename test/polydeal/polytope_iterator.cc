@@ -270,7 +270,8 @@ TestIterator<dim>::test3()
   std::vector<types::global_dof_index> local_dof_indices(dofs_per_cell);
   for (const auto &polytope : ah->polytope_iterators())
     {
-      std::cout << "Polytope number: " << polytope->index() << std::endl;
+      std::cout << "Polytope number: " << polytope->index()
+                << "\t volume: " << polytope->volume() << std::endl;
       const auto & boundary   = polytope->polytope_boundary();
       unsigned int face_index = 0;
       for (const auto &face : boundary)
