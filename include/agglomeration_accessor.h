@@ -70,7 +70,7 @@ public:
   /**
    * Return the agglomerate which shares face f.
    */
-  const typename DoFHandler<dim, spacedim>::active_cell_iterator &
+  const AgglomerationIterator<dim, spacedim>
   neighbor(const unsigned int f) const;
 
   /**
@@ -98,6 +98,11 @@ public:
   const std::vector<typename Triangulation<dim>::active_face_iterator> &
   polytope_boundary() const;
 
+  /**
+   * Return the diameter of the present polytopal element.
+   */
+  double
+  diameter() const;
 
   /**
    * Returns the deal.II cells that build the agglomerate.
@@ -122,6 +127,12 @@ public:
 
 
 private:
+  /**
+   * Private default constructor. This is not supposed to be used and hence will
+   * throw.
+   */
+  AgglomerationAccessor();
+
   /**
    * Private constructor for an agglomerate. This is meant to be invoked by
    * the AgglomerationIterator class. It takes as input the master cell of the
@@ -238,36 +249,38 @@ AgglomerationAccessor<dim, spacedim>::n_faces() const
 
 
 template <int dim, int spacedim>
-const typename DoFHandler<dim, spacedim>::active_cell_iterator &
+const AgglomerationIterator<dim, spacedim>
 AgglomerationAccessor<dim, spacedim>::neighbor(const unsigned int f) const
 {
   // Assert(!handler->is_slave_cell(cell),
   //        ExcMessage("This cells is not supposed to be a slave."));
-  if (!at_boundary(master_cell, f))
+  if (!at_boundary(f))
     {
       if (handler->is_standard_cell(master_cell) &&
           handler->is_standard_cell(master_cell->neighbor(f)))
         {
-          return master_cell->neighbor(f);
+          // return master_cell->neighbor(f);
+          return {master_cell->neighbor(f), handler};
         }
       else if (handler->is_master_cell(master_cell))
         {
           const auto &neigh =
             std::get<1>(handler->master_neighbors[{master_cell, f}]);
-          typename DoFHandler<dim, spacedim>::active_cell_iterator cell_dh(
-            *neigh, &(handler->agglo_dh));
-          return cell_dh;
+          // typename DoFHandler<dim, spacedim>::active_cell_iterator cell_dh(
+          //   *neigh, &(handler->agglo_dh));
+          // return cell_dh;
+          return {neigh, handler};
         }
       else
         {
           // If I fall here, I want to find the neighbor for a standard cell
           // adjacent to an agglomeration
-          const auto &master_cell =
-            handler->master_slave_relationships_iterators
-              [master_cell->neighbor(f)->active_cell_index()];
-          typename DoFHandler<dim, spacedim>::active_cell_iterator cell_dh(
-            *master_cell, &(handler->agglo_dh));
-          return cell_dh;
+          const auto &cell = handler->master_slave_relationships_iterators
+                               [master_cell->neighbor(f)->active_cell_index()];
+          // typename DoFHandler<dim, spacedim>::active_cell_iterator cell_dh(
+          //   *master_cell, &(handler->agglo_dh));
+          // return cell_dh;
+          return {cell, handler};
         }
     }
   else
@@ -286,7 +299,7 @@ AgglomerationAccessor<dim, spacedim>::neighbor_of_agglomerated_neighbor(
   // Assert(!is_slave_cell(cell),
   //        ExcMessage("This cells is not supposed to be a slave."));
   // First, make sure it's not a boundary face.
-  if (!at_boundary(master_cell, f))
+  if (!at_boundary(f))
     {
       if (handler->is_standard_cell(master_cell) &&
           handler->is_standard_cell(master_cell->neighbor(f)))
@@ -294,7 +307,7 @@ AgglomerationAccessor<dim, spacedim>::neighbor_of_agglomerated_neighbor(
           return master_cell->neighbor_of_neighbor(f);
         }
       else if (handler->is_master_cell(master_cell) &&
-               handler->is_master_cell(neighbor(f)))
+               handler->is_master_cell(neighbor(f).master_cell()))
         {
           const auto &current_agglo_info =
             handler->master_neighbors[{master_cell, f}];
@@ -304,19 +317,21 @@ AgglomerationAccessor<dim, spacedim>::neighbor_of_agglomerated_neighbor(
           const auto &agglo_neigh =
             neighbor(f); // returns the neighboring master
           const unsigned int n_faces_agglomerated_neighbor =
-            n_faces(agglo_neigh);
+            agglo_neigh->n_faces();
 
           // Loop over all cells of neighboring agglomerate
           for (unsigned int f_out = 0; f_out < n_faces_agglomerated_neighbor;
                ++f_out)
             {
-              if (neighbor(f_out).state() == IteratorState::valid &&
+              if (agglo_neigh->neighbor(f_out).state() ==
+                    IteratorState::valid &&
                   current_cell->neighbor(local_f_idx).state() ==
                     IteratorState::valid &&
                   current_cell.state() == IteratorState::valid)
                 {
                   const auto &neighboring_agglo_info =
-                    handler->master_neighbors[{agglo_neigh, f_out}];
+                    handler
+                      ->master_neighbors[{agglo_neigh.master_cell(), f_out}];
                   const auto &local_f_out_idx =
                     std::get<0>(neighboring_agglo_info);
                   const auto &current_cell_out =
@@ -331,8 +346,7 @@ AgglomerationAccessor<dim, spacedim>::neighbor_of_agglomerated_neighbor(
                   // condition must be added.
 
                   if (other_standard.state() == IteratorState::valid &&
-                      neighbor(f_out)->active_cell_index() ==
-                        master_cell->active_cell_index() &&
+                      agglo_neigh->neighbor(f_out)->index() == index() &&
                       current_cell->active_cell_index() ==
                         current_cell_out->neighbor(local_f_out_idx)
                           ->active_cell_index() &&
@@ -344,19 +358,19 @@ AgglomerationAccessor<dim, spacedim>::neighbor_of_agglomerated_neighbor(
           return {}; // just to suppress warnings
         }
       else if (handler->is_master_cell(master_cell) &&
-               handler->is_standard_cell(neighbor(f)))
+               handler->is_standard_cell(neighbor(f).master_cell()))
         {
           return std::get<2>(handler->master_neighbors[{master_cell, f}]);
         }
       else
         {
+          // TODO : check
           // If I fall here, I want to find the neighbor of neighbor for a
           // standard cell adjacent to an agglomeration.
-          const auto &master_cell =
+          const auto &master_neigh =
             neighbor(f); // this is the master of the neighboring agglomeration
-
-          return handler
-            ->shared_face_agglomeration_idx[{master_cell, master_cell, f}];
+          return handler->shared_face_agglomeration_idx[{
+            master_neigh.master_cell(), master_cell, f}];
         }
     }
   else
@@ -367,6 +381,12 @@ AgglomerationAccessor<dim, spacedim>::neighbor_of_agglomerated_neighbor(
 }
 
 // ------------------------------ inline functions -------------------------
+
+template <int dim, int spacedim>
+inline AgglomerationAccessor<dim, spacedim>::AgglomerationAccessor()
+{}
+
+
 
 template <int dim, int spacedim>
 inline AgglomerationAccessor<dim, spacedim>::AgglomerationAccessor(
@@ -431,16 +451,34 @@ AgglomerationAccessor<dim, spacedim>::at_boundary(const unsigned int f) const
 
 
 
-/**
- * Return the collection of vertices describing the boundary of the polytope
- * associated to the master cell `cell`. The return type is meant to describe
- * a sequence of edges (in 2D) or faces (in 3D).
- */
 template <int dim, int spacedim>
 inline const std::vector<typename Triangulation<dim>::active_face_iterator> &
 AgglomerationAccessor<dim, spacedim>::polytope_boundary() const
 {
   return handler->polygon_boundary[master_cell];
+}
+
+
+
+template <int dim, int spacedim>
+inline double
+AgglomerationAccessor<dim, spacedim>::diameter() const
+{
+  Assert(!handler->is_slave_cell(master_cell),
+         ExcMessage("The present function cannot be called for slave cells."));
+
+  if (handler->is_master_cell(master_cell))
+    {
+      // Get the bounding box associated with the master cell
+      const auto &bdary_pts =
+        handler->bboxes[present_index].get_boundary_points();
+      return (bdary_pts.second - bdary_pts.first).norm();
+    }
+  else
+    {
+      // Standard deal.II way to get the measure of a cell.
+      return master_cell->diameter();
+    }
 }
 
 
