@@ -59,6 +59,15 @@ class AgglomerationHandler;
 
 namespace dealii
 {
+  namespace internal
+  {
+    template <int, int>
+    class AgglomerationHandlerImplementation;
+  }
+} // namespace dealii
+
+namespace dealii
+{
   namespace IteratorFilters
   {
     /**
@@ -545,22 +554,20 @@ public:
 
   /**
    * For a given master cell `cell` and agglomerated face
-   * `agglomeration_face_number`, initialize shape functions, normals and
+   * `face_number`, initialize shape functions, normals and
    * quadratures.
    */
   const FEValuesBase<dim, spacedim> &
   reinit(const typename DoFHandler<dim, spacedim>::active_cell_iterator &cell,
-         const unsigned int agglomeration_face_number) const;
+         const unsigned int face_index) const;
 
   /**
-   * Helper function to call reinit on a master cell.
+   * For a given polytope and face index, initialize shape functions, normals
+   * and quadratures rules to integrate there.
    */
   const FEValuesBase<dim, spacedim> &
-  reinit_master(
-    const typename DoFHandler<dim, spacedim>::active_cell_iterator &cell,
-    const unsigned int                                              face_number,
-    std::unique_ptr<NonMatching::FEImmersedSurfaceValues<spacedim>>
-      &agglo_isv_ptr) const;
+  reinit(const AgglomerationIterator<dim, spacedim> &polytope,
+         const unsigned int                          face_index) const;
 
   /**
    *
@@ -574,6 +581,18 @@ public:
     const typename DoFHandler<dim, spacedim>::active_cell_iterator &neigh_cell,
     const unsigned int                                              local_in,
     const unsigned int local_outside) const;
+
+  /**
+   *
+   * Return a pair of FEValuesBase object reinited from the two sides of the
+   * agglomeration.
+   */
+  std::pair<const FEValuesBase<dim, spacedim> &,
+            const FEValuesBase<dim, spacedim> &>
+  reinit_interface(const AgglomerationIterator<dim, spacedim> &polytope_in,
+                   const AgglomerationIterator<dim, spacedim> &neigh_polytope,
+                   const unsigned int                          local_in,
+                   const unsigned int local_outside) const;
 
   /**
    * Return the agglomerated quadrature for the given agglomeration. This
@@ -1102,6 +1121,16 @@ private:
   initialize_hp_structure();
 
   /**
+   * Helper function to call reinit on a master cell.
+   */
+  const FEValuesBase<dim, spacedim> &
+  reinit_master(
+    const typename DoFHandler<dim, spacedim>::active_cell_iterator &cell,
+    const unsigned int                                              face_number,
+    std::unique_ptr<NonMatching::FEImmersedSurfaceValues<spacedim>>
+      &agglo_isv_ptr) const;
+
+  /**
    * Given an agglomeration described by the master cell `master_cell`, this
    * function:
    * - enumerates the faces of the agglomeration
@@ -1202,6 +1231,8 @@ private:
         setup_master_neighbor_connectivity(cell);
       }
   }
+
+  friend class internal::AgglomerationHandlerImplementation<dim, spacedim>;
 };
 
 
@@ -1270,6 +1301,114 @@ AgglomerationHandler<dim, spacedim>::polytope_iterators() const
     typename AgglomerationHandler<dim, spacedim>::agglomeration_iterator>(
     begin(), end());
 }
+
+
+
+namespace dealii
+{
+  namespace internal
+  {
+    template <int dim, int spacedim>
+    class AgglomerationHandlerImplementation
+    {
+    public:
+      static const FEValuesBase<dim, spacedim> &
+      reinit_master(
+        const typename DoFHandler<dim, spacedim>::active_cell_iterator &cell,
+        const unsigned int face_index,
+        std::unique_ptr<NonMatching::FEImmersedSurfaceValues<spacedim>>
+          &                                        agglo_isv_ptr,
+        const AgglomerationHandler<dim, spacedim> &handler)
+      {
+        Assert(handler.is_master_cell(cell),
+               ExcMessage("This cell must be a master one."));
+        const auto &info_neighbors =
+          handler.master_neighbors[{cell, face_index}];
+        const auto &local_face_idx   = std::get<0>(info_neighbors);
+        const auto &neighboring_cell = std::get<3>(info_neighbors);
+
+        if (neighboring_cell.state() == IteratorState::valid)
+          {
+            handler.no_face_values->reinit(neighboring_cell, local_face_idx);
+            auto q_points = handler.no_face_values->get_quadrature_points();
+
+            const auto &JxWs    = handler.no_face_values->get_JxW_values();
+            const auto &normals = handler.no_face_values->get_normal_vectors();
+
+            const auto &bbox =
+              handler
+                .bboxes[handler.master2polygon.at(cell->active_cell_index())];
+            const double                 bbox_measure = bbox.volume();
+            std::vector<Point<spacedim>> unit_q_points;
+
+            std::transform(q_points.begin(),
+                           q_points.end(),
+                           std::back_inserter(unit_q_points),
+                           [&](const Point<spacedim> &p) {
+                             return bbox.real_to_unit(p);
+                           });
+
+            // Weights must be scaled with det(J)*|J^-t n| for each quadrature
+            // point. Use the fact that we are using a BBox, so the jacobi
+            // entries are the side_length in each direction. Unfortunately,
+            // normal vectors will be scaled internally by deal.II by using a
+            // covariant transformation. In order not to change the normals, we
+            // multiply by the correct factors in order to obtain the original
+            // normal after the call to `reinit(cell)`.
+            std::vector<double>         scale_factors(q_points.size());
+            std::vector<double>         scaled_weights(q_points.size());
+            std::vector<Tensor<1, dim>> scaled_normals(q_points.size());
+
+            for (unsigned int q = 0; q < q_points.size(); ++q)
+              {
+                for (unsigned int direction = 0; direction < spacedim;
+                     ++direction)
+                  scaled_normals[q][direction] =
+                    normals[q][direction] * (bbox.side_length(direction));
+
+                scaled_weights[q] =
+                  (JxWs[q] * scaled_normals[q].norm()) / bbox_measure;
+                scaled_normals[q] /= scaled_normals[q].norm();
+              }
+
+            NonMatching::ImmersedSurfaceQuadrature<dim, spacedim> surface_quad(
+              unit_q_points, scaled_weights, scaled_normals);
+
+            agglo_isv_ptr =
+              std::make_unique<NonMatching::FEImmersedSurfaceValues<spacedim>>(
+                *(handler.euler_mapping),
+                *(handler.fe),
+                surface_quad,
+                handler.agglomeration_face_flags);
+
+            agglo_isv_ptr->reinit(cell);
+
+            return *agglo_isv_ptr;
+          }
+        else
+          {
+            // Then it's a boundary face of an agglomeration living on the
+            // boundary of the tria. You need to return an FEFaceValues on the
+            // boundary face of a boundary cell.
+            handler.no_face_values->reinit(neighboring_cell, local_face_idx);
+
+            // TODO: check if *mapping or *euler_mapping
+            handler.standard_scratch_face_bdary = std::make_unique<
+              typename AgglomerationHandler<dim, spacedim>::ScratchData>(
+              *(handler.euler_mapping),
+              handler.fe_collection[2],
+              handler.agglomeration_quad,
+              handler.agglomeration_flags,
+              handler.agglomeration_face_quad,
+              handler.agglomeration_face_flags);
+
+            return handler.standard_scratch_face_bdary->reinit(cell);
+          }
+      }
+    };
+  } // namespace internal
+} // namespace dealii
+
 
 
 #endif
