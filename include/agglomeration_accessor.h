@@ -124,6 +124,7 @@ public:
   const BoundingBox<dim> &
   get_bounding_box() const;
 
+
   /**
    * Return the index of the present polygon.
    */
@@ -211,6 +212,11 @@ private:
   void
   prev();
 
+  /**
+   * Returns the slaves of the present agglomeration.
+   */
+  const agglomeration_container &
+  get_slaves() const;
 
   template <int, int>
   friend class AgglomerationIterator;
@@ -442,8 +448,7 @@ template <int dim, int spacedim>
 inline typename AgglomerationAccessor<dim, spacedim>::agglomeration_container
 AgglomerationAccessor<dim, spacedim>::get_agglomerate() const
 {
-  auto agglomeration =
-    handler->get_slaves_of_idx(master_cell->active_cell_index());
+  auto agglomeration = get_slaves();
   agglomeration.push_back(master_cell);
   return agglomeration;
 }
@@ -580,6 +585,16 @@ AgglomerationAccessor<dim, spacedim>::as_dof_handler_iterator(
 {
   // Forward the call to the master cell using the right DoFHandler.
   return master_cell->as_dof_handler_iterator(dof_handler);
+}
+
+
+
+template <int dim, int spacedim>
+inline const typename AgglomerationAccessor<dim,
+                                            spacedim>::agglomeration_container &
+AgglomerationAccessor<dim, spacedim>::get_slaves() const
+{
+  return handler->master2slaves.at(master_cell->active_cell_index());
 }
 
 
