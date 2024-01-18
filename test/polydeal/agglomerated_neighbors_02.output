@@ -1,7 +1,45 @@
-Cell with idx: 3
+Cell with idx: 0
 Number of faces for the agglomeration: 8
 Agglomerated face with idx: 0
+Face idx: 1
+Neighbor idx: 4
+Face idx from outside: 0
+
+Agglomerated face with idx: 1
+Face idx: 2
+Face idx from outside: 4294967295
+
+Agglomerated face with idx: 2
 Face idx: 0
+Face idx from outside: 4294967295
+
+Agglomerated face with idx: 3
+Face idx: 3
+Neighbor idx: 8
+Face idx from outside: 2
+
+Agglomerated face with idx: 4
+Face idx: 1
+Neighbor idx: 4
+Face idx from outside: 0
+
+Agglomerated face with idx: 5
+Face idx: 3
+Neighbor idx: 8
+Face idx from outside: 2
+
+Agglomerated face with idx: 6
+Face idx: 0
+Face idx from outside: 4294967295
+
+Agglomerated face with idx: 7
+Face idx: 2
+Face idx from outside: 4294967295
+
+Cell with idx: 4
+Number of faces for the agglomeration: 8
+Agglomerated face with idx: 0
+Face idx: 1
 Face idx from outside: 4294967295
 
 Agglomerated face with idx: 1
@@ -9,94 +47,93 @@ Face idx: 2
 Face idx from outside: 4294967295
 
 Agglomerated face with idx: 2
-Face idx: 1
-Neighbor idx: 7
-Face idx from outside: 0
+Face idx: 0
+Neighbor idx: 0
+Face idx from outside: 1
 
 Agglomerated face with idx: 3
-Face idx: 2
-Face idx from outside: 4294967295
+Face idx: 3
+Neighbor idx: 12
+Face idx from outside: 2
 
 Agglomerated face with idx: 4
-Face idx: 0
+Face idx: 1
 Face idx from outside: 4294967295
 
 Agglomerated face with idx: 5
 Face idx: 3
-Neighbor idx: 11
+Neighbor idx: 12
 Face idx from outside: 2
 
 Agglomerated face with idx: 6
-Face idx: 1
-Neighbor idx: 7
-Face idx from outside: 0
+Face idx: 0
+Neighbor idx: 0
+Face idx from outside: 1
 
 Agglomerated face with idx: 7
-Face idx: 3
-Neighbor idx: 11
-Face idx from outside: 2
+Face idx: 2
+Face idx from outside: 4294967295
 
-Cell with idx: 7
+Cell with idx: 8
 Number of faces for the agglomeration: 8
 Agglomerated face with idx: 0
-Face idx: 0
-Neighbor idx: 3
-Face idx from outside: 1
+Face idx: 1
+Neighbor idx: 12
+Face idx from outside: 0
 
 Agglomerated face with idx: 1
 Face idx: 2
-Face idx from outside: 4294967295
+Neighbor idx: 0
+Face idx from outside: 3
 
 Agglomerated face with idx: 2
-Face idx: 1
+Face idx: 0
 Face idx from outside: 4294967295
 
 Agglomerated face with idx: 3
-Face idx: 2
+Face idx: 3
 Face idx from outside: 4294967295
 
 Agglomerated face with idx: 4
-Face idx: 0
-Neighbor idx: 3
-Face idx from outside: 1
+Face idx: 1
+Neighbor idx: 12
+Face idx from outside: 0
 
 Agglomerated face with idx: 5
 Face idx: 3
-Neighbor idx: 15
-Face idx from outside: 2
+Face idx from outside: 4294967295
 
 Agglomerated face with idx: 6
-Face idx: 1
+Face idx: 0
 Face idx from outside: 4294967295
 
 Agglomerated face with idx: 7
-Face idx: 3
-Neighbor idx: 15
-Face idx from outside: 2
+Face idx: 2
+Neighbor idx: 0
+Face idx from outside: 3
 
-Cell with idx: 11
+Cell with idx: 12
 Number of faces for the agglomeration: 8
 Agglomerated face with idx: 0
-Face idx: 0
+Face idx: 1
 Face idx from outside: 4294967295
 
 Agglomerated face with idx: 1
 Face idx: 2
-Neighbor idx: 3
+Neighbor idx: 4
 Face idx from outside: 3
 
 Agglomerated face with idx: 2
-Face idx: 1
-Neighbor idx: 15
-Face idx from outside: 0
+Face idx: 0
+Neighbor idx: 8
+Face idx from outside: 1
 
 Agglomerated face with idx: 3
-Face idx: 2
-Neighbor idx: 3
-Face idx from outside: 3
+Face idx: 3
+Face idx from outside: 4294967295
 
 Agglomerated face with idx: 4
-Face idx: 0
+Face idx: 1
 Face idx from outside: 4294967295
 
 Agglomerated face with idx: 5
@@ -104,49 +141,12 @@ Face idx: 3
 Face idx from outside: 4294967295
 
 Agglomerated face with idx: 6
-Face idx: 1
-Neighbor idx: 15
-Face idx from outside: 0
-
-Agglomerated face with idx: 7
-Face idx: 3
-Face idx from outside: 4294967295
-
-Cell with idx: 15
-Number of faces for the agglomeration: 8
-Agglomerated face with idx: 0
 Face idx: 0
-Neighbor idx: 11
+Neighbor idx: 8
 Face idx from outside: 1
 
-Agglomerated face with idx: 1
-Face idx: 2
-Neighbor idx: 7
-Face idx from outside: 3
-
-Agglomerated face with idx: 2
-Face idx: 1
-Face idx from outside: 4294967295
-
-Agglomerated face with idx: 3
-Face idx: 2
-Neighbor idx: 7
-Face idx from outside: 3
-
-Agglomerated face with idx: 4
-Face idx: 0
-Neighbor idx: 11
-Face idx from outside: 1
-
-Agglomerated face with idx: 5
-Face idx: 3
-Face idx from outside: 4294967295
-
-Agglomerated face with idx: 6
-Face idx: 1
-Face idx from outside: 4294967295
-
 Agglomerated face with idx: 7
-Face idx: 3
-Face idx from outside: 4294967295
+Face idx: 2
+Neighbor idx: 4
+Face idx from outside: 3
 

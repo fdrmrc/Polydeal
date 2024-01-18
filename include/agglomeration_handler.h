@@ -266,7 +266,7 @@ public:
    * about this is done.
    */
   agglomeration_iterator
-  insert_agglomerate(const AgglomerationContainer &cells);
+  define_agglomerate(const AgglomerationContainer &cells);
 
   /**
    * Get the connectivity of the agglomeration. TODO: this data structure should

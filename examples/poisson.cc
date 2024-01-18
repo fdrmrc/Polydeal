@@ -569,14 +569,14 @@ Poisson<dim>::setup_agglomeration()
 
       // For every subdomain, agglomerate elements together
       for (std::size_t i = 0; i < cells_per_subdomain.size(); ++i)
-        ah->insert_agglomerate(cells_per_subdomain[i]);
+        ah->define_agglomerate(cells_per_subdomain[i]);
     }
   else
     {
       // No partitioning means that each cell is a master cell
       for (const auto &cell : tria.active_cell_iterators())
         {
-          ah->insert_agglomerate({cell});
+          ah->define_agglomerate({cell});
         }
     }
 

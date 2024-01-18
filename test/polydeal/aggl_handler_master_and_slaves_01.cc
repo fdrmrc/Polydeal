@@ -41,6 +41,6 @@ main()
                                              cells_to_be_agglomerated);
 
   // Agglomerate the cells just stored
-  ah.insert_agglomerate(cells_to_be_agglomerated);
+  ah.define_agglomerate(cells_to_be_agglomerated);
   ah.print_agglomeration(std::cout);
 }

@@ -17,15 +17,15 @@
 // Start from a 4x4 grid, agglomerate cells so that you have 4 cells:
 // x  -  -   x  -   -  x
 // |         |         |
-//     12         15
+//     8         12
 // |         |         |
 // x  -  -   x  -  -   x
 // |         |         |
-//      3          7
+//      0          4
 // |         |         |
 // x   -  -  x  -  -   x
 //
-// Here, 3, 7, 12, 15 are the indices of the master cells of the agglomeration.
+// Here 0, 4, 8, 12 are the indices of the master cells of the agglomeration.
 // In this situation, for each cell T, there are *two* face indices from the
 // neighboring cell such that the neighbor is T.
 // This test checks that `neighbor_of_agglomerated_neighbor` can be called for
@@ -86,10 +86,10 @@ main()
                                              cells_to_be_agglomerated4);
 
   // Agglomerate the cells just stored
-  ah.insert_agglomerate(cells_to_be_agglomerated);
-  ah.insert_agglomerate(cells_to_be_agglomerated2);
-  ah.insert_agglomerate(cells_to_be_agglomerated3);
-  ah.insert_agglomerate(cells_to_be_agglomerated4);
+  ah.define_agglomerate(cells_to_be_agglomerated);
+  ah.define_agglomerate(cells_to_be_agglomerated2);
+  ah.define_agglomerate(cells_to_be_agglomerated3);
+  ah.define_agglomerate(cells_to_be_agglomerated4);
 
   std::vector<std::vector<typename Triangulation<2>::active_cell_iterator>>
     agglomerations{cells_to_be_agglomerated,

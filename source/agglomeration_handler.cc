@@ -38,7 +38,7 @@ AgglomerationHandler<dim, spacedim>::AgglomerationHandler(
 
 template <int dim, int spacedim>
 typename AgglomerationHandler<dim, spacedim>::agglomeration_iterator
-AgglomerationHandler<dim, spacedim>::insert_agglomerate(
+AgglomerationHandler<dim, spacedim>::define_agglomerate(
   const AgglomerationContainer &cells)
 {
   Assert(master_slave_relationships.size() > 0,
