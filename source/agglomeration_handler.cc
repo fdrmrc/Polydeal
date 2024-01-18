@@ -26,7 +26,7 @@ AgglomerationHandler<dim, spacedim>::AgglomerationHandler(
       cache_tria.get_mapping()))
 {
   Assert(dim == spacedim, ExcNotImplemented("Not available with codim > 0"));
-  Assert(dim == 2 || dim == 3, ExcMessage("Not available in 1D."));
+  Assert(dim == 2 || dim == 3, ExcImpossibleInDim(1));
   Assert(cached_tria->get_triangulation().n_active_cells() > 0,
          ExcMessage(
            "The triangulation must not be empty upon calling this function."));
@@ -44,57 +44,45 @@ AgglomerationHandler<dim, spacedim>::insert_agglomerate(
   Assert(master_slave_relationships.size() > 0,
          ExcMessage("Before calling this function, be sure that the "
                     "constructor of this object has been called."));
-  Assert(cells.size() >= 1, ExcMessage("No cells to be agglomerated."));
+  Assert(cells.size() > 0, ExcMessage("No cells to be agglomerated."));
 
   // Get global index for each cell
   std::vector<types::global_cell_index> global_indices;
   for (const auto &cell : cells)
     global_indices.push_back(cell->active_cell_index());
 
-  // Maximum index drives the selection of the master cell
-  types::global_cell_index master_idx =
-    *std::max_element(global_indices.begin(), global_indices.end());
+  // First index drives the selection of the master cell
+  const types::global_cell_index master_idx = global_indices[0];
+  master_cells_container.push_back(cells[0]);
 
   for (const types::global_cell_index idx : global_indices)
     master_slave_relationships[idx] = master_idx; // mark each slave
 
-  for (const auto &cell : cells)
-    {
-      if (cell->active_cell_index() == master_idx)
-        {
-          master_slave_relationships_iterators[cell->active_cell_index()] =
-            cell; // set iterator to master cell
-          master_cells_container.push_back(cell);
-        }
-    }
+  master_slave_relationships_iterators[master_idx] =
+    cells[0]; // set iterator to master cell
 
   std::vector<typename Triangulation<dim, spacedim>::active_cell_iterator>
     slaves;
   slaves.reserve(cells.size() - 1);
-  for (const auto &cell : cells)
+  // exclude first cell since it's the master cell
+  for (auto it = ++cells.begin(); it != cells.end(); ++it)
     {
-      if (cell->active_cell_index() != master_idx)
-        {
-          master_slave_relationships_iterators[cell->active_cell_index()] =
-            master_slave_relationships_iterators[master_idx];
-          slaves.push_back(cell);
-        }
+      slaves.push_back(*it);
+      master_slave_relationships_iterators[(*it)->active_cell_index()] =
+        cells[0];
     }
+  // Store the slaves
   master2slaves[master_idx] = slaves;
-
-  for (const types::global_cell_index idx : global_indices)
-    {
-      master_slave_relationships[idx] = master_idx; // mark each slave
-    }
 
   master_slave_relationships[master_idx] = -1;
 
   master2polygon[master_idx] = n_agglomerations;
-  ++n_agglomerations; // agglomeration has been performed, record it
+  ++n_agglomerations; // an agglomeration has been performed, record it
+
   create_bounding_box(cells, master_idx); // fill the vector of bboxes
 
   // Finally, return a polygonal iterator to the polytope just constructed.
-  return {master_slave_relationships_iterators[master_idx], this};
+  return {cells[0], this};
 }
 
 
