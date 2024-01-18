@@ -46,21 +46,14 @@ AgglomerationHandler<dim, spacedim>::insert_agglomerate(
                     "constructor of this object has been called."));
   Assert(cells.size() > 0, ExcMessage("No cells to be agglomerated."));
 
-  // Get global index for each cell
-  std::vector<types::global_cell_index> global_indices;
-  for (const auto &cell : cells)
-    global_indices.push_back(cell->active_cell_index());
 
-  // First index drives the selection of the master cell
-  const types::global_cell_index master_idx = global_indices[0];
+  // First index drives the selection of the master cell. After that, store the
+  // master cell.
+  const types::global_cell_index master_idx = cells[0]->active_cell_index();
   master_cells_container.push_back(cells[0]);
+  master_slave_relationships[master_idx] = -1;
 
-  for (const types::global_cell_index idx : global_indices)
-    master_slave_relationships[idx] = master_idx; // mark each slave
-
-  master_slave_relationships_iterators[master_idx] =
-    cells[0]; // set iterator to master cell
-
+  // Store slave cells and save the relationship with the parent
   std::vector<typename Triangulation<dim, spacedim>::active_cell_iterator>
     slaves;
   slaves.reserve(cells.size() - 1);
@@ -68,15 +61,20 @@ AgglomerationHandler<dim, spacedim>::insert_agglomerate(
   for (auto it = ++cells.begin(); it != cells.end(); ++it)
     {
       slaves.push_back(*it);
+      master_slave_relationships[(*it)->active_cell_index()] =
+        master_idx; // mark each slave
       master_slave_relationships_iterators[(*it)->active_cell_index()] =
         cells[0];
     }
-  // Store the slaves
+
+  master_slave_relationships_iterators[master_idx] =
+    cells[0]; // set iterator to master cell
+
+  // Store the slaves of each master
   master2slaves[master_idx] = slaves;
-
-  master_slave_relationships[master_idx] = -1;
-
+  // Save to which polygon this agglomerate correspond
   master2polygon[master_idx] = n_agglomerations;
+
   ++n_agglomerations; // an agglomeration has been performed, record it
 
   create_bounding_box(cells, master_idx); // fill the vector of bboxes
