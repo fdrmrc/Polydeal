@@ -31,8 +31,8 @@ template <int dim, int spacedim = dim>
 class AgglomerationIterator
 {
 public:
-  using agglomeration_container =
-    typename AgglomerationAccessor<dim, spacedim>::agglomeration_container;
+  using AgglomerationContainer =
+    typename AgglomerationAccessor<dim, spacedim>::AgglomerationContainer;
 
   /**
    * Empty constructor. This constructore creates an iterator pointing to an
@@ -42,7 +42,7 @@ public:
 
   /**
    * Constructor of the iterator. Takes a reference to the cells forming the
-   * actual polygon.
+   * actual polytope.
    */
   AgglomerationIterator(
     const typename Triangulation<dim, spacedim>::active_cell_iterator &cell,
@@ -145,7 +145,7 @@ public:
 
 private:
   /**
-   * The accessor to the actual polygon.
+   * The accessor to the actual polytope.
    */
   AgglomerationAccessor<dim, spacedim> accessor;
 };

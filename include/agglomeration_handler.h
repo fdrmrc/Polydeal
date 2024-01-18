@@ -104,8 +104,8 @@ class AgglomerationHandler : public Subscriptor
 public:
   using agglomeration_iterator = AgglomerationIterator<dim, spacedim>;
 
-  using agglomeration_container =
-    typename AgglomerationIterator<dim, spacedim>::agglomeration_container;
+  using AgglomerationContainer =
+    typename AgglomerationIterator<dim, spacedim>::AgglomerationContainer;
 
 
   enum CellAgglomerationType
@@ -152,13 +152,13 @@ public:
   }
 
   /**
-   * Iterator to the first polygon.
+   * Iterator to the first polytope.
    */
   agglomeration_iterator
   begin() const;
 
   /**
-   * Iterator to the first polygon.
+   * Iterator to the first polytope.
    */
   agglomeration_iterator
   begin();
@@ -266,7 +266,7 @@ public:
    * about this is done.
    */
   agglomeration_iterator
-  insert_agglomerate(const agglomeration_container &cells);
+  insert_agglomerate(const AgglomerationContainer &cells);
 
   /**
    * Get the connectivity of the agglomeration. TODO: this data structure should
@@ -596,7 +596,7 @@ public:
    */
   Quadrature<dim>
   agglomerated_quadrature(
-    const agglomeration_container &cells,
+    const AgglomerationContainer &cells,
     const typename Triangulation<dim, spacedim>::active_cell_iterator
       &master_cell) const;
 
@@ -793,8 +793,8 @@ private:
   mutable std::map<CellAndFace, MasterNeighborInfo> master_neighbors;
 
   /**
-   * Associate a master cell (hence, a given polygon) to its boundary faces. The
-   * boundary is described through a vector of face iterators.
+   * Associate a master cell (hence, a given polytope) to its boundary faces.
+   * The boundary is described through a vector of face iterators.
    *
    */
   mutable std::map<
@@ -892,7 +892,7 @@ private:
     std::vector<typename Triangulation<dim, spacedim>::active_cell_iterator>>
     master2slaves;
 
-  // Map the master cell index with the polygon index
+  // Map the master cell index with the polytope index
   std::unordered_map<types::global_cell_index, types::global_cell_index>
     master2polygon;
 
@@ -984,7 +984,7 @@ private:
    * cells. This fills also the euler vector
    */
   void
-  create_bounding_box(const agglomeration_container &polytope,
+  create_bounding_box(const AgglomerationContainer & polytope,
                       const types::global_cell_index master_idx)
   {
     Assert(n_agglomerations > 0,

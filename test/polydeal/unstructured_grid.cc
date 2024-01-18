@@ -14,7 +14,7 @@
  * ---------------------------------------------------------------------
  */
 
-// Compute the perimeter of a polygon arising from the agglomeration of some
+// Compute the perimeter of a polytope arising from the agglomeration of some
 // elements in unstructured grids.
 
 #include <deal.II/grid/grid_generator.h>

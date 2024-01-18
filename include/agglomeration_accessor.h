@@ -49,7 +49,7 @@ public:
   /**
    * Type for storing the polygons in an agglomerate.
    */
-  using agglomeration_container =
+  using AgglomerationContainer =
     std::vector<typename Triangulation<dim, spacedim>::active_cell_iterator>;
 
 
@@ -115,7 +115,7 @@ public:
   /**
    * Returns the deal.II cells that build the agglomerate.
    */
-  agglomeration_container
+  AgglomerationContainer
   get_agglomerate() const;
 
   /**
@@ -126,7 +126,7 @@ public:
 
 
   /**
-   * Return the index of the present polygon.
+   * Return the index of the present polytope.
    */
   types::global_cell_index
   index() const;
@@ -215,7 +215,7 @@ private:
   /**
    * Returns the slaves of the present agglomeration.
    */
-  const agglomeration_container &
+  const AgglomerationContainer &
   get_slaves() const;
 
   template <int, int>
@@ -445,7 +445,7 @@ AgglomerationAccessor<dim, spacedim>::get_dof_indices(
 
 
 template <int dim, int spacedim>
-inline typename AgglomerationAccessor<dim, spacedim>::agglomeration_container
+inline typename AgglomerationAccessor<dim, spacedim>::AgglomerationContainer
 AgglomerationAccessor<dim, spacedim>::get_agglomerate() const
 {
   auto agglomeration = get_slaves();
@@ -534,7 +534,7 @@ template <int dim, int spacedim>
 inline void
 AgglomerationAccessor<dim, spacedim>::next()
 {
-  // Increment the present index and update the polygon
+  // Increment the present index and update the polytope
   ++present_index;
   master_cell = handler->master_cells_container[present_index];
 }
@@ -545,7 +545,7 @@ template <int dim, int spacedim>
 inline void
 AgglomerationAccessor<dim, spacedim>::prev()
 {
-  // Decrement the present index and update the polygon
+  // Decrement the present index and update the polytope
   --present_index;
   master_cell = handler->master_cells_container[present_index];
 }
@@ -591,7 +591,7 @@ AgglomerationAccessor<dim, spacedim>::as_dof_handler_iterator(
 
 template <int dim, int spacedim>
 inline const typename AgglomerationAccessor<dim,
-                                            spacedim>::agglomeration_container &
+                                            spacedim>::AgglomerationContainer &
 AgglomerationAccessor<dim, spacedim>::get_slaves() const
 {
   return handler->master2slaves.at(master_cell->active_cell_index());

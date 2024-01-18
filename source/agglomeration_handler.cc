@@ -39,7 +39,7 @@ AgglomerationHandler<dim, spacedim>::AgglomerationHandler(
 template <int dim, int spacedim>
 typename AgglomerationHandler<dim, spacedim>::agglomeration_iterator
 AgglomerationHandler<dim, spacedim>::insert_agglomerate(
-  const agglomeration_container &cells)
+  const AgglomerationContainer &cells)
 {
   Assert(master_slave_relationships.size() > 0,
          ExcMessage("Before calling this function, be sure that the "
@@ -101,7 +101,7 @@ AgglomerationHandler<dim, spacedim>::insert_agglomerate(
 template <int dim, int spacedim>
 Quadrature<dim>
 AgglomerationHandler<dim, spacedim>::agglomerated_quadrature(
-  const typename AgglomerationHandler<dim, spacedim>::agglomeration_container
+  const typename AgglomerationHandler<dim, spacedim>::AgglomerationContainer
     &cells,
   const typename Triangulation<dim, spacedim>::active_cell_iterator
     &master_cell) const
