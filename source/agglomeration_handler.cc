@@ -37,7 +37,7 @@ AgglomerationHandler<dim, spacedim>::AgglomerationHandler(
 
 
 template <int dim, int spacedim>
-void
+typename AgglomerationHandler<dim, spacedim>::agglomeration_iterator
 AgglomerationHandler<dim, spacedim>::insert_agglomerate(
   const agglomeration_container &cells)
 {
@@ -92,6 +92,9 @@ AgglomerationHandler<dim, spacedim>::insert_agglomerate(
   master2polygon[master_idx] = n_agglomerations;
   ++n_agglomerations; // agglomeration has been performed, record it
   create_bounding_box(cells, master_idx); // fill the vector of bboxes
+
+  // Finally, return a polygonal iterator to the polytope just constructed.
+  return {master_slave_relationships_iterators[master_idx], this};
 }
 
 

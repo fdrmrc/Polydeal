@@ -265,7 +265,7 @@ public:
    * @note cells are assumed to be adjacent one to each other, and no check
    * about this is done.
    */
-  void
+  agglomeration_iterator
   insert_agglomerate(const agglomeration_container &cells);
 
   /**
@@ -284,6 +284,13 @@ public:
     return master_slave_relationships;
   }
 
+  /**
+   * TODO: remove this in favour of the accessor version.
+   *
+   * @param master_cell
+   * @return std::vector<
+   * typename Triangulation<dim, spacedim>::active_cell_iterator>
+   */
   inline std::vector<
     typename Triangulation<dim, spacedim>::active_cell_iterator>
   get_agglomerate(
@@ -313,6 +320,8 @@ public:
 
 
   /**
+   *
+   * TODO: remove this in favour of the accessor version
    * Return a vector of BoundingBox. Each one of the bounding boxes bounds an
    * agglomeration present in your triangulation.
    */
