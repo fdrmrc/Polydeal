@@ -69,11 +69,6 @@ test()
         polytope_iterator->get_bounding_box().get_boundary_points();
       std::cout << "p0: =" << bbox_agglomeration_pts.first << std::endl;
       std::cout << "p1: =" << bbox_agglomeration_pts.second << std::endl;
-
-      // std::ofstream           ofile("bboxes.vtu");
-      // BoundingBoxDataOut<dim> data_out;
-      // data_out.build_patches(ah.get_bboxes());
-      // data_out.write_vtu(ofile);
     }
 }
 int

@@ -321,19 +321,6 @@ public:
 
   /**
    *
-   * TODO: remove this in favour of the accessor version
-   * Return a vector of BoundingBox. Each one of the bounding boxes bounds an
-   * agglomeration present in your triangulation.
-   */
-  inline const std::vector<BoundingBox<spacedim>> &
-  get_bboxes() const
-  {
-    return bboxes;
-  }
-
-
-  /**
-   *
    * Return a constant reference to the DoFHandler underlying the
    * agglomeration. It knows which cell have been agglomerated, and which FE
    * spaces are present on each cell of the triangulation.

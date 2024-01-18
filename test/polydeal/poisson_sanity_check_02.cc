@@ -184,7 +184,6 @@ LaplaceOperator<dim>::assemble_system()
   FullMatrix<double> M22(dofs_per_cell, dofs_per_cell);
 
   std::vector<types::global_dof_index> local_dof_indices(dofs_per_cell);
-  // const auto &                         bboxes = ah->get_bboxes();
 
   for (const auto &polytope : ah->polytope_iterators())
     {
