@@ -61,11 +61,9 @@ test_internal_grid(Triangulation<dim> &tria)
   ah.distribute_agglomerated_dofs(fe_dg);
   ah.initialize_fe_values(QGauss<2>(1), update_JxW_values);
   double perimeter = 0.;
-  for (const auto &cell : ah.agglomeration_cell_iterators() |
-                            IteratorFilters::ActiveFEIndexEqualTo(
-                              ah.CellAgglomerationType::master))
+  for (const auto &cell : ah.polytope_iterators())
     {
-      unsigned int n_agglomerated_faces_per_cell = ah.n_faces(cell);
+      unsigned int n_agglomerated_faces_per_cell = cell->n_faces();
       std::cout << "Number of faces of this cell: "
                 << n_agglomerated_faces_per_cell << std::endl;
       for (size_t f = 0; f < n_agglomerated_faces_per_cell; ++f)
@@ -78,9 +76,8 @@ test_internal_grid(Triangulation<dim> &tria)
           std::cout << "For face with index f =" << f << " the normal is "
                     << normals[0] << std::endl;
         }
-      std::cout << "Perimeter of agglomeration with master idx: "
-                << cell->active_cell_index() << " is " << perimeter
-                << std::endl;
+      std::cout << "Perimeter of agglomeration with index " << cell->index()
+                << " is " << perimeter << std::endl;
       perimeter = 0.;
     }
 }
@@ -122,11 +119,9 @@ test_external_grid(Triangulation<2> &tria)
   ah.distribute_agglomerated_dofs(fe_dg);
   ah.initialize_fe_values(QGauss<2>(1), update_JxW_values);
   double perimeter = 0.;
-  for (const auto &cell : ah.agglomeration_cell_iterators() |
-                            IteratorFilters::ActiveFEIndexEqualTo(
-                              ah.CellAgglomerationType::master))
+  for (const auto &cell : ah.polytope_iterators())
     {
-      unsigned int n_agglomerated_faces_per_cell = ah.n_faces(cell);
+      unsigned int n_agglomerated_faces_per_cell = cell->n_faces();
       std::cout << "Number of faces of this cell: "
                 << n_agglomerated_faces_per_cell << std::endl;
       for (size_t f = 0; f < n_agglomerated_faces_per_cell; ++f)
@@ -139,9 +134,8 @@ test_external_grid(Triangulation<2> &tria)
           std::cout << "For face with index f =" << f << " the normal is "
                     << normals[0] << std::endl;
         }
-      std::cout << "Perimeter of agglomeration with master idx: "
-                << cell->active_cell_index() << " is " << perimeter
-                << std::endl;
+      std::cout << "Perimeter of agglomeration index: " << cell->index()
+                << " is " << perimeter << std::endl;
       perimeter = 0.;
     }
 }
