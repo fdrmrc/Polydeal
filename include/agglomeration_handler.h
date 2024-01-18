@@ -16,8 +16,6 @@
 #ifndef agglomeration_handler_h
 #define agglomeration_handler_h
 
-#include <deal.II/base/bounding_box_data_out.h>
-#include <deal.II/base/iterator_range.h>
 #include <deal.II/base/quadrature.h>
 #include <deal.II/base/subscriptor.h>
 
@@ -264,23 +262,11 @@ public:
    * -2: default value, standard deal.II cell
    * -1: cell is a master cell
    *
-   * @note Cells are assumed to be adjacent one to each other, and no check
+   * @note cells are assumed to be adjacent one to each other, and no check
    * about this is done.
    */
   void
-  insert_agglomerate(
-    const std::vector<
-      typename Triangulation<dim, spacedim>::active_cell_iterator>
-      &vec_of_cells);
-
-  /**
-   * Get cells agglomerated with the given cell iterator. Return an empty vector
-   * if there are no cells agglomerated with it.
-   */
-  std::vector<typename Triangulation<dim, spacedim>::active_cell_iterator>
-  get_agglomerated_cells(
-    const typename Triangulation<dim, spacedim>::active_cell_iterator &cell)
-    const;
+  insert_agglomerate(const agglomeration_container &cells);
 
   /**
    * Get the connectivity of the agglomeration. TODO: this data structure should
@@ -601,8 +587,7 @@ public:
    */
   Quadrature<dim>
   agglomerated_quadrature(
-    const std::vector<
-      typename Triangulation<dim, spacedim>::active_cell_iterator> &cells,
+    const agglomeration_container &cells,
     const typename Triangulation<dim, spacedim>::active_cell_iterator
       &master_cell) const;
 
@@ -990,11 +975,8 @@ private:
    * cells. This fills also the euler vector
    */
   void
-  create_bounding_box(
-    const std::vector<
-      typename Triangulation<dim, spacedim>::active_cell_iterator>
-      &                            vec_of_cells,
-    const types::global_cell_index master_idx)
+  create_bounding_box(const agglomeration_container &polytope,
+                      const types::global_cell_index master_idx)
   {
     Assert(n_agglomerations > 0,
            ExcMessage("No agglomeration has been performed."));
@@ -1002,7 +984,7 @@ private:
 
     std::vector<types::global_dof_index> dof_indices(euler_fe->dofs_per_cell);
     std::vector<Point<spacedim>>         pts; // store all the vertices
-    for (const auto &cell : vec_of_cells)
+    for (const auto &cell : polytope)
       {
         typename DoFHandler<dim, spacedim>::cell_iterator cell_dh(*cell,
                                                                   &euler_dh);
@@ -1079,7 +1061,7 @@ private:
       }
     else
       {
-        Assert(false, ExcInternalError());
+        Assert(false, ExcNotImplemented());
       }
   }
 

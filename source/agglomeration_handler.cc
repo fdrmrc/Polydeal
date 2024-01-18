@@ -39,17 +39,16 @@ AgglomerationHandler<dim, spacedim>::AgglomerationHandler(
 template <int dim, int spacedim>
 void
 AgglomerationHandler<dim, spacedim>::insert_agglomerate(
-  const std::vector<typename Triangulation<dim, spacedim>::active_cell_iterator>
-    &vec_of_cells)
+  const agglomeration_container &cells)
 {
   Assert(master_slave_relationships.size() > 0,
          ExcMessage("Before calling this function, be sure that the "
                     "constructor of this object has been called."));
-  Assert(vec_of_cells.size() >= 1, ExcMessage("No cells to be agglomerated."));
+  Assert(cells.size() >= 1, ExcMessage("No cells to be agglomerated."));
 
   // Get global index for each cell
   std::vector<types::global_cell_index> global_indices;
-  for (const auto &cell : vec_of_cells)
+  for (const auto &cell : cells)
     global_indices.push_back(cell->active_cell_index());
 
   // Maximum index drives the selection of the master cell
@@ -59,7 +58,7 @@ AgglomerationHandler<dim, spacedim>::insert_agglomerate(
   for (const types::global_cell_index idx : global_indices)
     master_slave_relationships[idx] = master_idx; // mark each slave
 
-  for (const auto &cell : vec_of_cells)
+  for (const auto &cell : cells)
     {
       if (cell->active_cell_index() == master_idx)
         {
@@ -71,8 +70,8 @@ AgglomerationHandler<dim, spacedim>::insert_agglomerate(
 
   std::vector<typename Triangulation<dim, spacedim>::active_cell_iterator>
     slaves;
-  slaves.reserve(vec_of_cells.size() - 1);
-  for (const auto &cell : vec_of_cells)
+  slaves.reserve(cells.size() - 1);
+  for (const auto &cell : cells)
     {
       if (cell->active_cell_index() != master_idx)
         {
@@ -92,26 +91,14 @@ AgglomerationHandler<dim, spacedim>::insert_agglomerate(
 
   master2polygon[master_idx] = n_agglomerations;
   ++n_agglomerations; // agglomeration has been performed, record it
-  create_bounding_box(vec_of_cells, master_idx); // fill the vector of bboxes
+  create_bounding_box(cells, master_idx); // fill the vector of bboxes
 }
-
-
-
-template <int dim, int spacedim>
-std::vector<typename Triangulation<dim, spacedim>::active_cell_iterator>
-AgglomerationHandler<dim, spacedim>::get_agglomerated_cells(
-  const typename Triangulation<dim, spacedim>::active_cell_iterator &cell) const
-{
-  const int current_idx = cell->active_cell_index();
-  return get_slaves_of_idx(current_idx);
-}
-
 
 
 template <int dim, int spacedim>
 Quadrature<dim>
 AgglomerationHandler<dim, spacedim>::agglomerated_quadrature(
-  const std::vector<typename Triangulation<dim, spacedim>::active_cell_iterator>
+  const typename AgglomerationHandler<dim, spacedim>::agglomeration_container
     &cells,
   const typename Triangulation<dim, spacedim>::active_cell_iterator
     &master_cell) const
