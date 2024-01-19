@@ -278,6 +278,22 @@ public:
     return master_neighbors;
   }
 
+
+  inline decltype(auto)
+  get_info()
+  {
+    return info_cells;
+  }
+
+
+  inline decltype(auto)
+  n_agglomerated_faces(
+    const typename Triangulation<dim, spacedim>::active_cell_iterator
+      &master_cell)
+  {
+    return number_of_agglomerated_faces.at(master_cell);
+  }
+
   inline const std::vector<long int> &
   get_relationships() const
   {
@@ -779,6 +795,34 @@ private:
    */
   mutable std::map<CellAndFace, MasterNeighborInfo> master_neighbors;
 
+
+  // /**
+  //  * Given a pair of neighboring cells, store the sequence of local face
+  //  indices
+  //  * and deal cells they share.
+  //  *
+  //  */
+  // mutable std::map<
+  //   std::pair<types::global_cell_index, types::global_cell_index>,
+  //   std::vector<
+  //     std::pair<typename Triangulation<dim, spacedim>::active_cell_iterator,
+  //               unsigned int>>>
+  //   agglomerated_faces;
+
+
+  mutable std::map<
+    CellAndFace,
+    std::vector<
+      std::pair<typename Triangulation<dim, spacedim>::active_cell_iterator,
+                unsigned int>>>
+    info_cells;
+
+
+
+  mutable std::map<typename Triangulation<dim, spacedim>::active_cell_iterator,
+                   unsigned int>
+    number_of_agglomerated_faces;
+
   /**
    * Associate a master cell (hence, a given polytope) to its boundary faces.
    * The boundary is described through a vector of face iterators.
@@ -1127,6 +1171,18 @@ private:
     const auto &agglomeration = get_agglomerate(master_cell);
 
     unsigned int n_agglo_faces = 0;
+
+    /**
+     * Given a pair of neighboring cells, store the sequence of local face
+     * indices and deal cells they share.
+     *
+     */
+    std::map<std::pair<types::global_cell_index, types::global_cell_index>,
+             std::vector<std::pair<
+               typename Triangulation<dim, spacedim>::active_cell_iterator,
+               unsigned int>>>
+      agglomerated_faces;
+
     for (const auto &cell : agglomeration)
       {
         for (const auto f : cell->face_indices())
@@ -1146,22 +1202,65 @@ private:
                 const auto nof = cell->neighbor_of_neighbor(f); // loc(f')
 
                 if (is_slave_cell(neighboring_cell))
-                  master_neighbors.emplace(
-                    cell_and_face,
-                    std::make_tuple(f,
-                                    master_slave_relationships_iterators
-                                      [neighboring_cell->active_cell_index()],
-                                    nof,
-                                    cell));
+                  {
+                    master_neighbors.emplace(
+                      cell_and_face,
+                      std::make_tuple(f,
+                                      master_slave_relationships_iterators
+                                        [neighboring_cell->active_cell_index()],
+                                      nof,
+                                      cell));
+
+                    // save the pair of neighboring cells
+                    std::pair<types::global_cell_index,
+                              types::global_cell_index>
+                      cell_and_neighbor{
+                        master2polygon.at(master_slave_relationships_iterators
+                                            [cell->active_cell_index()]
+                                              ->active_cell_index()),
+                        master2polygon.at(
+                          master_slave_relationships_iterators
+                            [neighboring_cell->active_cell_index()]
+                              ->active_cell_index())}; //(K1,K2) neighboring
+                                                       // polytopes. Here you
+                                                       // need a level of
+                                                       // indirection as you
+                                                       // need to find the
+                                                       // master of the
+                                                       // present slave
+
+                    agglomerated_faces[cell_and_neighbor].emplace_back(
+                      cell, f); //(K1,K2) -> store face indices and deal cell
+                  }
                 else
-                  master_neighbors.emplace(
-                    cell_and_face,
-                    std::make_tuple(
-                      f,
-                      neighboring_cell,
-                      nof,
-                      cell)); //(agglo,f)
-                              //->(loc(f),other_deal_cell,loc(f'),dealcell)
+                  {
+                    master_neighbors.emplace(
+                      cell_and_face,
+                      std::make_tuple(
+                        f,
+                        neighboring_cell,
+                        nof,
+                        cell)); //(agglo,f)
+                                //->(loc(f),other_deal_cell,loc(f'),dealcell)
+
+                    // save the pair of neighboring cells
+                    if (is_master_cell(neighboring_cell))
+                      {
+                        std::pair<types::global_cell_index,
+                                  types::global_cell_index>
+                          cell_and_neighbor{
+                            master2polygon.at(master_cell->active_cell_index()),
+                            master2polygon.at(
+                              neighboring_cell->active_cell_index())};
+                        //(K1,K2) neighboring
+                        // polytopes
+
+                        agglomerated_faces[cell_and_neighbor].emplace_back(
+                          cell,
+                          f); //(K1,K2) -> store local face index
+                              // and deal cell
+                      }
+                  }
 
                 // Now, link the index of the agglomerated face with the
                 // master and the neighboring cell.
@@ -1187,9 +1286,38 @@ private:
                                   cell)); // TODO: check what the last element
                                           // should be...
                 ++n_agglo_faces;
+
+
+                std::pair<types::global_cell_index, types::global_cell_index>
+                  cell_and_neighbor{master2polygon.at(
+                                      master_cell->active_cell_index()),
+                                    std::numeric_limits<unsigned int>::max()};
+
+
+                agglomerated_faces[cell_and_neighbor].emplace_back(
+                  cell,
+                  f); //(K1,K2) -> store local face index
+                      // and deal cell
               }
           }
+      } // loop over all cells of agglomerate
+
+    // recover information about deal cells and local face indices associated to
+    // the same face
+    unsigned int face = 0;
+    for (const auto &[key, val] : agglomerated_faces)
+      {
+        // I'm sitting on one pair
+        const auto &agglo_and_face = CellAndFace(master_cell, face);
+        for (const auto &p : val)
+          info_cells[agglo_and_face].emplace_back(
+            p.first,
+            p.second); // first = deal cell, second = local face index
+        // increment the face counter
+        ++face;
       }
+
+    number_of_agglomerated_faces[master_cell] = face;
   }
 
   /**
