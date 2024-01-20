@@ -119,3 +119,6 @@ deal.II cell index = 15
 Local face idx = 3
 
 Perimeter = 8
+- - - - - - - - - - - -
+Check on neighbors and neighbors of neighbors:
+Ok
