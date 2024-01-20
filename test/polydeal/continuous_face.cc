@@ -90,6 +90,8 @@ perimeter_test(AgglomerationHandler<2> &ah)
   std::cout << "Perimeter = " << perimeter << std::endl;
 }
 
+
+
 void
 test_neighbors(AgglomerationHandler<2> &ah)
 {
@@ -109,6 +111,46 @@ test_neighbors(AgglomerationHandler<2> &ah)
                           ah.neighbor_of_agglomerated_neighbor(cell, f))
                         ->active_cell_index() == cell->active_cell_index()),
                      ExcMessage("Mismatch!"));
+            }
+        }
+    }
+  std::cout << "Ok" << std::endl;
+}
+
+
+
+void
+test_face_qpoints(AgglomerationHandler<2> &ah)
+{
+  std::cout << "Check on quadrature points:" << std::endl;
+  for (const auto &cell : ah.agglomeration_cell_iterators() |
+                            IteratorFilters::ActiveFEIndexEqualTo(
+                              ah.CellAgglomerationType::master))
+    {
+      unsigned int n_faces = ah.n_agglomerated_faces(cell);
+      for (unsigned int f = 0; f < n_faces; ++f)
+        {
+          const auto &neigh_cell = ah.agglomerated_neighbor(cell, f);
+          if (!ah.at_boundary(cell, f))
+            {
+              const unsigned int nofn =
+                ah.neighbor_of_agglomerated_neighbor(cell, f);
+              const auto &fe_faces =
+                ah.reinit_interface(cell, neigh_cell, f, nofn);
+
+              const auto &fe_faces0 = fe_faces.first;
+              const auto &fe_faces1 = fe_faces.second;
+
+              const auto &points0 = fe_faces0.get_quadrature_points();
+              const auto &points1 = fe_faces1.get_quadrature_points();
+              for (size_t i = 0; i < fe_faces1.get_quadrature_points().size();
+                   ++i)
+                {
+                  double d = (points0[i] - points1[i]).norm();
+                  Assert(d < 1e-15,
+                         ExcMessage(
+                           "Face qpoints at the interface do not match!"));
+                }
             }
         }
     }
@@ -179,9 +221,12 @@ main()
 
   FE_DGQ<2> fe_dg(1);
   ah.distribute_agglomerated_dofs(fe_dg);
-  ah.initialize_fe_values(QGauss<2>(1), update_JxW_values);
+  ah.initialize_fe_values(QGauss<2>(1),
+                          update_JxW_values | update_quadrature_points);
 
   perimeter_test(ah);
   std::cout << "- - - - - - - - - - - -" << std::endl;
   test_neighbors(ah);
+  std::cout << "- - - - - - - - - - - -" << std::endl;
+  test_face_qpoints(ah);
 }
