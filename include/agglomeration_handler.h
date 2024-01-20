@@ -289,7 +289,7 @@ public:
   inline decltype(auto)
   n_agglomerated_faces(
     const typename Triangulation<dim, spacedim>::active_cell_iterator
-      &master_cell)
+      &master_cell) const
   {
     return number_of_agglomerated_faces.at(master_cell);
   }
@@ -420,7 +420,11 @@ public:
           }
         else if (is_master_cell(cell))
           {
-            const auto &neigh = std::get<1>(master_neighbors[{cell, f}]);
+            // const auto &neigh = std::get<1>(master_neighbors[{cell, f}]);
+            // typename DoFHandler<dim, spacedim>::active_cell_iterator cell_dh(
+            //   *neigh, &agglo_dh);
+            // return cell_dh;
+            const auto &neigh = std::get<2>(info_cells[{cell, f}][0]);
             typename DoFHandler<dim, spacedim>::active_cell_iterator cell_dh(
               *neigh, &agglo_dh);
             return cell_dh;
@@ -467,15 +471,68 @@ public:
         else if (is_master_cell(cell) &&
                  is_master_cell(agglomerated_neighbor(cell, f)))
           {
-            const auto &current_agglo_info = master_neighbors[{cell, f}];
-            const auto &local_f_idx        = std::get<0>(current_agglo_info);
-            const auto &current_cell       = std::get<3>(current_agglo_info);
+            // const auto &current_agglo_info = master_neighbors[{cell, f}];
+            // const auto &local_f_idx        = std::get<0>(current_agglo_info);
+            // const auto &current_cell       = std::get<3>(current_agglo_info);
+
+            // const auto &agglo_neigh =
+            //   agglomerated_neighbor(cell,
+            //                         f); // returns the neighboring master
+            // const unsigned int n_faces_agglomerated_neighbor =
+            //   n_faces(agglo_neigh);
+            // // Loop over all cells of neighboring agglomerate
+            // for (unsigned int f_out = 0; f_out <
+            // n_faces_agglomerated_neighbor;
+            //      ++f_out)
+            //   {
+            //     if (agglomerated_neighbor(agglo_neigh, f_out).state() ==
+            //           IteratorState::valid &&
+            //         current_cell->neighbor(local_f_idx).state() ==
+            //           IteratorState::valid &&
+            //         current_cell.state() == IteratorState::valid)
+            //       {
+            //         const auto &neighboring_agglo_info =
+            //           master_neighbors[{agglo_neigh, f_out}];
+            //         const auto &local_f_out_idx =
+            //           std::get<0>(neighboring_agglo_info);
+            //         const auto &current_cell_out =
+            //           std::get<3>(neighboring_agglo_info);
+            //         const auto &other_standard =
+            //           std::get<1>(neighboring_agglo_info);
+
+            //         // Here, an extra condition is needed because there can
+            //         be
+            //         // more than one face index that returns the same
+            //         neighbor
+            //         // if you simply check who is f' s.t.
+            //         // cell->neigh(f)->neigh(f') == cell. Hence, an extra
+            //         // condition must be added.
+
+            //         if (other_standard.state() == IteratorState::valid &&
+            //             agglomerated_neighbor(agglo_neigh, f_out)
+            //                 ->active_cell_index() ==
+            //               cell->active_cell_index() &&
+            //             current_cell->active_cell_index() ==
+            //               current_cell_out->neighbor(local_f_out_idx)
+            //                 ->active_cell_index() &&
+            //             current_cell->neighbor(local_f_idx) ==
+            //             current_cell_out)
+            //           return f_out;
+            //       }
+            //   }
+            // Assert(false, ExcInternalError());
+            // return {}; // just to suppress warnings
+
+
+            const auto &current_agglo_info = info_cells[{cell, f}][0];
+            const auto &current_cell       = std::get<0>(current_agglo_info);
+            const auto &local_f_idx        = std::get<1>(current_agglo_info);
 
             const auto &agglo_neigh =
               agglomerated_neighbor(cell,
                                     f); // returns the neighboring master
             const unsigned int n_faces_agglomerated_neighbor =
-              n_faces(agglo_neigh);
+              n_agglomerated_faces(agglo_neigh);
             // Loop over all cells of neighboring agglomerate
             for (unsigned int f_out = 0; f_out < n_faces_agglomerated_neighbor;
                  ++f_out)
@@ -486,30 +543,35 @@ public:
                       IteratorState::valid &&
                     current_cell.state() == IteratorState::valid)
                   {
-                    const auto &neighboring_agglo_info =
-                      master_neighbors[{agglo_neigh, f_out}];
-                    const auto &local_f_out_idx =
-                      std::get<0>(neighboring_agglo_info);
-                    const auto &current_cell_out =
-                      std::get<3>(neighboring_agglo_info);
-                    const auto &other_standard =
-                      std::get<1>(neighboring_agglo_info);
+                    const auto &neighbor_info =
+                      info_cells[{agglo_neigh, f_out}];
 
+                    for (const auto &[other_deal,
+                                      local_f_out_idx,
+                                      neigh_out,
+                                      dummy] : neighbor_info)
+                      {
+                        if (other_deal->neighbor(local_f_out_idx) ==
+                              current_cell &&
+                            other_deal.state() == IteratorState::valid)
+                          return f_out;
+                      }
                     // Here, an extra condition is needed because there can be
                     // more than one face index that returns the same neighbor
                     // if you simply check who is f' s.t.
                     // cell->neigh(f)->neigh(f') == cell. Hence, an extra
                     // condition must be added.
 
-                    if (other_standard.state() == IteratorState::valid &&
-                        agglomerated_neighbor(agglo_neigh, f_out)
-                            ->active_cell_index() ==
-                          cell->active_cell_index() &&
-                        current_cell->active_cell_index() ==
-                          current_cell_out->neighbor(local_f_out_idx)
-                            ->active_cell_index() &&
-                        current_cell->neighbor(local_f_idx) == current_cell_out)
-                      return f_out;
+                    // if (other_deal.state() == IteratorState::valid &&
+                    //     agglomerated_neighbor(agglo_neigh, f_out)
+                    //         ->active_cell_index() ==
+                    //       cell->active_cell_index() &&
+                    //     current_cell->active_cell_index() ==
+                    //       current_cell_out->neighbor(local_f_out_idx)
+                    //         ->active_cell_index() &&
+                    //     current_cell->neighbor(local_f_idx) ==
+                    //     current_cell_out)
+                    //   return f_out;
                   }
               }
             Assert(false, ExcInternalError());
@@ -676,8 +738,13 @@ public:
     if (is_standard_cell(cell))
       return cell->face(f)->at_boundary();
     else
-      return std::get<2>(master_neighbors[{cell, f}]) ==
-             std::numeric_limits<unsigned int>::max();
+      {
+        // return std::get<2>(master_neighbors[{cell, f}]) ==
+        //        std::numeric_limits<unsigned int>::max();
+        const auto &[deal_cell, local_face_idx, dummy, dummy_] =
+          info_cells[{cell, f}][0];
+        return deal_cell->at_boundary(local_face_idx);
+      }
   }
 
 
@@ -809,12 +876,20 @@ private:
   //               unsigned int>>>
   //   agglomerated_faces;
 
-
+  /**
+   * (Agglo,face agglo) ->
+   * - deal cell,
+   * - local deal face idx
+   * - neighboring master
+   *
+   */
   mutable std::map<
     CellAndFace,
     std::vector<
-      std::pair<typename Triangulation<dim, spacedim>::active_cell_iterator,
-                unsigned int>>>
+      std::tuple<typename Triangulation<dim, spacedim>::active_cell_iterator,
+                 unsigned int,
+                 typename Triangulation<dim, spacedim>::active_cell_iterator,
+                 unsigned int>>>
     info_cells;
 
 
@@ -1178,7 +1253,9 @@ private:
      *
      */
     std::map<std::pair<types::global_cell_index, types::global_cell_index>,
-             std::vector<std::pair<
+             std::vector<std::tuple<
+               typename Triangulation<dim, spacedim>::active_cell_iterator,
+               unsigned int,
                typename Triangulation<dim, spacedim>::active_cell_iterator,
                unsigned int>>>
       agglomerated_faces;
@@ -1230,7 +1307,12 @@ private:
                                                        // present slave
 
                     agglomerated_faces[cell_and_neighbor].emplace_back(
-                      cell, f); //(K1,K2) -> store face indices and deal cell
+                      cell,
+                      f,
+                      master_slave_relationships_iterators
+                        [neighboring_cell->active_cell_index()],
+                      nof); //(K1,K2) -> store face
+                            // indices and deal cell
                   }
                 else
                   {
@@ -1257,8 +1339,10 @@ private:
 
                         agglomerated_faces[cell_and_neighbor].emplace_back(
                           cell,
-                          f); //(K1,K2) -> store local face index
-                              // and deal cell
+                          f,
+                          neighboring_cell,
+                          nof); //(K1,K2) -> store local face index
+                                // and deal cell
                       }
                   }
 
@@ -1296,8 +1380,11 @@ private:
 
                 agglomerated_faces[cell_and_neighbor].emplace_back(
                   cell,
-                  f); //(K1,K2) -> store local face index
-                      // and deal cell
+                  f,
+                  neighboring_cell,
+                  std::numeric_limits<unsigned int>::max()); //(K1,K2) -> store
+                                                             // local face index
+                                                             // and deal cell
               }
           }
       } // loop over all cells of agglomerate
@@ -1309,10 +1396,13 @@ private:
       {
         // I'm sitting on one pair
         const auto &agglo_and_face = CellAndFace(master_cell, face);
-        for (const auto &p : val)
+        for (const auto &t : val)
           info_cells[agglo_and_face].emplace_back(
-            p.first,
-            p.second); // first = deal cell, second = local face index
+            std::get<0>(t),
+            std::get<1>(t),
+            std::get<2>(t),
+            std::get<3>(t)); // 0 = deal cell, 1 = local face index, 2 =
+                             // neighboring master, 3=nofn
         // increment the face counter
         ++face;
       }
@@ -1429,14 +1519,22 @@ namespace dealii
       {
         Assert(handler.is_master_cell(cell),
                ExcMessage("This cell must be a master one."));
-        const auto &info_neighbors =
-          handler.master_neighbors[{cell, face_index}];
-        const auto &local_face_idx   = std::get<0>(info_neighbors);
-        const auto &neighboring_cell = std::get<3>(info_neighbors);
+        // const auto &info_neighbors =
+        //   handler.master_neighbors[{cell, face_index}];
+        // const auto &local_face_idx = std::get<0>(info_neighbors);
+        // const auto &deal_cell      = std::get<3>(info_neighbors);
 
-        if (neighboring_cell.state() == IteratorState::valid)
+        const auto &cells_and_faces = handler.info_cells.at({cell, face_index});
+
+        std::vector<Point<spacedim>> final_unit_q_points;
+        std::vector<double>          final_weights;
+        std::vector<Tensor<1, dim>>  final_normals;
+
+
+        for (const auto &[deal_cell, local_face_idx, dummy, _dummy] :
+             cells_and_faces)
           {
-            handler.no_face_values->reinit(neighboring_cell, local_face_idx);
+            handler.no_face_values->reinit(deal_cell, local_face_idx);
             auto q_points = handler.no_face_values->get_quadrature_points();
 
             const auto &JxWs    = handler.no_face_values->get_JxW_values();
@@ -1445,9 +1543,9 @@ namespace dealii
             const auto &bbox =
               handler
                 .bboxes[handler.master2polygon.at(cell->active_cell_index())];
-            const double                 bbox_measure = bbox.volume();
-            std::vector<Point<spacedim>> unit_q_points;
+            const double bbox_measure = bbox.volume();
 
+            std::vector<Point<spacedim>> unit_q_points;
             std::transform(q_points.begin(),
                            q_points.end(),
                            std::back_inserter(unit_q_points),
@@ -1455,13 +1553,14 @@ namespace dealii
                              return bbox.real_to_unit(p);
                            });
 
-            // Weights must be scaled with det(J)*|J^-t n| for each quadrature
-            // point. Use the fact that we are using a BBox, so the jacobi
-            // entries are the side_length in each direction. Unfortunately,
-            // normal vectors will be scaled internally by deal.II by using a
-            // covariant transformation. In order not to change the normals, we
-            // multiply by the correct factors in order to obtain the original
-            // normal after the call to `reinit(cell)`.
+            // Weights must be scaled with det(J)*|J^-t n| for each
+            // quadrature point. Use the fact that we are using a BBox, so
+            // the jacobi entries are the side_length in each direction.
+            // Unfortunately, normal vectors will be scaled internally by
+            // deal.II by using a covariant transformation. In order not to
+            // change the normals, we multiply by the correct factors in
+            // order to obtain the original normal after the call to
+            // `reinit(cell)`.
             std::vector<double>         scale_factors(q_points.size());
             std::vector<double>         scaled_weights(q_points.size());
             std::vector<Tensor<1, dim>> scaled_normals(q_points.size());
@@ -1478,39 +1577,35 @@ namespace dealii
                 scaled_normals[q] /= scaled_normals[q].norm();
               }
 
-            NonMatching::ImmersedSurfaceQuadrature<dim, spacedim> surface_quad(
-              unit_q_points, scaled_weights, scaled_normals);
+            for (const auto &point : unit_q_points)
+              final_unit_q_points.push_back(point);
+            for (const auto &weight : scaled_weights)
+              final_weights.push_back(weight);
+            for (const auto &normal : scaled_normals)
+              final_normals.push_back(normal);
 
-            agglo_isv_ptr =
-              std::make_unique<NonMatching::FEImmersedSurfaceValues<spacedim>>(
-                *(handler.euler_mapping),
-                *(handler.fe),
-                surface_quad,
-                handler.agglomeration_face_flags);
-
-            agglo_isv_ptr->reinit(cell);
-
-            return *agglo_isv_ptr;
+            // std::transform(scaled_weights.begin(),
+            //                scaled_weights.end(),
+            //                std::back_inserter(final_weights));
+            // std::transform(scaled_normals.begin(),
+            //                scaled_normals.end(),
+            //                std::back_inserter(final_normals));
           }
-        else
-          {
-            // Then it's a boundary face of an agglomeration living on the
-            // boundary of the tria. You need to return an FEFaceValues on the
-            // boundary face of a boundary cell.
-            handler.no_face_values->reinit(neighboring_cell, local_face_idx);
 
-            // TODO: check if *mapping or *euler_mapping
-            handler.standard_scratch_face_bdary = std::make_unique<
-              typename AgglomerationHandler<dim, spacedim>::ScratchData>(
-              *(handler.euler_mapping),
-              handler.fe_collection[2],
-              handler.agglomeration_quad,
-              handler.agglomeration_flags,
-              handler.agglomeration_face_quad,
-              handler.agglomeration_face_flags);
+        // Done with collecting normals, qpoints and weights.
+        NonMatching::ImmersedSurfaceQuadrature<dim, spacedim> surface_quad(
+          final_unit_q_points, final_weights, final_normals);
 
-            return handler.standard_scratch_face_bdary->reinit(cell);
-          }
+        agglo_isv_ptr =
+          std::make_unique<NonMatching::FEImmersedSurfaceValues<spacedim>>(
+            *(handler.euler_mapping),
+            *(handler.fe),
+            surface_quad,
+            handler.agglomeration_face_flags);
+
+        agglo_isv_ptr->reinit(cell);
+
+        return *agglo_isv_ptr;
       }
     };
   } // namespace internal
