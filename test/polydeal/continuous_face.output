@@ -122,3 +122,6 @@ Perimeter = 8
 - - - - - - - - - - - -
 Check on neighbors and neighbors of neighbors:
 Ok
+- - - - - - - - - - - -
+Check on quadrature points:
+Ok
