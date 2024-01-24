@@ -965,6 +965,8 @@ AgglomerationHandler<dim, spacedim>::at_boundary(
     {
       // return std::get<2>(master_neighbors[{cell, f}]) ==
       //        std::numeric_limits<unsigned int>::max();
+      
+      // boundary cells are all clustered together
       const auto &[deal_cell, local_face_idx, dummy, dummy_] =
         info_cells[{cell, f}][0];
       return deal_cell->at_boundary(local_face_idx);

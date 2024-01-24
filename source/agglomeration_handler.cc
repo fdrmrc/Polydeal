@@ -294,18 +294,24 @@ AgglomerationHandler<dim, spacedim>::neighbor_of_agglomerated_neighbor(
                     IteratorState::valid &&
                   current_cell.state() == IteratorState::valid)
                 {
-                  const auto &neighbor_info = info_cells[{agglo_neigh, f_out}];
+                  // const auto &neighbor_info = info_cells[{agglo_neigh,
+                  // f_out}];
 
-                  for (const auto &[other_deal,
-                                    local_f_out_idx,
-                                    neigh_out,
-                                    dummy] : neighbor_info)
-                    {
-                      if (other_deal->neighbor(local_f_out_idx) ==
-                            current_cell &&
-                          other_deal.state() == IteratorState::valid)
-                        return f_out;
-                    }
+                  // Check if same master cell
+                  if (agglomerated_neighbor(agglo_neigh, f_out)
+                        ->active_cell_index() == cell->active_cell_index())
+                    return f_out;
+
+                  // for (const auto &[other_deal,
+                  //                   local_f_out_idx,
+                  //                   neigh_out,
+                  //                   dummy] : neighbor_info)
+                  //   {
+                  //     if (other_deal->neighbor(local_f_out_idx) ==
+                  //           current_cell &&
+                  //         other_deal.state() == IteratorState::valid)
+                  //       return f_out;
+                  //   }
                   // Here, an extra condition is needed because there can be
                   // more than one face index that returns the same neighbor
                   // if you simply check who is f' s.t.
