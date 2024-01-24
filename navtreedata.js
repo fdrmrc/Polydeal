@@ -58,7 +58,8 @@ var NAVTREE =
 
 var NAVTREEINDEX =
 [
-"agglomeration__accessor_8h.html"
+"agglomeration__accessor_8h.html",
+"structdealii_1_1_poly_utils_1_1_rtree__visitor.html#a693ac2689626a6ffea48a99d9ec5a55d"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

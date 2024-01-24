@@ -1,6 +1,9 @@
 var annotated_dup =
 [
     [ "dealii", null, [
+      [ "internal", "namespacedealii_1_1internal.html", [
+        [ "AgglomerationHandlerImplementation", "classdealii_1_1internal_1_1_agglomeration_handler_implementation.html", "classdealii_1_1internal_1_1_agglomeration_handler_implementation" ]
+      ] ],
       [ "IteratorFilters", "namespacedealii_1_1_iterator_filters.html", [
         [ "IsNotSlave", "classdealii_1_1_iterator_filters_1_1_is_not_slave.html", "classdealii_1_1_iterator_filters_1_1_is_not_slave" ]
       ] ],

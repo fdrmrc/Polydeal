@@ -211,7 +211,7 @@ var searchData=
   ['utilities_3a_3ampi_3a_3ainternal_3a_3ampidatatypes_208',['MPIDataTypes',['http://www.dealii.org/developer/doxygen/deal.II/namespaceUtilities_1_1MPI_1_1internal_1_1MPIDataTypes.html',1,'Utilities::MPI::internal']]],
   ['utilities_3a_3ampi_3a_3ainternal_3a_3atags_209',['Tags',['http://www.dealii.org/developer/doxygen/deal.II/namespaceUtilities_1_1MPI_1_1internal_1_1Tags.html',1,'Utilities::MPI::internal']]],
   ['utilities_3a_3ampi_3a_3alargecount_210',['LargeCount',['http://www.dealii.org/developer/doxygen/deal.II/namespaceUtilities_1_1MPI_1_1LargeCount.html',1,'Utilities::MPI']]],
-  ['utilities_3a_3ampi_3a_3aremotepointevaluation_211',['RemotePointEvaluation',['http://www.dealii.org/developer/doxygen/deal.II/classUtilities_1_1MPI_1_1RemotePointEvaluation_1_1CellData.html',1,'Utilities::MPI']]],
+  ['utilities_3a_3ampi_3a_3aremotepointevaluation_211',['RemotePointEvaluation',['http://www.dealii.org/developer/doxygen/deal.II/structUtilities_1_1MPI_1_1RemotePointEvaluation_1_1AdditionalData.html',1,'Utilities::MPI']]],
   ['utilities_3a_3ampi_3a_3asum_212',['sum',['http://www.dealii.org/developer/doxygen/deal.II/classSparseMatrix.html#a3500e4b06ef59cd4b6e0eec5f4797c90',1,'SparseMatrix']]],
   ['utilities_3a_3asystem_213',['System',['http://www.dealii.org/developer/doxygen/deal.II/namespaceUtilities_1_1System.html',1,'Utilities']]],
   ['utilities_3a_3atrilinos_214',['Trilinos',['http://www.dealii.org/developer/doxygen/deal.II/namespaceUtilities_1_1Trilinos.html',1,'Utilities']]],
