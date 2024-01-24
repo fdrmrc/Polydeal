@@ -275,60 +275,62 @@ AgglomerationHandler<dim, spacedim>::neighbor_of_agglomerated_neighbor(
           // return {}; // just to suppress warnings
 
 
-          const auto &current_agglo_info = info_cells[{cell, f}][0];
-          const auto &current_cell       = std::get<0>(current_agglo_info);
-          const auto &local_f_idx        = std::get<1>(current_agglo_info);
+          // const auto &current_agglo_info = info_cells[{cell, f}][0];
+          // const auto &current_cell       = std::get<0>(current_agglo_info);
+          // const auto &local_f_idx        = std::get<1>(current_agglo_info);
 
           const auto &agglo_neigh =
             agglomerated_neighbor(cell,
                                   f); // returns the neighboring master
+          AssertThrow(agglo_neigh.state() == IteratorState::valid,
+                      ExcInternalError());
           const unsigned int n_faces_agglomerated_neighbor =
             n_agglomerated_faces(agglo_neigh);
           // Loop over all cells of neighboring agglomerate
           for (unsigned int f_out = 0; f_out < n_faces_agglomerated_neighbor;
                ++f_out)
             {
-              if (agglomerated_neighbor(agglo_neigh, f_out).state() ==
-                    IteratorState::valid &&
-                  current_cell->neighbor(local_f_idx).state() ==
-                    IteratorState::valid &&
-                  current_cell.state() == IteratorState::valid)
-                {
-                  // const auto &neighbor_info = info_cells[{agglo_neigh,
-                  // f_out}];
+              // if (agglomerated_neighbor(agglo_neigh, f_out).state() ==
+              //       IteratorState::valid &&
+              //     current_cell->neighbor(local_f_idx).state() ==
+              //       IteratorState::valid &&
+              //     current_cell.state() == IteratorState::valid)
+              //   {
+              // const auto &neighbor_info = info_cells[{agglo_neigh,
+              // f_out}];
 
-                  // Check if same master cell
-                  if (agglomerated_neighbor(agglo_neigh, f_out)
-                        ->active_cell_index() == cell->active_cell_index())
-                    return f_out;
+              // Check if same master cell
+              if (agglomerated_neighbor(agglo_neigh, f_out)
+                    ->active_cell_index() == cell->active_cell_index())
+                return f_out;
 
-                  // for (const auto &[other_deal,
-                  //                   local_f_out_idx,
-                  //                   neigh_out,
-                  //                   dummy] : neighbor_info)
-                  //   {
-                  //     if (other_deal->neighbor(local_f_out_idx) ==
-                  //           current_cell &&
-                  //         other_deal.state() == IteratorState::valid)
-                  //       return f_out;
-                  //   }
-                  // Here, an extra condition is needed because there can be
-                  // more than one face index that returns the same neighbor
-                  // if you simply check who is f' s.t.
-                  // cell->neigh(f)->neigh(f') == cell. Hence, an extra
-                  // condition must be added.
+              // for (const auto &[other_deal,
+              //                   local_f_out_idx,
+              //                   neigh_out,
+              //                   dummy] : neighbor_info)
+              //   {
+              //     if (other_deal->neighbor(local_f_out_idx) ==
+              //           current_cell &&
+              //         other_deal.state() == IteratorState::valid)
+              //       return f_out;
+              //   }
+              // Here, an extra condition is needed because there can be
+              // more than one face index that returns the same neighbor
+              // if you simply check who is f' s.t.
+              // cell->neigh(f)->neigh(f') == cell. Hence, an extra
+              // condition must be added.
 
-                  // if (other_deal.state() == IteratorState::valid &&
-                  //     agglomerated_neighbor(agglo_neigh, f_out)
-                  //         ->active_cell_index() ==
-                  //       cell->active_cell_index() &&
-                  //     current_cell->active_cell_index() ==
-                  //       current_cell_out->neighbor(local_f_out_idx)
-                  //         ->active_cell_index() &&
-                  //     current_cell->neighbor(local_f_idx) ==
-                  //     current_cell_out)
-                  //   return f_out;
-                }
+              // if (other_deal.state() == IteratorState::valid &&
+              //     agglomerated_neighbor(agglo_neigh, f_out)
+              //         ->active_cell_index() ==
+              //       cell->active_cell_index() &&
+              //     current_cell->active_cell_index() ==
+              //       current_cell_out->neighbor(local_f_out_idx)
+              //         ->active_cell_index() &&
+              //     current_cell->neighbor(local_f_idx) ==
+              //     current_cell_out)
+              //   return f_out;
+              // }
             }
           Assert(false, ExcInternalError());
           return {}; // just to suppress warnings
