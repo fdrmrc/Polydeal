@@ -1,3 +1,5 @@
+
+
 #include <deal.II/grid/grid_generator.h>
 #include <deal.II/grid/grid_out.h>
 
@@ -22,7 +24,7 @@ public:
 
   virtual void
   value_list(const std::vector<Point<dim>> &points,
-             std::vector<double> &          values,
+             std::vector<double>           &values,
              const unsigned int /*component*/) const override;
 };
 
@@ -34,14 +36,14 @@ public:
   value(const Point<dim> &p, const unsigned int component = 0) const override;
 
   virtual Tensor<1, dim>
-  gradient(const Point<dim> & p,
+  gradient(const Point<dim>  &p,
            const unsigned int component = 0) const override;
 };
 
 template <int dim>
 void
 RightHandSide<dim>::value_list(const std::vector<Point<dim>> &points,
-                               std::vector<double> &          values,
+                               std::vector<double>           &values,
                                const unsigned int /*component*/) const
 {
   for (unsigned int i = 0; i < values.size(); ++i)
@@ -114,6 +116,7 @@ TestIterator<dim>::make_grid()
   GridGenerator::hyper_cube(tria, -1, 1);
   tria.refine_global(6);
   cached_tria = std::make_unique<GridTools::Cache<dim>>(tria, mapping);
+  ah          = std::make_unique<AgglomerationHandler<dim>>(*cached_tria);
 }
 
 
@@ -123,6 +126,19 @@ void
 TestIterator<dim>::setup_agglomeration()
 
 {
+  std::vector<typename Triangulation<2>::active_cell_iterator>
+    cells; // each cell = an agglomerate
+  for (const auto &cell : tria.active_cell_iterators())
+    cells.push_back(cell);
+
+  std::vector<types::global_cell_index> flagged_cells;
+  const auto                            store_flagged_cells =
+    [&flagged_cells](
+      const std::vector<types::global_cell_index> &idxs_to_be_agglomerated) {
+      for (const int idx : idxs_to_be_agglomerated)
+        flagged_cells.push_back(idx);
+    };
+
   // std::vector<types::global_cell_index> idxs_to_be_agglomerated = {
   //   3, 9}; //{8, 9, 10, 11};
   std::vector<types::global_cell_index> idxs_to_be_agglomerated = {
@@ -133,6 +149,7 @@ TestIterator<dim>::setup_agglomeration()
   PolyUtils::collect_cells_for_agglomeration(tria,
                                              idxs_to_be_agglomerated,
                                              cells_to_be_agglomerated);
+  store_flagged_cells(idxs_to_be_agglomerated);
 
 
   std::vector<types::global_cell_index> idxs_to_be_agglomerated2 = {
@@ -143,6 +160,7 @@ TestIterator<dim>::setup_agglomeration()
   PolyUtils::collect_cells_for_agglomeration(tria,
                                              idxs_to_be_agglomerated2,
                                              cells_to_be_agglomerated2);
+  store_flagged_cells(idxs_to_be_agglomerated2);
 
 
   std::vector<types::global_cell_index> idxs_to_be_agglomerated3 = {1226, 1227};
@@ -151,6 +169,7 @@ TestIterator<dim>::setup_agglomeration()
   PolyUtils::collect_cells_for_agglomeration(tria,
                                              idxs_to_be_agglomerated3,
                                              cells_to_be_agglomerated3);
+  store_flagged_cells(idxs_to_be_agglomerated3);
 
 
   std::vector<types::global_cell_index> idxs_to_be_agglomerated4 = {
@@ -160,6 +179,7 @@ TestIterator<dim>::setup_agglomeration()
   PolyUtils::collect_cells_for_agglomeration(tria,
                                              idxs_to_be_agglomerated4,
                                              cells_to_be_agglomerated4);
+  store_flagged_cells(idxs_to_be_agglomerated4);
 
 
   std::vector<types::global_cell_index> idxs_to_be_agglomerated5 = {
@@ -169,6 +189,7 @@ TestIterator<dim>::setup_agglomeration()
   PolyUtils::collect_cells_for_agglomeration(tria,
                                              idxs_to_be_agglomerated5,
                                              cells_to_be_agglomerated5);
+  store_flagged_cells(idxs_to_be_agglomerated5);
 
   std::vector<types::global_cell_index> idxs_to_be_agglomerated6 = {3648, 3306};
   std::vector<typename Triangulation<dim>::active_cell_iterator>
@@ -176,6 +197,7 @@ TestIterator<dim>::setup_agglomeration()
   PolyUtils::collect_cells_for_agglomeration(tria,
                                              idxs_to_be_agglomerated6,
                                              cells_to_be_agglomerated6);
+  store_flagged_cells(idxs_to_be_agglomerated6);
 
   std::vector<types::global_cell_index> idxs_to_be_agglomerated7 = {3765, 3764};
   std::vector<typename Triangulation<dim>::active_cell_iterator>
@@ -183,17 +205,28 @@ TestIterator<dim>::setup_agglomeration()
   PolyUtils::collect_cells_for_agglomeration(tria,
                                              idxs_to_be_agglomerated7,
                                              cells_to_be_agglomerated7);
+  store_flagged_cells(idxs_to_be_agglomerated7);
+
 
 
   // Agglomerate the cells just stored
-  ah = std::make_unique<AgglomerationHandler<dim>>(*cached_tria);
-  ah->define_agglomerate(cells_to_be_agglomerated);
-  ah->define_agglomerate(cells_to_be_agglomerated2);
-  ah->define_agglomerate(cells_to_be_agglomerated3);
-  ah->define_agglomerate(cells_to_be_agglomerated4);
-  ah->define_agglomerate(cells_to_be_agglomerated5);
-  ah->define_agglomerate(cells_to_be_agglomerated6);
-  ah->define_agglomerate(cells_to_be_agglomerated7);
+  ah->insert_agglomerate(cells_to_be_agglomerated);
+  ah->insert_agglomerate(cells_to_be_agglomerated2);
+  ah->insert_agglomerate(cells_to_be_agglomerated3);
+  ah->insert_agglomerate(cells_to_be_agglomerated4);
+  ah->insert_agglomerate(cells_to_be_agglomerated5);
+  ah->insert_agglomerate(cells_to_be_agglomerated6);
+  ah->insert_agglomerate(cells_to_be_agglomerated7);
+
+  for (std::size_t i = 0; i < tria.n_active_cells(); ++i)
+    {
+      // If not present, agglomerate all the singletons
+      if (std::find(flagged_cells.begin(),
+                    flagged_cells.end(),
+                    cells[i]->active_cell_index()) == std::end(flagged_cells))
+        ah->insert_agglomerate({cells[i]});
+    }
+
   ah->distribute_agglomerated_dofs(dg_fe);
 }
 
@@ -210,12 +243,15 @@ TestIterator<dim>::test1()
     for (; polytope != ah->end(); ++polytope)
       {
         const unsigned int n_faces = polytope->n_faces();
-        std::cout << "n_faces =" << n_faces << std::endl;
-        polytope->get_dof_indices(local_dof_indices);
-        std::cout << "Global DoF indices for polytope " << polytope->index()
-                  << std::endl;
-        for (const types::global_dof_index idx : local_dof_indices)
-          std::cout << idx << std::endl;
+        if (n_faces == 6)
+          {
+            std::cout << "n_faces =" << n_faces << std::endl;
+            polytope->get_dof_indices(local_dof_indices);
+            std::cout << "Global DoF indices for polytope " << polytope->index()
+                      << std::endl;
+            for (const types::global_dof_index idx : local_dof_indices)
+              std::cout << idx << std::endl;
+          }
       } // Loop over polytopes
   }
   std::cout << std::endl;
@@ -226,12 +262,15 @@ TestIterator<dim>::test1()
     for (; polytope != ah->begin(); --polytope)
       {
         const unsigned int n_faces = polytope->n_faces();
-        std::cout << "n_faces =" << n_faces << std::endl;
-        polytope->get_dof_indices(local_dof_indices);
-        std::cout << "Global DoF indices for polytope " << polytope->index()
-                  << std::endl;
-        for (const types::global_dof_index idx : local_dof_indices)
-          std::cout << idx << std::endl;
+        if (n_faces == 6)
+          {
+            std::cout << "n_faces =" << n_faces << std::endl;
+            polytope->get_dof_indices(local_dof_indices);
+            std::cout << "Global DoF indices for polytope " << polytope->index()
+                      << std::endl;
+            for (const types::global_dof_index idx : local_dof_indices)
+              std::cout << idx << std::endl;
+          }
       } // Loop over polytopes
   }
 }
@@ -249,12 +288,15 @@ TestIterator<dim>::test2()
   for (const auto &polytope : ah->polytope_iterators())
     {
       const unsigned int n_faces = polytope->n_faces();
-      std::cout << "n_faces =" << n_faces << std::endl;
-      polytope->get_dof_indices(local_dof_indices);
-      std::cout << "Global DoF indices for polytope " << polytope->index()
-                << std::endl;
-      for (const types::global_dof_index idx : local_dof_indices)
-        std::cout << idx << std::endl;
+      if (n_faces == 6)
+        {
+          std::cout << "n_faces =" << n_faces << std::endl;
+          polytope->get_dof_indices(local_dof_indices);
+          std::cout << "Global DoF indices for polytope " << polytope->index()
+                    << std::endl;
+          for (const types::global_dof_index idx : local_dof_indices)
+            std::cout << idx << std::endl;
+        }
     }
 }
 
@@ -270,18 +312,21 @@ TestIterator<dim>::test3()
   std::vector<types::global_dof_index> local_dof_indices(dofs_per_cell);
   for (const auto &polytope : ah->polytope_iterators())
     {
-      std::cout << "Polytope number: " << polytope->index()
-                << "\t volume: " << polytope->volume() << std::endl;
-      const auto & boundary   = polytope->polytope_boundary();
-      unsigned int face_index = 0;
-      for (const auto &face : boundary)
+      if (polytope->n_faces() == 6)
         {
-          std::cout << "Face index: " << ++face_index << std::endl;
-          for (unsigned int vertex_index :
-               GeometryInfo<dim - 1>::vertex_indices())
-            std::cout << face->vertex(vertex_index) << std::endl;
+          std::cout << "Polytope number: " << polytope->index()
+                    << "\t volume: " << polytope->volume() << std::endl;
+          const auto  &boundary   = polytope->polytope_boundary();
+          unsigned int face_index = 0;
+          for (const auto &face : boundary)
+            {
+              std::cout << "Face index: " << ++face_index << std::endl;
+              for (unsigned int vertex_index :
+                   GeometryInfo<dim - 1>::vertex_indices())
+                std::cout << face->vertex(vertex_index) << std::endl;
+            }
+          std::cout << std::endl;
         }
-      std::cout << std::endl;
     }
 }
 

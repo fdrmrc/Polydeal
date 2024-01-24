@@ -894,6 +894,21 @@ private:
 
 
 
+  mutable std::vector<types::global_cell_index> visited_polytopes;
+
+  // (cell,neighcell)->{cells,local face indices}
+  mutable std::map<
+    std::pair<types::global_cell_index, types::global_cell_index>,
+    std::vector<
+      std::pair<typename Triangulation<dim, spacedim>::active_cell_iterator,
+                unsigned int>>>
+    interface;
+
+
+  mutable std::set<std::pair<types::global_cell_index, unsigned int>>
+    visited_cell_and_faces;
+
+
   mutable std::map<typename Triangulation<dim, spacedim>::active_cell_iterator,
                    unsigned int>
     number_of_agglomerated_faces;
@@ -1313,6 +1328,68 @@ private:
                         [neighboring_cell->active_cell_index()],
                       nof); //(K1,K2) -> store face
                             // indices and deal cell
+
+                    if (visited_cell_and_faces.find(
+                          {cell->active_cell_index(), f}) ==
+                        std::end(visited_cell_and_faces))
+                      {
+                        interface[{master2polygon.at(
+                                     master_cell->active_cell_index()),
+                                   master2polygon.at(
+                                     master_slave_relationships_iterators
+                                       [neighboring_cell->active_cell_index()]
+                                         ->active_cell_index())}]
+                          .emplace_back(cell, f);
+                        auto it = visited_cell_and_faces.insert(
+                          {cell->active_cell_index(), f});
+                      }
+
+
+                    if (visited_cell_and_faces.find(
+                          {cell->neighbor(f)->active_cell_index(), nof}) ==
+                        std::end(visited_cell_and_faces))
+                      {
+                        interface[{master2polygon.at(
+                                     master_slave_relationships_iterators
+                                       [neighboring_cell->active_cell_index()]
+                                         ->active_cell_index()),
+                                   master2polygon.at(
+                                     master_cell->active_cell_index())}]
+                          .emplace_back(cell->neighbor(f), nof);
+                        auto it = visited_cell_and_faces.insert(
+                          {cell->neighbor(f)->active_cell_index(), nof});
+                      }
+
+                    // if (std::find(visited_polytopes.cbegin(),
+                    //               visited_polytopes.cend(),
+                    //               master2polygon.at(
+                    //                 master_slave_relationships_iterators
+                    //                   [neighboring_cell->active_cell_index()]
+                    //                     ->active_cell_index())) ==
+                    //     std::end(visited_polytopes))
+                    //   {
+                    // neighbor not visited
+                    // interface[{master2polygon.at(
+                    //              master_slave_relationships_iterators
+                    //                [neighboring_cell->active_cell_index()]
+                    //                  ->active_cell_index()),
+                    //            master2polygon.at(
+                    //              master_cell->active_cell_index())}] =
+                    //   interface[{master2polygon.at(
+                    //                master_cell->active_cell_index()),
+                    //              master2polygon.at(
+                    //                master_slave_relationships_iterators
+                    //                  [neighboring_cell->active_cell_index()]
+                    //                    ->active_cell_index())}];
+                    // }
+
+
+
+                    // record that this polytope has been visited
+                    // visited_polytopes.push_back(master2polygon.at(
+                    //   master_slave_relationships_iterators
+                    //     [neighboring_cell->active_cell_index()]
+                    //       ->active_cell_index()));
                   }
                 else
                   {
@@ -1343,6 +1420,67 @@ private:
                           neighboring_cell,
                           nof); //(K1,K2) -> store local face index
                                 // and deal cell
+
+
+                        // if (std::find(
+                        //       visited_polytopes.begin(),
+                        //       visited_polytopes.end(),
+                        //       master2polygon.at(
+                        //         neighboring_cell->active_cell_index())) !=
+                        //     std::end(visited_polytopes))
+                        // {
+                        // already discovered
+
+                        if (visited_cell_and_faces.find(
+                              {cell->active_cell_index(), f}) ==
+                            std::end(visited_cell_and_faces))
+                          {
+                            interface[{master2polygon.at(
+                                         master_cell->active_cell_index()),
+                                       master2polygon.at(
+                                         neighboring_cell
+                                           ->active_cell_index())}]
+                              .emplace_back(cell, f);
+                            auto it = visited_cell_and_faces.insert(
+                              {cell->active_cell_index(), f});
+                          }
+
+                        if (visited_cell_and_faces.find(
+                              {cell->neighbor(f)->active_cell_index(), nof}) ==
+                            std::end(visited_cell_and_faces))
+                          {
+                            interface[{master2polygon.at(
+                                         neighboring_cell->active_cell_index()),
+                                       master2polygon.at(
+                                         master_cell->active_cell_index())}]
+                              .emplace_back(cell->neighbor(f), nof);
+                            auto it = visited_cell_and_faces.insert(
+                              {cell->neighbor(f)->active_cell_index(), nof});
+                          }
+
+                        // if (std::find(
+                        //       visited_polytopes.cbegin(),
+                        //       visited_polytopes.cend(),
+                        //       master2polygon.at(
+                        //         neighboring_cell->active_cell_index())) ==
+                        //     std::end(visited_polytopes))
+                        //   {
+                        // neighbor not visited
+                        // interface[{master2polygon.at(
+                        //              neighboring_cell->active_cell_index()),
+                        //            master2polygon.at(
+                        //              master_cell->active_cell_index())}] =
+                        //   interface[{master2polygon.at(
+                        //                master_cell->active_cell_index()),
+                        //              master2polygon.at(
+                        //                neighboring_cell->active_cell_index())}];
+                        // }
+
+
+                        // record the visited polytope
+                        // visited_polytopes.push_back(master2polygon.at(
+                        //   neighboring_cell->active_cell_index()));
+                        // }
                       }
                   }
 
@@ -1389,6 +1527,8 @@ private:
           }
       } // loop over all cells of agglomerate
 
+    // visited_polytopes.push_back(
+    //   master2polygon.at(master_cell->active_cell_index()));
     // recover information about deal cells and local face indices associated to
     // the same face
     unsigned int face = 0;
@@ -1524,88 +1664,195 @@ namespace dealii
         // const auto &local_face_idx = std::get<0>(info_neighbors);
         // const auto &deal_cell      = std::get<3>(info_neighbors);
 
-        const auto &cells_and_faces = handler.info_cells.at({cell, face_index});
+        const auto  cells_and_faces = handler.info_cells.at({cell, face_index});
+        const auto &neighbor = handler.agglomerated_neighbor(cell, face_index);
 
-        std::vector<Point<spacedim>> final_unit_q_points;
-        std::vector<double>          final_weights;
-        std::vector<Tensor<1, dim>>  final_normals;
+        // std::cout << "reinit master " << cell->active_cell_index() <<
+        // std::endl; std::cout << "agglomerate face " << face_index <<
+        // std::endl;
 
+        types::global_cell_index polytope_in =
+          handler.master2polygon.at(cell->active_cell_index());
 
-        for (const auto &[deal_cell, local_face_idx, dummy, _dummy] :
-             cells_and_faces)
+        if (neighbor.state() == IteratorState::valid)
           {
-            handler.no_face_values->reinit(deal_cell, local_face_idx);
-            auto q_points = handler.no_face_values->get_quadrature_points();
+            types::global_cell_index polytope_out =
+              handler.master2polygon.at(neighbor->active_cell_index());
 
-            const auto &JxWs    = handler.no_face_values->get_JxW_values();
-            const auto &normals = handler.no_face_values->get_normal_vectors();
 
-            const auto &bbox =
-              handler
-                .bboxes[handler.master2polygon.at(cell->active_cell_index())];
-            const double bbox_measure = bbox.volume();
 
-            std::vector<Point<spacedim>> unit_q_points;
-            std::transform(q_points.begin(),
-                           q_points.end(),
-                           std::back_inserter(unit_q_points),
-                           [&](const Point<spacedim> &p) {
-                             return bbox.real_to_unit(p);
-                           });
+            const auto common_face =
+              handler.interface.at({polytope_in, polytope_out});
 
-            // Weights must be scaled with det(J)*|J^-t n| for each
-            // quadrature point. Use the fact that we are using a BBox, so
-            // the jacobi entries are the side_length in each direction.
-            // Unfortunately, normal vectors will be scaled internally by
-            // deal.II by using a covariant transformation. In order not to
-            // change the normals, we multiply by the correct factors in
-            // order to obtain the original normal after the call to
-            // `reinit(cell)`.
-            std::vector<double>         scale_factors(q_points.size());
-            std::vector<double>         scaled_weights(q_points.size());
-            std::vector<Tensor<1, dim>> scaled_normals(q_points.size());
+            std::vector<Point<spacedim>> final_unit_q_points;
+            std::vector<double>          final_weights;
+            std::vector<Tensor<1, dim>>  final_normals;
 
-            for (unsigned int q = 0; q < q_points.size(); ++q)
+
+            for (const auto &[deal_cell, local_face_idx] : common_face)
               {
-                for (unsigned int direction = 0; direction < spacedim;
-                     ++direction)
-                  scaled_normals[q][direction] =
-                    normals[q][direction] * (bbox.side_length(direction));
+                // std::cout << "deal cell = " << deal_cell->active_cell_index()
+                //           << std::endl;
+                // std::cout << "local face index = " << local_face_idx
+                //           << std::endl;
+                handler.no_face_values->reinit(deal_cell, local_face_idx);
+                auto q_points = handler.no_face_values->get_quadrature_points();
 
-                scaled_weights[q] =
-                  (JxWs[q] * scaled_normals[q].norm()) / bbox_measure;
-                scaled_normals[q] /= scaled_normals[q].norm();
+                const auto &JxWs = handler.no_face_values->get_JxW_values();
+                const auto &normals =
+                  handler.no_face_values->get_normal_vectors();
+
+                const auto & bbox = handler.bboxes[handler.master2polygon.at(
+                  cell->active_cell_index())];
+                const double bbox_measure = bbox.volume();
+
+                std::vector<Point<spacedim>> unit_q_points;
+                std::transform(q_points.begin(),
+                               q_points.end(),
+                               std::back_inserter(unit_q_points),
+                               [&](const Point<spacedim> &p) {
+                                 return bbox.real_to_unit(p);
+                               });
+
+                // Weights must be scaled with det(J)*|J^-t n| for each
+                // quadrature point. Use the fact that we are using a BBox, so
+                // the jacobi entries are the side_length in each direction.
+                // Unfortunately, normal vectors will be scaled internally by
+                // deal.II by using a covariant transformation. In order not to
+                // change the normals, we multiply by the correct factors in
+                // order to obtain the original normal after the call to
+                // `reinit(cell)`.
+                std::vector<double>         scale_factors(q_points.size());
+                std::vector<double>         scaled_weights(q_points.size());
+                std::vector<Tensor<1, dim>> scaled_normals(q_points.size());
+
+                for (unsigned int q = 0; q < q_points.size(); ++q)
+                  {
+                    for (unsigned int direction = 0; direction < spacedim;
+                         ++direction)
+                      scaled_normals[q][direction] =
+                        normals[q][direction] * (bbox.side_length(direction));
+
+                    scaled_weights[q] =
+                      (JxWs[q] * scaled_normals[q].norm()) / bbox_measure;
+                    scaled_normals[q] /= scaled_normals[q].norm();
+                  }
+
+                for (const auto &point : unit_q_points)
+                  final_unit_q_points.push_back(point);
+                for (const auto &weight : scaled_weights)
+                  final_weights.push_back(weight);
+                for (const auto &normal : scaled_normals)
+                  final_normals.push_back(normal);
+
+                // std::transform(scaled_weights.begin(),
+                //                scaled_weights.end(),
+                //                std::back_inserter(final_weights));
+                // std::transform(scaled_normals.begin(),
+                //                scaled_normals.end(),
+                //                std::back_inserter(final_normals));
               }
 
-            for (const auto &point : unit_q_points)
-              final_unit_q_points.push_back(point);
-            for (const auto &weight : scaled_weights)
-              final_weights.push_back(weight);
-            for (const auto &normal : scaled_normals)
-              final_normals.push_back(normal);
+            // std::cout << "final_unit_q_points size = "
+            //           << final_unit_q_points.size() << std::endl;
+            // Done with collecting normals, qpoints and weights.
+            NonMatching::ImmersedSurfaceQuadrature<dim, spacedim> surface_quad(
+              final_unit_q_points, final_weights, final_normals);
 
-            // std::transform(scaled_weights.begin(),
-            //                scaled_weights.end(),
-            //                std::back_inserter(final_weights));
-            // std::transform(scaled_normals.begin(),
-            //                scaled_normals.end(),
-            //                std::back_inserter(final_normals));
+            agglo_isv_ptr =
+              std::make_unique<NonMatching::FEImmersedSurfaceValues<spacedim>>(
+                *(handler.euler_mapping),
+                *(handler.fe),
+                surface_quad,
+                handler.agglomeration_face_flags);
+
+            agglo_isv_ptr->reinit(cell);
+
+            return *agglo_isv_ptr;
           }
+        else
+          {
+            std::vector<Point<spacedim>> final_unit_q_points;
+            std::vector<double>          final_weights;
+            std::vector<Tensor<1, dim>>  final_normals;
 
-        // Done with collecting normals, qpoints and weights.
-        NonMatching::ImmersedSurfaceQuadrature<dim, spacedim> surface_quad(
-          final_unit_q_points, final_weights, final_normals);
 
-        agglo_isv_ptr =
-          std::make_unique<NonMatching::FEImmersedSurfaceValues<spacedim>>(
-            *(handler.euler_mapping),
-            *(handler.fe),
-            surface_quad,
-            handler.agglomeration_face_flags);
+            for (const auto &[deal_cell, local_face_idx, dummy, dummy_] :
+                 cells_and_faces)
+              {
+                handler.no_face_values->reinit(deal_cell, local_face_idx);
+                auto q_points = handler.no_face_values->get_quadrature_points();
 
-        agglo_isv_ptr->reinit(cell);
+                const auto &JxWs = handler.no_face_values->get_JxW_values();
+                const auto &normals =
+                  handler.no_face_values->get_normal_vectors();
 
-        return *agglo_isv_ptr;
+                const auto & bbox = handler.bboxes[handler.master2polygon.at(
+                  cell->active_cell_index())];
+                const double bbox_measure = bbox.volume();
+
+                std::vector<Point<spacedim>> unit_q_points;
+                std::transform(q_points.begin(),
+                               q_points.end(),
+                               std::back_inserter(unit_q_points),
+                               [&](const Point<spacedim> &p) {
+                                 return bbox.real_to_unit(p);
+                               });
+
+                // Weights must be scaled with det(J)*|J^-t n| for each
+                // quadrature point. Use the fact that we are using a BBox, so
+                // the jacobi entries are the side_length in each direction.
+                // Unfortunately, normal vectors will be scaled internally by
+                // deal.II by using a covariant transformation. In order not to
+                // change the normals, we multiply by the correct factors in
+                // order to obtain the original normal after the call to
+                // `reinit(cell)`.
+                std::vector<double>         scale_factors(q_points.size());
+                std::vector<double>         scaled_weights(q_points.size());
+                std::vector<Tensor<1, dim>> scaled_normals(q_points.size());
+
+                for (unsigned int q = 0; q < q_points.size(); ++q)
+                  {
+                    for (unsigned int direction = 0; direction < spacedim;
+                         ++direction)
+                      scaled_normals[q][direction] =
+                        normals[q][direction] * (bbox.side_length(direction));
+
+                    scaled_weights[q] =
+                      (JxWs[q] * scaled_normals[q].norm()) / bbox_measure;
+                    scaled_normals[q] /= scaled_normals[q].norm();
+                  }
+
+                for (const auto &point : unit_q_points)
+                  final_unit_q_points.push_back(point);
+                for (const auto &weight : scaled_weights)
+                  final_weights.push_back(weight);
+                for (const auto &normal : scaled_normals)
+                  final_normals.push_back(normal);
+
+                // std::transform(scaled_weights.begin(),
+                //                scaled_weights.end(),
+                //                std::back_inserter(final_weights));
+                // std::transform(scaled_normals.begin(),
+                //                scaled_normals.end(),
+                //                std::back_inserter(final_normals));
+              }
+
+            // Done with collecting normals, qpoints and weights.
+            NonMatching::ImmersedSurfaceQuadrature<dim, spacedim> surface_quad(
+              final_unit_q_points, final_weights, final_normals);
+
+            agglo_isv_ptr =
+              std::make_unique<NonMatching::FEImmersedSurfaceValues<spacedim>>(
+                *(handler.euler_mapping),
+                *(handler.fe),
+                surface_quad,
+                handler.agglomeration_face_flags);
+
+            agglo_isv_ptr->reinit(cell);
+
+            return *agglo_isv_ptr;
+          }
       }
     };
   } // namespace internal

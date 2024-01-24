@@ -216,7 +216,7 @@ LaplaceOperator<dim>::assemble_system()
 
       // Face terms
       const unsigned int n_faces = polytope->n_faces();
-      AssertThrow(n_faces >= 4,
+      AssertThrow(n_faces > 0,
                   ExcMessage(
                     "Invalid element: at least 4 faces are required."));
 

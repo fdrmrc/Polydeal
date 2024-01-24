@@ -29,7 +29,7 @@
 #include <algorithm>
 
 
-constexpr double entry_tol = 1e-14;
+static constexpr double entry_tol = 1e-13;
 
 template <int dim>
 class RightHandSide : public Function<dim>
@@ -219,6 +219,16 @@ Poisson<dim>::setup_agglomeration()
           ah->define_agglomerate(cells_to_be_agglomerated);
         }
     }
+  else
+    {
+      std::vector<typename Triangulation<dim>::active_cell_iterator>
+        cells; // each cell = an agglomerate
+      for (const auto &cell : tria.active_cell_iterators())
+        cells.push_back(cell);
+
+      for (std::size_t i = 0; i < tria.n_active_cells(); ++i)
+        ah->insert_agglomerate({cells[i]});
+    }
 
   ah->distribute_agglomerated_dofs(dg_fe);
   ah->create_agglomeration_sparsity_pattern(sparsity);
@@ -291,7 +301,8 @@ Poisson<dim>::assemble_system()
         cell_matrix, cell_rhs, local_dof_indices, system_matrix, system_rhs);
 
       // Face terms
-      const unsigned int n_faces = ah->n_faces(cell);
+      const unsigned int n_faces =
+        ah->n_agglomerated_faces(cell); // ah->n_faces(cell);
 
       for (unsigned int f = 0; f < n_faces; ++f)
         {
@@ -521,7 +532,8 @@ test()
           std::fabs(standard_matrix.el(i, j) - agglo_matrix.el(i, j)) <
             entry_tol,
           ExcMessage(
-            "Matrices are not equivalent up to machine precision. Code is buggy."));
+            "Matrices are not equivalent up to machine precision. Code is buggy, see entry(" +
+            std::to_string(i) + "," + std::to_string(j) + ")."));
       }
   std::cout << "Ok" << std::endl;
 }

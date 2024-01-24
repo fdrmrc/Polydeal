@@ -15,23 +15,12 @@
  */
 
 
-// On a 2x2 mesh, agglomerate together cells 0,1,2 (call it K1) and create a
-// dummy agglomerate (K2) with only cell 3. Later, check the number of faces for
-// each agglomerate.
-// - - - - - - -
-// |     |  K2  |
-// |     | - - -
-// |  K1        |
-// - - - - - - -
-//
-// From the picture, its clear that:
-// K1 has 2 faces (the two lines neighbouring K2) and all the boundary lines
-// K2 has 2 faces (the two lines neighbouring K1) and all the boundary lines
-
+// Same test of continuous_face.cc, but with a distorted grid.
 
 
 #include <deal.II/grid/grid_generator.h>
 #include <deal.II/grid/grid_out.h>
+#include <deal.II/grid/grid_tools.h>
 
 #include <agglomeration_handler.h>
 #include <poly_utils.h>
@@ -238,45 +227,25 @@ test1(const Triangulation<2> &tria, AgglomerationHandler<2> &ah)
 int
 main()
 {
-  FE_DGQ<2>   fe_dg(1);
+  Triangulation<2> tria;
+  GridGenerator::hyper_cube(tria, -1, 1);
   MappingQ<2> mapping(1);
-  {
-    Triangulation<2> tria;
-    GridGenerator::hyper_cube(tria, -1, 1);
-    tria.refine_global(2);
-    GridTools::Cache<2>     cached_tria(tria, mapping);
-    AgglomerationHandler<2> ah(cached_tria);
+  tria.refine_global(2);
+  GridTools::distort_random(0.25, tria);
+  GridTools::Cache<2>     cached_tria(tria, mapping);
+  AgglomerationHandler<2> ah(cached_tria);
 
-    test0(tria, ah);
+  test0(tria, ah);
+  test1(tria, ah);
 
-    ah.distribute_agglomerated_dofs(fe_dg);
-    ah.initialize_fe_values(QGauss<2>(1),
-                            update_JxW_values | update_quadrature_points);
+  FE_DGQ<2> fe_dg(1);
+  ah.distribute_agglomerated_dofs(fe_dg);
+  ah.initialize_fe_values(QGauss<2>(1),
+                          update_JxW_values | update_quadrature_points);
 
-    perimeter_test(ah);
-    std::cout << "- - - - - - - - - - - -" << std::endl;
-    test_neighbors(ah);
-    std::cout << "- - - - - - - - - - - -" << std::endl;
-    test_face_qpoints(ah);
-  }
-
-  {
-    Triangulation<2> tria;
-    GridGenerator::hyper_cube(tria, -1, 1);
-    tria.refine_global(2);
-    GridTools::Cache<2>     cached_tria(tria, mapping);
-    AgglomerationHandler<2> ah(cached_tria);
-
-    test1(tria, ah);
-    ah.distribute_agglomerated_dofs(fe_dg);
-    ah.initialize_fe_values(QGauss<2>(1),
-                            update_JxW_values | update_quadrature_points);
-
-    perimeter_test(ah);
-    std::cout << "- - - - - - - - - - - -" << std::endl;
-    test_neighbors(ah);
-    std::cout << "- - - - - - - - - - - -" << std::endl;
-    test_face_qpoints(ah);
-    test1(tria, ah);
-  }
+  perimeter_test(ah);
+  std::cout << "- - - - - - - - - - - -" << std::endl;
+  test_neighbors(ah);
+  std::cout << "- - - - - - - - - - - -" << std::endl;
+  test_face_qpoints(ah);
 }

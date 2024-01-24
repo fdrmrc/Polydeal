@@ -22,7 +22,7 @@ public:
 
   virtual void
   value_list(const std::vector<Point<dim>> &points,
-             std::vector<double> &          values,
+             std::vector<double>           &values,
              const unsigned int /*component*/) const override;
 };
 
@@ -34,14 +34,14 @@ public:
   value(const Point<dim> &p, const unsigned int component = 0) const override;
 
   virtual Tensor<1, dim>
-  gradient(const Point<dim> & p,
+  gradient(const Point<dim>  &p,
            const unsigned int component = 0) const override;
 };
 
 template <int dim>
 void
 RightHandSide<dim>::value_list(const std::vector<Point<dim>> &points,
-                               std::vector<double> &          values,
+                               std::vector<double>           &values,
                                const unsigned int /*component*/) const
 {
   for (unsigned int i = 0; i < values.size(); ++i)
@@ -135,9 +135,23 @@ Poisson<dim>::setup_agglomeration()
 {
   // std::vector<types::global_cell_index> idxs_to_be_agglomerated = {
   //   3, 9}; //{8, 9, 10, 11};
+  std::vector<typename Triangulation<2>::active_cell_iterator>
+    cells; // each cell = an agglomerate
+  for (const auto &cell : tria.active_cell_iterators())
+    cells.push_back(cell);
+
+
+  std::vector<types::global_cell_index> flagged_cells;
+  const auto                            store_flagged_cells =
+    [&flagged_cells](
+      const std::vector<types::global_cell_index> &idxs_to_be_agglomerated) {
+      for (const int idx : idxs_to_be_agglomerated)
+        flagged_cells.push_back(idx);
+    };
+
   std::vector<types::global_cell_index> idxs_to_be_agglomerated = {
     3235, 3238}; //{3,9};
-
+  store_flagged_cells(idxs_to_be_agglomerated);
   std::vector<typename Triangulation<dim>::active_cell_iterator>
     cells_to_be_agglomerated;
   PolyUtils::collect_cells_for_agglomeration(tria,
@@ -147,6 +161,7 @@ Poisson<dim>::setup_agglomeration()
 
   std::vector<types::global_cell_index> idxs_to_be_agglomerated2 = {
     831, 874}; //{25,19}
+  store_flagged_cells(idxs_to_be_agglomerated2);
 
   std::vector<typename Triangulation<dim>::active_cell_iterator>
     cells_to_be_agglomerated2;
@@ -156,6 +171,8 @@ Poisson<dim>::setup_agglomeration()
 
 
   std::vector<types::global_cell_index> idxs_to_be_agglomerated3 = {1226, 1227};
+  store_flagged_cells(idxs_to_be_agglomerated3);
+
   std::vector<typename Triangulation<dim>::active_cell_iterator>
     cells_to_be_agglomerated3;
   PolyUtils::collect_cells_for_agglomeration(tria,
@@ -165,6 +182,8 @@ Poisson<dim>::setup_agglomeration()
 
   std::vector<types::global_cell_index> idxs_to_be_agglomerated4 = {
     2279, 2278}; //{36,37}
+  store_flagged_cells(idxs_to_be_agglomerated4);
+
   std::vector<typename Triangulation<dim>::active_cell_iterator>
     cells_to_be_agglomerated4;
   PolyUtils::collect_cells_for_agglomeration(tria,
@@ -174,6 +193,8 @@ Poisson<dim>::setup_agglomeration()
 
   std::vector<types::global_cell_index> idxs_to_be_agglomerated5 = {
     3760, 3761}; //{3772,3773}
+  store_flagged_cells(idxs_to_be_agglomerated5);
+
   std::vector<typename Triangulation<dim>::active_cell_iterator>
     cells_to_be_agglomerated5;
   PolyUtils::collect_cells_for_agglomeration(tria,
@@ -181,6 +202,8 @@ Poisson<dim>::setup_agglomeration()
                                              cells_to_be_agglomerated5);
 
   std::vector<types::global_cell_index> idxs_to_be_agglomerated6 = {3648, 3306};
+  store_flagged_cells(idxs_to_be_agglomerated6);
+
   std::vector<typename Triangulation<dim>::active_cell_iterator>
     cells_to_be_agglomerated6;
   PolyUtils::collect_cells_for_agglomeration(tria,
@@ -188,6 +211,8 @@ Poisson<dim>::setup_agglomeration()
                                              cells_to_be_agglomerated6);
 
   std::vector<types::global_cell_index> idxs_to_be_agglomerated7 = {3765, 3764};
+  store_flagged_cells(idxs_to_be_agglomerated7);
+
   std::vector<typename Triangulation<dim>::active_cell_iterator>
     cells_to_be_agglomerated7;
   PolyUtils::collect_cells_for_agglomeration(tria,
@@ -197,13 +222,24 @@ Poisson<dim>::setup_agglomeration()
 
   // Agglomerate the cells just stored
   ah = std::make_unique<AgglomerationHandler<dim>>(*cached_tria);
-  ah->define_agglomerate(cells_to_be_agglomerated);
-  ah->define_agglomerate(cells_to_be_agglomerated2);
-  ah->define_agglomerate(cells_to_be_agglomerated3);
-  ah->define_agglomerate(cells_to_be_agglomerated4);
-  ah->define_agglomerate(cells_to_be_agglomerated5);
-  ah->define_agglomerate(cells_to_be_agglomerated6);
-  ah->define_agglomerate(cells_to_be_agglomerated7);
+  ah->insert_agglomerate(cells_to_be_agglomerated);
+  ah->insert_agglomerate(cells_to_be_agglomerated2);
+  ah->insert_agglomerate(cells_to_be_agglomerated3);
+  ah->insert_agglomerate(cells_to_be_agglomerated4);
+  ah->insert_agglomerate(cells_to_be_agglomerated5);
+  ah->insert_agglomerate(cells_to_be_agglomerated6);
+  ah->insert_agglomerate(cells_to_be_agglomerated7);
+
+  // Agglomerate all the other singletons
+  for (std::size_t i = 0; i < tria.n_active_cells(); ++i)
+    {
+      // If not present, agglomerate all the singletons
+      if (std::find(flagged_cells.begin(),
+                    flagged_cells.end(),
+                    cells[i]->active_cell_index()) == std::end(flagged_cells))
+        ah->insert_agglomerate({cells[i]});
+    }
+
   ah->distribute_agglomerated_dofs(dg_fe);
   ah->create_agglomeration_sparsity_pattern(sparsity);
 }
@@ -246,7 +282,7 @@ Poisson<dim>::assemble_system()
       cell_rhs                 = 0;
       const auto &agglo_values = ah->reinit(cell);
 
-      const auto &        q_points  = agglo_values.get_quadrature_points();
+      const auto         &q_points  = agglo_values.get_quadrature_points();
       const unsigned int  n_qpoints = q_points.size();
       std::vector<double> rhs(n_qpoints);
       rhs_function->value_list(q_points, rhs);
@@ -271,7 +307,7 @@ Poisson<dim>::assemble_system()
         cell_matrix, cell_rhs, local_dof_indices, system_matrix, system_rhs);
 
       // Face terms
-      const unsigned int n_faces = ah->n_faces(cell);
+      const unsigned int n_faces = ah->n_agglomerated_faces(cell);
 
       for (unsigned int f = 0; f < n_faces; ++f)
         {

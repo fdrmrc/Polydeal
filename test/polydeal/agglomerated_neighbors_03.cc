@@ -104,7 +104,8 @@ main()
                               ah.CellAgglomerationType::master))
     {
       std::cout << "Cell with idx: " << cell->active_cell_index() << std::endl;
-      const unsigned int n_faces = ah.n_faces(cell);
+      // const unsigned int n_faces = ah.n_faces(cell);
+      const unsigned int n_faces = ah.n_agglomerated_faces(cell);
       std::cout << "Number of faces for this cell: " << n_faces << std::endl;
       for (unsigned int f = 0; f < n_faces; ++f)
         {

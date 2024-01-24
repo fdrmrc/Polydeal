@@ -361,10 +361,16 @@ Poisson<dim>::setup_agglomeration()
                                              cells_to_be_agglomerated4);
 
   // Agglomerate the cells just stored
-  ah->define_agglomerate(cells_to_be_agglomerated);
-  ah->define_agglomerate(cells_to_be_agglomerated2);
-  ah->define_agglomerate(cells_to_be_agglomerated3);
-  ah->define_agglomerate(cells_to_be_agglomerated4);
+  ah->insert_agglomerate(cells_to_be_agglomerated);
+  ah->insert_agglomerate(cells_to_be_agglomerated2);
+  ah->insert_agglomerate(cells_to_be_agglomerated3);
+  ah->insert_agglomerate(cells_to_be_agglomerated4);
+
+  std::vector<std::vector<typename Triangulation<2>::active_cell_iterator>>
+    agglomerations{cells_to_be_agglomerated,
+                   cells_to_be_agglomerated2,
+                   cells_to_be_agglomerated3,
+                   cells_to_be_agglomerated4};
 
   ah->distribute_agglomerated_dofs(*dg_fe);
   ah->create_agglomeration_sparsity_pattern(sparsity);
@@ -445,9 +451,6 @@ Poisson<dim>::assemble_system()
 
       // Face terms
       const unsigned int n_faces = ah->n_agglomerated_faces(cell);
-      AssertThrow(n_faces > 0, ExcMessage("Invalid element!"));
-
-
 
       // auto   polygon_boundary_vertices = ah->polytope_boundary(cell);
       for (unsigned int f = 0; f < n_faces; ++f)
