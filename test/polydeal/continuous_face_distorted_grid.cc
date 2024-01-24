@@ -227,25 +227,46 @@ test1(const Triangulation<2> &tria, AgglomerationHandler<2> &ah)
 int
 main()
 {
-  Triangulation<2> tria;
-  GridGenerator::hyper_cube(tria, -1, 1);
-  MappingQ<2> mapping(1);
-  tria.refine_global(2);
-  GridTools::distort_random(0.25, tria);
-  GridTools::Cache<2>     cached_tria(tria, mapping);
-  AgglomerationHandler<2> ah(cached_tria);
+  {
+    Triangulation<2> tria;
+    GridGenerator::hyper_cube(tria, -1, 1);
+    MappingQ<2> mapping(1);
+    tria.refine_global(2);
+    GridTools::distort_random(0.25, tria);
+    GridTools::Cache<2>     cached_tria(tria, mapping);
+    AgglomerationHandler<2> ah(cached_tria);
 
-  test0(tria, ah);
-  test1(tria, ah);
+    test0(tria, ah);
+    FE_DGQ<2> fe_dg(1);
+    ah.distribute_agglomerated_dofs(fe_dg);
+    ah.initialize_fe_values(QGauss<2>(1),
+                            update_JxW_values | update_quadrature_points);
 
-  FE_DGQ<2> fe_dg(1);
-  ah.distribute_agglomerated_dofs(fe_dg);
-  ah.initialize_fe_values(QGauss<2>(1),
-                          update_JxW_values | update_quadrature_points);
+    perimeter_test(ah);
+    std::cout << "- - - - - - - - - - - -" << std::endl;
+    test_neighbors(ah);
+    std::cout << "- - - - - - - - - - - -" << std::endl;
+    test_face_qpoints(ah);
+  }
+  {
+    Triangulation<2> tria;
+    GridGenerator::hyper_cube(tria, -1, 1);
+    MappingQ<2> mapping(1);
+    tria.refine_global(2);
+    GridTools::distort_random(0.25, tria);
+    GridTools::Cache<2>     cached_tria(tria, mapping);
+    AgglomerationHandler<2> ah(cached_tria);
 
-  perimeter_test(ah);
-  std::cout << "- - - - - - - - - - - -" << std::endl;
-  test_neighbors(ah);
-  std::cout << "- - - - - - - - - - - -" << std::endl;
-  test_face_qpoints(ah);
+    test1(tria, ah);
+    FE_DGQ<2> fe_dg(1);
+    ah.distribute_agglomerated_dofs(fe_dg);
+    ah.initialize_fe_values(QGauss<2>(1),
+                            update_JxW_values | update_quadrature_points);
+
+    perimeter_test(ah);
+    std::cout << "- - - - - - - - - - - -" << std::endl;
+    test_neighbors(ah);
+    std::cout << "- - - - - - - - - - - -" << std::endl;
+    test_face_qpoints(ah);
+  }
 }
