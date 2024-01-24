@@ -1,16 +1,15 @@
 Number of faces of this cell: 6
-For face with index f =0 the normal is 0.996727 -0.0808435
-For face with index f =1 the normal is 0 -1
-For face with index f =2 the normal is -0.0808435 0.996727
-For face with index f =3 the normal is -0.964741 0.263203
-For face with index f =4 the normal is 0 -1
-For face with index f =5 the normal is 0.372271 0.928124
+For face with index f =0 the normal is 0 -1
+For face with index f =1 the normal is -0.964741 0.263203
+For face with index f =2 the normal is 0.372271 0.928124
+For face with index f =3 the normal is 0 -1
+For face with index f =4 the normal is 0.996727 -0.0808435
+For face with index f =5 the normal is -0.0808435 0.996727
 Perimeter of agglomeration index: 0 is 0.977666
-Number of faces of this cell: 6
-For face with index f =0 the normal is 1 -0
-For face with index f =1 the normal is 0 -1
-For face with index f =2 the normal is 0 1
-For face with index f =3 the normal is -0.959683 -0.281085
-For face with index f =4 the normal is 0.707107 -0.707107
-For face with index f =5 the normal is -1.57009e-16 1
+Number of faces of this cell: 5
+For face with index f =0 the normal is 0.707107 -0.707107
+For face with index f =1 the normal is -0.959683 -0.281085
+For face with index f =2 the normal is -1.57009e-16 1
+For face with index f =3 the normal is 1 -0
+For face with index f =4 the normal is 0 1
 Perimeter of agglomeration with index 0 is 2.04613

@@ -34,7 +34,21 @@ test_internal_grid(Triangulation<dim> &tria)
   GridTools::Cache<2>     cached_tria(tria, mapping);
   AgglomerationHandler<2> ah(cached_tria);
 
+  std::vector<typename Triangulation<2>::active_cell_iterator>
+    cells; // each cell = an agglomerate
+  for (const auto &cell : tria.active_cell_iterators())
+    cells.push_back(cell);
+
+  std::vector<types::global_cell_index> flagged_cells;
+  const auto                            store_flagged_cells =
+    [&flagged_cells](
+      const std::vector<types::global_cell_index> &idxs_to_be_agglomerated) {
+      for (const int idx : idxs_to_be_agglomerated)
+        flagged_cells.push_back(idx);
+    };
+
   std::vector<types::global_cell_index> idxs_to_be_agglomerated = {8, 5};
+  store_flagged_cells(idxs_to_be_agglomerated);
 
   std::vector<typename Triangulation<2>::active_cell_iterator>
     cells_to_be_agglomerated;
@@ -55,7 +69,16 @@ test_internal_grid(Triangulation<dim> &tria)
   //   }
 
   // Agglomerate the cells just stored
-  ah.define_agglomerate(cells_to_be_agglomerated);
+  ah.insert_agglomerate(cells_to_be_agglomerated);
+  for (std::size_t i = 0; i < tria.n_active_cells(); ++i)
+    {
+      // If not present, agglomerate all the singletons
+      if (std::find(flagged_cells.begin(),
+                    flagged_cells.end(),
+                    cells[i]->active_cell_index()) == std::end(flagged_cells))
+        ah.insert_agglomerate({cells[i]});
+    }
+
 
   FE_DGQ<2> fe_dg(1);
   ah.distribute_agglomerated_dofs(fe_dg);
@@ -64,21 +87,24 @@ test_internal_grid(Triangulation<dim> &tria)
   for (const auto &cell : ah.polytope_iterators())
     {
       unsigned int n_agglomerated_faces_per_cell = cell->n_faces();
-      std::cout << "Number of faces of this cell: "
-                << n_agglomerated_faces_per_cell << std::endl;
-      for (size_t f = 0; f < n_agglomerated_faces_per_cell; ++f)
+      if (n_agglomerated_faces_per_cell == 5)
         {
-          const auto &test_feisv = ah.reinit(cell, f);
-          const auto &normals    = test_feisv.get_normal_vectors();
-          perimeter += std::accumulate(test_feisv.get_JxW_values().begin(),
-                                       test_feisv.get_JxW_values().end(),
-                                       0.);
-          std::cout << "For face with index f =" << f << " the normal is "
-                    << normals[0] << std::endl;
+          std::cout << "Number of faces of this cell: "
+                    << n_agglomerated_faces_per_cell << std::endl;
+          for (size_t f = 0; f < n_agglomerated_faces_per_cell; ++f)
+            {
+              const auto &test_feisv = ah.reinit(cell, f);
+              const auto &normals    = test_feisv.get_normal_vectors();
+              perimeter += std::accumulate(test_feisv.get_JxW_values().begin(),
+                                           test_feisv.get_JxW_values().end(),
+                                           0.);
+              std::cout << "For face with index f =" << f << " the normal is "
+                        << normals[0] << std::endl;
+            }
+          std::cout << "Perimeter of agglomeration with index " << cell->index()
+                    << " is " << perimeter << std::endl;
+          perimeter = 0.;
         }
-      std::cout << "Perimeter of agglomeration with index " << cell->index()
-                << " is " << perimeter << std::endl;
-      perimeter = 0.;
     }
 }
 
@@ -104,7 +130,21 @@ test_external_grid(Triangulation<2> &tria)
   //   std::cout << "Grid written " << std::endl;
   // }
 
+  std::vector<typename Triangulation<2>::active_cell_iterator>
+    cells; // each cell = an agglomerate
+  for (const auto &cell : tria.active_cell_iterators())
+    cells.push_back(cell);
+
+  std::vector<types::global_cell_index> flagged_cells;
+  const auto                            store_flagged_cells =
+    [&flagged_cells](
+      const std::vector<types::global_cell_index> &idxs_to_be_agglomerated) {
+      for (const int idx : idxs_to_be_agglomerated)
+        flagged_cells.push_back(idx);
+    };
+
   std::vector<types::global_cell_index> idxs_to_be_agglomerated = {25, 44};
+  store_flagged_cells(idxs_to_be_agglomerated);
 
   std::vector<typename Triangulation<2>::active_cell_iterator>
     cells_to_be_agglomerated;
@@ -112,8 +152,18 @@ test_external_grid(Triangulation<2> &tria)
                                              idxs_to_be_agglomerated,
                                              cells_to_be_agglomerated);
 
+
   // Agglomerate the cells just stored
   ah.define_agglomerate(cells_to_be_agglomerated);
+
+  for (std::size_t i = 0; i < tria.n_active_cells(); ++i)
+    {
+      // If not present, agglomerate all the singletons
+      if (std::find(flagged_cells.begin(),
+                    flagged_cells.end(),
+                    cells[i]->active_cell_index()) == std::end(flagged_cells))
+        ah.insert_agglomerate({cells[i]});
+    }
 
   FE_DGQ<2> fe_dg(1);
   ah.distribute_agglomerated_dofs(fe_dg);
@@ -122,21 +172,24 @@ test_external_grid(Triangulation<2> &tria)
   for (const auto &cell : ah.polytope_iterators())
     {
       unsigned int n_agglomerated_faces_per_cell = cell->n_faces();
-      std::cout << "Number of faces of this cell: "
-                << n_agglomerated_faces_per_cell << std::endl;
-      for (size_t f = 0; f < n_agglomerated_faces_per_cell; ++f)
+      if (n_agglomerated_faces_per_cell == 6)
         {
-          const auto &test_feisv = ah.reinit(cell, f);
-          const auto &normals    = test_feisv.get_normal_vectors();
-          perimeter += std::accumulate(test_feisv.get_JxW_values().begin(),
-                                       test_feisv.get_JxW_values().end(),
-                                       0.);
-          std::cout << "For face with index f =" << f << " the normal is "
-                    << normals[0] << std::endl;
+          std::cout << "Number of faces of this cell: "
+                    << n_agglomerated_faces_per_cell << std::endl;
+          for (size_t f = 0; f < n_agglomerated_faces_per_cell; ++f)
+            {
+              const auto &test_feisv = ah.reinit(cell, f);
+              const auto &normals    = test_feisv.get_normal_vectors();
+              perimeter += std::accumulate(test_feisv.get_JxW_values().begin(),
+                                           test_feisv.get_JxW_values().end(),
+                                           0.);
+              std::cout << "For face with index f =" << f << " the normal is "
+                        << normals[0] << std::endl;
+            }
+          std::cout << "Perimeter of agglomeration index: " << cell->index()
+                    << " is " << perimeter << std::endl;
+          perimeter = 0.;
         }
-      std::cout << "Perimeter of agglomeration index: " << cell->index()
-                << " is " << perimeter << std::endl;
-      perimeter = 0.;
     }
 }
 

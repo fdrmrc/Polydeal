@@ -241,7 +241,7 @@ LaplaceOperator<dim>::assemble_system()
 
       // Face terms
       const unsigned int n_faces = polytope->n_faces();
-      AssertThrow(n_faces >= 4,
+      AssertThrow(n_faces > 0,
                   ExcMessage(
                     "Invalid element: at least 4 faces are required."));
 
@@ -311,6 +311,25 @@ LaplaceOperator<dim>::assemble_system()
                   const auto &fe_faces0 = fe_faces.first;
                   const auto &fe_faces1 = fe_faces.second;
 
+#ifdef AGGLO_DEBUG
+
+                  Assert((neigh_polytope->neighbor(nofn)->index() ==
+                          polytope->index()),
+                         ExcMessage("Mismatch!"));
+
+
+                  const auto &points0 = fe_faces0.get_quadrature_points();
+                  const auto &points1 = fe_faces1.get_quadrature_points();
+                  for (size_t i = 0;
+                       i < fe_faces1.get_quadrature_points().size();
+                       ++i)
+                    {
+                      double d = (points0[i] - points1[i]).norm();
+                      Assert(d < 1e-15,
+                             ExcMessage(
+                               "Face qpoints at the interface do not match!"));
+                    }
+#endif
                   // #ifdef AGGLO_DEBUG
                   //                   std::cout << "Local from current: " << f
                   //                   << std::endl; std::cout << "Local from

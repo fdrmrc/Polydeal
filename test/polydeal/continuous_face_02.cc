@@ -15,23 +15,21 @@
  */
 
 
-// On a 2x2 mesh, agglomerate together cells 0,1,2 (call it K1) and create a
-// dummy agglomerate (K2) with only cell 3. Later, check the number of faces for
-// each agglomerate.
-// - - - - - - -
-// |     |  K2  |
-// |     | - - -
-// |  K1        |
-// - - - - - - -
-//
-// From the picture, its clear that:
-// K1 has 2 faces (the two lines neighbouring K2) and all the boundary lines
-// K2 has 2 faces (the two lines neighbouring K1) and all the boundary lines
+// Similar to continuous_face.cc, but with more complicated configurations.
+// - - - - - - - - -|
+// |      | K5 | K6 |
+// |  K2  | - - - - |
+// |      | K3 | K4 |
+// |- - - - - - - - |
+// |     K1         |
+// - - - - - - - - -|
 
 
 
 #include <deal.II/grid/grid_generator.h>
-#include <deal.II/grid/grid_out.h>
+#include <deal.II/grid/grid_tools.h>
+
+#include <deal.II/numerics/data_out.h>
 
 #include <agglomeration_handler.h>
 #include <poly_utils.h>
@@ -127,12 +125,15 @@ test_face_qpoints(AgglomerationHandler<2> &ah)
                             IteratorFilters::ActiveFEIndexEqualTo(
                               ah.CellAgglomerationType::master))
     {
+      std::cout << "Cell = " << cell->active_cell_index() << std::endl;
       unsigned int n_faces = ah.n_agglomerated_faces(cell);
       for (unsigned int f = 0; f < n_faces; ++f)
         {
-          const auto &neigh_cell = ah.agglomerated_neighbor(cell, f);
           if (!ah.at_boundary(cell, f))
             {
+              const auto &neigh_cell = ah.agglomerated_neighbor(cell, f);
+              std::cout << "Neigh cell = " << neigh_cell->active_cell_index()
+                        << std::endl;
               const unsigned int nofn =
                 ah.neighbor_of_agglomerated_neighbor(cell, f);
               const auto &fe_faces =
@@ -171,44 +172,18 @@ test0(const Triangulation<2> &tria, AgglomerationHandler<2> &ah)
                                              idxs_to_be_agglomerated,
                                              cells_to_be_agglomerated);
 
-  std::vector<types::global_cell_index> idxs_to_be_agglomerated2 = {
-    8, 9, 10, 11, 12, 13, 14, 15};
-  std::vector<typename Triangulation<2>::active_cell_iterator>
-    cells_to_be_agglomerated2;
-  PolyUtils::collect_cells_for_agglomeration(tria,
-                                             idxs_to_be_agglomerated2,
-                                             cells_to_be_agglomerated2);
-
-  // Agglomerate the cells just stored
-  ah.insert_agglomerate(cells_to_be_agglomerated);
-  ah.insert_agglomerate(cells_to_be_agglomerated2);
-}
-
-
-
-void
-test1(const Triangulation<2> &tria, AgglomerationHandler<2> &ah)
-{
-  std::vector<types::global_cell_index> idxs_to_be_agglomerated = {0, 1, 2, 3};
-
-  std::vector<typename Triangulation<2>::active_cell_iterator>
-    cells_to_be_agglomerated;
-  PolyUtils::collect_cells_for_agglomeration(tria,
-                                             idxs_to_be_agglomerated,
-                                             cells_to_be_agglomerated);
-
-  std::vector<types::global_cell_index> idxs_to_be_agglomerated2 = {4, 5, 6, 7};
-  std::vector<typename Triangulation<2>::active_cell_iterator>
-    cells_to_be_agglomerated2;
-  PolyUtils::collect_cells_for_agglomeration(tria,
-                                             idxs_to_be_agglomerated2,
-                                             cells_to_be_agglomerated2);
-
-
-  std::vector<types::global_cell_index> idxs_to_be_agglomerated3 = {8,
+  std::vector<types::global_cell_index> idxs_to_be_agglomerated2 = {8,
                                                                     9,
                                                                     10,
                                                                     11};
+  std::vector<typename Triangulation<2>::active_cell_iterator>
+    cells_to_be_agglomerated2;
+  PolyUtils::collect_cells_for_agglomeration(tria,
+                                             idxs_to_be_agglomerated2,
+                                             cells_to_be_agglomerated2);
+
+
+  std::vector<types::global_cell_index> idxs_to_be_agglomerated3 = {12};
 
   std::vector<typename Triangulation<2>::active_cell_iterator>
     cells_to_be_agglomerated3;
@@ -217,10 +192,7 @@ test1(const Triangulation<2> &tria, AgglomerationHandler<2> &ah)
                                              cells_to_be_agglomerated3);
 
 
-  std::vector<types::global_cell_index> idxs_to_be_agglomerated4 = {12,
-                                                                    13,
-                                                                    14,
-                                                                    15};
+  std::vector<types::global_cell_index> idxs_to_be_agglomerated4 = {13};
 
   std::vector<typename Triangulation<2>::active_cell_iterator>
     cells_to_be_agglomerated4;
@@ -228,24 +200,149 @@ test1(const Triangulation<2> &tria, AgglomerationHandler<2> &ah)
                                              idxs_to_be_agglomerated4,
                                              cells_to_be_agglomerated4);
 
+  std::vector<types::global_cell_index> idxs_to_be_agglomerated5 = {14};
+
+  std::vector<typename Triangulation<2>::active_cell_iterator>
+    cells_to_be_agglomerated5;
+  PolyUtils::collect_cells_for_agglomeration(tria,
+                                             idxs_to_be_agglomerated5,
+                                             cells_to_be_agglomerated5);
+
+  std::vector<types::global_cell_index> idxs_to_be_agglomerated6 = {15};
+
+  std::vector<typename Triangulation<2>::active_cell_iterator>
+    cells_to_be_agglomerated6;
+  PolyUtils::collect_cells_for_agglomeration(tria,
+                                             idxs_to_be_agglomerated6,
+                                             cells_to_be_agglomerated6);
+
   // Agglomerate the cells just stored
   ah.insert_agglomerate(cells_to_be_agglomerated);
   ah.insert_agglomerate(cells_to_be_agglomerated2);
   ah.insert_agglomerate(cells_to_be_agglomerated3);
   ah.insert_agglomerate(cells_to_be_agglomerated4);
+  ah.insert_agglomerate(cells_to_be_agglomerated5);
+  ah.insert_agglomerate(cells_to_be_agglomerated6);
+}
+
+
+
+void
+test1(const Triangulation<2> &tria, AgglomerationHandler<2> &ah)
+{
+  std::vector<types::global_cell_index> idxs_to_be_agglomerated = {
+    0, 1, 2, 3, 4, 5, 6, 7};
+
+  std::vector<typename Triangulation<2>::active_cell_iterator>
+    cells_to_be_agglomerated;
+  PolyUtils::collect_cells_for_agglomeration(tria,
+                                             idxs_to_be_agglomerated,
+                                             cells_to_be_agglomerated);
+
+  std::vector<types::global_cell_index> idxs_to_be_agglomerated2 = {8,
+                                                                    9,
+                                                                    10,
+                                                                    11};
+  std::vector<typename Triangulation<2>::active_cell_iterator>
+    cells_to_be_agglomerated2;
+  PolyUtils::collect_cells_for_agglomeration(tria,
+                                             idxs_to_be_agglomerated2,
+                                             cells_to_be_agglomerated2);
+
+
+  std::vector<types::global_cell_index> idxs_to_be_agglomerated3 = {12,
+                                                                    13,
+                                                                    14,
+                                                                    15};
+  std::vector<typename Triangulation<2>::active_cell_iterator>
+    cells_to_be_agglomerated3;
+  PolyUtils::collect_cells_for_agglomeration(tria,
+                                             idxs_to_be_agglomerated3,
+                                             cells_to_be_agglomerated3);
+
+  // Agglomerate the cells just stored
+  ah.insert_agglomerate(cells_to_be_agglomerated);
+  ah.insert_agglomerate(cells_to_be_agglomerated2);
+  ah.insert_agglomerate(cells_to_be_agglomerated3);
+}
+
+
+
+void
+test2(const Triangulation<2> &tria, AgglomerationHandler<2> &ah)
+{
+  std::vector<types::global_cell_index> idxs_to_be_agglomerated = {3, 6, 9, 12};
+
+  std::vector<typename Triangulation<2>::active_cell_iterator>
+    cells_to_be_agglomerated;
+  PolyUtils::collect_cells_for_agglomeration(tria,
+                                             idxs_to_be_agglomerated,
+                                             cells_to_be_agglomerated);
+
+  std::vector<types::global_cell_index> idxs_to_be_agglomerated2 = {0, 1, 4, 5};
+  std::vector<typename Triangulation<2>::active_cell_iterator>
+    cells_to_be_agglomerated2;
+  PolyUtils::collect_cells_for_agglomeration(tria,
+                                             idxs_to_be_agglomerated2,
+                                             cells_to_be_agglomerated2);
+
+
+  std::vector<types::global_cell_index> idxs_to_be_agglomerated3 = {2, 8, 10};
+  std::vector<typename Triangulation<2>::active_cell_iterator>
+    cells_to_be_agglomerated3;
+  PolyUtils::collect_cells_for_agglomeration(tria,
+                                             idxs_to_be_agglomerated3,
+                                             cells_to_be_agglomerated3);
+
+  std::vector<types::global_cell_index> idxs_to_be_agglomerated4 = {11, 14, 15};
+  std::vector<typename Triangulation<2>::active_cell_iterator>
+    cells_to_be_agglomerated4;
+  PolyUtils::collect_cells_for_agglomeration(tria,
+                                             idxs_to_be_agglomerated4,
+                                             cells_to_be_agglomerated4);
+
+  std::vector<types::global_cell_index> idxs_to_be_agglomerated5 = {7, 13};
+  std::vector<typename Triangulation<2>::active_cell_iterator>
+    cells_to_be_agglomerated5;
+  PolyUtils::collect_cells_for_agglomeration(tria,
+                                             idxs_to_be_agglomerated5,
+                                             cells_to_be_agglomerated5);
+
+  // Agglomerate the cells just stored
+  ah.insert_agglomerate(cells_to_be_agglomerated);
+  ah.insert_agglomerate(cells_to_be_agglomerated2);
+  ah.insert_agglomerate(cells_to_be_agglomerated3);
+  ah.insert_agglomerate(cells_to_be_agglomerated4);
+  ah.insert_agglomerate(cells_to_be_agglomerated5);
+}
+
+
+
+void
+test3(const Triangulation<2> & tria,
+      AgglomerationHandler<2> &ah,
+      const unsigned int       n_subdomains)
+{
+  std::vector<std::vector<typename Triangulation<2>::active_cell_iterator>>
+    cells_per_subdomain(n_subdomains);
+  for (const auto &cell : tria.active_cell_iterators())
+    cells_per_subdomain[cell->subdomain_id()].push_back(cell);
+
+  for (std::size_t i = 0; i < cells_per_subdomain.size(); ++i)
+    ah.insert_agglomerate(cells_per_subdomain[i]);
 }
 
 int
 main()
 {
-  FE_DGQ<2>   fe_dg(1);
-  MappingQ<2> mapping(1);
   {
     Triangulation<2> tria;
     GridGenerator::hyper_cube(tria, -1, 1);
+    MappingQ<2> mapping(1);
     tria.refine_global(2);
     GridTools::Cache<2>     cached_tria(tria, mapping);
     AgglomerationHandler<2> ah(cached_tria);
+    FE_DGQ<2>               fe_dg(1);
 
     test0(tria, ah);
 
@@ -258,16 +355,20 @@ main()
     test_neighbors(ah);
     std::cout << "- - - - - - - - - - - -" << std::endl;
     test_face_qpoints(ah);
+    std::cout << "End Test0" << std::endl;
   }
 
   {
     Triangulation<2> tria;
     GridGenerator::hyper_cube(tria, -1, 1);
+    MappingQ<2> mapping(1);
     tria.refine_global(2);
     GridTools::Cache<2>     cached_tria(tria, mapping);
     AgglomerationHandler<2> ah(cached_tria);
+    FE_DGQ<2>               fe_dg(1);
 
     test1(tria, ah);
+
     ah.distribute_agglomerated_dofs(fe_dg);
     ah.initialize_fe_values(QGauss<2>(1),
                             update_JxW_values | update_quadrature_points);
@@ -277,6 +378,60 @@ main()
     test_neighbors(ah);
     std::cout << "- - - - - - - - - - - -" << std::endl;
     test_face_qpoints(ah);
-    test1(tria, ah);
+    std::cout << "End Test1" << std::endl;
+  }
+
+  {
+    Triangulation<2> tria;
+    GridGenerator::hyper_cube(tria, -1, 1);
+    MappingQ<2> mapping(1);
+    tria.refine_global(2);
+    GridTools::Cache<2>     cached_tria(tria, mapping);
+    AgglomerationHandler<2> ah(cached_tria);
+    FE_DGQ<2>               fe_dg(1);
+
+    test2(tria, ah);
+
+    ah.distribute_agglomerated_dofs(fe_dg);
+    ah.initialize_fe_values(QGauss<2>(1),
+                            update_JxW_values | update_quadrature_points);
+
+    perimeter_test(ah);
+    std::cout << "- - - - - - - - - - - -" << std::endl;
+    test_neighbors(ah);
+    std::cout << "- - - - - - - - - - - -" << std::endl;
+    test_face_qpoints(ah);
+    std::cout << "End Test2" << std::endl;
+  }
+
+  {
+    Triangulation<2> tria;
+    GridGenerator::hyper_cube(tria, -1, 1);
+    MappingQ<2> mapping(1);
+    tria.refine_global(3);
+
+    const unsigned int n_subdomains = 10;
+
+    GridTools::partition_triangulation(n_subdomains,
+                                       tria,
+                                       SparsityTools::Partitioner::metis);
+
+    GridTools::Cache<2>     cached_tria(tria, mapping);
+    AgglomerationHandler<2> ah(cached_tria);
+    FE_DGQ<2>               fe_dg(1);
+
+    test3(tria, ah, n_subdomains);
+
+
+    ah.distribute_agglomerated_dofs(fe_dg);
+    ah.initialize_fe_values(QGauss<2>(1),
+                            update_JxW_values | update_quadrature_points);
+
+    perimeter_test(ah);
+    std::cout << "- - - - - - - - - - - -" << std::endl;
+    test_neighbors(ah);
+    std::cout << "- - - - - - - - - - - -" << std::endl;
+    test_face_qpoints(ah);
+    std::cout << "End Test3" << std::endl;
   }
 }

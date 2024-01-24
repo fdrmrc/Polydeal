@@ -41,12 +41,12 @@ void
 test_q_points_agglomerated_face(Triangulation<dim> &tria)
 {
   GridGenerator::hyper_cube(tria, -1, 1);
-  tria.refine_global(3);
+  tria.refine_global(2);
   GridTools::Cache<2>     cached_tria(tria, mapping);
   AgglomerationHandler<2> ah(cached_tria);
 
   std::vector<types::global_cell_index> idxs_to_be_agglomerated = {
-    3, 6, 9, 12, 13}; //{8, 9, 10, 11};
+    0, 1, 2, 3}; //{8, 9, 10, 11};
 
   std::vector<typename Triangulation<2>::active_cell_iterator>
     cells_to_be_agglomerated;
@@ -54,7 +54,7 @@ test_q_points_agglomerated_face(Triangulation<dim> &tria)
                                              idxs_to_be_agglomerated,
                                              cells_to_be_agglomerated);
 
-  std::vector<types::global_cell_index> idxs_to_be_agglomerated2 = {15, 36, 37};
+  std::vector<types::global_cell_index> idxs_to_be_agglomerated2 = {4, 5, 6, 7};
 
   std::vector<typename Triangulation<2>::active_cell_iterator>
     cells_to_be_agglomerated2;
@@ -62,7 +62,10 @@ test_q_points_agglomerated_face(Triangulation<dim> &tria)
                                              idxs_to_be_agglomerated2,
                                              cells_to_be_agglomerated2);
 
-  std::vector<types::global_cell_index> idxs_to_be_agglomerated3 = {57, 60, 54};
+  std::vector<types::global_cell_index> idxs_to_be_agglomerated3 = {8,
+                                                                    9,
+                                                                    10,
+                                                                    11};
 
   std::vector<typename Triangulation<2>::active_cell_iterator>
     cells_to_be_agglomerated3;
@@ -70,7 +73,7 @@ test_q_points_agglomerated_face(Triangulation<dim> &tria)
                                              idxs_to_be_agglomerated3,
                                              cells_to_be_agglomerated3);
 
-  std::vector<types::global_cell_index> idxs_to_be_agglomerated4 = {25, 19, 22};
+  std::vector<types::global_cell_index> idxs_to_be_agglomerated4 = {12};
 
   std::vector<typename Triangulation<2>::active_cell_iterator>
     cells_to_be_agglomerated4;
@@ -78,11 +81,38 @@ test_q_points_agglomerated_face(Triangulation<dim> &tria)
                                              idxs_to_be_agglomerated4,
                                              cells_to_be_agglomerated4);
 
+  std::vector<types::global_cell_index> idxs_to_be_agglomerated5 = {13};
+
+  std::vector<typename Triangulation<2>::active_cell_iterator>
+    cells_to_be_agglomerated5;
+  PolyUtils::collect_cells_for_agglomeration(tria,
+                                             idxs_to_be_agglomerated5,
+                                             cells_to_be_agglomerated5);
+
+  std::vector<types::global_cell_index> idxs_to_be_agglomerated6 = {14};
+
+  std::vector<typename Triangulation<2>::active_cell_iterator>
+    cells_to_be_agglomerated6;
+  PolyUtils::collect_cells_for_agglomeration(tria,
+                                             idxs_to_be_agglomerated6,
+                                             cells_to_be_agglomerated6);
+
+  std::vector<types::global_cell_index> idxs_to_be_agglomerated7 = {15};
+
+  std::vector<typename Triangulation<2>::active_cell_iterator>
+    cells_to_be_agglomerated7;
+  PolyUtils::collect_cells_for_agglomeration(tria,
+                                             idxs_to_be_agglomerated7,
+                                             cells_to_be_agglomerated7);
+
   // Agglomerate the cells just stored
-  ah.define_agglomerate(cells_to_be_agglomerated);
-  ah.define_agglomerate(cells_to_be_agglomerated2);
-  ah.define_agglomerate(cells_to_be_agglomerated3);
-  ah.define_agglomerate(cells_to_be_agglomerated4);
+  ah.insert_agglomerate(cells_to_be_agglomerated);
+  ah.insert_agglomerate(cells_to_be_agglomerated2);
+  ah.insert_agglomerate(cells_to_be_agglomerated3);
+  ah.insert_agglomerate(cells_to_be_agglomerated4);
+  ah.insert_agglomerate(cells_to_be_agglomerated5);
+  ah.insert_agglomerate(cells_to_be_agglomerated6);
+  ah.insert_agglomerate(cells_to_be_agglomerated7);
 
 
   FE_DGQ<2> fe_dg(1);
@@ -90,38 +120,38 @@ test_q_points_agglomerated_face(Triangulation<dim> &tria)
   ah.initialize_fe_values(QGauss<dim>(1), update_default);
   for (const auto &cell : ah.agglomeration_cell_iterators())
     {
-      if (!ah.is_slave_cell(cell))
+      const unsigned int n_faces = ah.n_agglomerated_faces(cell);
+      std::cout << "Cell with index " << cell->active_cell_index() << " has "
+                << n_faces << " faces" << std::endl;
+
+      for (unsigned int f = 0; f < n_faces; ++f)
         {
-          std::cout << "Cell with index " << cell->active_cell_index()
-                    << " has " << ah.n_faces(cell) << " faces" << std::endl;
-
-
-          for (unsigned int f = 0; f < ah.n_faces(cell); ++f)
+          if (!ah.at_boundary(cell, f))
             {
-              if (!ah.at_boundary(cell, f))
-                {
-                  const auto & neigh_cell = ah.agglomerated_neighbor(cell, f);
-                  unsigned int nofn =
-                    ah.neighbor_of_agglomerated_neighbor(cell, f);
-                  std::cout
-                    << "Neighbor is: " << neigh_cell->active_cell_index()
-                    << std::endl;
-                  const auto &fe_faces =
-                    ah.reinit_interface(cell, neigh_cell, f, nofn);
+              const auto & neigh_cell = ah.agglomerated_neighbor(cell, f);
+              unsigned int nofn = ah.neighbor_of_agglomerated_neighbor(cell, f);
+              std::cout << "Neighbor is: " << neigh_cell->active_cell_index()
+                        << std::endl;
+              Assert((ah.agglomerated_neighbor(
+                          neigh_cell,
+                          ah.neighbor_of_agglomerated_neighbor(cell, f))
+                        ->active_cell_index() == cell->active_cell_index()),
+                     ExcMessage("Mismatch!"));
+              const auto &fe_faces =
+                ah.reinit_interface(cell, neigh_cell, f, nofn);
 
-                  const auto &q_points_neigh =
-                    fe_faces.first.get_quadrature_points();
-                  const auto &q_points_inside =
-                    fe_faces.second.get_quadrature_points();
-                  for (unsigned int q_index :
-                       fe_faces.first.quadrature_point_indices())
-                    {
-                      Assert(
-                        (q_points_neigh[q_index] - q_points_inside[q_index])
-                            .norm() < 1e-15,
-                        ExcMessage(
-                          "Quadrature points should be the same when seen from the neighboring face."));
-                    }
+              const auto &q_points_neigh =
+                fe_faces.first.get_quadrature_points();
+              const auto &q_points_inside =
+                fe_faces.second.get_quadrature_points();
+              for (unsigned int q_index :
+                   fe_faces.first.quadrature_point_indices())
+                {
+                  Assert(
+                    (q_points_neigh[q_index] - q_points_inside[q_index])
+                        .norm() < 1e-15,
+                    ExcMessage(
+                      "Quadrature points should be the same when seen from the neighboring face."));
                 }
             }
         }

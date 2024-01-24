@@ -49,10 +49,25 @@ reinit_on_neighbor(Triangulation<dim> &tria)
   tria.refine_global(3);
   GridTools::Cache<2>     cached_tria(tria, mapping);
   AgglomerationHandler<2> ah(cached_tria);
+  FE_DGQ<2>               fe_dg(1);
+
+
+  std::vector<typename Triangulation<2>::active_cell_iterator>
+    cells; // each cell = an agglomerate
+  for (const auto &cell : tria.active_cell_iterators())
+    cells.push_back(cell);
+
+  std::vector<types::global_cell_index> flagged_cells;
+  const auto                            store_flagged_cells =
+    [&flagged_cells](
+      const std::vector<types::global_cell_index> &idxs_to_be_agglomerated) {
+      for (const int idx : idxs_to_be_agglomerated)
+        flagged_cells.push_back(idx);
+    };
 
   std::vector<types::global_cell_index> idxs_to_be_agglomerated = {
     3, 6, 9}; //{8, 9, 10, 11};
-
+  store_flagged_cells(idxs_to_be_agglomerated);
   std::vector<typename Triangulation<2>::active_cell_iterator>
     cells_to_be_agglomerated;
   PolyUtils::collect_cells_for_agglomeration(tria,
@@ -60,6 +75,7 @@ reinit_on_neighbor(Triangulation<dim> &tria)
                                              cells_to_be_agglomerated);
 
   std::vector<types::global_cell_index> idxs_to_be_agglomerated2 = {15, 36, 37};
+  store_flagged_cells(idxs_to_be_agglomerated2);
 
   std::vector<typename Triangulation<2>::active_cell_iterator>
     cells_to_be_agglomerated2;
@@ -68,6 +84,7 @@ reinit_on_neighbor(Triangulation<dim> &tria)
                                              cells_to_be_agglomerated2);
 
   std::vector<types::global_cell_index> idxs_to_be_agglomerated3 = {57, 60, 54};
+  store_flagged_cells(idxs_to_be_agglomerated3);
 
   std::vector<typename Triangulation<2>::active_cell_iterator>
     cells_to_be_agglomerated3;
@@ -76,6 +93,7 @@ reinit_on_neighbor(Triangulation<dim> &tria)
                                              cells_to_be_agglomerated3);
 
   std::vector<types::global_cell_index> idxs_to_be_agglomerated4 = {25, 19, 22};
+  store_flagged_cells(idxs_to_be_agglomerated4);
 
   std::vector<typename Triangulation<2>::active_cell_iterator>
     cells_to_be_agglomerated4;
@@ -89,15 +107,22 @@ reinit_on_neighbor(Triangulation<dim> &tria)
   ah.define_agglomerate(cells_to_be_agglomerated3);
   ah.define_agglomerate(cells_to_be_agglomerated4);
 
+  for (std::size_t i = 0; i < tria.n_active_cells(); ++i)
+    {
+      // If not present, agglomerate all the singletons
+      if (std::find(flagged_cells.begin(),
+                    flagged_cells.end(),
+                    cells[i]->active_cell_index()) == std::end(flagged_cells))
+        ah.insert_agglomerate({cells[i]});
+    }
 
-  FE_DGQ<2> fe_dg(1);
   ah.distribute_agglomerated_dofs(fe_dg);
   ah.initialize_fe_values(QGauss<2>(1), update_default);
   for (const auto &cell : ah.agglomeration_cell_iterators())
     {
       if (!ah.is_slave_cell(cell))
         {
-          unsigned int n_faces = ah.n_faces(cell);
+          unsigned int n_faces = ah.n_agglomerated_faces(cell);
           std::cout << "Cell with index " << cell->active_cell_index()
                     << " has " << n_faces << " faces" << std::endl;
           for (unsigned int f = 0; f < n_faces; ++f)
@@ -114,11 +139,19 @@ reinit_on_neighbor(Triangulation<dim> &tria)
                             << ") = " << neigh_cell->active_cell_index()
                             << std::endl;
 
+                  AssertThrow(ah.agglomerated_neighbor(neigh_cell, nofn)
+                                  ->active_cell_index() ==
+                                cell->active_cell_index(),
+                              ExcMessage("Mismatch!"));
+
                   const auto &interface_fe_face_values =
                     ah.reinit_interface(cell, neigh_cell, f, nofn);
-                  Assert(interface_fe_face_values.first.dofs_per_cell == 4 &&
-                           interface_fe_face_values.second.dofs_per_cell == 4,
-                         ExcMessage("Das kann nicht wahr sein..."));
+
+                  AssertThrow(interface_fe_face_values.first.dofs_per_cell ==
+                                  4 &&
+                                interface_fe_face_values.second.dofs_per_cell ==
+                                  4,
+                              ExcMessage("Das kann nicht wahr sein..."));
                 }
               else
                 {

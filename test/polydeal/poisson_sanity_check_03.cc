@@ -201,8 +201,8 @@ LaplaceOperator<dim>::assemble_system()
         cell_matrix, cell_rhs, local_dof_indices, system_matrix, system_rhs);
 
       // Face terms
-      const unsigned int n_faces = ah->n_faces(cell);
-      AssertThrow(n_faces >= 4,
+      const unsigned int n_faces = ah->n_agglomerated_faces(cell);
+      AssertThrow(n_faces > 0,
                   ExcMessage(
                     "Invalid element: at least 4 faces are required."));
 
