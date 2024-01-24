@@ -231,32 +231,18 @@ public:
    * be private. Keep the getter just for the time being.
    */
   inline decltype(auto)
-  get_agglomerated_connectivity()
-  {
-    return master_neighbors;
-  }
-
+  get_agglomerated_connectivity();
 
   inline decltype(auto)
-  get_info()
-  {
-    return info_cells;
-  }
-
+  get_info();
 
   inline decltype(auto)
   n_agglomerated_faces(
     const typename Triangulation<dim, spacedim>::active_cell_iterator
-      &master_cell) const
-  {
-    return number_of_agglomerated_faces.at(master_cell);
-  }
+      &master_cell) const;
 
   inline const std::vector<long int> &
-  get_relationships() const
-  {
-    return master_slave_relationships;
-  }
+  get_relationships() const;
 
   /**
    * TODO: remove this in favour of the accessor version.
@@ -269,13 +255,7 @@ public:
     typename Triangulation<dim, spacedim>::active_cell_iterator>
   get_agglomerate(
     const typename Triangulation<dim, spacedim>::active_cell_iterator
-      &master_cell) const
-  {
-    Assert(is_master_cell(master_cell), ExcInternalError());
-    auto agglomeration = get_slaves_of_idx(master_cell->active_cell_index());
-    agglomeration.push_back(master_cell);
-    return agglomeration;
-  }
+      &master_cell) const;
 
   /**
    * Display the indices of the vector identifying which cell is agglomerated
@@ -298,10 +278,7 @@ public:
    * spaces are present on each cell of the triangulation.
    */
   inline const DoFHandler<dim, spacedim> &
-  get_dof_handler() const
-  {
-    return agglo_dh;
-  }
+  get_dof_handler() const;
 
   /**
    * Return the number of agglomerated faces for a generic deal.II cell. If it's
@@ -413,20 +390,14 @@ public:
    */
   inline const std::vector<
     typename Triangulation<dim, spacedim>::active_cell_iterator> &
-  get_slaves_of_idx(types::global_cell_index idx) const
-  {
-    return master2slaves.at(idx);
-  }
+  get_slaves_of_idx(types::global_cell_index idx) const;
 
   /**
    * Helper function to determine whether or not a cell is a master or a slave
    */
   template <typename CellIterator>
   inline bool
-  is_master_cell(const CellIterator &cell) const
-  {
-    return master_slave_relationships[cell->active_cell_index()] == -1;
-  }
+  is_master_cell(const CellIterator &cell) const;
 
   /**
    * Helper function to determine if the given cell is a standard deal.II cell,
@@ -435,10 +406,7 @@ public:
    */
   template <typename CellIterator>
   inline bool
-  is_standard_cell(const CellIterator &cell) const
-  {
-    return master_slave_relationships[cell->active_cell_index()] == -2;
-  }
+  is_standard_cell(const CellIterator &cell) const;
 
   /**
    * Helper function to determine whether or not a cell is a slave cell, without
@@ -446,10 +414,7 @@ public:
    */
   template <typename CellIterator>
   inline bool
-  is_slave_cell(const CellIterator &cell) const
-  {
-    return master_slave_relationships[cell->active_cell_index()] >= 0;
-  }
+  is_slave_cell(const CellIterator &cell) const;
 
   /**
    *
@@ -463,40 +428,16 @@ public:
   inline bool
   at_boundary(
     const typename DoFHandler<dim, spacedim>::active_cell_iterator &cell,
-    const unsigned int                                              f) const
-  {
-    Assert(!is_slave_cell(cell),
-           ExcMessage("This function should not be called for a slave cell."));
-    if (is_standard_cell(cell))
-      return cell->face(f)->at_boundary();
-    else
-      {
-        // return std::get<2>(master_neighbors[{cell, f}]) ==
-        //        std::numeric_limits<unsigned int>::max();
-        const auto &[deal_cell, local_face_idx, dummy, dummy_] =
-          info_cells[{cell, f}][0];
-        return deal_cell->at_boundary(local_face_idx);
-      }
-  }
+    const unsigned int                                              f) const;
 
   inline decltype(auto)
-  agglomeration_cell_iterators()
-  {
-    return agglo_dh.active_cell_iterators() |
-           IteratorFilters::IsNotSlave(this); // iterator range
-  }
+  agglomeration_cell_iterators();
 
   inline unsigned int
-  n_dofs_per_cell() const noexcept
-  {
-    return fe->n_dofs_per_cell();
-  }
+  n_dofs_per_cell() const noexcept;
 
   inline types::global_dof_index
-  n_dofs() const noexcept
-  {
-    return agglo_dh.n_dofs();
-  }
+  n_dofs() const noexcept;
 
   /**
    * Interpolate the solution defined on the agglomerates onto a classical
@@ -531,10 +472,7 @@ public:
    */
   inline const std::vector<typename Triangulation<dim>::active_face_iterator> &
   polytope_boundary(
-    const typename Triangulation<dim>::active_cell_iterator &cell)
-  {
-    return polygon_boundary[cell];
-  }
+    const typename Triangulation<dim>::active_cell_iterator &cell);
 
   /**
    * Record the number of agglomerations on the grid.
@@ -593,10 +531,7 @@ private:
 
   inline typename Triangulation<dim, spacedim>::active_cell_iterator &
   is_slave_cell_of(
-    const typename Triangulation<dim, spacedim>::active_cell_iterator &cell)
-  {
-    return master_slave_relationships_iterators[cell->active_cell_index()];
-  }
+    const typename Triangulation<dim, spacedim>::active_cell_iterator &cell);
 
   /**
    * Construct bounding boxes for an agglomeration described by a sequence of
@@ -610,14 +545,8 @@ private:
   inline types::global_cell_index
   get_master_idx_of_cell(
     const typename Triangulation<dim, spacedim>::active_cell_iterator &cell)
-    const
-  {
-    auto idx = master_slave_relationships[cell->active_cell_index()];
-    if ((idx == -1) || (idx == -2))
-      return cell->active_cell_index();
-    else
-      return idx;
-  }
+    const;
+
   /**
    * Returns true if the two given cells are agglomerated together.
    */
@@ -625,10 +554,7 @@ private:
   are_cells_agglomerated(
     const typename Triangulation<dim, spacedim>::active_cell_iterator &cell,
     const typename Triangulation<dim, spacedim>::active_cell_iterator
-      &other_cell) const
-  {
-    return (get_master_idx_of_cell(cell) == get_master_idx_of_cell(other_cell));
-  }
+      &other_cell) const;
 
   /**
    * Assign a finite element index on each cell of a triangulation, depending
@@ -912,6 +838,212 @@ private:
 
   friend class internal::AgglomerationHandlerImplementation<dim, spacedim>;
 };
+
+
+
+// ------------------------------ inline functions -------------------------
+template <int dim, int spacedim>
+inline decltype(auto)
+AgglomerationHandler<dim, spacedim>::get_agglomerated_connectivity()
+{
+  return master_neighbors;
+}
+
+
+
+template <int dim, int spacedim>
+inline decltype(auto)
+AgglomerationHandler<dim, spacedim>::get_info()
+{
+  return info_cells;
+}
+
+
+
+template <int dim, int spacedim>
+inline decltype(auto)
+AgglomerationHandler<dim, spacedim>::n_agglomerated_faces(
+  const typename Triangulation<dim, spacedim>::active_cell_iterator
+    &master_cell) const
+{
+  return number_of_agglomerated_faces.at(master_cell);
+}
+
+
+
+template <int dim, int spacedim>
+inline const std::vector<long int> &
+AgglomerationHandler<dim, spacedim>::get_relationships() const
+{
+  return master_slave_relationships;
+}
+
+
+
+template <int dim, int spacedim>
+inline std::vector<typename Triangulation<dim, spacedim>::active_cell_iterator>
+AgglomerationHandler<dim, spacedim>::get_agglomerate(
+  const typename Triangulation<dim, spacedim>::active_cell_iterator
+    &master_cell) const
+{
+  Assert(is_master_cell(master_cell), ExcInternalError());
+  auto agglomeration = get_slaves_of_idx(master_cell->active_cell_index());
+  agglomeration.push_back(master_cell);
+  return agglomeration;
+}
+
+
+
+template <int dim, int spacedim>
+inline const DoFHandler<dim, spacedim> &
+AgglomerationHandler<dim, spacedim>::get_dof_handler() const
+{
+  return agglo_dh;
+}
+
+
+
+template <int dim, int spacedim>
+inline const std::vector<
+  typename Triangulation<dim, spacedim>::active_cell_iterator> &
+AgglomerationHandler<dim, spacedim>::get_slaves_of_idx(
+  types::global_cell_index idx) const
+{
+  return master2slaves.at(idx);
+}
+
+
+
+template <int dim, int spacedim>
+template <typename CellIterator>
+inline bool
+AgglomerationHandler<dim, spacedim>::is_master_cell(
+  const CellIterator &cell) const
+{
+  return master_slave_relationships[cell->active_cell_index()] == -1;
+}
+
+
+
+template <int dim, int spacedim>
+template <typename CellIterator>
+inline bool
+AgglomerationHandler<dim, spacedim>::is_standard_cell(
+  const CellIterator &cell) const
+{
+  return master_slave_relationships[cell->active_cell_index()] == -2;
+}
+
+
+
+/**
+ * Helper function to determine whether or not a cell is a slave cell, without
+ * any information about his parents.
+ */
+template <int dim, int spacedim>
+template <typename CellIterator>
+inline bool
+AgglomerationHandler<dim, spacedim>::is_slave_cell(
+  const CellIterator &cell) const
+{
+  return master_slave_relationships[cell->active_cell_index()] >= 0;
+}
+
+
+
+template <int dim, int spacedim>
+inline bool
+AgglomerationHandler<dim, spacedim>::at_boundary(
+  const typename DoFHandler<dim, spacedim>::active_cell_iterator &cell,
+  const unsigned int                                              f) const
+{
+  Assert(!is_slave_cell(cell),
+         ExcMessage("This function should not be called for a slave cell."));
+  if (is_standard_cell(cell))
+    return cell->face(f)->at_boundary();
+  else
+    {
+      // return std::get<2>(master_neighbors[{cell, f}]) ==
+      //        std::numeric_limits<unsigned int>::max();
+      const auto &[deal_cell, local_face_idx, dummy, dummy_] =
+        info_cells[{cell, f}][0];
+      return deal_cell->at_boundary(local_face_idx);
+    }
+}
+
+
+
+template <int dim, int spacedim>
+inline decltype(auto)
+AgglomerationHandler<dim, spacedim>::agglomeration_cell_iterators()
+{
+  return agglo_dh.active_cell_iterators() |
+         IteratorFilters::IsNotSlave(this); // iterator range
+}
+
+
+
+template <int dim, int spacedim>
+inline unsigned int
+AgglomerationHandler<dim, spacedim>::n_dofs_per_cell() const noexcept
+{
+  return fe->n_dofs_per_cell();
+}
+
+
+
+template <int dim, int spacedim>
+inline types::global_dof_index
+AgglomerationHandler<dim, spacedim>::n_dofs() const noexcept
+{
+  return agglo_dh.n_dofs();
+}
+
+
+
+template <int dim, int spacedim>
+inline const std::vector<typename Triangulation<dim>::active_face_iterator> &
+AgglomerationHandler<dim, spacedim>::polytope_boundary(
+  const typename Triangulation<dim>::active_cell_iterator &cell)
+{
+  return polygon_boundary[cell];
+}
+
+
+
+template <int dim, int spacedim>
+inline typename Triangulation<dim, spacedim>::active_cell_iterator &
+AgglomerationHandler<dim, spacedim>::is_slave_cell_of(
+  const typename Triangulation<dim, spacedim>::active_cell_iterator &cell)
+{
+  return master_slave_relationships_iterators[cell->active_cell_index()];
+}
+
+
+
+template <int dim, int spacedim>
+inline types::global_cell_index
+AgglomerationHandler<dim, spacedim>::get_master_idx_of_cell(
+  const typename Triangulation<dim, spacedim>::active_cell_iterator &cell) const
+{
+  auto idx = master_slave_relationships[cell->active_cell_index()];
+  if ((idx == -1) || (idx == -2))
+    return cell->active_cell_index();
+  else
+    return idx;
+}
+
+
+
+template <int dim, int spacedim>
+inline bool
+AgglomerationHandler<dim, spacedim>::are_cells_agglomerated(
+  const typename Triangulation<dim, spacedim>::active_cell_iterator &cell,
+  const typename Triangulation<dim, spacedim>::active_cell_iterator &other_cell)
+  const
+{
+  return (get_master_idx_of_cell(cell) == get_master_idx_of_cell(other_cell));
+}
 
 
 
