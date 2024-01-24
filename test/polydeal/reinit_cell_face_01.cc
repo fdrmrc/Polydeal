@@ -83,21 +83,20 @@ main()
   ah.distribute_agglomerated_dofs(fe_dg);
   ah.initialize_fe_values(QGauss<2>(1), update_JxW_values);
   double perimeter = 0.;
-  for (const auto &cell : ah.agglomeration_cell_iterators() |
-                            IteratorFilters::ActiveFEIndexEqualTo(
-                              ah.CellAgglomerationType::master))
+
+
+  for (const auto &polytope : ah.polytope_iterators())
     {
-      unsigned int n_agglomerated_faces_per_cell = ah.n_faces(cell);
+      unsigned int n_agglomerated_faces_per_cell = polytope->n_faces();
       for (size_t f = 0; f < n_agglomerated_faces_per_cell; ++f)
         {
-          const auto &test_feisv = ah.reinit(cell, f);
+          const auto &test_feisv = ah.reinit(polytope, f);
           perimeter += std::accumulate(test_feisv.get_JxW_values().begin(),
                                        test_feisv.get_JxW_values().end(),
                                        0.);
         }
-      std::cout << "Perimeter of agglomeration with master idx: "
-                << cell->active_cell_index() << " is " << perimeter
-                << std::endl;
+      std::cout << "Perimeter of polytope with index: " << polytope->index()
+                << " is " << perimeter << std::endl;
       perimeter = 0.;
     }
 }

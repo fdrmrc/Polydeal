@@ -209,15 +209,12 @@ LaplaceOperator<dim>::assemble_system()
   FullMatrix<double> M22(dofs_per_cell, dofs_per_cell);
 
   std::vector<types::global_dof_index> local_dof_indices(dofs_per_cell);
-  // const auto &                         bboxes = ah->get_bboxes();
 
-  for (const auto &cell : ah->agglomeration_cell_iterators())
+  for (const auto &polytope : ah->polytope_iterators())
     {
-      // std::cout << "Cell with idx: " << cell->active_cell_index() <<
-      // std::endl;
       cell_matrix              = 0;
       cell_rhs                 = 0;
-      const auto &agglo_values = ah->reinit(cell);
+      const auto &agglo_values = ah->reinit(polytope);
 
       const auto &        q_points  = agglo_values.get_quadrature_points();
       const unsigned int  n_qpoints = q_points.size();
@@ -238,12 +235,12 @@ LaplaceOperator<dim>::assemble_system()
             }
         }
 
-      cell->get_dof_indices(local_dof_indices);
+      polytope->get_dof_indices(local_dof_indices);
       constraints.distribute_local_to_global(
         cell_matrix, cell_rhs, local_dof_indices, system_matrix, system_rhs);
 
       // Face terms
-      const unsigned int n_faces = ah->n_faces(cell);
+      const unsigned int n_faces = polytope->n_faces();
       AssertThrow(n_faces >= 4,
                   ExcMessage(
                     "Invalid element: at least 4 faces are required."));
@@ -255,13 +252,14 @@ LaplaceOperator<dim>::assemble_system()
         {
           // double       hf                   = cell->face(0)->measure();
           // const double current_element_size = std::fabs(ah->volume(cell));
-          const double current_element_diameter = std::fabs(ah->diameter(cell));
+          const double current_element_diameter =
+            std::fabs(polytope->diameter());
           // const double penalty =
           //   penalty_constant * (1. / current_element_diameter);
 
-          if (ah->at_boundary(cell, f))
+          if (polytope->at_boundary(f))
             {
-              const auto &fe_face = ah->reinit(cell, f);
+              const auto &fe_face = ah->reinit(polytope, f);
 
               const unsigned int dofs_per_cell = fe_face.dofs_per_cell;
               std::vector<types::global_dof_index> local_dof_indices_bdary_cell(
@@ -285,29 +283,30 @@ LaplaceOperator<dim>::assemble_system()
                 }
 
               // distribute DoFs
-              cell->get_dof_indices(local_dof_indices_bdary_cell);
+              polytope->get_dof_indices(local_dof_indices_bdary_cell);
               constraints.distribute_local_to_global(
                 cell_matrix, local_dof_indices_bdary_cell, system_matrix);
             }
           else
             {
-              const auto &neigh_cell = ah->agglomerated_neighbor(cell, f);
+              const auto &neigh_polytope = polytope->neighbor(f);
 
               const double neigh_element_diameter =
-                std::fabs(ah->diameter(neigh_cell));
+                std::fabs(neigh_polytope->diameter());
               const double penalty =
                 penalty_constant *
                 std::max(1. / current_element_diameter,
                          1. / neigh_element_diameter); // Cinv still missing
 
               // This is necessary to loop over internal faces only once.
-              if (cell->active_cell_index() < neigh_cell->active_cell_index())
+              if (polytope->index() < neigh_polytope->index())
                 {
                   unsigned int nofn =
-                    ah->neighbor_of_agglomerated_neighbor(cell, f);
+                    polytope->neighbor_of_agglomerated_neighbor(f);
+                  // ah->neighbor_of_agglomerated_neighbor(cell, f);
 
                   const auto &fe_faces =
-                    ah->reinit_interface(cell, neigh_cell, f, nofn);
+                    ah->reinit_interface(polytope, neigh_polytope, f, nofn);
 
                   const auto &fe_faces0 = fe_faces.first;
                   const auto &fe_faces1 = fe_faces.second;
@@ -320,7 +319,7 @@ LaplaceOperator<dim>::assemble_system()
                   //                   std::cout << "Jump between " <<
                   //                   cell->active_cell_index()
                   //                             << " and " <<
-                  //                             neigh_cell->active_cell_index()
+                  //                             neigh_polytope->active_cell_index()
                   //                             << std::endl;
                   //                   {
                   //                     std::cout << "Dalla prima i qpoints
@@ -402,12 +401,12 @@ LaplaceOperator<dim>::assemble_system()
 
                   // distribute DoFs accordingly
                   // std::cout << "Neighbor is " <<
-                  // neigh_cell->active_cell_index()
+                  // neigh_polytope->active_cell_index()
                   //           << std::endl;
                   // Retrieve DoFs info from the cell iterator.
-                  typename DoFHandler<dim>::cell_iterator neigh_dh(
-                    *neigh_cell, &(ah->agglo_dh));
-                  neigh_dh->get_dof_indices(local_dof_indices_neighbor);
+                  // typename DoFHandler<dim>::cell_iterator neigh_dh(
+                  //   *neigh_polytope, &(ah->agglo_dh));
+                  neigh_polytope->get_dof_indices(local_dof_indices_neighbor);
 
                   constraints.distribute_local_to_global(M11,
                                                          local_dof_indices,

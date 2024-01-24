@@ -467,13 +467,14 @@ Poisson<dim>::output_results()
 
     std::cout << "L2 error:" << L2_error << std::endl;
 
-
-    data_out.attach_dof_handler(ah->output_dh);
-    data_out.add_data_vector(interpolated_solution,
-                             "u",
-                             DataOut<dim>::type_dof_data);
-    data_out.build_patches(mapping);
-    data_out.write_vtu(output);
+    /*
+        data_out.attach_dof_handler(ah->output_dh);
+        data_out.add_data_vector(interpolated_solution,
+                                 "u",
+                                 DataOut<dim>::type_dof_data);
+        data_out.build_patches(mapping);
+        data_out.write_vtu(output);
+     */
   }
 }
 

@@ -31,17 +31,18 @@ template <int dim, int spacedim = dim>
 class AgglomerationIterator
 {
 public:
-  using agglomeration_container =
-    typename AgglomerationAccessor<dim, spacedim>::agglomeration_container;
+  using AgglomerationContainer =
+    typename AgglomerationAccessor<dim, spacedim>::AgglomerationContainer;
 
   /**
-   * Empty constructor. Such an object is not usable!
+   * Empty constructor. This constructore creates an iterator pointing to an
+   * invalid object.
    */
-  AgglomerationIterator() = default;
+  AgglomerationIterator();
 
   /**
    * Constructor of the iterator. Takes a reference to the cells forming the
-   * actual polygon.
+   * actual polytope.
    */
   AgglomerationIterator(
     const typename Triangulation<dim, spacedim>::active_cell_iterator &cell,
@@ -120,6 +121,18 @@ public:
   operator--(int);
 
   /**
+   * Return the state of the present iterator.
+   */
+  IteratorState::IteratorStates
+  state() const;
+
+  /**
+   * Return the master cell associated to the present polytope.
+   */
+  const typename Triangulation<dim, spacedim>::active_cell_iterator &
+  master_cell() const;
+
+  /**
    * Mark the class as bidirectional iterator and declare some alias which
    * are standard for iterators and are used by algorithms to enquire about
    * the specifics of the iterators they work on.
@@ -132,7 +145,7 @@ public:
 
 private:
   /**
-   * The accessor to the actual polygon.
+   * The accessor to the actual polytope.
    */
   AgglomerationAccessor<dim, spacedim> accessor;
 };
@@ -140,6 +153,13 @@ private:
 
 
 // ------------------------------ inline functions -------------------------
+
+template <int dim, int spacedim>
+inline AgglomerationIterator<dim, spacedim>::AgglomerationIterator()
+  : accessor()
+{}
+
+
 
 template <int dim, int spacedim>
 inline AgglomerationIterator<dim, spacedim>::AgglomerationIterator(
@@ -247,6 +267,24 @@ AgglomerationIterator<dim, spacedim>::operator--(int)
                         operator--();
 
   return tmp;
+}
+
+
+
+template <int dim, int spacedim>
+inline IteratorState::IteratorStates
+AgglomerationIterator<dim, spacedim>::state() const
+{
+  return accessor.master_cell.state();
+}
+
+
+
+template <int dim, int spacedim>
+inline const typename Triangulation<dim, spacedim>::active_cell_iterator &
+AgglomerationIterator<dim, spacedim>::master_cell() const
+{
+  return accessor.master_cell;
 }
 
 

@@ -48,9 +48,10 @@ test()
                                                  idxs_to_be_agglomerated,
                                                  cells_to_be_agglomerated);
 
-      ah.insert_agglomerate(cells_to_be_agglomerated);
+
+      auto polytope_iterator = ah.insert_agglomerate(cells_to_be_agglomerated);
       const auto &bbox_agglomeration_pts =
-        ah.get_bboxes()[0].get_boundary_points();
+        polytope_iterator->get_bounding_box().get_boundary_points();
       std::cout << "p0: =" << bbox_agglomeration_pts.first << std::endl;
       std::cout << "p1: =" << bbox_agglomeration_pts.second << std::endl;
     }
@@ -63,16 +64,11 @@ test()
                                                  idxs_to_be_agglomerated,
                                                  cells_to_be_agglomerated);
 
-      ah.insert_agglomerate(cells_to_be_agglomerated);
+      auto polytope_iterator = ah.insert_agglomerate(cells_to_be_agglomerated);
       const auto &bbox_agglomeration_pts =
-        ah.get_bboxes()[0].get_boundary_points();
+        polytope_iterator->get_bounding_box().get_boundary_points();
       std::cout << "p0: =" << bbox_agglomeration_pts.first << std::endl;
       std::cout << "p1: =" << bbox_agglomeration_pts.second << std::endl;
-
-      // std::ofstream           ofile("bboxes.vtu");
-      // BoundingBoxDataOut<dim> data_out;
-      // data_out.build_patches(ah.get_bboxes());
-      // data_out.write_vtu(ofile);
     }
 }
 int

@@ -70,7 +70,7 @@ test()
         ++first_cell;
 
       unsigned int face_index =
-        0; // the face number of the triangulations seen as a polygon.
+        0; // the face number of the triangulations seen as a polytope.
       for (unsigned int f : first_cell->face_indices())
         {
           if (first_cell->face(f)->at_boundary())
