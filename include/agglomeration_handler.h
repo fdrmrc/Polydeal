@@ -115,30 +115,7 @@ public:
     standard = 2
   };
 
-  /**
-   * Record the number of agglomerations on the grid.
-   */
-  unsigned int n_agglomerations;
 
-  /**
-   * DoFHandler for the agglomerated space
-   */
-  DoFHandler<dim, spacedim> agglo_dh;
-
-  /**
-   * DoFHandler for the finest space: classical deal.II space
-   */
-  DoFHandler<dim, spacedim> output_dh;
-
-  /**
-   * Sparsity to interpolate on the output dh.
-   */
-  SparsityPattern output_interpolation_sparsity;
-
-  /**
-   * Interpolation matrix for the output dh.
-   */
-  SparseMatrix<double> output_interpolation_matrix;
 
   explicit AgglomerationHandler(
     const GridTools::Cache<dim, spacedim> &cached_tria);
@@ -226,26 +203,7 @@ public:
     const Quadrature<dim> &    cell_quadrature = QGauss<dim>(1),
     const UpdateFlags &        flags           = UpdateFlags::update_default,
     const Quadrature<dim - 1> &face_quadrature = QGauss<dim - 1>(1),
-    const UpdateFlags &        face_flags      = UpdateFlags::update_default)
-  {
-    agglomeration_quad       = cell_quadrature;
-    agglomeration_flags      = flags;
-    agglomeration_face_quad  = face_quadrature;
-    agglomeration_face_flags = face_flags | internal_agglomeration_face_flags;
-
-
-    no_values = std::make_unique<FEValues<dim>>(
-      *mapping,
-      dummy_fe,
-      agglomeration_quad,
-      update_quadrature_points | update_JxW_values); // only for quadrature
-    no_face_values = std::make_unique<FEFaceValues<dim>>(
-      *mapping,
-      dummy_fe,
-      agglomeration_face_quad,
-      update_quadrature_points | update_JxW_values |
-        update_normal_vectors); // only for quadrature
-  }
+    const UpdateFlags &        face_flags      = UpdateFlags::update_default);
 
   /**
    * Given a Triangulation with some agglomerated cells, create the sparsity
@@ -333,8 +291,6 @@ public:
           << master_slave_relationships[cell->active_cell_index()] << std::endl;
   }
 
-
-
   /**
    *
    * Return a constant reference to the DoFHandler underlying the
@@ -354,23 +310,7 @@ public:
   unsigned int
   n_agglomerated_faces_per_cell(
     const typename Triangulation<dim, spacedim>::active_cell_iterator &cell)
-    const
-  {
-    unsigned int n_neighbors = 0;
-    for (const auto &f : cell->face_indices())
-      {
-        const auto &neighboring_cell = cell->neighbor(f);
-        if ((cell->face(f)->at_boundary()) ||
-            (neighboring_cell->is_active() &&
-             !are_cells_agglomerated(cell, neighboring_cell)))
-          {
-            ++n_neighbors;
-          }
-      }
-    return n_neighbors;
-  }
-
-
+    const;
 
   /**
    * Return, for a cell, the number of faces. In case the cell is a standard
@@ -380,26 +320,7 @@ public:
    */
   unsigned int
   n_faces(
-    const typename DoFHandler<dim, spacedim>::active_cell_iterator &cell) const
-  {
-    Assert(!is_slave_cell(cell), ExcMessage("You cannot pass a slave cell."));
-    if (is_standard_cell(cell))
-      {
-        return cell->n_faces();
-      }
-    else
-      {
-        const auto & agglomeration = get_agglomerate(cell);
-        unsigned int n_neighbors   = 0;
-        for (const auto &cell : agglomeration)
-          {
-            n_neighbors += n_agglomerated_faces_per_cell(cell);
-          }
-        return n_neighbors;
-      }
-  }
-
-
+    const typename DoFHandler<dim, spacedim>::active_cell_iterator &cell) const;
 
   /**
    * Return, for each cell belonging to the same agllomeration, a cell belonging
@@ -408,46 +329,7 @@ public:
   typename DoFHandler<dim, spacedim>::active_cell_iterator
   agglomerated_neighbor(
     const typename DoFHandler<dim, spacedim>::active_cell_iterator &cell,
-    const unsigned int                                              f) const
-  {
-    Assert(!is_slave_cell(cell),
-           ExcMessage("This cells is not supposed to be a slave."));
-    if (!at_boundary(cell, f))
-      {
-        if (is_standard_cell(cell) && is_standard_cell(cell->neighbor(f)))
-          {
-            return cell->neighbor(f);
-          }
-        else if (is_master_cell(cell))
-          {
-            // const auto &neigh = std::get<1>(master_neighbors[{cell, f}]);
-            // typename DoFHandler<dim, spacedim>::active_cell_iterator cell_dh(
-            //   *neigh, &agglo_dh);
-            // return cell_dh;
-            const auto &neigh = std::get<2>(info_cells[{cell, f}][0]);
-            typename DoFHandler<dim, spacedim>::active_cell_iterator cell_dh(
-              *neigh, &agglo_dh);
-            return cell_dh;
-          }
-        else
-          {
-            // If I fall here, I want to find the neighbor for a standard cell
-            // adjacent to an agglomeration
-            const auto &master_cell =
-              master_slave_relationships_iterators[cell->neighbor(f)
-                                                     ->active_cell_index()];
-            typename DoFHandler<dim, spacedim>::active_cell_iterator cell_dh(
-              *master_cell, &agglo_dh);
-            return cell_dh;
-          }
-      }
-    else
-      {
-        return {};
-      }
-  }
-
-
+    const unsigned int                                              f) const;
 
   /**
    * Generalize the 'cell->neighbor_of_neighbor(f)' to the case where 'cell' is:
@@ -457,147 +339,7 @@ public:
   unsigned int
   neighbor_of_agglomerated_neighbor(
     const typename DoFHandler<dim, spacedim>::active_cell_iterator &cell,
-    const unsigned int                                              f) const
-  {
-    Assert(!is_slave_cell(cell),
-           ExcMessage("This cells is not supposed to be a slave."));
-    // First, make sure it's not a boundary face.
-    if (!at_boundary(cell, f))
-      {
-        if (is_standard_cell(cell) && is_standard_cell(cell->neighbor(f)))
-          {
-            return cell->neighbor_of_neighbor(f);
-          }
-        else if (is_master_cell(cell) &&
-                 is_master_cell(agglomerated_neighbor(cell, f)))
-          {
-            // const auto &current_agglo_info = master_neighbors[{cell, f}];
-            // const auto &local_f_idx        = std::get<0>(current_agglo_info);
-            // const auto &current_cell       = std::get<3>(current_agglo_info);
-
-            // const auto &agglo_neigh =
-            //   agglomerated_neighbor(cell,
-            //                         f); // returns the neighboring master
-            // const unsigned int n_faces_agglomerated_neighbor =
-            //   n_faces(agglo_neigh);
-            // // Loop over all cells of neighboring agglomerate
-            // for (unsigned int f_out = 0; f_out <
-            // n_faces_agglomerated_neighbor;
-            //      ++f_out)
-            //   {
-            //     if (agglomerated_neighbor(agglo_neigh, f_out).state() ==
-            //           IteratorState::valid &&
-            //         current_cell->neighbor(local_f_idx).state() ==
-            //           IteratorState::valid &&
-            //         current_cell.state() == IteratorState::valid)
-            //       {
-            //         const auto &neighboring_agglo_info =
-            //           master_neighbors[{agglo_neigh, f_out}];
-            //         const auto &local_f_out_idx =
-            //           std::get<0>(neighboring_agglo_info);
-            //         const auto &current_cell_out =
-            //           std::get<3>(neighboring_agglo_info);
-            //         const auto &other_standard =
-            //           std::get<1>(neighboring_agglo_info);
-
-            //         // Here, an extra condition is needed because there can
-            //         be
-            //         // more than one face index that returns the same
-            //         neighbor
-            //         // if you simply check who is f' s.t.
-            //         // cell->neigh(f)->neigh(f') == cell. Hence, an extra
-            //         // condition must be added.
-
-            //         if (other_standard.state() == IteratorState::valid &&
-            //             agglomerated_neighbor(agglo_neigh, f_out)
-            //                 ->active_cell_index() ==
-            //               cell->active_cell_index() &&
-            //             current_cell->active_cell_index() ==
-            //               current_cell_out->neighbor(local_f_out_idx)
-            //                 ->active_cell_index() &&
-            //             current_cell->neighbor(local_f_idx) ==
-            //             current_cell_out)
-            //           return f_out;
-            //       }
-            //   }
-            // Assert(false, ExcInternalError());
-            // return {}; // just to suppress warnings
-
-
-            const auto &current_agglo_info = info_cells[{cell, f}][0];
-            const auto &current_cell       = std::get<0>(current_agglo_info);
-            const auto &local_f_idx        = std::get<1>(current_agglo_info);
-
-            const auto &agglo_neigh =
-              agglomerated_neighbor(cell,
-                                    f); // returns the neighboring master
-            const unsigned int n_faces_agglomerated_neighbor =
-              n_agglomerated_faces(agglo_neigh);
-            // Loop over all cells of neighboring agglomerate
-            for (unsigned int f_out = 0; f_out < n_faces_agglomerated_neighbor;
-                 ++f_out)
-              {
-                if (agglomerated_neighbor(agglo_neigh, f_out).state() ==
-                      IteratorState::valid &&
-                    current_cell->neighbor(local_f_idx).state() ==
-                      IteratorState::valid &&
-                    current_cell.state() == IteratorState::valid)
-                  {
-                    const auto &neighbor_info =
-                      info_cells[{agglo_neigh, f_out}];
-
-                    for (const auto &[other_deal,
-                                      local_f_out_idx,
-                                      neigh_out,
-                                      dummy] : neighbor_info)
-                      {
-                        if (other_deal->neighbor(local_f_out_idx) ==
-                              current_cell &&
-                            other_deal.state() == IteratorState::valid)
-                          return f_out;
-                      }
-                    // Here, an extra condition is needed because there can be
-                    // more than one face index that returns the same neighbor
-                    // if you simply check who is f' s.t.
-                    // cell->neigh(f)->neigh(f') == cell. Hence, an extra
-                    // condition must be added.
-
-                    // if (other_deal.state() == IteratorState::valid &&
-                    //     agglomerated_neighbor(agglo_neigh, f_out)
-                    //         ->active_cell_index() ==
-                    //       cell->active_cell_index() &&
-                    //     current_cell->active_cell_index() ==
-                    //       current_cell_out->neighbor(local_f_out_idx)
-                    //         ->active_cell_index() &&
-                    //     current_cell->neighbor(local_f_idx) ==
-                    //     current_cell_out)
-                    //   return f_out;
-                  }
-              }
-            Assert(false, ExcInternalError());
-            return {}; // just to suppress warnings
-          }
-        else if (is_master_cell(cell) &&
-                 is_standard_cell(agglomerated_neighbor(cell, f)))
-          {
-            return std::get<2>(master_neighbors[{cell, f}]);
-          }
-        else
-          {
-            // If I fall here, I want to find the neighbor of neighbor for a
-            // standard cell adjacent to an agglomeration.
-            const auto &master_cell = agglomerated_neighbor(
-              cell, f); // this is the master of the neighboring agglomeration
-
-            return shared_face_agglomeration_idx[{master_cell, cell, f}];
-          }
-      }
-    else
-      {
-        // Face is at boundary
-        return numbers::invalid_unsigned_int;
-      }
-  }
+    const unsigned int                                              f) const;
 
   /**
    * Construct a finite element space on the agglomeration.
@@ -665,8 +407,6 @@ public:
     const typename Triangulation<dim, spacedim>::active_cell_iterator
       &master_cell) const;
 
-
-
   /**
    * Find (if any) the cells that have the given master index. Note that `idx`
    * is as it can be equal to -1 (meaning that the cell is a master one).
@@ -678,8 +418,6 @@ public:
     return master2slaves.at(idx);
   }
 
-
-
   /**
    * Helper function to determine whether or not a cell is a master or a slave
    */
@@ -689,8 +427,6 @@ public:
   {
     return master_slave_relationships[cell->active_cell_index()] == -1;
   }
-
-
 
   /**
    * Helper function to determine if the given cell is a standard deal.II cell,
@@ -704,8 +440,6 @@ public:
     return master_slave_relationships[cell->active_cell_index()] == -2;
   }
 
-
-
   /**
    * Helper function to determine whether or not a cell is a slave cell, without
    * any information about his parents.
@@ -717,8 +451,6 @@ public:
     return master_slave_relationships[cell->active_cell_index()] >= 0;
   }
 
-
-
   /**
    *
    * This function generalizes the behaviour of cell->face(f)->at_boundary()
@@ -728,7 +460,7 @@ public:
    * Otherwise, if the cell is a master one, you have a boolean returning true
    * is that face for the agglomeration is on the boundary or not.
    */
-  bool
+  inline bool
   at_boundary(
     const typename DoFHandler<dim, spacedim>::active_cell_iterator &cell,
     const unsigned int                                              f) const
@@ -747,16 +479,12 @@ public:
       }
   }
 
-
-  decltype(auto)
+  inline decltype(auto)
   agglomeration_cell_iterators()
   {
     return agglo_dh.active_cell_iterators() |
            IteratorFilters::IsNotSlave(this); // iterator range
   }
-
-  std::unique_ptr<MappingFEField<dim, spacedim> /*, Vector<double>*/>
-    euler_mapping;
 
   inline unsigned int
   n_dofs_per_cell() const noexcept
@@ -773,6 +501,7 @@ public:
   /**
    * Interpolate the solution defined on the agglomerates onto a classical
    * deal.II DoFHandler.
+   * #TODO: place this in a helper function
    */
   void
   setup_output_interpolation_matrix();
@@ -807,7 +536,147 @@ public:
     return polygon_boundary[cell];
   }
 
+  /**
+   * Record the number of agglomerations on the grid.
+   */
+  unsigned int n_agglomerations;
+
+  /**
+   * DoFHandler for the agglomerated space
+   */
+  DoFHandler<dim, spacedim> agglo_dh;
+
+  /**
+   * DoFHandler for the finest space: classical deal.II space
+   */
+  DoFHandler<dim, spacedim> output_dh;
+
+  /**
+   * Sparsity to interpolate on the output dh.
+   */
+  SparsityPattern output_interpolation_sparsity;
+
+  /**
+   * Interpolation matrix for the output dh.
+   */
+  SparseMatrix<double> output_interpolation_matrix;
+
+  std::unique_ptr<MappingFEField<dim, spacedim> /*, Vector<double>*/>
+    euler_mapping;
+
+
 private:
+  /**
+   * Initialize connectivity informations
+   */
+  void
+  initialize_agglomeration_data(
+    const std::unique_ptr<GridTools::Cache<dim, spacedim>> &cache_tria);
+
+  /**
+   * Reinitialize the agglomeration data.
+   */
+  void
+  connect_to_tria_signals()
+  {
+    // First disconnect existing connections
+    tria_listener.disconnect();
+    tria_listener = tria->signals.any_change.connect(
+      [&]() { this->initialize_agglomeration_data(this->cached_tria); });
+  }
+
+  /**
+   * Helper function to determine whether or not a cell is a slave cell.
+   * Instead of returning a boolean, it gives the index of the master cell. If
+   * it's a master cell, then the it returns -1, by construction.
+   */
+
+  inline typename Triangulation<dim, spacedim>::active_cell_iterator &
+  is_slave_cell_of(
+    const typename Triangulation<dim, spacedim>::active_cell_iterator &cell)
+  {
+    return master_slave_relationships_iterators[cell->active_cell_index()];
+  }
+
+  /**
+   * Construct bounding boxes for an agglomeration described by a sequence of
+   * cells. This fills also the euler vector
+   */
+  void
+  create_bounding_box(const AgglomerationContainer & polytope,
+                      const types::global_cell_index master_idx);
+
+
+  inline types::global_cell_index
+  get_master_idx_of_cell(
+    const typename Triangulation<dim, spacedim>::active_cell_iterator &cell)
+    const
+  {
+    auto idx = master_slave_relationships[cell->active_cell_index()];
+    if ((idx == -1) || (idx == -2))
+      return cell->active_cell_index();
+    else
+      return idx;
+  }
+  /**
+   * Returns true if the two given cells are agglomerated together.
+   */
+  inline bool
+  are_cells_agglomerated(
+    const typename Triangulation<dim, spacedim>::active_cell_iterator &cell,
+    const typename Triangulation<dim, spacedim>::active_cell_iterator
+      &other_cell) const
+  {
+    return (get_master_idx_of_cell(cell) == get_master_idx_of_cell(other_cell));
+  }
+
+  /**
+   * Assign a finite element index on each cell of a triangulation, depending
+   * if it is a master cell, a slave cell, or a standard deal.II cell. A user
+   * doesn't need to know the internals of this, the only thing that is
+   * relevant is that after the call to the present function, DoFs are
+   * distributed in a different way if a cell is a master, slave, or standard
+   * cell.
+   */
+  void
+  initialize_hp_structure();
+
+  /**
+   * Helper function to call reinit on a master cell.
+   */
+  const FEValuesBase<dim, spacedim> &
+  reinit_master(
+    const typename DoFHandler<dim, spacedim>::active_cell_iterator &cell,
+    const unsigned int                                              face_number,
+    std::unique_ptr<NonMatching::FEImmersedSurfaceValues<spacedim>>
+      &agglo_isv_ptr) const;
+
+  /**
+   * Given an agglomeration described by the master cell `master_cell`, this
+   * function:
+   * - enumerates the faces of the agglomeration
+   * - stores who is the neighbor, the local face indices from outside and
+   * inside
+   *
+   * #TODO:
+   * - change name
+   * - improve documentation
+   */
+  void
+  setup_master_neighbor_connectivity(
+    const typename Triangulation<dim, spacedim>::active_cell_iterator
+      &master_cell) const;
+
+  /**
+   * Initialize all the necessary connectivity information for an
+   * agglomeration. #TODO: loop over polytopes, avoid using master cells
+   * explicitely.
+   */
+  void
+  setup_connectivity_of_agglomeration();
+
+
+
   /**
    * Vector of indices such that v[cell->active_cell_index()] returns
    * { -1 if `cell` is a master cell
@@ -816,6 +685,7 @@ private:
    * `cell` is a slave cell.
    */
   std::vector<long int> master_slave_relationships;
+
 
 
   /**
@@ -1040,535 +910,6 @@ private:
   std::vector<typename Triangulation<dim, spacedim>::active_cell_iterator>
     master_cells_container;
 
-  /**
-   * Initialize connectivity informations
-   */
-  void
-  initialize_agglomeration_data(
-    const std::unique_ptr<GridTools::Cache<dim, spacedim>> &cache_tria)
-  {
-    tria    = &cache_tria->get_triangulation();
-    mapping = &cache_tria->get_mapping();
-
-    agglo_dh.reinit(*tria);
-    FE_DGQ<dim, spacedim> dummy_dg(1);
-    euler_fe = std::make_unique<FESystem<dim, spacedim>>(dummy_dg, spacedim);
-    euler_dh.reinit(*tria);
-    euler_dh.distribute_dofs(*euler_fe);
-    euler_vector.reinit(euler_dh.n_dofs());
-
-    master_slave_relationships.resize(tria->n_active_cells(), -2);
-    master_slave_relationships_iterators.resize(tria->n_active_cells(), {});
-    if (n_agglomerations > 0)
-      std::fill(master_slave_relationships.begin(),
-                master_slave_relationships.end(),
-                -2); // identify all the tria with standard deal.II cells.
-
-    master_neighbors.clear();
-    // bboxes.resize(tria->n_active_cells());
-
-    // First, update the pointer
-    cached_tria = std::make_unique<GridTools::Cache<dim, spacedim>>(
-      cache_tria->get_triangulation(), cache_tria->get_mapping());
-
-    connect_to_tria_signals();
-    n_agglomerations = 0;
-  }
-
-  /**
-   * Reinitialize the agglomeration data.
-   */
-  void
-  connect_to_tria_signals()
-  {
-    // First disconnect existing connections
-    tria_listener.disconnect();
-    tria_listener = tria->signals.any_change.connect(
-      [&]() { this->initialize_agglomeration_data(this->cached_tria); });
-  }
-
-  /**
-   * Helper function to determine whether or not a cell is a slave cell.
-   * Instead of returning a boolean, it gives the index of the master cell. If
-   * it's a master cell, then the it returns -1, by construction.
-   */
-
-  inline typename Triangulation<dim, spacedim>::active_cell_iterator &
-  is_slave_cell_of(
-    const typename Triangulation<dim, spacedim>::active_cell_iterator &cell)
-  {
-    return master_slave_relationships_iterators[cell->active_cell_index()];
-  }
-
-  /**
-   * Construct bounding boxes for an agglomeration described by a sequence of
-   * cells. This fills also the euler vector
-   */
-  void
-  create_bounding_box(const AgglomerationContainer & polytope,
-                      const types::global_cell_index master_idx)
-  {
-    Assert(n_agglomerations > 0,
-           ExcMessage("No agglomeration has been performed."));
-    Assert(dim > 1, ExcNotImplemented());
-
-    std::vector<types::global_dof_index> dof_indices(euler_fe->dofs_per_cell);
-    std::vector<Point<spacedim>>         pts; // store all the vertices
-    for (const auto &cell : polytope)
-      {
-        for (const auto i : cell->vertex_indices())
-          pts.push_back(cell->vertex(i));
-      }
-    typename DoFHandler<dim, spacedim>::cell_iterator cell_dh(*polytope[0],
-                                                              &euler_dh);
-    cell_dh->get_dof_indices(dof_indices);
-
-    bboxes.emplace_back(pts);
-
-    const auto &p0 =
-      bboxes[master2polygon.at(master_idx)].get_boundary_points().first;
-    const auto &p1 =
-      bboxes[master2polygon.at(master_idx)].get_boundary_points().second;
-
-    if constexpr (dim == 2)
-      {
-        euler_vector[dof_indices[0]] = p0[0];
-        euler_vector[dof_indices[4]] = p0[1];
-        // Lower right
-        euler_vector[dof_indices[1]] = p1[0];
-        euler_vector[dof_indices[5]] = p0[1];
-        // Upper left
-        euler_vector[dof_indices[2]] = p0[0];
-        euler_vector[dof_indices[6]] = p1[1];
-        // Upper right
-        euler_vector[dof_indices[3]] = p1[0];
-        euler_vector[dof_indices[7]] = p1[1];
-      }
-    else if constexpr (dim == 3)
-      {
-        // Lowers
-
-        // left
-        euler_vector[dof_indices[0]]  = p0[0];
-        euler_vector[dof_indices[8]]  = p0[1];
-        euler_vector[dof_indices[16]] = p0[2];
-
-        // right
-        euler_vector[dof_indices[1]]  = p1[0];
-        euler_vector[dof_indices[9]]  = p0[1];
-        euler_vector[dof_indices[17]] = p0[2];
-
-        // left
-        euler_vector[dof_indices[2]]  = p0[0];
-        euler_vector[dof_indices[10]] = p1[1];
-        euler_vector[dof_indices[18]] = p0[2];
-
-        // right
-        euler_vector[dof_indices[3]]  = p1[0];
-        euler_vector[dof_indices[11]] = p1[1];
-        euler_vector[dof_indices[19]] = p0[2];
-
-        // Uppers
-
-        // left
-        euler_vector[dof_indices[4]]  = p0[0];
-        euler_vector[dof_indices[12]] = p0[1];
-        euler_vector[dof_indices[20]] = p1[2];
-
-        // right
-        euler_vector[dof_indices[5]]  = p1[0];
-        euler_vector[dof_indices[13]] = p0[1];
-        euler_vector[dof_indices[21]] = p1[2];
-
-        // left
-        euler_vector[dof_indices[6]]  = p0[0];
-        euler_vector[dof_indices[14]] = p1[1];
-        euler_vector[dof_indices[22]] = p1[2];
-
-        // right
-        euler_vector[dof_indices[7]]  = p1[0];
-        euler_vector[dof_indices[15]] = p1[1];
-        euler_vector[dof_indices[23]] = p1[2];
-      }
-    else
-      {
-        Assert(false, ExcNotImplemented());
-      }
-  }
-
-
-  inline types::global_cell_index
-  get_master_idx_of_cell(
-    const typename Triangulation<dim, spacedim>::active_cell_iterator &cell)
-    const
-  {
-    auto idx = master_slave_relationships[cell->active_cell_index()];
-    if ((idx == -1) || (idx == -2))
-      return cell->active_cell_index();
-    else
-      return idx;
-  }
-  /**
-   * Returns true if the two given cells are agglomerated together.
-   */
-  inline bool
-  are_cells_agglomerated(
-    const typename Triangulation<dim, spacedim>::active_cell_iterator &cell,
-    const typename Triangulation<dim, spacedim>::active_cell_iterator
-      &other_cell) const
-  {
-    return (get_master_idx_of_cell(cell) == get_master_idx_of_cell(other_cell));
-  }
-
-
-
-  /**
-   * Assign a finite element index on each cell of a triangulation, depending
-   * if it is a master cell, a slave cell, or a standard deal.II cell. A user
-   * doesn't need to know the internals of this, the only thing that is
-   * relevant is that after the call to the present function, DoFs are
-   * distributed in a different way if a cell is a master, slave, or standard
-   * cell.
-   */
-  void
-  initialize_hp_structure();
-
-  /**
-   * Helper function to call reinit on a master cell.
-   */
-  const FEValuesBase<dim, spacedim> &
-  reinit_master(
-    const typename DoFHandler<dim, spacedim>::active_cell_iterator &cell,
-    const unsigned int                                              face_number,
-    std::unique_ptr<NonMatching::FEImmersedSurfaceValues<spacedim>>
-      &agglo_isv_ptr) const;
-
-  /**
-   * Given an agglomeration described by the master cell `master_cell`, this
-   * function:
-   * - enumerates the faces of the agglomeration
-   * - stores who is the neighbor, the local face indices from outside and
-   * inside
-   */
-  void
-  setup_master_neighbor_connectivity(
-    const typename Triangulation<dim, spacedim>::active_cell_iterator
-      &master_cell) const
-  {
-    Assert(master_slave_relationships[master_cell->active_cell_index()] == -1,
-           ExcMessage("The present cell is not a master one."));
-
-    const auto &agglomeration = get_agglomerate(master_cell);
-
-    unsigned int n_agglo_faces = 0;
-
-    /**
-     * Given a pair of neighboring cells, store the sequence of local face
-     * indices and deal cells they share.
-     *
-     */
-    std::map<std::pair<types::global_cell_index, types::global_cell_index>,
-             std::vector<std::tuple<
-               typename Triangulation<dim, spacedim>::active_cell_iterator,
-               unsigned int,
-               typename Triangulation<dim, spacedim>::active_cell_iterator,
-               unsigned int>>>
-      agglomerated_faces;
-
-    for (const auto &cell : agglomeration)
-      {
-        for (const auto f : cell->face_indices())
-          {
-            const auto &neighboring_cell = cell->neighbor(f);
-            // Check if cell is not on the boundary and if it's not
-            // agglomerated with the neighbor If so, it's a neighbor of the
-            // present agglomeration
-            if (neighboring_cell.state() == IteratorState::valid &&
-                !are_cells_agglomerated(cell, neighboring_cell))
-              {
-                // a new face of the agglomeration has been discovered.
-                polygon_boundary[master_cell].push_back(cell->face(f));
-
-                const auto &cell_and_face =
-                  CellAndFace(master_cell, n_agglo_faces);      //(agglo,f)
-                const auto nof = cell->neighbor_of_neighbor(f); // loc(f')
-
-                if (is_slave_cell(neighboring_cell))
-                  {
-                    master_neighbors.emplace(
-                      cell_and_face,
-                      std::make_tuple(f,
-                                      master_slave_relationships_iterators
-                                        [neighboring_cell->active_cell_index()],
-                                      nof,
-                                      cell));
-
-                    // save the pair of neighboring cells
-                    std::pair<types::global_cell_index,
-                              types::global_cell_index>
-                      cell_and_neighbor{
-                        master2polygon.at(master_slave_relationships_iterators
-                                            [cell->active_cell_index()]
-                                              ->active_cell_index()),
-                        master2polygon.at(
-                          master_slave_relationships_iterators
-                            [neighboring_cell->active_cell_index()]
-                              ->active_cell_index())}; //(K1,K2) neighboring
-                                                       // polytopes. Here you
-                                                       // need a level of
-                                                       // indirection as you
-                                                       // need to find the
-                                                       // master of the
-                                                       // present slave
-
-                    agglomerated_faces[cell_and_neighbor].emplace_back(
-                      cell,
-                      f,
-                      master_slave_relationships_iterators
-                        [neighboring_cell->active_cell_index()],
-                      nof); //(K1,K2) -> store face
-                            // indices and deal cell
-
-                    if (visited_cell_and_faces.find(
-                          {cell->active_cell_index(), f}) ==
-                        std::end(visited_cell_and_faces))
-                      {
-                        interface[{master2polygon.at(
-                                     master_cell->active_cell_index()),
-                                   master2polygon.at(
-                                     master_slave_relationships_iterators
-                                       [neighboring_cell->active_cell_index()]
-                                         ->active_cell_index())}]
-                          .emplace_back(cell, f);
-                        auto it = visited_cell_and_faces.insert(
-                          {cell->active_cell_index(), f});
-                      }
-
-
-                    if (visited_cell_and_faces.find(
-                          {cell->neighbor(f)->active_cell_index(), nof}) ==
-                        std::end(visited_cell_and_faces))
-                      {
-                        interface[{master2polygon.at(
-                                     master_slave_relationships_iterators
-                                       [neighboring_cell->active_cell_index()]
-                                         ->active_cell_index()),
-                                   master2polygon.at(
-                                     master_cell->active_cell_index())}]
-                          .emplace_back(cell->neighbor(f), nof);
-                        auto it = visited_cell_and_faces.insert(
-                          {cell->neighbor(f)->active_cell_index(), nof});
-                      }
-
-                    // if (std::find(visited_polytopes.cbegin(),
-                    //               visited_polytopes.cend(),
-                    //               master2polygon.at(
-                    //                 master_slave_relationships_iterators
-                    //                   [neighboring_cell->active_cell_index()]
-                    //                     ->active_cell_index())) ==
-                    //     std::end(visited_polytopes))
-                    //   {
-                    // neighbor not visited
-                    // interface[{master2polygon.at(
-                    //              master_slave_relationships_iterators
-                    //                [neighboring_cell->active_cell_index()]
-                    //                  ->active_cell_index()),
-                    //            master2polygon.at(
-                    //              master_cell->active_cell_index())}] =
-                    //   interface[{master2polygon.at(
-                    //                master_cell->active_cell_index()),
-                    //              master2polygon.at(
-                    //                master_slave_relationships_iterators
-                    //                  [neighboring_cell->active_cell_index()]
-                    //                    ->active_cell_index())}];
-                    // }
-
-
-
-                    // record that this polytope has been visited
-                    // visited_polytopes.push_back(master2polygon.at(
-                    //   master_slave_relationships_iterators
-                    //     [neighboring_cell->active_cell_index()]
-                    //       ->active_cell_index()));
-                  }
-                else
-                  {
-                    master_neighbors.emplace(
-                      cell_and_face,
-                      std::make_tuple(
-                        f,
-                        neighboring_cell,
-                        nof,
-                        cell)); //(agglo,f)
-                                //->(loc(f),other_deal_cell,loc(f'),dealcell)
-
-                    // save the pair of neighboring cells
-                    if (is_master_cell(neighboring_cell))
-                      {
-                        std::pair<types::global_cell_index,
-                                  types::global_cell_index>
-                          cell_and_neighbor{
-                            master2polygon.at(master_cell->active_cell_index()),
-                            master2polygon.at(
-                              neighboring_cell->active_cell_index())};
-                        //(K1,K2) neighboring
-                        // polytopes
-
-                        agglomerated_faces[cell_and_neighbor].emplace_back(
-                          cell,
-                          f,
-                          neighboring_cell,
-                          nof); //(K1,K2) -> store local face index
-                                // and deal cell
-
-
-                        // if (std::find(
-                        //       visited_polytopes.begin(),
-                        //       visited_polytopes.end(),
-                        //       master2polygon.at(
-                        //         neighboring_cell->active_cell_index())) !=
-                        //     std::end(visited_polytopes))
-                        // {
-                        // already discovered
-
-                        if (visited_cell_and_faces.find(
-                              {cell->active_cell_index(), f}) ==
-                            std::end(visited_cell_and_faces))
-                          {
-                            interface[{master2polygon.at(
-                                         master_cell->active_cell_index()),
-                                       master2polygon.at(
-                                         neighboring_cell
-                                           ->active_cell_index())}]
-                              .emplace_back(cell, f);
-                            auto it = visited_cell_and_faces.insert(
-                              {cell->active_cell_index(), f});
-                          }
-
-                        if (visited_cell_and_faces.find(
-                              {cell->neighbor(f)->active_cell_index(), nof}) ==
-                            std::end(visited_cell_and_faces))
-                          {
-                            interface[{master2polygon.at(
-                                         neighboring_cell->active_cell_index()),
-                                       master2polygon.at(
-                                         master_cell->active_cell_index())}]
-                              .emplace_back(cell->neighbor(f), nof);
-                            auto it = visited_cell_and_faces.insert(
-                              {cell->neighbor(f)->active_cell_index(), nof});
-                          }
-
-                        // if (std::find(
-                        //       visited_polytopes.cbegin(),
-                        //       visited_polytopes.cend(),
-                        //       master2polygon.at(
-                        //         neighboring_cell->active_cell_index())) ==
-                        //     std::end(visited_polytopes))
-                        //   {
-                        // neighbor not visited
-                        // interface[{master2polygon.at(
-                        //              neighboring_cell->active_cell_index()),
-                        //            master2polygon.at(
-                        //              master_cell->active_cell_index())}] =
-                        //   interface[{master2polygon.at(
-                        //                master_cell->active_cell_index()),
-                        //              master2polygon.at(
-                        //                neighboring_cell->active_cell_index())}];
-                        // }
-
-
-                        // record the visited polytope
-                        // visited_polytopes.push_back(master2polygon.at(
-                        //   neighboring_cell->active_cell_index()));
-                        // }
-                      }
-                  }
-
-                // Now, link the index of the agglomerated face with the
-                // master and the neighboring cell.
-                shared_face_agglomeration_idx.emplace(
-                  MasterAndNeighborAndFace(master_cell, neighboring_cell, nof),
-                  n_agglo_faces);
-                ++n_agglo_faces;
-              }
-            else if (cell->face(f)->at_boundary())
-              {
-                // Boundary face of a boundary cell.
-                // Note that the neighboring cell must be invalid.
-                const auto &cell_and_face =
-                  CellAndFace(master_cell, n_agglo_faces);
-
-                polygon_boundary[master_cell].push_back(cell->face(f));
-
-                master_neighbors.emplace(
-                  cell_and_face,
-                  std::make_tuple(f,
-                                  neighboring_cell,
-                                  std::numeric_limits<unsigned int>::max(),
-                                  cell)); // TODO: check what the last element
-                                          // should be...
-                ++n_agglo_faces;
-
-
-                std::pair<types::global_cell_index, types::global_cell_index>
-                  cell_and_neighbor{master2polygon.at(
-                                      master_cell->active_cell_index()),
-                                    std::numeric_limits<unsigned int>::max()};
-
-
-                agglomerated_faces[cell_and_neighbor].emplace_back(
-                  cell,
-                  f,
-                  neighboring_cell,
-                  std::numeric_limits<unsigned int>::max()); //(K1,K2) -> store
-                                                             // local face index
-                                                             // and deal cell
-              }
-          }
-      } // loop over all cells of agglomerate
-
-    // visited_polytopes.push_back(
-    //   master2polygon.at(master_cell->active_cell_index()));
-    // recover information about deal cells and local face indices associated to
-    // the same face
-    unsigned int face = 0;
-    for (const auto &[key, val] : agglomerated_faces)
-      {
-        // I'm sitting on one pair
-        const auto &agglo_and_face = CellAndFace(master_cell, face);
-        for (const auto &t : val)
-          info_cells[agglo_and_face].emplace_back(
-            std::get<0>(t),
-            std::get<1>(t),
-            std::get<2>(t),
-            std::get<3>(t)); // 0 = deal cell, 1 = local face index, 2 =
-                             // neighboring master, 3=nofn
-        // increment the face counter
-        ++face;
-      }
-
-    number_of_agglomerated_faces[master_cell] = face;
-  }
-
-  /**
-   * Initialize all the necessary connectivity information for an
-   * agglomeration.
-   */
-  void
-  setup_connectivity_of_agglomeration()
-  {
-    Assert(
-      agglo_dh.n_dofs() > 0,
-      ExcMessage(
-        "The DoFHandler associated to the agglomeration has not been initialized. It's likely that you forgot to distribute the DoFs, i.e. you may want to check if a call to `initialize_hp_structure()` has been done."));
-    for (const auto &cell :
-         agglo_dh.active_cell_iterators() |
-           IteratorFilters::ActiveFEIndexEqualTo(CellAgglomerationType::master))
-      {
-        setup_master_neighbor_connectivity(cell);
-      }
-  }
-
   friend class internal::AgglomerationHandlerImplementation<dim, spacedim>;
 };
 
@@ -1638,225 +979,6 @@ AgglomerationHandler<dim, spacedim>::polytope_iterators() const
     typename AgglomerationHandler<dim, spacedim>::agglomeration_iterator>(
     begin(), end());
 }
-
-
-
-namespace dealii
-{
-  namespace internal
-  {
-    template <int dim, int spacedim>
-    class AgglomerationHandlerImplementation
-    {
-    public:
-      static const FEValuesBase<dim, spacedim> &
-      reinit_master(
-        const typename DoFHandler<dim, spacedim>::active_cell_iterator &cell,
-        const unsigned int face_index,
-        std::unique_ptr<NonMatching::FEImmersedSurfaceValues<spacedim>>
-          &                                        agglo_isv_ptr,
-        const AgglomerationHandler<dim, spacedim> &handler)
-      {
-        Assert(handler.is_master_cell(cell),
-               ExcMessage("This cell must be a master one."));
-        // const auto &info_neighbors =
-        //   handler.master_neighbors[{cell, face_index}];
-        // const auto &local_face_idx = std::get<0>(info_neighbors);
-        // const auto &deal_cell      = std::get<3>(info_neighbors);
-
-        const auto  cells_and_faces = handler.info_cells.at({cell, face_index});
-        const auto &neighbor = handler.agglomerated_neighbor(cell, face_index);
-
-        // std::cout << "reinit master " << cell->active_cell_index() <<
-        // std::endl; std::cout << "agglomerate face " << face_index <<
-        // std::endl;
-
-        types::global_cell_index polytope_in =
-          handler.master2polygon.at(cell->active_cell_index());
-
-        if (neighbor.state() == IteratorState::valid)
-          {
-            types::global_cell_index polytope_out =
-              handler.master2polygon.at(neighbor->active_cell_index());
-
-
-
-            const auto common_face =
-              handler.interface.at({polytope_in, polytope_out});
-
-            std::vector<Point<spacedim>> final_unit_q_points;
-            std::vector<double>          final_weights;
-            std::vector<Tensor<1, dim>>  final_normals;
-
-
-            for (const auto &[deal_cell, local_face_idx] : common_face)
-              {
-                // std::cout << "deal cell = " << deal_cell->active_cell_index()
-                //           << std::endl;
-                // std::cout << "local face index = " << local_face_idx
-                //           << std::endl;
-                handler.no_face_values->reinit(deal_cell, local_face_idx);
-                auto q_points = handler.no_face_values->get_quadrature_points();
-
-                const auto &JxWs = handler.no_face_values->get_JxW_values();
-                const auto &normals =
-                  handler.no_face_values->get_normal_vectors();
-
-                const auto & bbox = handler.bboxes[handler.master2polygon.at(
-                  cell->active_cell_index())];
-                const double bbox_measure = bbox.volume();
-
-                std::vector<Point<spacedim>> unit_q_points;
-                std::transform(q_points.begin(),
-                               q_points.end(),
-                               std::back_inserter(unit_q_points),
-                               [&](const Point<spacedim> &p) {
-                                 return bbox.real_to_unit(p);
-                               });
-
-                // Weights must be scaled with det(J)*|J^-t n| for each
-                // quadrature point. Use the fact that we are using a BBox, so
-                // the jacobi entries are the side_length in each direction.
-                // Unfortunately, normal vectors will be scaled internally by
-                // deal.II by using a covariant transformation. In order not to
-                // change the normals, we multiply by the correct factors in
-                // order to obtain the original normal after the call to
-                // `reinit(cell)`.
-                std::vector<double>         scale_factors(q_points.size());
-                std::vector<double>         scaled_weights(q_points.size());
-                std::vector<Tensor<1, dim>> scaled_normals(q_points.size());
-
-                for (unsigned int q = 0; q < q_points.size(); ++q)
-                  {
-                    for (unsigned int direction = 0; direction < spacedim;
-                         ++direction)
-                      scaled_normals[q][direction] =
-                        normals[q][direction] * (bbox.side_length(direction));
-
-                    scaled_weights[q] =
-                      (JxWs[q] * scaled_normals[q].norm()) / bbox_measure;
-                    scaled_normals[q] /= scaled_normals[q].norm();
-                  }
-
-                for (const auto &point : unit_q_points)
-                  final_unit_q_points.push_back(point);
-                for (const auto &weight : scaled_weights)
-                  final_weights.push_back(weight);
-                for (const auto &normal : scaled_normals)
-                  final_normals.push_back(normal);
-
-                // std::transform(scaled_weights.begin(),
-                //                scaled_weights.end(),
-                //                std::back_inserter(final_weights));
-                // std::transform(scaled_normals.begin(),
-                //                scaled_normals.end(),
-                //                std::back_inserter(final_normals));
-              }
-
-            // std::cout << "final_unit_q_points size = "
-            //           << final_unit_q_points.size() << std::endl;
-            // Done with collecting normals, qpoints and weights.
-            NonMatching::ImmersedSurfaceQuadrature<dim, spacedim> surface_quad(
-              final_unit_q_points, final_weights, final_normals);
-
-            agglo_isv_ptr =
-              std::make_unique<NonMatching::FEImmersedSurfaceValues<spacedim>>(
-                *(handler.euler_mapping),
-                *(handler.fe),
-                surface_quad,
-                handler.agglomeration_face_flags);
-
-            agglo_isv_ptr->reinit(cell);
-
-            return *agglo_isv_ptr;
-          }
-        else
-          {
-            std::vector<Point<spacedim>> final_unit_q_points;
-            std::vector<double>          final_weights;
-            std::vector<Tensor<1, dim>>  final_normals;
-
-
-            for (const auto &[deal_cell, local_face_idx, dummy, dummy_] :
-                 cells_and_faces)
-              {
-                handler.no_face_values->reinit(deal_cell, local_face_idx);
-                auto q_points = handler.no_face_values->get_quadrature_points();
-
-                const auto &JxWs = handler.no_face_values->get_JxW_values();
-                const auto &normals =
-                  handler.no_face_values->get_normal_vectors();
-
-                const auto & bbox = handler.bboxes[handler.master2polygon.at(
-                  cell->active_cell_index())];
-                const double bbox_measure = bbox.volume();
-
-                std::vector<Point<spacedim>> unit_q_points;
-                std::transform(q_points.begin(),
-                               q_points.end(),
-                               std::back_inserter(unit_q_points),
-                               [&](const Point<spacedim> &p) {
-                                 return bbox.real_to_unit(p);
-                               });
-
-                // Weights must be scaled with det(J)*|J^-t n| for each
-                // quadrature point. Use the fact that we are using a BBox, so
-                // the jacobi entries are the side_length in each direction.
-                // Unfortunately, normal vectors will be scaled internally by
-                // deal.II by using a covariant transformation. In order not to
-                // change the normals, we multiply by the correct factors in
-                // order to obtain the original normal after the call to
-                // `reinit(cell)`.
-                std::vector<double>         scale_factors(q_points.size());
-                std::vector<double>         scaled_weights(q_points.size());
-                std::vector<Tensor<1, dim>> scaled_normals(q_points.size());
-
-                for (unsigned int q = 0; q < q_points.size(); ++q)
-                  {
-                    for (unsigned int direction = 0; direction < spacedim;
-                         ++direction)
-                      scaled_normals[q][direction] =
-                        normals[q][direction] * (bbox.side_length(direction));
-
-                    scaled_weights[q] =
-                      (JxWs[q] * scaled_normals[q].norm()) / bbox_measure;
-                    scaled_normals[q] /= scaled_normals[q].norm();
-                  }
-
-                for (const auto &point : unit_q_points)
-                  final_unit_q_points.push_back(point);
-                for (const auto &weight : scaled_weights)
-                  final_weights.push_back(weight);
-                for (const auto &normal : scaled_normals)
-                  final_normals.push_back(normal);
-
-                // std::transform(scaled_weights.begin(),
-                //                scaled_weights.end(),
-                //                std::back_inserter(final_weights));
-                // std::transform(scaled_normals.begin(),
-                //                scaled_normals.end(),
-                //                std::back_inserter(final_normals));
-              }
-
-            // Done with collecting normals, qpoints and weights.
-            NonMatching::ImmersedSurfaceQuadrature<dim, spacedim> surface_quad(
-              final_unit_q_points, final_weights, final_normals);
-
-            agglo_isv_ptr =
-              std::make_unique<NonMatching::FEImmersedSurfaceValues<spacedim>>(
-                *(handler.euler_mapping),
-                *(handler.fe),
-                surface_quad,
-                handler.agglomeration_face_flags);
-
-            agglo_isv_ptr->reinit(cell);
-
-            return *agglo_isv_ptr;
-          }
-      }
-    };
-  } // namespace internal
-} // namespace dealii
 
 
 
