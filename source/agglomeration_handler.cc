@@ -514,6 +514,10 @@ AgglomerationHandler<dim, spacedim>::setup_master_neighbor_connectivity(
              unsigned int>>>
     agglomerated_faces;
 
+  std::set<types::global_cell_index> visited_polygonal_neighbors;
+
+  number_of_agglomerated_faces.reserve(master2polygon.size());
+
   for (const auto &cell : agglomeration)
     {
       for (const auto f : cell->face_indices())
@@ -566,6 +570,13 @@ AgglomerationHandler<dim, spacedim>::setup_master_neighbor_connectivity(
                       [neighboring_cell->active_cell_index()],
                     nof); //(K1,K2) -> store face
                           // indices and deal cell
+
+
+                  visited_polygonal_neighbors.insert(
+                    master2polygon.at(master_slave_relationships_iterators
+                                        [neighboring_cell->active_cell_index()]
+                                          ->active_cell_index()));
+
 
                   if (visited_cell_and_faces.find(
                         {cell->active_cell_index(), f}) ==
@@ -669,6 +680,10 @@ AgglomerationHandler<dim, spacedim>::setup_master_neighbor_connectivity(
                       // {
                       // already discovered
 
+
+                      visited_polygonal_neighbors.insert(master2polygon.at(
+                        neighboring_cell->active_cell_index()));
+
                       if (visited_cell_and_faces.find(
                             {cell->active_cell_index(), f}) ==
                           std::end(visited_cell_and_faces))
@@ -752,6 +767,10 @@ AgglomerationHandler<dim, spacedim>::setup_master_neighbor_connectivity(
                                     master_cell->active_cell_index()),
                                   std::numeric_limits<unsigned int>::max()};
 
+              visited_polygonal_neighbors.insert(
+                std::numeric_limits<unsigned int>::max());
+
+
               if (visited_cell_and_faces.find({cell->active_cell_index(), f}) ==
                   std::end(visited_cell_and_faces))
                 {
@@ -794,8 +813,8 @@ AgglomerationHandler<dim, spacedim>::setup_master_neighbor_connectivity(
       // increment the face counter
       ++face;
     }
-
-  number_of_agglomerated_faces[master_cell] = face;
+  number_of_agglomerated_faces[master2polygon.at(
+    master_cell->active_cell_index())] = visited_polygonal_neighbors.size();
 }
 
 
