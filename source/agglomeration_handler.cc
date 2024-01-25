@@ -804,13 +804,13 @@ template <int dim, int spacedim>
 void
 AgglomerationHandler<dim, spacedim>::setup_connectivity_of_agglomeration()
 {
+  Assert(master_cells_container.size() > 0,
+         ExcMessage("No agglomeration has been performed."));
   Assert(
     agglo_dh.n_dofs() > 0,
     ExcMessage(
       "The DoFHandler associated to the agglomeration has not been initialized. It's likely that you forgot to distribute the DoFs, i.e. you may want to check if a call to `initialize_hp_structure()` has been done."));
-  for (const auto &cell :
-       agglo_dh.active_cell_iterators() |
-         IteratorFilters::ActiveFEIndexEqualTo(CellAgglomerationType::master))
+  for (const auto &cell : master_cells_container)
     {
       setup_master_neighbor_connectivity(cell);
     }
