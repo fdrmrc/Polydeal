@@ -704,10 +704,7 @@ private:
   mutable std::set<std::pair<types::global_cell_index, unsigned int>>
     visited_cell_and_faces;
 
-
-  mutable std::map<typename Triangulation<dim, spacedim>::active_cell_iterator,
-                   unsigned int>
-    number_of_agglomerated_faces;
+  mutable std::vector<types::global_cell_index> number_of_agglomerated_faces;
 
   /**
    * Associate a master cell (hence, a given polytope) to its boundary faces.
@@ -866,7 +863,8 @@ AgglomerationHandler<dim, spacedim>::n_agglomerated_faces(
   const typename Triangulation<dim, spacedim>::active_cell_iterator
     &master_cell) const
 {
-  return number_of_agglomerated_faces.at(master_cell);
+  return number_of_agglomerated_faces[master2polygon.at(
+    master_cell->active_cell_index())];
 }
 
 
@@ -965,7 +963,7 @@ AgglomerationHandler<dim, spacedim>::at_boundary(
     {
       // return std::get<2>(master_neighbors[{cell, f}]) ==
       //        std::numeric_limits<unsigned int>::max();
-      
+
       // boundary cells are all clustered together
       const auto &[deal_cell, local_face_idx, dummy, dummy_] =
         info_cells[{cell, f}][0];
