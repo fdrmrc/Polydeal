@@ -388,7 +388,8 @@ AgglomerationHandler<dim, spacedim>::initialize_agglomeration_data(
               -2); // identify all the tria with standard deal.II cells.
 
   master_neighbors.clear();
-  // bboxes.resize(tria->n_active_cells());
+  interface.clear();
+  bboxes.clear();
 
   // First, update the pointer
   cached_tria = std::make_unique<GridTools::Cache<dim, spacedim>>(
