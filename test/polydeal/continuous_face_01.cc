@@ -40,49 +40,49 @@
 void
 perimeter_test(AgglomerationHandler<2> &ah)
 {
-  const auto &info      = ah.get_info();
-  double      perimeter = 0.;
-  for (const auto &cell : ah.agglomeration_cell_iterators() |
-                            IteratorFilters::ActiveFEIndexEqualTo(
-                              ah.CellAgglomerationType::master))
+  double perimeter = 0.;
+  for (const auto &polytope : ah.polytope_iterators())
     {
-      std::cout << "Master cell index = " << cell->active_cell_index()
-                << std::endl;
-      unsigned int n_faces = ah.n_agglomerated_faces(cell);
+      std::cout << "Master cell index = "
+                << polytope.master_cell()->active_cell_index() << std::endl;
+      const auto &info = ah.get_interface();
+
+      unsigned int n_faces = polytope->n_faces();
       std::cout << "Number of agglomerated faces = " << n_faces << std::endl;
       for (unsigned int f = 0; f < n_faces; ++f)
         {
           std::cout << "Agglomerate face index = " << f << std::endl;
-          const auto &neighbor = ah.agglomerated_neighbor(cell, f);
-          if (!ah.at_boundary(cell, f))
+          if (!polytope->at_boundary(f))
             {
-              std::cout << "Neighbor = " << neighbor->active_cell_index()
+              const auto &neighbor = polytope->neighbor(f);
+              std::cout << "Neighbor polytope index = " << neighbor->index()
                         << std::endl;
               std::cout << "Neighbor of neighbor = "
-                        << ah.neighbor_of_agglomerated_neighbor(cell, f)
+                        << polytope->neighbor_of_agglomerated_neighbor(f)
                         << std::endl;
+
+
+              const auto &common_face =
+                info.at({polytope->index(), neighbor->index()});
+
+              for (const auto &[deal_cell, local_face_idx] : common_face)
+                {
+                  std::cout
+                    << "deal.II cell index = " << deal_cell->active_cell_index()
+                    << std::endl;
+                  std::cout << "Local face idx = " << local_face_idx
+                            << std::endl;
+                  std::cout << "Neighboring master cell index = "
+                            << neighbor.master_cell()->active_cell_index()
+                            << std::endl;
+                }
             }
           else
             {
-              const auto &test_feisv = ah.reinit(cell, f);
+              const auto &test_feisv = ah.reinit(polytope, f);
               perimeter += std::accumulate(test_feisv.get_JxW_values().begin(),
                                            test_feisv.get_JxW_values().end(),
                                            0.);
-            }
-
-          const auto &vec_tuple = info.at({cell, f});
-          for (const auto &[deal_cell,
-                            local_face_idx,
-                            neighboring_master,
-                            dummy] : vec_tuple)
-            {
-              std::cout << "deal.II cell index = "
-                        << deal_cell->active_cell_index() << std::endl;
-              std::cout << "Local face idx = " << local_face_idx << std::endl;
-              if (neighboring_master.state() == IteratorState::valid)
-                std::cout << "Neighboring master cell index = "
-                          << neighboring_master->active_cell_index()
-                          << std::endl;
             }
         }
       std::cout << std::endl;
@@ -96,21 +96,19 @@ void
 test_neighbors(AgglomerationHandler<2> &ah)
 {
   std::cout << "Check on neighbors and neighbors of neighbors:" << std::endl;
-  for (const auto &cell : ah.agglomeration_cell_iterators() |
-                            IteratorFilters::ActiveFEIndexEqualTo(
-                              ah.CellAgglomerationType::master))
+  for (const auto &polytope : ah.polytope_iterators())
     {
-      unsigned int n_faces = ah.n_agglomerated_faces(cell);
+      unsigned int n_faces = polytope->n_faces();
       for (unsigned int f = 0; f < n_faces; ++f)
         {
-          const auto &neighbor = ah.agglomerated_neighbor(cell, f);
-          if (!ah.at_boundary(cell, f))
+          if (!polytope->at_boundary(f))
             {
-              Assert((ah.agglomerated_neighbor(
-                          neighbor,
-                          ah.neighbor_of_agglomerated_neighbor(cell, f))
-                        ->active_cell_index() == cell->active_cell_index()),
-                     ExcMessage("Mismatch!"));
+              const auto &neighbor_polytope = polytope->neighbor(f);
+              AssertThrow(neighbor_polytope
+                              ->neighbor(
+                                polytope->neighbor_of_agglomerated_neighbor(f))
+                              ->index() == polytope->index(),
+                          ExcMessage("Mismatch!"));
             }
         }
     }
@@ -123,20 +121,18 @@ void
 test_face_qpoints(AgglomerationHandler<2> &ah)
 {
   std::cout << "Check on quadrature points:" << std::endl;
-  for (const auto &cell : ah.agglomeration_cell_iterators() |
-                            IteratorFilters::ActiveFEIndexEqualTo(
-                              ah.CellAgglomerationType::master))
+  for (const auto &polytope : ah.polytope_iterators())
     {
-      unsigned int n_faces = ah.n_agglomerated_faces(cell);
+      unsigned int n_faces = polytope->n_faces();
       for (unsigned int f = 0; f < n_faces; ++f)
         {
-          const auto &neigh_cell = ah.agglomerated_neighbor(cell, f);
-          if (!ah.at_boundary(cell, f))
+          if (!polytope->at_boundary(f))
             {
+              const auto &       neigh_polytope = polytope->neighbor(f);
               const unsigned int nofn =
-                ah.neighbor_of_agglomerated_neighbor(cell, f);
+                polytope->neighbor_of_agglomerated_neighbor(f);
               const auto &fe_faces =
-                ah.reinit_interface(cell, neigh_cell, f, nofn);
+                ah.reinit_interface(polytope, neigh_polytope, f, nofn);
 
               const auto &fe_faces0 = fe_faces.first;
               const auto &fe_faces1 = fe_faces.second;

@@ -10,19 +10,19 @@ Neighbor is: 3
 Neighbor is: 12
 Neighbor is: 14
 Cell with index 12 has 4 faces
-Neighbor is: 7
 Neighbor is: 11
 Neighbor is: 13
+Neighbor is: 7
 Neighbor is: 14
 Cell with index 13 has 4 faces
-Neighbor is: 7
 Neighbor is: 12
+Neighbor is: 7
 Neighbor is: 15
 Cell with index 14 has 4 faces
 Neighbor is: 11
-Neighbor is: 12
 Neighbor is: 15
+Neighbor is: 12
 Cell with index 15 has 3 faces
-Neighbor is: 13
 Neighbor is: 14
+Neighbor is: 13
 Ok
