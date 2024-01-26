@@ -718,8 +718,8 @@ Poisson<dim>::assemble_system()
 
 
       // Face terms
-      const unsigned int n_faces = ah->n_faces(cell);
-      AssertThrow(n_faces >= 4,
+      const unsigned int n_faces = ah->n_agglomerated_faces(cell);
+      AssertThrow(n_faces > 0,
                   ExcMessage(
                     "Invalid element: at least 4 faces are required."));
 
@@ -751,12 +751,13 @@ Poisson<dim>::assemble_system()
               // Get normal vectors seen from each agglomeration.
               const auto &normals = fe_face.get_normal_vectors();
 
-              const double penalty =
-                penalty_constant / PolyUtils::compute_h_orthogonal(
-                                     f, polygon_boundary_vertices, normals[0]);
-
               // const double penalty =
-              //   penalty_constant / std::fabs(ah->diameter(cell));
+              //   penalty_constant / PolyUtils::compute_h_orthogonal(
+              //                        f, polygon_boundary_vertices,
+              //                        normals[0]);
+
+              const double penalty =
+                penalty_constant / std::fabs(ah->diameter(cell));
 
               for (unsigned int q_index : fe_face.quadrature_point_indices())
                 {
@@ -853,13 +854,13 @@ Poisson<dim>::assemble_system()
 
                   const auto &normals = fe_faces0.get_normal_vectors();
 
-                  const double penalty =
-                    penalty_constant /
-                    PolyUtils::compute_h_orthogonal(f,
-                                                    polygon_boundary_vertices,
-                                                    normals[0]);
                   // const double penalty =
-                  //   penalty_constant / std::fabs(ah->diameter(cell));
+                  //   penalty_constant /
+                  //   PolyUtils::compute_h_orthogonal(f,
+                  //                                   polygon_boundary_vertices,
+                  //                                   normals[0]);
+                  const double penalty =
+                    penalty_constant / std::fabs(ah->diameter(cell));
 
                   // M11
                   for (unsigned int q_index :
