@@ -234,7 +234,7 @@ public:
   get_agglomerated_connectivity();
 
   inline decltype(auto)
-  get_info();
+  get_interface() const;
 
   inline decltype(auto)
   n_agglomerated_faces(
@@ -704,6 +704,8 @@ private:
   mutable std::set<std::pair<types::global_cell_index, unsigned int>>
     visited_cell_and_faces;
 
+
+
   mutable std::vector<types::global_cell_index> number_of_agglomerated_faces;
 
   /**
@@ -715,6 +717,12 @@ private:
     const typename Triangulation<dim, spacedim>::active_cell_iterator,
     std::vector<typename Triangulation<dim>::active_face_iterator>>
     polygon_boundary;
+
+  mutable std::map<
+    std::pair<types::global_cell_index, unsigned int>,
+    std::pair<bool,
+              typename Triangulation<dim, spacedim>::active_cell_iterator>>
+    cell_face_at_boundary;
 
   mutable std::map<MasterAndNeighborAndFace, types::global_cell_index>
     shared_face_agglomeration_idx;
@@ -850,9 +858,9 @@ AgglomerationHandler<dim, spacedim>::get_agglomerated_connectivity()
 
 template <int dim, int spacedim>
 inline decltype(auto)
-AgglomerationHandler<dim, spacedim>::get_info()
+AgglomerationHandler<dim, spacedim>::get_interface() const
 {
-  return info_cells;
+  return interface;
 }
 
 
@@ -953,21 +961,24 @@ template <int dim, int spacedim>
 inline bool
 AgglomerationHandler<dim, spacedim>::at_boundary(
   const typename DoFHandler<dim, spacedim>::active_cell_iterator &cell,
-  const unsigned int                                              f) const
+  const unsigned int face_index) const
 {
   Assert(!is_slave_cell(cell),
          ExcMessage("This function should not be called for a slave cell."));
   if (is_standard_cell(cell))
-    return cell->face(f)->at_boundary();
+    return cell->face(face_index)->at_boundary();
   else
     {
       // return std::get<2>(master_neighbors[{cell, f}]) ==
       //        std::numeric_limits<unsigned int>::max();
 
       // boundary cells are all clustered together
-      const auto &[deal_cell, local_face_idx, dummy, dummy_] =
-        info_cells[{cell, f}][0];
-      return deal_cell->at_boundary(local_face_idx);
+      // const auto &[deal_cell, local_face_idx, dummy, dummy_] =
+      //   info_cells[{cell, f}][0];
+      // return deal_cell->at_boundary(local_face_idx);
+      return cell_face_at_boundary
+        .at({master2polygon.at(cell->active_cell_index()), face_index})
+        .first;
     }
 }
 

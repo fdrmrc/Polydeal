@@ -179,7 +179,12 @@ AgglomerationHandler<dim, spacedim>::agglomerated_neighbor(
           // typename DoFHandler<dim, spacedim>::active_cell_iterator cell_dh(
           //   *neigh, &agglo_dh);
           // return cell_dh;
-          const auto &neigh = std::get<2>(info_cells[{cell, f}][0]);
+
+          // const auto &neigh = std::get<2>(info_cells[{cell, f}][0]);
+          const auto &neigh =
+            cell_face_at_boundary
+              .at({master2polygon.at(cell->active_cell_index()), f})
+              .second;
           typename DoFHandler<dim, spacedim>::active_cell_iterator cell_dh(
             *neigh, &agglo_dh);
           return cell_dh;
@@ -300,9 +305,11 @@ AgglomerationHandler<dim, spacedim>::neighbor_of_agglomerated_neighbor(
               // f_out}];
 
               // Check if same master cell
-              if (agglomerated_neighbor(agglo_neigh, f_out)
-                    ->active_cell_index() == cell->active_cell_index())
-                return f_out;
+              if (agglomerated_neighbor(agglo_neigh, f_out).state() ==
+                  IteratorState::valid)
+                if (agglomerated_neighbor(agglo_neigh, f_out)
+                      ->active_cell_index() == cell->active_cell_index())
+                  return f_out;
 
               // for (const auto &[other_deal,
               //                   local_f_out_idx,
@@ -583,7 +590,15 @@ AgglomerationHandler<dim, spacedim>::setup_master_neighbor_connectivity(
                       std::end(visited_polygonal_neighbors))
                     {
                       // found a neighbor
+                      cell_face_at_boundary[{
+                        polygon_index,
+                        number_of_agglomerated_faces[polygon_index]}] = {
+                        false,
+                        master_slave_relationships_iterators
+                          [neighboring_cell->active_cell_index()]};
+
                       ++number_of_agglomerated_faces[polygon_index];
+
 
                       visited_polygonal_neighbors.insert(master2polygon.at(
                         master_slave_relationships_iterators
@@ -696,7 +711,14 @@ AgglomerationHandler<dim, spacedim>::setup_master_neighbor_connectivity(
                           std::end(visited_polygonal_neighbors))
                         {
                           // found a neighbor
+
+                          cell_face_at_boundary[{
+                            polygon_index,
+                            number_of_agglomerated_faces[polygon_index]}] = {
+                            false, neighboring_cell};
+
                           ++number_of_agglomerated_faces[polygon_index];
+
 
                           visited_polygonal_neighbors.insert(master2polygon.at(
                             neighboring_cell->active_cell_index()));
@@ -755,6 +777,8 @@ AgglomerationHandler<dim, spacedim>::setup_master_neighbor_connectivity(
                     }
                 }
 
+
+
               // Now, link the index of the agglomerated face with the
               // master and the neighboring cell.
               shared_face_agglomeration_idx.emplace(
@@ -789,7 +813,13 @@ AgglomerationHandler<dim, spacedim>::setup_master_neighbor_connectivity(
                     std::numeric_limits<unsigned int>::max()) ==
                   std::end(visited_polygonal_neighbors))
                 {
-                  // found a neighbor
+                  // boundary face. Notice that `neighboring_cell` is invalid
+                  // here.
+                  cell_face_at_boundary[{
+                    polygon_index,
+                    number_of_agglomerated_faces[polygon_index]}] = {
+                    true, neighboring_cell};
+
                   ++number_of_agglomerated_faces[polygon_index];
 
                   visited_polygonal_neighbors.insert(
@@ -824,21 +854,21 @@ AgglomerationHandler<dim, spacedim>::setup_master_neighbor_connectivity(
   //   master2polygon.at(master_cell->active_cell_index()));
   // recover information about deal cells and local face indices associated to
   // the same face
-  unsigned int face = 0;
-  for (const auto &[key, val] : agglomerated_faces)
-    {
-      // I'm sitting on one pair
-      const auto &agglo_and_face = CellAndFace(master_cell, face);
-      for (const auto &t : val)
-        info_cells[agglo_and_face].emplace_back(
-          std::get<0>(t),
-          std::get<1>(t),
-          std::get<2>(t),
-          std::get<3>(t)); // 0 = deal cell, 1 = local face index, 2 =
-                           // neighboring master, 3=nofn
-      // increment the face counter
-      ++face;
-    }
+  // unsigned int face = 0;
+  // for (const auto &[key, val] : agglomerated_faces)
+  //   {
+  //     // I'm sitting on one pair
+  //     const auto &agglo_and_face = CellAndFace(master_cell, face);
+  //     for (const auto &t : val)
+  //       info_cells[agglo_and_face].emplace_back(
+  //         std::get<0>(t),
+  //         std::get<1>(t),
+  //         std::get<2>(t),
+  //         std::get<3>(t)); // 0 = deal cell, 1 = local face index, 2 =
+  //                          // neighboring master, 3=nofn
+  //     // increment the face counter
+  //     ++face;
+  //   }
   // number_of_agglomerated_faces[polygon_index] =
   //   visited_polygonal_neighbors.size();
 }
