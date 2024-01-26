@@ -29,6 +29,7 @@
 #include <deal.II/fe/mapping_fe_field.h>
 #include <deal.II/fe/mapping_q.h>
 
+#include <deal.II/grid/filtered_iterator.h>
 #include <deal.II/grid/grid_tools_cache.h>
 #include <deal.II/grid/tria.h>
 
@@ -47,10 +48,10 @@
 #include <agglomeration_iterator.h>
 
 #include <fstream>
+#include <utility>
 
 using namespace dealii;
 
-// Forward declarations
 template <int dim, int spacedim>
 class AgglomerationHandler;
 
@@ -58,93 +59,44 @@ namespace dealii
 {
   namespace internal
   {
-    /**
-     * Helper class to reinit finite element spaces on polytopal cells.
-     */
     template <int, int>
     class AgglomerationHandlerImplementation;
-  } // namespace internal
+  }
 } // namespace dealii
 
-
-/**
- * Helper class for the storage of connectivity information of the polytopal
- * grid.
- */
 namespace dealii
 {
-  namespace internal
+  namespace IteratorFilters
   {
+    /**
+     * This predicate returns true if the present cell is not-slave.
+     *
+     */
     template <int dim, int spacedim>
-    class PolytopeCache
+    class IsNotSlave
     {
     public:
-      /**
-       * Default constructor.
-       */
-      PolytopeCache() = default;
-
-      /**
-       * Destructor. It simply calls clear() for all of its members.
-       */
-      ~PolytopeCache() = default;
-
-      void
-      clear()
+      IsNotSlave(AgglomerationHandler<dim, spacedim> *agglo_handler_ptr)
       {
-        // clear all the members
-        cell_face_at_boundary.clear();
-        interface.clear();
-        visited_cell_and_faces.clear();
+        ah = agglo_handler_ptr;
       }
 
-      /**
-       * Standard std::set for recording the standard cells and faces (in the
-       * deal.II lingo) that have been already visited. The first argument of
-       * the pair identifies the global index of a deal.II cell, while the
-       * second its local face number.
-       *
-       */
-      mutable std::set<std::pair<types::global_cell_index, unsigned int>>
-        visited_cell_and_faces;
+      template <typename CellIterator>
+      bool
+      operator()(const CellIterator &cell) const
+      {
+        return !ah->is_slave_cell(cell);
+      }
 
-      /**
-       * Map that associate the pair of (polytopal index, polytopal face) to
-       * (b,cell). The latter pair indicates whether or not the present face is
-       * on boundary. If it's on the boundary, then b is true and cell is an
-       * invalid cell iterator. Otherwise, b is false and cell points to the
-       * neighboring polytopal cell.
-       *
-       */
-      mutable std::map<
-        std::pair<types::global_cell_index, unsigned int>,
-        std::pair<bool,
-                  typename Triangulation<dim, spacedim>::active_cell_iterator>>
-        cell_face_at_boundary;
-
-      /**
-       * Standard std::map that associated to a pair of neighboring polytopic
-       * cells (current_polytope, neighboring_polytope) a sequence of
-       * ({deal_cell,deal_face_index}) which is meant to describe their
-       * interface.
-       * Indeed, the pair is identified by the two polytopic global indices,
-       * while the interface is described by a std::vector of deal.II cells and
-       * faces.
-       *
-       */
-      mutable std::map<
-        std::pair<types::global_cell_index, types::global_cell_index>,
-        std::vector<
-          std::pair<typename Triangulation<dim, spacedim>::active_cell_iterator,
-                    unsigned int>>>
-        interface;
+    private:
+      AgglomerationHandler<dim, spacedim> *ah;
     };
-  } // namespace internal
+
+  } // namespace IteratorFilters
 } // namespace dealii
 
-
 /**
- * #TODO: Documentation.
+ * Assumption: each cell may have only one master cell
  */
 template <int dim, int spacedim = dim>
 class AgglomerationHandler : public Subscriptor
@@ -259,13 +211,8 @@ public:
    * agglomerated cells are seen as one **unique** cell, with only the DoFs
    * associated to the master cell of the agglomeration.
    */
-  template <typename Number = double>
   void
-  create_agglomeration_sparsity_pattern(
-    SparsityPattern &               sparsity_pattern,
-    const AffineConstraints<Number> constraints = AffineConstraints<Number>(),
-    const bool                      keep_constrained_dofs = true,
-    const types::subdomain_id subdomain_id = numbers::invalid_subdomain_id);
+  create_agglomeration_sparsity_pattern(SparsityPattern &sparsity_pattern);
 
   /**
    * Store internally that the given cells are agglomerated. The convenction we
@@ -279,11 +226,37 @@ public:
   agglomeration_iterator
   define_agglomerate(const AgglomerationContainer &cells);
 
+  /**
+   * Get the connectivity of the agglomeration. TODO: this data structure should
+   * be private. Keep the getter just for the time being.
+   */
   inline decltype(auto)
-  get_interface() const;
+  get_agglomerated_connectivity()
+  {
+    return master_neighbors;
+  }
+
+
+  inline decltype(auto)
+  get_info()
+  {
+    return info_cells;
+  }
+
+
+  inline decltype(auto)
+  n_agglomerated_faces(
+    const typename Triangulation<dim, spacedim>::active_cell_iterator
+      &master_cell) const
+  {
+    return number_of_agglomerated_faces.at(master_cell);
+  }
 
   inline const std::vector<long int> &
-  get_relationships() const;
+  get_relationships() const
+  {
+    return master_slave_relationships;
+  }
 
   /**
    * TODO: remove this in favour of the accessor version.
@@ -296,7 +269,13 @@ public:
     typename Triangulation<dim, spacedim>::active_cell_iterator>
   get_agglomerate(
     const typename Triangulation<dim, spacedim>::active_cell_iterator
-      &master_cell) const;
+      &master_cell) const
+  {
+    Assert(is_master_cell(master_cell), ExcInternalError());
+    auto agglomeration = get_slaves_of_idx(master_cell->active_cell_index());
+    agglomeration.push_back(master_cell);
+    return agglomeration;
+  }
 
   /**
    * Display the indices of the vector identifying which cell is agglomerated
@@ -319,13 +298,10 @@ public:
    * spaces are present on each cell of the triangulation.
    */
   inline const DoFHandler<dim, spacedim> &
-  get_dof_handler() const;
-
-  /**
-   * Returns the number of agglomerate cells in the grid.
-   */
-  unsigned int
-  n_agglomerates() const;
+  get_dof_handler() const
+  {
+    return agglo_dh;
+  }
 
   /**
    * Return the number of agglomerated faces for a generic deal.II cell. If it's
@@ -347,10 +323,45 @@ public:
     const typename DoFHandler<dim, spacedim>::active_cell_iterator &cell) const;
 
   /**
+   * Return, for each cell belonging to the same agllomeration, a cell belonging
+   * to the neighbor agglomeration
+   */
+  typename DoFHandler<dim, spacedim>::active_cell_iterator
+  agglomerated_neighbor(
+    const typename DoFHandler<dim, spacedim>::active_cell_iterator &cell,
+    const unsigned int                                              f) const;
+
+  /**
+   * Generalize the 'cell->neighbor_of_neighbor(f)' to the case where 'cell' is:
+   * - a master cell of an agglomeration.
+   * - a standard cell adjacent to an agglomeration.
+   */
+  unsigned int
+  neighbor_of_agglomerated_neighbor(
+    const typename DoFHandler<dim, spacedim>::active_cell_iterator &cell,
+    const unsigned int                                              f) const;
+
+  /**
+   * Construct a finite element space on the agglomeration.
+   */
+  const FEValues<dim, spacedim> &
+  reinit(
+    const typename DoFHandler<dim, spacedim>::active_cell_iterator &cell) const;
+
+  /**
    * Construct a finite element space on the agglomeration.
    */
   const FEValues<dim, spacedim> &
   reinit(const AgglomerationIterator<dim, spacedim> &polytope) const;
+
+  /**
+   * For a given master cell `cell` and agglomerated face
+   * `face_number`, initialize shape functions, normals and
+   * quadratures.
+   */
+  const FEValuesBase<dim, spacedim> &
+  reinit(const typename DoFHandler<dim, spacedim>::active_cell_iterator &cell,
+         const unsigned int face_index) const;
 
   /**
    * For a given polytope and face index, initialize shape functions, normals
@@ -359,6 +370,19 @@ public:
   const FEValuesBase<dim, spacedim> &
   reinit(const AgglomerationIterator<dim, spacedim> &polytope,
          const unsigned int                          face_index) const;
+
+  /**
+   *
+   * Return a pair of FEValuesBase object reinited from the two sides of the
+   * agglomeration.
+   */
+  std::pair<const FEValuesBase<dim, spacedim> &,
+            const FEValuesBase<dim, spacedim> &>
+  reinit_interface(
+    const typename DoFHandler<dim, spacedim>::active_cell_iterator &cell_in,
+    const typename DoFHandler<dim, spacedim>::active_cell_iterator &neigh_cell,
+    const unsigned int                                              local_in,
+    const unsigned int local_outside) const;
 
   /**
    *
@@ -383,6 +407,49 @@ public:
     const typename Triangulation<dim, spacedim>::active_cell_iterator
       &master_cell) const;
 
+  /**
+   * Find (if any) the cells that have the given master index. Note that `idx`
+   * is as it can be equal to -1 (meaning that the cell is a master one).
+   */
+  inline const std::vector<
+    typename Triangulation<dim, spacedim>::active_cell_iterator> &
+  get_slaves_of_idx(types::global_cell_index idx) const
+  {
+    return master2slaves.at(idx);
+  }
+
+  /**
+   * Helper function to determine whether or not a cell is a master or a slave
+   */
+  template <typename CellIterator>
+  inline bool
+  is_master_cell(const CellIterator &cell) const
+  {
+    return master_slave_relationships[cell->active_cell_index()] == -1;
+  }
+
+  /**
+   * Helper function to determine if the given cell is a standard deal.II cell,
+   * that is: not master, nor slave.
+   *
+   */
+  template <typename CellIterator>
+  inline bool
+  is_standard_cell(const CellIterator &cell) const
+  {
+    return master_slave_relationships[cell->active_cell_index()] == -2;
+  }
+
+  /**
+   * Helper function to determine whether or not a cell is a slave cell, without
+   * any information about his parents.
+   */
+  template <typename CellIterator>
+  inline bool
+  is_slave_cell(const CellIterator &cell) const
+  {
+    return master_slave_relationships[cell->active_cell_index()] >= 0;
+  }
 
   /**
    *
@@ -396,13 +463,40 @@ public:
   inline bool
   at_boundary(
     const typename DoFHandler<dim, spacedim>::active_cell_iterator &cell,
-    const unsigned int                                              f) const;
+    const unsigned int                                              f) const
+  {
+    Assert(!is_slave_cell(cell),
+           ExcMessage("This function should not be called for a slave cell."));
+    if (is_standard_cell(cell))
+      return cell->face(f)->at_boundary();
+    else
+      {
+        // return std::get<2>(master_neighbors[{cell, f}]) ==
+        //        std::numeric_limits<unsigned int>::max();
+        const auto &[deal_cell, local_face_idx, dummy, dummy_] =
+          info_cells[{cell, f}][0];
+        return deal_cell->at_boundary(local_face_idx);
+      }
+  }
+
+  inline decltype(auto)
+  agglomeration_cell_iterators()
+  {
+    return agglo_dh.active_cell_iterators() |
+           IteratorFilters::IsNotSlave(this); // iterator range
+  }
 
   inline unsigned int
-  n_dofs_per_cell() const noexcept;
+  n_dofs_per_cell() const noexcept
+  {
+    return fe->n_dofs_per_cell();
+  }
 
   inline types::global_dof_index
-  n_dofs() const noexcept;
+  n_dofs() const noexcept
+  {
+    return agglo_dh.n_dofs();
+  }
 
   /**
    * Interpolate the solution defined on the agglomerates onto a classical
@@ -413,14 +507,39 @@ public:
   setup_output_interpolation_matrix();
 
   /**
+   *
+   * Compute the volume of an agglomerate. This @p cell argument takes the
+   * deal.II cell that identifies an agglomerate. If it's a standard cell,
+   * than the this function is equivalent to cell->volume(). An exception is
+   * thrown is the given cell is a slave cell.
+   */
+  double
+  volume(const typename Triangulation<dim>::active_cell_iterator &cell) const;
+
+  /*
+   * Compute the diameter $h_K$ for a given agglomerate $K$. If $K$ is a
+   * standard cell, this is equivalent to call cell->diameter(). Otherwise, this
+   * function computes the diameter of the bounding box associated with $K$.
+   */
+  double
+  diameter(const typename Triangulation<dim>::active_cell_iterator &cell) const;
+
+  /**
    * Return the collection of vertices describing the boundary of the polytope
    * associated to the master cell `cell`. The return type is meant to describe
    * a sequence of edges (in 2D) or faces (in 3D).
    */
   inline const std::vector<typename Triangulation<dim>::active_face_iterator> &
   polytope_boundary(
-    const typename Triangulation<dim>::active_cell_iterator &cell);
+    const typename Triangulation<dim>::active_cell_iterator &cell)
+  {
+    return polygon_boundary[cell];
+  }
 
+  /**
+   * Record the number of agglomerations on the grid.
+   */
+  unsigned int n_agglomerations;
 
   /**
    * DoFHandler for the agglomerated space
@@ -474,7 +593,10 @@ private:
 
   inline typename Triangulation<dim, spacedim>::active_cell_iterator &
   is_slave_cell_of(
-    const typename Triangulation<dim, spacedim>::active_cell_iterator &cell);
+    const typename Triangulation<dim, spacedim>::active_cell_iterator &cell)
+  {
+    return master_slave_relationships_iterators[cell->active_cell_index()];
+  }
 
   /**
    * Construct bounding boxes for an agglomeration described by a sequence of
@@ -488,8 +610,14 @@ private:
   inline types::global_cell_index
   get_master_idx_of_cell(
     const typename Triangulation<dim, spacedim>::active_cell_iterator &cell)
-    const;
-
+    const
+  {
+    auto idx = master_slave_relationships[cell->active_cell_index()];
+    if ((idx == -1) || (idx == -2))
+      return cell->active_cell_index();
+    else
+      return idx;
+  }
   /**
    * Returns true if the two given cells are agglomerated together.
    */
@@ -497,7 +625,10 @@ private:
   are_cells_agglomerated(
     const typename Triangulation<dim, spacedim>::active_cell_iterator &cell,
     const typename Triangulation<dim, spacedim>::active_cell_iterator
-      &other_cell) const;
+      &other_cell) const
+  {
+    return (get_master_idx_of_cell(cell) == get_master_idx_of_cell(other_cell));
+  }
 
   /**
    * Assign a finite element index on each cell of a triangulation, depending
@@ -520,39 +651,21 @@ private:
     std::unique_ptr<NonMatching::FEImmersedSurfaceValues<spacedim>>
       &agglo_isv_ptr) const;
 
-
   /**
-   * Find (if any) the cells that have the given master index. Note that `idx`
-   * is as it can be equal to -1 (meaning that the cell is a master one).
-   */
-  inline const std::vector<
-    typename Triangulation<dim, spacedim>::active_cell_iterator> &
-  get_slaves_of_idx(types::global_cell_index idx) const;
-
-  /**
-   * Helper function to determine whether or not a cell is a master or a slave
-   */
-  template <typename CellIterator>
-  inline bool
-  is_master_cell(const CellIterator &cell) const;
-
-  /**
-   * Helper function to determine if the given cell is a standard deal.II cell,
-   * that is: not master, nor slave.
+   * Given an agglomeration described by the master cell `master_cell`, this
+   * function:
+   * - enumerates the faces of the agglomeration
+   * - stores who is the neighbor, the local face indices from outside and
+   * inside
    *
+   * #TODO:
+   * - change name
+   * - improve documentation
    */
-  template <typename CellIterator>
-  inline bool
-  is_standard_cell(const CellIterator &cell) const;
-
-  /**
-   * Helper function to determine whether or not a cell is a slave cell, without
-   * any information about his parents.
-   */
-  template <typename CellIterator>
-  inline bool
-  is_slave_cell(const CellIterator &cell) const;
-
+  void
+  setup_master_neighbor_connectivity(
+    const typename Triangulation<dim, spacedim>::active_cell_iterator
+      &master_cell) const;
 
   /**
    * Initialize all the necessary connectivity information for an
@@ -562,10 +675,6 @@ private:
   void
   setup_connectivity_of_agglomeration();
 
-  /**
-   * Record the number of agglomerations on the grid.
-   */
-  unsigned int n_agglomerations;
 
 
   /**
@@ -577,6 +686,8 @@ private:
    */
   std::vector<long int> master_slave_relationships;
 
+
+
   /**
    *  Same as the one above, but storing cell iterators rather than indices.
    *
@@ -586,7 +697,91 @@ private:
 
   using ScratchData = MeshWorker::ScratchData<dim, spacedim>;
 
-  mutable std::vector<types::global_cell_index> number_of_agglomerated_faces;
+  // In order to enumerate the faces of an agglomeration, we consider a map
+  // where the key is represented by an iterator to the (master) cell and the
+  // index of the agglomerated face.
+  using CellAndFace =
+    std::pair<const typename Triangulation<dim, spacedim>::active_cell_iterator,
+              types::global_cell_index>;
+
+  using MasterAndNeighborAndFace = std::tuple<
+    const typename Triangulation<dim, spacedim>::active_cell_iterator,
+    const typename Triangulation<dim, spacedim>::active_cell_iterator,
+    types::global_cell_index>;
+
+  // As value, we have a vector where each element identifies:
+  // - the local face index from the agglomeration
+  // - a cell_iterator to the neighboring cell (which is outside of the
+  // agglomeration)
+  // - the face index seen from outside
+  // This is necessary to compute quadrature rules on each agglomerated face.
+  using MasterNeighborInfo = std::tuple<
+    types::global_cell_index,
+    const typename Triangulation<dim, spacedim>::active_cell_iterator,
+    types::global_cell_index,
+    const typename Triangulation<dim, spacedim>::active_cell_iterator>;
+
+  /**
+   * For each pair (master_cell,agglo_face_number), give the following
+   * information:
+   * - local face index (standard deal.II indexing)
+   * - neighboring cell (standard deal.II cell)
+   * - neighbor of neighbor (for standard deal.II cell)
+   * - deal.II cell that owns that face of the agglomerate element
+   *
+   */
+  mutable std::map<CellAndFace, MasterNeighborInfo> master_neighbors;
+
+
+  // /**
+  //  * Given a pair of neighboring cells, store the sequence of local face
+  //  indices
+  //  * and deal cells they share.
+  //  *
+  //  */
+  // mutable std::map<
+  //   std::pair<types::global_cell_index, types::global_cell_index>,
+  //   std::vector<
+  //     std::pair<typename Triangulation<dim, spacedim>::active_cell_iterator,
+  //               unsigned int>>>
+  //   agglomerated_faces;
+
+  /**
+   * (Agglo,face agglo) ->
+   * - deal cell,
+   * - local deal face idx
+   * - neighboring master
+   *
+   */
+  mutable std::map<
+    CellAndFace,
+    std::vector<
+      std::tuple<typename Triangulation<dim, spacedim>::active_cell_iterator,
+                 unsigned int,
+                 typename Triangulation<dim, spacedim>::active_cell_iterator,
+                 unsigned int>>>
+    info_cells;
+
+
+
+  mutable std::vector<types::global_cell_index> visited_polytopes;
+
+  // (cell,neighcell)->{cells,local face indices}
+  mutable std::map<
+    std::pair<types::global_cell_index, types::global_cell_index>,
+    std::vector<
+      std::pair<typename Triangulation<dim, spacedim>::active_cell_iterator,
+                unsigned int>>>
+    interface;
+
+
+  mutable std::set<std::pair<types::global_cell_index, unsigned int>>
+    visited_cell_and_faces;
+
+
+  mutable std::map<typename Triangulation<dim, spacedim>::active_cell_iterator,
+                   unsigned int>
+    number_of_agglomerated_faces;
 
   /**
    * Associate a master cell (hence, a given polytope) to its boundary faces.
@@ -598,6 +793,8 @@ private:
     std::vector<typename Triangulation<dim>::active_face_iterator>>
     polygon_boundary;
 
+  mutable std::map<MasterAndNeighborAndFace, types::global_cell_index>
+    shared_face_agglomeration_idx;
 
   /**
    * Vector of `BoundingBoxes` s.t. `bboxes[idx]` equals BBOx associated to the
@@ -636,6 +833,18 @@ private:
    * and return the result of scratch.reinit(cell) for cells
    */
   mutable std::unique_ptr<ScratchData> standard_scratch;
+
+  mutable std::unique_ptr<ScratchData> standard_scratch_face;
+
+  mutable std::unique_ptr<ScratchData> standard_scratch_face_any;
+
+  mutable std::unique_ptr<ScratchData> standard_scratch_face_bdary;
+
+  mutable std::unique_ptr<ScratchData> standard_scratch_face_std;
+
+  mutable std::unique_ptr<ScratchData> standard_scratch_face_std_neigh;
+
+  mutable std::unique_ptr<ScratchData> standard_scratch_face_std_another;
 
   /**
    * Fill this up in reinit(cell), for agglomerated cells, using the custom
@@ -702,193 +911,7 @@ private:
     master_cells_container;
 
   friend class internal::AgglomerationHandlerImplementation<dim, spacedim>;
-
-  internal::PolytopeCache<dim, spacedim> polytope_cache;
-
-  /**
-   * Bool that keeps track whether the mesh is composed also by standard deal.II
-   * cells as (trivial) polytopes.
-   */
-  bool hybrid_mesh;
 };
-
-
-
-// ------------------------------ inline functions -------------------------
-template <int dim, int spacedim>
-inline decltype(auto)
-AgglomerationHandler<dim, spacedim>::get_interface() const
-{
-  return polytope_cache.interface;
-}
-
-
-
-template <int dim, int spacedim>
-inline const std::vector<long int> &
-AgglomerationHandler<dim, spacedim>::get_relationships() const
-{
-  return master_slave_relationships;
-}
-
-
-
-template <int dim, int spacedim>
-inline std::vector<typename Triangulation<dim, spacedim>::active_cell_iterator>
-AgglomerationHandler<dim, spacedim>::get_agglomerate(
-  const typename Triangulation<dim, spacedim>::active_cell_iterator
-    &master_cell) const
-{
-  Assert(is_master_cell(master_cell), ExcInternalError());
-  auto agglomeration = get_slaves_of_idx(master_cell->active_cell_index());
-  agglomeration.push_back(master_cell);
-  return agglomeration;
-}
-
-
-
-template <int dim, int spacedim>
-inline const DoFHandler<dim, spacedim> &
-AgglomerationHandler<dim, spacedim>::get_dof_handler() const
-{
-  return agglo_dh;
-}
-
-
-
-template <int dim, int spacedim>
-inline const std::vector<
-  typename Triangulation<dim, spacedim>::active_cell_iterator> &
-AgglomerationHandler<dim, spacedim>::get_slaves_of_idx(
-  types::global_cell_index idx) const
-{
-  return master2slaves.at(idx);
-}
-
-
-
-template <int dim, int spacedim>
-template <typename CellIterator>
-inline bool
-AgglomerationHandler<dim, spacedim>::is_master_cell(
-  const CellIterator &cell) const
-{
-  return master_slave_relationships[cell->active_cell_index()] == -1;
-}
-
-
-
-template <int dim, int spacedim>
-template <typename CellIterator>
-inline bool
-AgglomerationHandler<dim, spacedim>::is_standard_cell(
-  const CellIterator &cell) const
-{
-  return master_slave_relationships[cell->active_cell_index()] == -2;
-}
-
-
-
-/**
- * Helper function to determine whether or not a cell is a slave cell, without
- * any information about his parents.
- */
-template <int dim, int spacedim>
-template <typename CellIterator>
-inline bool
-AgglomerationHandler<dim, spacedim>::is_slave_cell(
-  const CellIterator &cell) const
-{
-  return master_slave_relationships[cell->active_cell_index()] >= 0;
-}
-
-
-
-template <int dim, int spacedim>
-inline bool
-AgglomerationHandler<dim, spacedim>::at_boundary(
-  const typename DoFHandler<dim, spacedim>::active_cell_iterator &cell,
-  const unsigned int face_index) const
-{
-  Assert(!is_slave_cell(cell),
-         ExcMessage("This function should not be called for a slave cell."));
-
-  return polytope_cache.cell_face_at_boundary
-    .at({master2polygon.at(cell->active_cell_index()), face_index})
-    .first;
-}
-
-
-template <int dim, int spacedim>
-inline unsigned int
-AgglomerationHandler<dim, spacedim>::n_dofs_per_cell() const noexcept
-{
-  return fe->n_dofs_per_cell();
-}
-
-
-
-template <int dim, int spacedim>
-inline types::global_dof_index
-AgglomerationHandler<dim, spacedim>::n_dofs() const noexcept
-{
-  return agglo_dh.n_dofs();
-}
-
-
-
-template <int dim, int spacedim>
-inline const std::vector<typename Triangulation<dim>::active_face_iterator> &
-AgglomerationHandler<dim, spacedim>::polytope_boundary(
-  const typename Triangulation<dim>::active_cell_iterator &cell)
-{
-  return polygon_boundary[cell];
-}
-
-
-
-template <int dim, int spacedim>
-inline typename Triangulation<dim, spacedim>::active_cell_iterator &
-AgglomerationHandler<dim, spacedim>::is_slave_cell_of(
-  const typename Triangulation<dim, spacedim>::active_cell_iterator &cell)
-{
-  return master_slave_relationships_iterators[cell->active_cell_index()];
-}
-
-
-
-template <int dim, int spacedim>
-inline types::global_cell_index
-AgglomerationHandler<dim, spacedim>::get_master_idx_of_cell(
-  const typename Triangulation<dim, spacedim>::active_cell_iterator &cell) const
-{
-  auto idx = master_slave_relationships[cell->active_cell_index()];
-  if ((idx == -1) || (idx == -2))
-    return cell->active_cell_index();
-  else
-    return idx;
-}
-
-
-
-template <int dim, int spacedim>
-inline bool
-AgglomerationHandler<dim, spacedim>::are_cells_agglomerated(
-  const typename Triangulation<dim, spacedim>::active_cell_iterator &cell,
-  const typename Triangulation<dim, spacedim>::active_cell_iterator &other_cell)
-  const
-{
-  return (get_master_idx_of_cell(cell) == get_master_idx_of_cell(other_cell));
-}
-
-
-
-template <int dim, int spacedim>
-inline unsigned int
-AgglomerationHandler<dim, spacedim>::n_agglomerates() const
-{
-  return n_agglomerations;
-}
 
 
 

@@ -441,11 +441,12 @@ namespace dealii::PolyUtils
            ExcMessage(
              "The vector of cells is supposed to be filled by this function."));
     for (const auto &cell : tria.active_cell_iterators())
-      if (std::find(cell_idxs.begin(),
-                    cell_idxs.end(),
-                    cell->active_cell_index()) != cell_idxs.end())
+      if (cell->is_locally_owned())
         {
-          cells_to_be_agglomerated.push_back(cell);
+          if (std::find(cell_idxs.begin(),
+                        cell_idxs.end(),
+                        cell->active_cell_index()) != cell_idxs.end())
+            cells_to_be_agglomerated.push_back(cell);
         }
   }
 } // namespace dealii::PolyUtils

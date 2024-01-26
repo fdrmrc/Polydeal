@@ -138,6 +138,7 @@ public:
   index() const;
 
   /**
+
    * Returns an active cell iterator for the dof_handler, matching the polytope
    * referenced by the input iterator. The type of the returned object is a
    * DoFHandler::active_cell_iterator which can be used to initialize
@@ -146,12 +147,13 @@ public:
   typename DoFHandler<dim, spacedim>::active_cell_iterator
   as_dof_handler_iterator(const DoFHandler<dim, spacedim> &dof_handler) const;
 
-  /**
-   * Returns the number of classical deal.II cells that are building the present
-   * polygon.
+  /* Returns true if this polygon is owned by the current processor. On a serial
+   * Triangulation this returs always true, but may yield false for a
+   * parallel::distributed::Triangulation.
    */
-  unsigned int
-  n_background_cells() const;
+  bool
+  is_locally_owned() const;
+
 
 
 private:
@@ -507,38 +509,12 @@ AgglomerationAccessor<dim, spacedim>::get_slaves() const
 
 
 template <int dim, int spacedim>
-inline unsigned int
-AgglomerationAccessor<dim, spacedim>::n_background_cells() const
-{
-  AssertThrow(get_agglomerate().size() > 0, ExcMessage("Empty agglomeration."));
-  return get_agglomerate().size();
-}
-
-
-
-template <int dim, int spacedim>
-unsigned int
-AgglomerationAccessor<dim, spacedim>::n_agglomerated_faces() const
-{
-  const auto & agglomeration = get_agglomerate();
-  unsigned int n_neighbors   = 0;
-  for (const auto &cell : agglomeration)
-    n_neighbors += n_agglomerated_faces_per_cell(cell);
-  return n_neighbors;
-}
-
-
-
-template <int dim, int spacedim>
 inline bool
-AgglomerationAccessor<dim, spacedim>::at_boundary(const unsigned int f) const
+AgglomerationAccessor<dim, spacedim>::is_locally_owned() const
 {
-  Assert(!handler->is_slave_cell(master_cell),
-         ExcMessage("This function should not be called for a slave cell."));
-
-  typename DoFHandler<dim, spacedim>::active_cell_iterator cell_dh(
-    *master_cell, &(handler->agglo_dh));
-  return handler->at_boundary(cell_dh, f);
+  return master_cell->is_locally_owned();
 }
+
+
 
 #endif
