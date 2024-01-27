@@ -504,15 +504,13 @@ AgglomerationHandler<dim, spacedim>::setup_connectivity_of_agglomeration()
   Assert(
     agglo_dh.n_dofs() > 0,
     ExcMessage(
-      "The DoFHandler associated to the agglomeration has not been initialized.
-      It's likely that you forgot to distribute the DoFs, i.e. you may want to
-      check if a call to `initialize_hp_structure()` has been done."));
-      
+      "The DoFHandler associated to the agglomeration has not been initialized. It's likely that you forgot to distribute the DoFs, i.e. you may want to check if a call to `initialize_hp_structure()` has been done."));
+
   number_of_agglomerated_faces.resize(master2polygon.size(), 0);
   for (const auto &cell : master_cells_container)
     {
-    internal::AgglomerationHandlerImplementation<dim, spacedim>::
-      setup_master_neighbor_connectivity(cell, *this);
+      internal::AgglomerationHandlerImplementation<dim, spacedim>::
+        setup_master_neighbor_connectivity(cell, *this);
     }
 }
 
