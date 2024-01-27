@@ -1,3 +1,67 @@
+Cell with index 9 has 7 faces
+Neighbor index= 2
+Neighbor of neighbor(0) = 2
+Neighbor index= 1
+Neighbor of neighbor(1) = 1
+Neighbor index= 7
+Neighbor of neighbor(2) = 7
+Neighbor index= 4
+Neighbor of neighbor(3) = 4
+Neighbor index= 12
+Neighbor of neighbor(4) = 12
+Neighbor index= 8
+Neighbor of neighbor(5) = 8
+Neighbor index= 11
+Neighbor of neighbor(6) = 11
+
+Cell with index 37 has 7 faces
+Neighbor index= 14
+Neighbor of neighbor(0) = 14
+Neighbor index= 26
+Neighbor of neighbor(1) = 26
+Neighbor index= 13
+Neighbor of neighbor(2) = 13
+Neighbor index= 33
+Neighbor of neighbor(3) = 33
+Neighbor index= 38
+Neighbor of neighbor(4) = 38
+Neighbor index= 48
+Neighbor of neighbor(5) = 48
+Neighbor index= 39
+Neighbor of neighbor(6) = 39
+
+Cell with index 60 has 7 faces
+Neighbor index= 51
+Neighbor of neighbor(0) = 51
+Neighbor index= 55
+Neighbor of neighbor(1) = 55
+Neighbor index= 52
+Neighbor of neighbor(2) = 52
+Neighbor index= 56
+Neighbor of neighbor(3) = 56
+Neighbor index= 59
+Neighbor of neighbor(4) = 59
+Neighbor index= 61
+Neighbor of neighbor(5) = 61
+Neighbor index= 62
+Neighbor of neighbor(6) = 62
+
+Cell with index 25 has 7 faces
+Neighbor index= 18
+Neighbor of neighbor(0) = 18
+Neighbor index= 17
+Neighbor of neighbor(1) = 17
+Neighbor index= 23
+Neighbor of neighbor(2) = 23
+Neighbor index= 20
+Neighbor of neighbor(3) = 20
+Neighbor index= 28
+Neighbor of neighbor(4) = 28
+Neighbor index= 24
+Neighbor of neighbor(5) = 24
+Neighbor index= 27
+Neighbor of neighbor(6) = 27
+
 Cell with index 0 has 3 faces
 Face with idx: 0 is a boundary face.
 Neighbor index= 1
@@ -77,22 +141,6 @@ Neighbor index= 2
 Neighbor of neighbor(2) = 2
 Neighbor index= 10
 Neighbor of neighbor(3) = 10
-
-Cell with index 9 has 7 faces
-Neighbor index= 2
-Neighbor of neighbor(0) = 2
-Neighbor index= 1
-Neighbor of neighbor(1) = 1
-Neighbor index= 7
-Neighbor of neighbor(2) = 7
-Neighbor index= 4
-Neighbor of neighbor(3) = 4
-Neighbor index= 12
-Neighbor of neighbor(4) = 12
-Neighbor index= 8
-Neighbor of neighbor(5) = 8
-Neighbor index= 11
-Neighbor of neighbor(6) = 11
 
 Cell with index 10 has 4 faces
 Face with idx: 0 is a boundary face.
@@ -220,22 +268,6 @@ Neighbor of neighbor(2) = 18
 Neighbor index= 26
 Neighbor of neighbor(3) = 26
 
-Cell with index 25 has 7 faces
-Neighbor index= 18
-Neighbor of neighbor(0) = 18
-Neighbor index= 17
-Neighbor of neighbor(1) = 17
-Neighbor index= 23
-Neighbor of neighbor(2) = 23
-Neighbor index= 20
-Neighbor of neighbor(3) = 20
-Neighbor index= 28
-Neighbor of neighbor(4) = 28
-Neighbor index= 24
-Neighbor of neighbor(5) = 24
-Neighbor index= 27
-Neighbor of neighbor(6) = 27
-
 Cell with index 26 has 4 faces
 Neighbor index= 37
 Neighbor of neighbor(0) = 37
@@ -329,22 +361,6 @@ Neighbor index= 33
 Neighbor of neighbor(2) = 33
 Neighbor index= 41
 Neighbor of neighbor(3) = 41
-
-Cell with index 37 has 7 faces
-Neighbor index= 14
-Neighbor of neighbor(0) = 14
-Neighbor index= 26
-Neighbor of neighbor(1) = 26
-Neighbor index= 13
-Neighbor of neighbor(2) = 13
-Neighbor index= 33
-Neighbor of neighbor(3) = 33
-Neighbor index= 38
-Neighbor of neighbor(4) = 38
-Neighbor index= 48
-Neighbor of neighbor(5) = 48
-Neighbor index= 39
-Neighbor of neighbor(6) = 39
 
 Cell with index 38 has 4 faces
 Neighbor index= 35
@@ -550,22 +566,6 @@ Neighbor of neighbor(1) = 62
 Neighbor index= 60
 Neighbor of neighbor(2) = 60
 Face with idx: 3 is a boundary face.
-
-Cell with index 60 has 7 faces
-Neighbor index= 51
-Neighbor of neighbor(0) = 51
-Neighbor index= 55
-Neighbor of neighbor(1) = 55
-Neighbor index= 52
-Neighbor of neighbor(2) = 52
-Neighbor index= 56
-Neighbor of neighbor(3) = 56
-Neighbor index= 59
-Neighbor of neighbor(4) = 59
-Neighbor index= 61
-Neighbor of neighbor(5) = 61
-Neighbor index= 62
-Neighbor of neighbor(6) = 62
 
 Cell with index 61 has 4 faces
 Neighbor index= 60
