@@ -1042,6 +1042,16 @@ AgglomerationHandler<dim, spacedim>::reinit(
                     "agglomeration has not been set up."));
 
   const auto &deal_cell = polytope->as_dof_handler_iterator(agglo_dh);
+
+  if (polytope->n_background_cells() == 1)
+    {
+      standard_scratch = std::make_unique<ScratchData>(*mapping,
+                                                       fe_collection[2],
+                                                       agglomeration_quad,
+                                                       agglomeration_flags);
+      return standard_scratch->reinit(deal_cell);
+    }
+
   if (is_master_cell(deal_cell))
     {
       const auto &agglo_cells = polytope->get_agglomerate();
