@@ -154,6 +154,14 @@ public:
   bool
   is_locally_owned() const;
 
+  /**
+   * The polygonal analogue of CellAccessor::id(). It provides a way to uniquely
+   * identify cells in a parallel Triangulation such as a
+   * parallel::distributed::Triangulation.
+   */
+  CellId
+  id() const;
+
 
 
 private:
@@ -513,6 +521,15 @@ inline bool
 AgglomerationAccessor<dim, spacedim>::is_locally_owned() const
 {
   return master_cell->is_locally_owned();
+}
+
+
+
+template <int dim, int spacedim>
+inline CellId
+AgglomerationAccessor<dim, spacedim>::id() const
+{
+  return master_cell->id();
 }
 
 
