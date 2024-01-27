@@ -59,9 +59,12 @@ namespace dealii
 {
   namespace internal
   {
+    /**
+     * Helper class to reinit finite element spaces on polytopal cells.
+     */
     template <int, int>
     class AgglomerationHandlerImplementation;
-  }
+  } // namespace internal
 } // namespace dealii
 
 namespace dealii
@@ -94,6 +97,30 @@ namespace dealii
 
   } // namespace IteratorFilters
 } // namespace dealii
+
+
+
+template <int dim, int spacedim>
+struct PolytopeCache
+{
+  mutable std::map<
+    std::pair<types::global_cell_index, unsigned int>,
+    std::pair<bool,
+              typename Triangulation<dim, spacedim>::active_cell_iterator>>
+    cell_face_at_boundary;
+
+  // (cell,neighcell)->{cells,local face indices}
+  mutable std::map<
+    std::pair<types::global_cell_index, types::global_cell_index>,
+    std::vector<
+      std::pair<typename Triangulation<dim, spacedim>::active_cell_iterator,
+                unsigned int>>>
+    interface;
+
+  mutable std::set<std::pair<types::global_cell_index, unsigned int>>
+    visited_cell_and_faces;
+};
+
 
 /**
  * Assumption: each cell may have only one master cell
@@ -577,21 +604,7 @@ private:
     std::unique_ptr<NonMatching::FEImmersedSurfaceValues<spacedim>>
       &agglo_isv_ptr) const;
 
-  /**
-   * Given an agglomeration described by the master cell `master_cell`, this
-   * function:
-   * - enumerates the faces of the agglomeration
-   * - stores who is the neighbor, the local face indices from outside and
-   * inside
-   *
-   * #TODO:
-   * - change name
-   * - improve documentation
-   */
-  void
-  setup_master_neighbor_connectivity(
-    const typename Triangulation<dim, spacedim>::active_cell_iterator
-      &master_cell) const;
+
 
   /**
    * Initialize all the necessary connectivity information for an
@@ -679,30 +692,6 @@ private:
    * - neighboring master
    *
    */
-  mutable std::map<
-    CellAndFace,
-    std::vector<
-      std::tuple<typename Triangulation<dim, spacedim>::active_cell_iterator,
-                 unsigned int,
-                 typename Triangulation<dim, spacedim>::active_cell_iterator,
-                 unsigned int>>>
-    info_cells;
-
-
-
-  mutable std::vector<types::global_cell_index> visited_polytopes;
-
-  // (cell,neighcell)->{cells,local face indices}
-  mutable std::map<
-    std::pair<types::global_cell_index, types::global_cell_index>,
-    std::vector<
-      std::pair<typename Triangulation<dim, spacedim>::active_cell_iterator,
-                unsigned int>>>
-    interface;
-
-
-  mutable std::set<std::pair<types::global_cell_index, unsigned int>>
-    visited_cell_and_faces;
 
 
 
@@ -718,11 +707,7 @@ private:
     std::vector<typename Triangulation<dim>::active_face_iterator>>
     polygon_boundary;
 
-  mutable std::map<
-    std::pair<types::global_cell_index, unsigned int>,
-    std::pair<bool,
-              typename Triangulation<dim, spacedim>::active_cell_iterator>>
-    cell_face_at_boundary;
+
 
   mutable std::map<MasterAndNeighborAndFace, types::global_cell_index>
     shared_face_agglomeration_idx;
@@ -842,6 +827,8 @@ private:
     master_cells_container;
 
   friend class internal::AgglomerationHandlerImplementation<dim, spacedim>;
+
+  PolytopeCache<dim, spacedim> polytope_cache;
 };
 
 
@@ -860,7 +847,7 @@ template <int dim, int spacedim>
 inline decltype(auto)
 AgglomerationHandler<dim, spacedim>::get_interface() const
 {
-  return interface;
+  return polytope_cache.interface;
 }
 
 
@@ -976,7 +963,7 @@ AgglomerationHandler<dim, spacedim>::at_boundary(
       // const auto &[deal_cell, local_face_idx, dummy, dummy_] =
       //   info_cells[{cell, f}][0];
       // return deal_cell->at_boundary(local_face_idx);
-      return cell_face_at_boundary
+      return polytope_cache.cell_face_at_boundary
         .at({master2polygon.at(cell->active_cell_index()), face_index})
         .first;
     }
