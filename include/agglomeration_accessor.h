@@ -140,6 +140,13 @@ public:
   typename DoFHandler<dim, spacedim>::active_cell_iterator
   as_dof_handler_iterator(const DoFHandler<dim, spacedim> &dof_handler) const;
 
+  /**
+   * Returns the number of classical deal.II cells that are building the present
+   * polygon.
+   */
+  unsigned int
+  n_background_cells() const;
+
 
 private:
   /**
@@ -612,6 +619,16 @@ inline const typename AgglomerationAccessor<dim,
 AgglomerationAccessor<dim, spacedim>::get_slaves() const
 {
   return handler->master2slaves.at(master_cell->active_cell_index());
+}
+
+
+
+template <int dim, int spacedim>
+inline unsigned int
+AgglomerationAccessor<dim, spacedim>::n_background_cells() const
+{
+  AssertThrow(get_agglomerate().size() > 0, ExcMessage("Empty agglomeration."));
+  return get_agglomerate().size();
 }
 
 
