@@ -54,29 +54,42 @@ main(int argc, char *argv[])
         ah.insert_agglomerate({cell});
     }
 
-  unsigned int polygons_per_rank = 0;
 
+  std::vector<unsigned int> polygons_per_rank;
   for (const auto &polygon : ah.polytope_iterators())
     {
       if (polygon->is_locally_owned())
-        ++polygons_per_rank;
+        polygons_per_rank.push_back(polygon->index());
     }
-  MPI_Send(&polygons_per_rank, 1, MPI_UNSIGNED, 0, 0, comm);
+  unsigned int local_size = polygons_per_rank.size();
+  MPI_Send(&local_size, 1, MPI_UNSIGNED, 0, 0, comm); // tag_size=0
+  MPI_Send(polygons_per_rank.data(),
+           polygons_per_rank.size(),
+           MPI_UNSIGNED,
+           0,
+           1,
+           comm); // tag for local polygon indices = 1
 
   if (Utilities::MPI::this_mpi_process(comm) == 0)
     {
       for (unsigned int p = 0; p < n_ranks; ++p)
         {
-          unsigned int polygons_from_rank_p = 0;
-          MPI_Recv(&polygons_from_rank_p,
-                   1,
+          unsigned int received_size = 0;
+          MPI_Recv(
+            &received_size, 1, MPI_UNSIGNED, p, 0, comm, MPI_STATUS_IGNORE);
+
+          std::vector<unsigned int> polygons_per_rank_p(received_size);
+          MPI_Recv(polygons_per_rank_p.data(),
+                   received_size,
                    MPI_UNSIGNED,
                    p,
-                   0,
+                   1,
                    comm,
                    MPI_STATUS_IGNORE);
-          std::cout << "Rank " << p << " owns " << polygons_from_rank_p
-                    << " polygons." << std::endl;
+          std::cout << "Rank " << p << " owns " << polygons_per_rank_p.size()
+                    << " polygons with indices: " << std::endl;
+          for (const unsigned int idx : polygons_per_rank_p)
+            std::cout << idx << std::endl;
         }
     }
 }
