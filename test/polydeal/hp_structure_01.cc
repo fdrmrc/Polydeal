@@ -90,19 +90,16 @@ main()
   ah.distribute_agglomerated_dofs(fe_dg);
   std::vector<types::global_dof_index> dof_indices(4);
 
-  for (const auto &cell : ah.agglomeration_cell_iterators() |
-                            IteratorFilters::ActiveFEIndexEqualTo(
-                              ah.CellAgglomerationType::master))
+  for (const auto &polytope : ah.polytope_iterators())
     {
-      cell->get_dof_indices(dof_indices);
-      std::cout << "Cell with global index: " << cell->active_cell_index()
+      polytope->get_dof_indices(dof_indices);
+      std::cout << "Cell with global index: "
+                << polytope.master_cell()->active_cell_index()
                 << " has global DoF indices: " << std::endl;
       for (const auto &idx : dof_indices)
-        {
-          std::cout << idx << std::endl;
-        }
+        std::cout << idx << std::endl;
       std::cout << " and vertices: " << std::endl;
-      typename Triangulation<2>::cell_iterator cell_it(*cell, &ah.agglo_dh);
+      typename Triangulation<2>::cell_iterator cell_it(polytope.master_cell());
       for (const auto i : cell_it->vertex_indices())
         {
           std::cout << cell_it->vertex(i) << std::endl;

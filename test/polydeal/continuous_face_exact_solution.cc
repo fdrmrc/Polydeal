@@ -413,12 +413,12 @@ Poisson<dim>::assemble_system()
   double              test_integral = 0.;
   double              test_bdary    = 0.;
   double              test_volume   = 0.;
-  for (const auto &cell : ah->agglomeration_cell_iterators())
+  for (const auto &polytope : ah->polytope_iterators())
     {
       // local_volume             = 0.;
       cell_matrix              = 0;
       cell_rhs                 = 0;
-      const auto &agglo_values = ah->reinit(cell);
+      const auto &agglo_values = ah->reinit(polytope);
 
       const auto &q_points = agglo_values.get_quadrature_points();
 
@@ -445,19 +445,19 @@ Poisson<dim>::assemble_system()
           test_volume += agglo_values.JxW(q_index);
         }
 
-      cell->get_dof_indices(local_dof_indices);
+      polytope->get_dof_indices(local_dof_indices);
       constraints.distribute_local_to_global(
         cell_matrix, cell_rhs, local_dof_indices, system_matrix, system_rhs);
 
       // Face terms
-      const unsigned int n_faces = ah->n_agglomerated_faces(cell);
+      const unsigned int n_faces = polytope->n_faces();
 
       // auto   polygon_boundary_vertices = ah->polytope_boundary(cell);
       for (unsigned int f = 0; f < n_faces; ++f)
         {
-          if (ah->at_boundary(cell, f))
+          if (polytope->at_boundary(f))
             {
-              const auto &fe_face = ah->reinit(cell, f);
+              const auto &fe_face = ah->reinit(polytope, f);
 
               const unsigned int dofs_per_cell = fe_face.dofs_per_cell;
               std::vector<types::global_dof_index> local_dof_indices_bdary_cell(
@@ -474,7 +474,7 @@ Poisson<dim>::assemble_system()
               const auto &normals = fe_face.get_normal_vectors();
 
               const double penalty =
-                penalty_constant / std::fabs(ah->diameter(cell));
+                penalty_constant / std::fabs(polytope->diameter());
 
               cell_matrix = 0.;
               cell_rhs    = 0.;
@@ -506,7 +506,7 @@ Poisson<dim>::assemble_system()
                 }
 
               // distribute DoFs
-              cell->get_dof_indices(local_dof_indices_bdary_cell);
+              polytope->get_dof_indices(local_dof_indices_bdary_cell);
               constraints.distribute_local_to_global(cell_matrix,
                                                      cell_rhs,
                                                      local_dof_indices,
@@ -515,16 +515,16 @@ Poisson<dim>::assemble_system()
             }
           else
             {
-              const auto &neigh_cell = ah->agglomerated_neighbor(cell, f);
+              const auto &neigh_polytope = polytope->neighbor(f);
 
               // This is necessary to loop over internal faces only once.
-              if (cell->active_cell_index() < neigh_cell->active_cell_index())
+              if (polytope->index() < neigh_polytope->index())
                 {
                   unsigned int nofn =
-                    ah->neighbor_of_agglomerated_neighbor(cell, f);
+                    polytope->neighbor_of_agglomerated_neighbor(f);
 
                   const auto &fe_faces =
-                    ah->reinit_interface(cell, neigh_cell, f, nofn);
+                    ah->reinit_interface(polytope, neigh_polytope, f, nofn);
 
                   const auto &fe_faces0 = fe_faces.first;
                   const auto &fe_faces1 = fe_faces.second;
@@ -554,7 +554,7 @@ Poisson<dim>::assemble_system()
 
                   const auto & normals = fe_faces0.get_normal_vectors();
                   const double penalty =
-                    penalty_constant / std::fabs(ah->diameter(cell));
+                    penalty_constant / std::fabs(polytope->diameter());
 
                   // M11
                   for (unsigned int q_index :
@@ -615,9 +615,7 @@ Poisson<dim>::assemble_system()
 
                   // distribute DoFs accordingly
                   // Retrieve DoFs info from the cell iterator.
-                  typename DoFHandler<dim>::cell_iterator neigh_dh(
-                    *neigh_cell, &(ah->agglo_dh));
-                  neigh_dh->get_dof_indices(local_dof_indices_neighbor);
+                  neigh_polytope->get_dof_indices(local_dof_indices_neighbor);
 
                   constraints.distribute_local_to_global(M11,
                                                          local_dof_indices,

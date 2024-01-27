@@ -1,28 +1,28 @@
-Cell with index 3 has 3 faces
-Neighbor is: 7
-Neighbor is: 11
-Cell with index 7 has 4 faces
+Polytope with index 0 has 3 faces
+Neighbor is: 1
+Neighbor is: 2
+Polytope with index 1 has 4 faces
+Neighbor is: 0
 Neighbor is: 3
-Neighbor is: 12
-Neighbor is: 13
-Cell with index 11 has 4 faces
+Neighbor is: 4
+Polytope with index 2 has 4 faces
+Neighbor is: 0
 Neighbor is: 3
-Neighbor is: 12
-Neighbor is: 14
-Cell with index 12 has 4 faces
-Neighbor is: 11
-Neighbor is: 13
-Neighbor is: 7
-Neighbor is: 14
-Cell with index 13 has 4 faces
-Neighbor is: 12
-Neighbor is: 7
-Neighbor is: 15
-Cell with index 14 has 4 faces
-Neighbor is: 11
-Neighbor is: 15
-Neighbor is: 12
-Cell with index 15 has 3 faces
-Neighbor is: 14
-Neighbor is: 13
+Neighbor is: 5
+Polytope with index 3 has 4 faces
+Neighbor is: 2
+Neighbor is: 4
+Neighbor is: 1
+Neighbor is: 5
+Polytope with index 4 has 4 faces
+Neighbor is: 3
+Neighbor is: 1
+Neighbor is: 6
+Polytope with index 5 has 4 faces
+Neighbor is: 2
+Neighbor is: 6
+Neighbor is: 3
+Polytope with index 6 has 3 faces
+Neighbor is: 5
+Neighbor is: 4
 Ok
