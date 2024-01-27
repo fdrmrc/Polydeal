@@ -103,22 +103,24 @@ test_q_points_agglomerated_face(Triangulation<dim> &tria)
   FE_DGQ<2> fe_dg(1);
   ah.distribute_agglomerated_dofs(fe_dg);
   ah.initialize_fe_values(QGauss<2>(1), update_default);
-  for (const auto &cell : ah.agglomeration_cell_iterators())
+  for (const auto &polytope : ah.polytope_iterators())
     {
-      std::cout << "Cell with index " << cell->active_cell_index() << " has "
-                << ah.n_agglomerated_faces(cell) << " faces" << std::endl;
+      std::cout << "Cell with index "
+                << polytope.master_cell()->active_cell_index() << " has "
+                << polytope->n_faces() << " faces" << std::endl;
 
-
-      for (unsigned int f = 0; f < ah.n_agglomerated_faces(cell); ++f)
+      for (unsigned int f = 0; f < polytope->n_faces(); ++f)
         {
-          if (!ah.at_boundary(cell, f))
+          if (!polytope->at_boundary(f))
             {
-              const auto & neigh_cell = ah.agglomerated_neighbor(cell, f);
-              unsigned int nofn = ah.neighbor_of_agglomerated_neighbor(cell, f);
-              std::cout << "Neighbor is: " << neigh_cell->active_cell_index()
+              const auto & neigh_polytope = polytope->neighbor(f);
+              unsigned int nofn =
+                polytope->neighbor_of_agglomerated_neighbor(f);
+              std::cout << "Neighbor is: "
+                        << neigh_polytope.master_cell()->active_cell_index()
                         << std::endl;
               const auto &fe_faces =
-                ah.reinit_interface(cell, neigh_cell, f, nofn);
+                ah.reinit_interface(polytope, neigh_polytope, f, nofn);
 
               const auto &q_points_neigh =
                 fe_faces.first.get_quadrature_points();

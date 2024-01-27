@@ -99,19 +99,18 @@ main()
 
   FE_DGQ<2> fe_dg(1);
   ah.distribute_agglomerated_dofs(fe_dg);
-  for (const auto &cell : ah.agglomeration_cell_iterators() |
-                            IteratorFilters::ActiveFEIndexEqualTo(
-                              ah.CellAgglomerationType::master))
+  for (const auto &polytope : ah.polytope_iterators())
     {
-      std::cout << "Cell with idx: " << cell->active_cell_index() << std::endl;
+      std::cout << "Cell with idx: "
+                << polytope.master_cell()->active_cell_index() << std::endl;
       // const unsigned int n_faces = ah.n_faces(cell);
-      const unsigned int n_faces = ah.n_agglomerated_faces(cell);
+      const unsigned int n_faces = polytope->n_faces();
       std::cout << "Number of faces for this cell: " << n_faces << std::endl;
       for (unsigned int f = 0; f < n_faces; ++f)
         {
-          std::cout << "Neighbor of neighbor for (" << cell->active_cell_index()
-                    << "," << f
-                    << ") = " << ah.neighbor_of_agglomerated_neighbor(cell, f)
+          std::cout << "Neighbor of neighbor for ("
+                    << polytope.master_cell()->active_cell_index() << "," << f
+                    << ") = " << polytope->neighbor_of_agglomerated_neighbor(f)
                     << std::endl;
         }
 

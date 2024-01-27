@@ -1,3 +1,25 @@
+Cell with index 9 has 7 faces
+Neighbor is: 2
+Neighbor is: 1
+Neighbor is: 7
+Neighbor is: 4
+Neighbor is: 12
+Neighbor is: 8
+Neighbor is: 11
+Cell with index 37 has 6 faces
+Neighbor is: 33
+Neighbor is: 14
+Neighbor is: 38
+Neighbor is: 48
+Neighbor is: 15
+Neighbor is: 39
+Cell with index 25 has 6 faces
+Neighbor is: 18
+Neighbor is: 22
+Neighbor is: 17
+Neighbor is: 24
+Neighbor is: 28
+Neighbor is: 27
 Cell with index 0 has 3 faces
 Neighbor is: 1
 Neighbor is: 2
@@ -35,14 +57,6 @@ Cell with index 8 has 4 faces
 Neighbor is: 3
 Neighbor is: 2
 Neighbor is: 10
-Cell with index 9 has 7 faces
-Neighbor is: 2
-Neighbor is: 1
-Neighbor is: 7
-Neighbor is: 4
-Neighbor is: 12
-Neighbor is: 8
-Neighbor is: 11
 Cell with index 10 has 4 faces
 Neighbor is: 11
 Neighbor is: 8
@@ -112,13 +126,6 @@ Neighbor is: 13
 Neighbor is: 25
 Neighbor is: 18
 Neighbor is: 26
-Cell with index 25 has 6 faces
-Neighbor is: 18
-Neighbor is: 22
-Neighbor is: 17
-Neighbor is: 24
-Neighbor is: 28
-Neighbor is: 27
 Cell with index 26 has 4 faces
 Neighbor is: 15
 Neighbor is: 27
@@ -165,13 +172,6 @@ Neighbor is: 34
 Neighbor is: 38
 Neighbor is: 33
 Neighbor is: 41
-Cell with index 37 has 6 faces
-Neighbor is: 33
-Neighbor is: 14
-Neighbor is: 38
-Neighbor is: 48
-Neighbor is: 15
-Neighbor is: 39
 Cell with index 38 has 4 faces
 Neighbor is: 35
 Neighbor is: 39

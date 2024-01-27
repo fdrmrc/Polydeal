@@ -118,49 +118,44 @@ reinit_on_neighbor(Triangulation<dim> &tria)
 
   ah.distribute_agglomerated_dofs(fe_dg);
   ah.initialize_fe_values(QGauss<2>(1), update_default);
-  for (const auto &cell : ah.agglomeration_cell_iterators())
+  for (const auto &polytope : ah.polytope_iterators())
     {
-      if (!ah.is_slave_cell(cell))
+      unsigned int n_faces = polytope->n_faces();
+      std::cout << "Cell with index "
+                << polytope.master_cell()->active_cell_index() << " has "
+                << n_faces << " faces" << std::endl;
+      for (unsigned int f = 0; f < n_faces; ++f)
         {
-          unsigned int n_faces = ah.n_agglomerated_faces(cell);
-          std::cout << "Cell with index " << cell->active_cell_index()
-                    << " has " << n_faces << " faces" << std::endl;
-          for (unsigned int f = 0; f < n_faces; ++f)
+          if (!polytope->at_boundary(f))
             {
-              if (!ah.at_boundary(cell, f))
-                {
-                  const auto &neigh_cell = ah.agglomerated_neighbor(cell, f);
-                  std::cout
-                    << "Neighbor index= " << neigh_cell->active_cell_index()
-                    << std::endl;
-                  unsigned int nofn =
-                    ah.neighbor_of_agglomerated_neighbor(cell, f);
-                  std::cout << "Neighbor of neighbor(" << f
-                            << ") = " << neigh_cell->active_cell_index()
-                            << std::endl;
+              const auto &neigh_polytope = polytope->neighbor(f);
+              std::cout << "Neighbor index= "
+                        << neigh_polytope.master_cell()->active_cell_index()
+                        << std::endl;
+              unsigned int nofn =
+                polytope->neighbor_of_agglomerated_neighbor(f);
+              std::cout << "Neighbor of neighbor(" << f << ") = "
+                        << neigh_polytope.master_cell()->active_cell_index()
+                        << std::endl;
 
-                  AssertThrow(ah.agglomerated_neighbor(neigh_cell, nofn)
-                                  ->active_cell_index() ==
-                                cell->active_cell_index(),
-                              ExcMessage("Mismatch!"));
+              AssertThrow(neigh_polytope->neighbor(nofn)->index() ==
+                            polytope->index(),
+                          ExcMessage("Mismatch!"));
 
-                  const auto &interface_fe_face_values =
-                    ah.reinit_interface(cell, neigh_cell, f, nofn);
+              const auto &interface_fe_face_values =
+                ah.reinit_interface(polytope, neigh_polytope, f, nofn);
 
-                  AssertThrow(interface_fe_face_values.first.dofs_per_cell ==
-                                  4 &&
-                                interface_fe_face_values.second.dofs_per_cell ==
-                                  4,
-                              ExcMessage("Das kann nicht wahr sein..."));
-                }
-              else
-                {
-                  std::cout << "Face with idx: " << f << " is a boundary face."
-                            << std::endl;
-                }
+              AssertThrow(interface_fe_face_values.first.dofs_per_cell == 4 &&
+                            interface_fe_face_values.second.dofs_per_cell == 4,
+                          ExcMessage("Das kann nicht wahr sein..."));
             }
-          std::cout << std::endl;
+          else
+            {
+              std::cout << "Face with idx: " << f << " is a boundary face."
+                        << std::endl;
+            }
         }
+      std::cout << std::endl;
     }
 }
 
