@@ -14,7 +14,6 @@
  * ---------------------------------------------------------------------
  */
 
-#include <deal.II/grid/grid_generator.h>
 
 #include <agglomeration_handler.h>
 
@@ -182,7 +181,7 @@ AgglomerationHandler<dim, spacedim>::agglomerated_neighbor(
 
           // const auto &neigh = std::get<2>(info_cells[{cell, f}][0]);
           const auto &neigh =
-            cell_face_at_boundary
+            polytope_cache.cell_face_at_boundary
               .at({master2polygon.at(cell->active_cell_index()), f})
               .second;
           typename DoFHandler<dim, spacedim>::active_cell_iterator cell_dh(
@@ -388,7 +387,7 @@ AgglomerationHandler<dim, spacedim>::initialize_agglomeration_data(
               -2); // identify all the tria with standard deal.II cells.
 
   master_neighbors.clear();
-  interface.clear();
+  polytope_cache.interface.clear();
   bboxes.clear();
 
   // First, update the pointer
@@ -498,386 +497,6 @@ AgglomerationHandler<dim, spacedim>::create_bounding_box(
 
 template <int dim, int spacedim>
 void
-AgglomerationHandler<dim, spacedim>::setup_master_neighbor_connectivity(
-  const typename Triangulation<dim, spacedim>::active_cell_iterator
-    &master_cell) const
-{
-  Assert(master_slave_relationships[master_cell->active_cell_index()] == -1,
-         ExcMessage("The present cell is not a master one."));
-
-  const auto &                   agglomeration = get_agglomerate(master_cell);
-  const types::global_cell_index polygon_index =
-    master2polygon.at(master_cell->active_cell_index());
-
-  unsigned int n_agglo_faces = 0;
-
-  /**
-   * Given a pair of neighboring cells, store the sequence of local face
-   * indices and deal cells they share.
-   *
-   */
-  std::map<std::pair<types::global_cell_index, types::global_cell_index>,
-           std::vector<std::tuple<
-             typename Triangulation<dim, spacedim>::active_cell_iterator,
-             unsigned int,
-             typename Triangulation<dim, spacedim>::active_cell_iterator,
-             unsigned int>>>
-    agglomerated_faces;
-
-  std::set<types::global_cell_index> visited_polygonal_neighbors;
-
-  number_of_agglomerated_faces.resize(master2polygon.size(), 0);
-
-
-  for (const auto &cell : agglomeration)
-    {
-      for (const auto f : cell->face_indices())
-        {
-          const auto &neighboring_cell = cell->neighbor(f);
-          // Check if cell is not on the boundary and if it's not
-          // agglomerated with the neighbor If so, it's a neighbor of the
-          // present agglomeration
-          if (neighboring_cell.state() == IteratorState::valid &&
-              !are_cells_agglomerated(cell, neighboring_cell))
-            {
-              // a new face of the agglomeration has been discovered.
-              polygon_boundary[master_cell].push_back(cell->face(f));
-
-              const auto &cell_and_face =
-                CellAndFace(master_cell, n_agglo_faces);      //(agglo,f)
-              const auto nof = cell->neighbor_of_neighbor(f); // loc(f')
-
-              if (is_slave_cell(neighboring_cell))
-                {
-                  master_neighbors.emplace(
-                    cell_and_face,
-                    std::make_tuple(f,
-                                    master_slave_relationships_iterators
-                                      [neighboring_cell->active_cell_index()],
-                                    nof,
-                                    cell));
-
-                  // save the pair of neighboring cells
-                  std::pair<types::global_cell_index, types::global_cell_index>
-                    cell_and_neighbor{
-                      master2polygon.at(master_slave_relationships_iterators
-                                          [cell->active_cell_index()]
-                                            ->active_cell_index()),
-                      master2polygon.at(
-                        master_slave_relationships_iterators
-                          [neighboring_cell->active_cell_index()]
-                            ->active_cell_index())}; //(K1,K2) neighboring
-                                                     // polytopes. Here you
-                                                     // need a level of
-                                                     // indirection as you
-                                                     // need to find the
-                                                     // master of the
-                                                     // present slave
-
-                  agglomerated_faces[cell_and_neighbor].emplace_back(
-                    cell,
-                    f,
-                    master_slave_relationships_iterators
-                      [neighboring_cell->active_cell_index()],
-                    nof); //(K1,K2) -> store face
-                          // indices and deal cell
-
-
-
-                  if (visited_polygonal_neighbors.find(master2polygon.at(
-                        master_slave_relationships_iterators
-                          [neighboring_cell->active_cell_index()]
-                            ->active_cell_index())) ==
-                      std::end(visited_polygonal_neighbors))
-                    {
-                      // found a neighbor
-                      cell_face_at_boundary[{
-                        polygon_index,
-                        number_of_agglomerated_faces[polygon_index]}] = {
-                        false,
-                        master_slave_relationships_iterators
-                          [neighboring_cell->active_cell_index()]};
-
-                      ++number_of_agglomerated_faces[polygon_index];
-
-
-                      visited_polygonal_neighbors.insert(master2polygon.at(
-                        master_slave_relationships_iterators
-                          [neighboring_cell->active_cell_index()]
-                            ->active_cell_index()));
-                    }
-
-
-                  if (visited_cell_and_faces.find(
-                        {cell->active_cell_index(), f}) ==
-                      std::end(visited_cell_and_faces))
-                    {
-                      interface[{polygon_index,
-                                 master2polygon.at(
-                                   master_slave_relationships_iterators
-                                     [neighboring_cell->active_cell_index()]
-                                       ->active_cell_index())}]
-                        .emplace_back(cell, f);
-                      auto it = visited_cell_and_faces.insert(
-                        {cell->active_cell_index(), f});
-                    }
-
-
-                  if (visited_cell_and_faces.find(
-                        {neighboring_cell->active_cell_index(), nof}) ==
-                      std::end(visited_cell_and_faces))
-                    {
-                      interface[{master2polygon.at(
-                                   master_slave_relationships_iterators
-                                     [neighboring_cell->active_cell_index()]
-                                       ->active_cell_index()),
-                                 polygon_index}]
-                        .emplace_back(neighboring_cell, nof);
-                      auto it = visited_cell_and_faces.insert(
-                        {neighboring_cell->active_cell_index(), nof});
-                    }
-
-                  // if (std::find(visited_polytopes.cbegin(),
-                  //               visited_polytopes.cend(),
-                  //               master2polygon.at(
-                  //                 master_slave_relationships_iterators
-                  //                   [neighboring_cell->active_cell_index()]
-                  //                     ->active_cell_index())) ==
-                  //     std::end(visited_polytopes))
-                  //   {
-                  // neighbor not visited
-                  // interface[{master2polygon.at(
-                  //              master_slave_relationships_iterators
-                  //                [neighboring_cell->active_cell_index()]
-                  //                  ->active_cell_index()),
-                  //            master2polygon.at(
-                  //              master_cell->active_cell_index())}] =
-                  //   interface[{master2polygon.at(
-                  //                master_cell->active_cell_index()),
-                  //              master2polygon.at(
-                  //                master_slave_relationships_iterators
-                  //                  [neighboring_cell->active_cell_index()]
-                  //                    ->active_cell_index())}];
-                  // }
-
-
-
-                  // record that this polytope has been visited
-                  // visited_polytopes.push_back(master2polygon.at(
-                  //   master_slave_relationships_iterators
-                  //     [neighboring_cell->active_cell_index()]
-                  //       ->active_cell_index()));
-                }
-              else
-                {
-                  master_neighbors.emplace(
-                    cell_and_face,
-                    std::make_tuple(
-                      f,
-                      neighboring_cell,
-                      nof,
-                      cell)); //(agglo,f)
-                              //->(loc(f),other_deal_cell,loc(f'),dealcell)
-
-                  // save the pair of neighboring cells
-                  if (is_master_cell(neighboring_cell))
-                    {
-                      std::pair<types::global_cell_index,
-                                types::global_cell_index>
-                        cell_and_neighbor{
-                          polygon_index,
-                          master2polygon.at(
-                            neighboring_cell->active_cell_index())};
-                      //(K1,K2) neighboring
-                      // polytopes
-
-                      agglomerated_faces[cell_and_neighbor].emplace_back(
-                        cell,
-                        f,
-                        neighboring_cell,
-                        nof); //(K1,K2) -> store local face index
-                              // and deal cell
-
-
-                      // if (std::find(
-                      //       visited_polytopes.begin(),
-                      //       visited_polytopes.end(),
-                      //       master2polygon.at(
-                      //         neighboring_cell->active_cell_index())) !=
-                      //     std::end(visited_polytopes))
-                      // {
-                      // already discovered
-                      if (visited_polygonal_neighbors.find(master2polygon.at(
-                            neighboring_cell->active_cell_index())) ==
-                          std::end(visited_polygonal_neighbors))
-                        {
-                          // found a neighbor
-
-                          cell_face_at_boundary[{
-                            polygon_index,
-                            number_of_agglomerated_faces[polygon_index]}] = {
-                            false, neighboring_cell};
-
-                          ++number_of_agglomerated_faces[polygon_index];
-
-
-                          visited_polygonal_neighbors.insert(master2polygon.at(
-                            neighboring_cell->active_cell_index()));
-                        }
-
-
-
-                      if (visited_cell_and_faces.find(
-                            {cell->active_cell_index(), f}) ==
-                          std::end(visited_cell_and_faces))
-                        {
-                          interface[{polygon_index,
-                                     master2polygon.at(
-                                       neighboring_cell->active_cell_index())}]
-                            .emplace_back(cell, f);
-
-                          auto it = visited_cell_and_faces.insert(
-                            {cell->active_cell_index(), f});
-                        }
-
-                      if (visited_cell_and_faces.find(
-                            {neighboring_cell->active_cell_index(), nof}) ==
-                          std::end(visited_cell_and_faces))
-                        {
-                          interface[{master2polygon.at(
-                                       neighboring_cell->active_cell_index()),
-                                     polygon_index}]
-                            .emplace_back(neighboring_cell, nof);
-                          auto it = visited_cell_and_faces.insert(
-                            {neighboring_cell->active_cell_index(), nof});
-                        }
-
-                      // if (std::find(
-                      //       visited_polytopes.cbegin(),
-                      //       visited_polytopes.cend(),
-                      //       master2polygon.at(
-                      //         neighboring_cell->active_cell_index())) ==
-                      //     std::end(visited_polytopes))
-                      //   {
-                      // neighbor not visited
-                      // interface[{master2polygon.at(
-                      //              neighboring_cell->active_cell_index()),
-                      //            master2polygon.at(
-                      //              master_cell->active_cell_index())}] =
-                      //   interface[{master2polygon.at(
-                      //                master_cell->active_cell_index()),
-                      //              master2polygon.at(
-                      //                neighboring_cell->active_cell_index())}];
-                      // }
-
-
-                      // record the visited polytope
-                      // visited_polytopes.push_back(master2polygon.at(
-                      //   neighboring_cell->active_cell_index()));
-                      // }
-                    }
-                }
-
-
-
-              // Now, link the index of the agglomerated face with the
-              // master and the neighboring cell.
-              shared_face_agglomeration_idx.emplace(
-                MasterAndNeighborAndFace(master_cell, neighboring_cell, nof),
-                n_agglo_faces);
-              ++n_agglo_faces;
-            }
-          else if (cell->face(f)->at_boundary())
-            {
-              // Boundary face of a boundary cell.
-              // Note that the neighboring cell must be invalid.
-              const auto &cell_and_face =
-                CellAndFace(master_cell, n_agglo_faces);
-
-              polygon_boundary[master_cell].push_back(cell->face(f));
-
-              master_neighbors.emplace(
-                cell_and_face,
-                std::make_tuple(f,
-                                neighboring_cell,
-                                std::numeric_limits<unsigned int>::max(),
-                                cell)); // TODO: check what the last element
-                                        // should be...
-              ++n_agglo_faces;
-
-
-              std::pair<types::global_cell_index, types::global_cell_index>
-                cell_and_neighbor{polygon_index,
-                                  std::numeric_limits<unsigned int>::max()};
-
-              if (visited_polygonal_neighbors.find(
-                    std::numeric_limits<unsigned int>::max()) ==
-                  std::end(visited_polygonal_neighbors))
-                {
-                  // boundary face. Notice that `neighboring_cell` is invalid
-                  // here.
-                  cell_face_at_boundary[{
-                    polygon_index,
-                    number_of_agglomerated_faces[polygon_index]}] = {
-                    true, neighboring_cell};
-
-                  ++number_of_agglomerated_faces[polygon_index];
-
-                  visited_polygonal_neighbors.insert(
-                    std::numeric_limits<unsigned int>::max());
-                }
-
-
-
-              if (visited_cell_and_faces.find({cell->active_cell_index(), f}) ==
-                  std::end(visited_cell_and_faces))
-                {
-                  interface[{polygon_index,
-                             std::numeric_limits<unsigned int>::max()}]
-                    .emplace_back(cell, f);
-                  auto it = visited_cell_and_faces.insert(
-                    {cell->active_cell_index(), f});
-                }
-
-
-              agglomerated_faces[cell_and_neighbor].emplace_back(
-                cell,
-                f,
-                neighboring_cell,
-                std::numeric_limits<unsigned int>::max()); //(K1,K2) -> store
-                                                           // local face index
-                                                           // and deal cell
-            }
-        }
-    } // loop over all cells of agglomerate
-
-  // visited_polytopes.push_back(
-  //   master2polygon.at(master_cell->active_cell_index()));
-  // recover information about deal cells and local face indices associated to
-  // the same face
-  // unsigned int face = 0;
-  // for (const auto &[key, val] : agglomerated_faces)
-  //   {
-  //     // I'm sitting on one pair
-  //     const auto &agglo_and_face = CellAndFace(master_cell, face);
-  //     for (const auto &t : val)
-  //       info_cells[agglo_and_face].emplace_back(
-  //         std::get<0>(t),
-  //         std::get<1>(t),
-  //         std::get<2>(t),
-  //         std::get<3>(t)); // 0 = deal cell, 1 = local face index, 2 =
-  //                          // neighboring master, 3=nofn
-  //     // increment the face counter
-  //     ++face;
-  //   }
-  // number_of_agglomerated_faces[polygon_index] =
-  //   visited_polygonal_neighbors.size();
-}
-
-
-
-template <int dim, int spacedim>
-void
 AgglomerationHandler<dim, spacedim>::setup_connectivity_of_agglomeration()
 {
   Assert(master_cells_container.size() > 0,
@@ -886,9 +505,11 @@ AgglomerationHandler<dim, spacedim>::setup_connectivity_of_agglomeration()
     agglo_dh.n_dofs() > 0,
     ExcMessage(
       "The DoFHandler associated to the agglomeration has not been initialized. It's likely that you forgot to distribute the DoFs, i.e. you may want to check if a call to `initialize_hp_structure()` has been done."));
+  number_of_agglomerated_faces.resize(master2polygon.size(), 0);
   for (const auto &cell : master_cells_container)
     {
-      setup_master_neighbor_connectivity(cell);
+      internal::AgglomerationHandlerImplementation<dim, spacedim>::
+        setup_master_neighbor_connectivity(cell, *this);
     }
 }
 
@@ -1686,7 +1307,7 @@ namespace dealii
           polytope_out = std::numeric_limits<unsigned int>::max();
 
         const auto common_face =
-          handler.interface.at({polytope_in, polytope_out});
+          handler.polytope_cache.interface.at({polytope_in, polytope_out});
 
         std::vector<Point<spacedim>> final_unit_q_points;
         std::vector<double>          final_weights;
@@ -1774,7 +1395,275 @@ namespace dealii
 
         return *agglo_isv_ptr;
       }
+
+
+
+      /**
+       * Given an agglomeration described by the master cell `master_cell`, this
+       * function:
+       * - enumerates the faces of the agglomeration
+       * - stores who is the neighbor, the local face indices from outside and
+       * inside*/
+      static void
+      setup_master_neighbor_connectivity(
+        const typename Triangulation<dim, spacedim>::active_cell_iterator
+          &                                        master_cell,
+        const AgglomerationHandler<dim, spacedim> &handler)
+      {
+        Assert(
+          handler
+              .master_slave_relationships[master_cell->active_cell_index()] ==
+            -1,
+          ExcMessage("The present cell is not a master one."));
+
+        const auto &agglomeration = handler.get_agglomerate(master_cell);
+        const types::global_cell_index current_polytope_index =
+          handler.master2polygon.at(master_cell->active_cell_index());
+
+        unsigned int n_agglo_faces = 0;
+
+        std::set<types::global_cell_index> visited_polygonal_neighbors;
+
+
+        for (const auto &cell : agglomeration)
+          {
+            const types::global_cell_index cell_index =
+              cell->active_cell_index();
+            for (const auto f : cell->face_indices())
+              {
+                const auto &neighboring_cell = cell->neighbor(f);
+
+                // Check if:
+                // - cell is not on the boundary,
+                // - it's not agglomerated with the neighbor. If so, it's a
+                // neighbor of the present agglomeration
+                if (neighboring_cell.state() == IteratorState::valid &&
+                    !handler.are_cells_agglomerated(cell, neighboring_cell))
+                  {
+                    // a new face of the agglomeration has been discovered.
+                    handler.polygon_boundary[master_cell].push_back(
+                      cell->face(f));
+
+                    // global index of neighboring deal.II cell
+                    const types::global_cell_index neighboring_cell_index =
+                      neighboring_cell->active_cell_index();
+
+                    // master cell for the neighboring polytope
+                    const auto &master_of_neighbor =
+                      handler.master_slave_relationships_iterators
+                        [neighboring_cell_index];
+
+
+                    const auto &cell_and_face =
+                      typename AgglomerationHandler<dim, spacedim>::CellAndFace(
+                        master_cell, n_agglo_faces);                //(agglo,f)
+                    const auto nof = cell->neighbor_of_neighbor(f); // loc(f')
+
+                    if (handler.is_slave_cell(neighboring_cell))
+                      {
+                        // index of the neighboring polytope
+                        const types::global_cell_index neighbor_polytope_index =
+                          handler.master2polygon.at(
+                            master_of_neighbor->active_cell_index());
+
+                        handler.master_neighbors.emplace(
+                          cell_and_face,
+                          std::make_tuple(f, master_of_neighbor, nof, cell));
+
+
+                        if (visited_polygonal_neighbors.find(
+                              neighbor_polytope_index) ==
+                            std::end(visited_polygonal_neighbors))
+                          {
+                            // found a neighbor
+                            handler.polytope_cache.cell_face_at_boundary[{
+                              current_polytope_index,
+                              handler.number_of_agglomerated_faces
+                                [current_polytope_index]}] = {
+                              false, master_of_neighbor};
+
+                            ++handler.number_of_agglomerated_faces
+                                [current_polytope_index];
+
+                            visited_polygonal_neighbors.insert(
+                              neighbor_polytope_index);
+                          }
+
+
+                        if (handler.polytope_cache.visited_cell_and_faces.find(
+                              {cell_index, f}) ==
+                            std::end(
+                              handler.polytope_cache.visited_cell_and_faces))
+                          {
+                            handler.polytope_cache
+                              .interface[{current_polytope_index,
+                                          neighbor_polytope_index}]
+                              .emplace_back(cell, f);
+
+                            handler.polytope_cache.visited_cell_and_faces
+                              .insert({cell_index, f});
+                          }
+
+
+                        if (handler.polytope_cache.visited_cell_and_faces.find(
+                              {neighboring_cell_index, nof}) ==
+                            std::end(
+                              handler.polytope_cache.visited_cell_and_faces))
+                          {
+                            handler.polytope_cache
+                              .interface[{neighbor_polytope_index,
+                                          current_polytope_index}]
+                              .emplace_back(neighboring_cell, nof);
+
+                            handler.polytope_cache.visited_cell_and_faces
+                              .insert({neighboring_cell_index, nof});
+                          }
+                      }
+                    else
+                      {
+                        handler.master_neighbors.emplace(
+                          cell_and_face,
+                          std::make_tuple(
+                            f,
+                            neighboring_cell,
+                            nof,
+                            cell)); //(agglo,f)
+                                    //->(loc(f),other_deal_cell,loc(f'),dealcell)
+
+                        // save the pair of neighboring cells
+                        if (handler.is_master_cell(neighboring_cell))
+                          {
+                            if (visited_polygonal_neighbors.find(
+                                  handler.master2polygon.at(
+                                    neighboring_cell_index)) ==
+                                std::end(visited_polygonal_neighbors))
+                              {
+                                // found a neighbor
+
+                                handler.polytope_cache.cell_face_at_boundary[{
+                                  current_polytope_index,
+                                  handler.number_of_agglomerated_faces
+                                    [current_polytope_index]}] = {
+                                  false, neighboring_cell};
+
+                                ++handler.number_of_agglomerated_faces
+                                    [current_polytope_index];
+
+
+                                visited_polygonal_neighbors.insert(
+                                  handler.master2polygon.at(
+                                    neighboring_cell_index));
+                              }
+
+
+
+                            if (handler.polytope_cache.visited_cell_and_faces
+                                  .find({cell_index, f}) ==
+                                std::end(handler.polytope_cache
+                                           .visited_cell_and_faces))
+                              {
+                                handler.polytope_cache
+                                  .interface[{current_polytope_index,
+                                              handler.master2polygon.at(
+                                                neighboring_cell_index)}]
+                                  .emplace_back(cell, f);
+
+                                handler.polytope_cache.visited_cell_and_faces
+                                  .insert({cell_index, f});
+                              }
+
+                            if (handler.polytope_cache.visited_cell_and_faces
+                                  .find({neighboring_cell_index, nof}) ==
+                                std::end(handler.polytope_cache
+                                           .visited_cell_and_faces))
+                              {
+                                handler.polytope_cache
+                                  .interface[{handler.master2polygon.at(
+                                                neighboring_cell_index),
+                                              current_polytope_index}]
+                                  .emplace_back(neighboring_cell, nof);
+
+                                handler.polytope_cache.visited_cell_and_faces
+                                  .insert({neighboring_cell_index, nof});
+                              }
+                          }
+                      }
+
+
+
+                    // Now, link the index of the agglomerated face with the
+                    // master and the neighboring cell.
+                    handler.shared_face_agglomeration_idx.emplace(
+                      typename AgglomerationHandler<dim, spacedim>::
+                        MasterAndNeighborAndFace(master_cell,
+                                                 neighboring_cell,
+                                                 nof),
+                      n_agglo_faces);
+                    ++n_agglo_faces;
+                  }
+                else if (cell->face(f)->at_boundary())
+                  {
+                    // Boundary face of a boundary cell.
+                    // Note that the neighboring cell must be invalid.
+                    const auto &cell_and_face =
+                      typename AgglomerationHandler<dim, spacedim>::CellAndFace(
+                        master_cell, n_agglo_faces);
+
+                    handler.polygon_boundary[master_cell].push_back(
+                      cell->face(f));
+
+                    handler.master_neighbors.emplace(
+                      cell_and_face,
+                      std::make_tuple(f,
+                                      neighboring_cell,
+                                      std::numeric_limits<unsigned int>::max(),
+                                      cell)); // TODO: check what the last
+                                              // element should be...
+                    ++n_agglo_faces;
+
+
+
+                    if (visited_polygonal_neighbors.find(
+                          std::numeric_limits<unsigned int>::max()) ==
+                        std::end(visited_polygonal_neighbors))
+                      {
+                        // boundary face. Notice that `neighboring_cell` is
+                        // invalid here.
+                        handler.polytope_cache.cell_face_at_boundary[{
+                          current_polytope_index,
+                          handler.number_of_agglomerated_faces
+                            [current_polytope_index]}] = {true,
+                                                          neighboring_cell};
+
+                        ++handler.number_of_agglomerated_faces
+                            [current_polytope_index];
+
+                        visited_polygonal_neighbors.insert(
+                          std::numeric_limits<unsigned int>::max());
+                      }
+
+
+
+                    if (handler.polytope_cache.visited_cell_and_faces.find(
+                          {cell_index, f}) ==
+                        std::end(handler.polytope_cache.visited_cell_and_faces))
+                      {
+                        handler.polytope_cache
+                          .interface[{current_polytope_index,
+                                      std::numeric_limits<unsigned int>::max()}]
+                          .emplace_back(cell, f);
+
+                        handler.polytope_cache.visited_cell_and_faces.insert(
+                          {cell_index, f});
+                      }
+                  }
+              }
+          } // loop over all cells of agglomerate
+      }
     };
+
+
+
   } // namespace internal
 } // namespace dealii
 
