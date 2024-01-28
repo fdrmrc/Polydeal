@@ -884,6 +884,14 @@ private:
   friend class internal::AgglomerationHandlerImplementation<dim, spacedim>;
 
   internal::PolytopeCache<dim, spacedim> polytope_cache;
+
+  /**
+   * Bool that keeps track whether the mesh is composed also by standard deal.II
+   * cells as (trivial) polytopes.
+   */
+  bool hybrid_mesh;
+
+
 };
 
 
