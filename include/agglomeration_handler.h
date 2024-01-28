@@ -52,6 +52,7 @@
 
 using namespace dealii;
 
+// Forward declarations
 template <int dim, int spacedim>
 class AgglomerationHandler;
 
@@ -100,30 +101,80 @@ namespace dealii
 
 
 
-template <int dim, int spacedim>
-struct PolytopeCache
+/**
+ * Helper class for the storage of connectivity information of the polytopal
+ * grid.
+ */
+namespace dealii
 {
-  mutable std::map<
-    std::pair<types::global_cell_index, unsigned int>,
-    std::pair<bool,
-              typename Triangulation<dim, spacedim>::active_cell_iterator>>
-    cell_face_at_boundary;
+  namespace internal
+  {
+    template <int dim, int spacedim>
+    class PolytopeCache
+    {
+    public:
+      /**
+       * Default constructor.
+       */
+      PolytopeCache() = default;
 
-  // (cell,neighcell)->{cells,local face indices}
-  mutable std::map<
-    std::pair<types::global_cell_index, types::global_cell_index>,
-    std::vector<
-      std::pair<typename Triangulation<dim, spacedim>::active_cell_iterator,
-                unsigned int>>>
-    interface;
+      /**
+       * Destructor. It simply calls clear() for all of its members.
+       */
+      ~PolytopeCache()
+      {
+        cell_face_at_boundary.clear();
+        interface.clear();
+        visited_cell_and_faces.clear();
+      }
 
-  mutable std::set<std::pair<types::global_cell_index, unsigned int>>
-    visited_cell_and_faces;
-};
+      /**
+       * Standard std::set for recording the standard cells and faces (in the
+       * deal.II lingo) that have been already visited. The first argument of
+       * the pair identifies the global index of a deal.II cell, while the
+       * second its local face number.
+       *
+       */
+      mutable std::set<std::pair<types::global_cell_index, unsigned int>>
+        visited_cell_and_faces;
+
+      /**
+       * Map that associate the pair of (polytopal index, polytopal face) to
+       * (b,cell). The latter pair indicates whether or not the present face is
+       * on boundary. If it's on the boundary, then b is true and cell is an
+       * invalid cell iterator. Otherwise, b is false and cell points to the
+       * neighboring polytopal cell.
+       *
+       */
+      mutable std::map<
+        std::pair<types::global_cell_index, unsigned int>,
+        std::pair<bool,
+                  typename Triangulation<dim, spacedim>::active_cell_iterator>>
+        cell_face_at_boundary;
+
+      /**
+       * Standard std::map that associated to a pair of neighboring polytopic
+       * cells (current_polytope, neighboring_polytope) a sequence of
+       * ({deal_cell,deal_face_index}) which is meant to describe their
+       * interface.
+       * Indeed, the pair is identified by the two polytopic global indices,
+       * while the interface is described by a std::vector of deal.II cells and
+       * faces.
+       *
+       */
+      mutable std::map<
+        std::pair<types::global_cell_index, types::global_cell_index>,
+        std::vector<
+          std::pair<typename Triangulation<dim, spacedim>::active_cell_iterator,
+                    unsigned int>>>
+        interface;
+    };
+  } // namespace internal
+} // namespace dealii
 
 
 /**
- * Assumption: each cell may have only one master cell
+ * #TODO: Documentation.
  */
 template <int dim, int spacedim = dim>
 class AgglomerationHandler : public Subscriptor
@@ -828,7 +879,7 @@ private:
 
   friend class internal::AgglomerationHandlerImplementation<dim, spacedim>;
 
-  PolytopeCache<dim, spacedim> polytope_cache;
+  internal::PolytopeCache<dim, spacedim> polytope_cache;
 };
 
 
