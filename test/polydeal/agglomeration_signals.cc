@@ -76,11 +76,11 @@ main()
   ah.define_agglomerate(cells_to_be_agglomerated3);
   ah.define_agglomerate(cells_to_be_agglomerated4);
 
-  // Refine the triangulation, and check that the internal data structure for
-  // connectivity is empty now.
+  // Refine the triangulation, and check that the number of agglomerations is
+  // set to 0 again.
   tria.refine_global(1);
-  Assert(ah.get_agglomerated_connectivity().empty() == true,
-         ExcMessage("The connectivity has not been cleared."));
+  Assert(ah.n_agglomerates() == 0,
+         ExcMessage("Data structures have not been cleared."));
   std::cout << "OK" << std::endl;
   return 0;
 }

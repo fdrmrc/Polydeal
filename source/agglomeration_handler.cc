@@ -124,8 +124,13 @@ AgglomerationHandler<dim, spacedim>::initialize_fe_values(
       // the mesh is composed by standard and agglomerate cells. initialize
       // classes needed for standard cells in order to treat that finite element
       // space as defined on a standard shape and not on the BoundingBox.
-      standard_scratch = std::make_unique<ScratchData>(
-        *mapping, *fe, cell_quadrature, flags, face_quadrature, face_flags);
+      standard_scratch =
+        std::make_unique<ScratchData>(*mapping,
+                                      *fe,
+                                      cell_quadrature,
+                                      agglomeration_flags,
+                                      face_quadrature,
+                                      agglomeration_face_flags);
     }
 }
 
@@ -770,25 +775,10 @@ AgglomerationHandler<dim, spacedim>::reinit(
                     "agglomeration has not been set up."));
 
   const auto &deal_cell = polytope->as_dof_handler_iterator(agglo_dh);
-  if ((is_standard_cell(deal_cell) && at_boundary(deal_cell, face_index)) ||
-      (is_standard_cell(deal_cell) &&
-       is_master_cell(agglomerated_neighbor(deal_cell, face_index))))
-    {
-      standard_scratch_face_any =
-        std::make_unique<ScratchData>(*mapping,
-                                      fe_collection[2],
-                                      agglomeration_quad,
-                                      agglomeration_flags,
-                                      agglomeration_face_quad,
-                                      agglomeration_face_flags);
-      return standard_scratch_face_any->reinit(deal_cell, face_index);
-    }
-  else
-    {
-      Assert(is_master_cell(deal_cell), ExcMessage("This should be true."));
-      return internal::AgglomerationHandlerImplementation<dim, spacedim>::
-        reinit_master(deal_cell, face_index, agglomerated_isv_bdary, *this);
-    }
+  Assert(is_master_cell(deal_cell), ExcMessage("This should be true."));
+
+  return internal::AgglomerationHandlerImplementation<dim, spacedim>::
+    reinit_master(deal_cell, face_index, agglomerated_isv_bdary, *this);
 }
 
 
@@ -804,92 +794,22 @@ AgglomerationHandler<dim, spacedim>::reinit_interface(
 {
   const auto &cell_in    = polytope_in->as_dof_handler_iterator(agglo_dh);
   const auto &neigh_cell = neigh_polytope->as_dof_handler_iterator(agglo_dh);
-  Assert(
-    !is_slave_cell(cell_in) && !is_slave_cell(neigh_cell),
-    ExcMessage(
-      "At least of the two cells sharing a face is a slave cell. This should never happen if you want to agglomerate some cells together. "));
+  Assert(is_master_cell(cell_in) && is_master_cell(neigh_cell),
+         ExcMessage("Both cells should be masters."));
+  // both are masters. That means you want to compute the jumps or
+  // averages between a face shared by two neighboring agglomerations.
 
-  if (is_standard_cell(cell_in) && is_standard_cell(neigh_cell))
-    {
-      standard_scratch_face_std =
-        std::make_unique<ScratchData>(*mapping,
-                                      fe_collection[2],
-                                      agglomeration_quad,
-                                      agglomeration_flags,
-                                      agglomeration_face_quad,
-                                      agglomeration_face_flags);
+  const auto &fe_in =
+    internal::AgglomerationHandlerImplementation<dim, spacedim>::reinit_master(
+      cell_in, local_in, agglomerated_isv, *this);
+  const auto &fe_out =
+    internal::AgglomerationHandlerImplementation<dim, spacedim>::reinit_master(
+      neigh_cell, local_neigh, agglomerated_isv_neigh, *this);
+  std::pair<const FEValuesBase<dim, spacedim> &,
+            const FEValuesBase<dim, spacedim> &>
+    my_p(fe_in, fe_out);
 
-      standard_scratch_face_std_neigh =
-        std::make_unique<ScratchData>(*mapping,
-                                      fe_collection[2],
-                                      agglomeration_quad,
-                                      agglomeration_flags,
-                                      agglomeration_face_quad,
-                                      agglomeration_face_flags);
-
-      std::pair<const FEValuesBase<dim, spacedim> &,
-                const FEValuesBase<dim, spacedim> &>
-        my_p(standard_scratch_face_std->reinit(cell_in, local_in),
-             standard_scratch_face_std_neigh->reinit(neigh_cell, local_neigh));
-
-      return my_p;
-    }
-  else if (is_standard_cell(neigh_cell) && is_master_cell(cell_in))
-    {
-      const auto &fe_in = reinit(cell_in, local_in);
-      // TODO: check if euler or mapping
-      standard_scratch_face_std_another =
-        std::make_unique<ScratchData>(*mapping,
-                                      fe_collection[2],
-                                      agglomeration_quad,
-                                      agglomeration_flags,
-                                      agglomeration_face_quad,
-                                      agglomeration_face_flags);
-
-      std::pair<const FEValuesBase<dim, spacedim> &,
-                const FEValuesBase<dim, spacedim> &>
-        my_p(fe_in,
-             standard_scratch_face_std_another->reinit(neigh_cell,
-                                                       local_neigh));
-      return my_p;
-    }
-  else if (is_standard_cell(cell_in) && is_master_cell(neigh_cell))
-    {
-      const auto &fe_out = reinit(neigh_cell, local_neigh);
-      standard_scratch_face_std_another =
-        std::make_unique<ScratchData>(*mapping,
-                                      fe_collection[2],
-                                      agglomeration_quad,
-                                      agglomeration_flags,
-                                      agglomeration_face_quad,
-                                      agglomeration_face_flags);
-
-      std::pair<const FEValuesBase<dim, spacedim> &,
-                const FEValuesBase<dim, spacedim> &>
-        my_p(standard_scratch_face_std_another->reinit(cell_in, local_in),
-             fe_out);
-
-      return my_p;
-    }
-  else
-    {
-      Assert(is_master_cell(cell_in) && is_master_cell(neigh_cell),
-             ExcMessage("Both cells should be masters."));
-      // both are masters. That means you want to compute the jumps or
-      // averages between a face shared by two neighboring agglomerations.
-
-      const auto &fe_in =
-        internal::AgglomerationHandlerImplementation<dim, spacedim>::
-          reinit_master(cell_in, local_in, agglomerated_isv, *this);
-      const auto &fe_out =
-        internal::AgglomerationHandlerImplementation<dim, spacedim>::
-          reinit_master(neigh_cell, local_neigh, agglomerated_isv_neigh, *this);
-      std::pair<const FEValuesBase<dim, spacedim> &,
-                const FEValuesBase<dim, spacedim> &>
-        my_p(fe_in, fe_out);
-
-      return my_p;
-    }
+  return my_p;
 }
 
 
@@ -1356,18 +1276,8 @@ namespace dealii
               final_weights.push_back(weight);
             for (const auto &normal : scaled_normals)
               final_normals.push_back(normal);
-
-            // std::transform(scaled_weights.begin(),
-            //                scaled_weights.end(),
-            //                std::back_inserter(final_weights));
-            // std::transform(scaled_normals.begin(),
-            //                scaled_normals.end(),
-            //                std::back_inserter(final_normals));
           }
 
-        // std::cout << "final_unit_q_points size = "
-        //           << final_unit_q_points.size() << std::endl;
-        // Done with collecting normals, qpoints and weights.
         NonMatching::ImmersedSurfaceQuadrature<dim, spacedim> surface_quad(
           final_unit_q_points, final_weights, final_normals);
 
@@ -1386,8 +1296,8 @@ namespace dealii
 
 
       /**
-       * Given an agglomeration described by the master cell `master_cell`, this
-       * function:
+       * Given an agglomeration described by the master cell `master_cell`,
+       * this function:
        * - enumerates the faces of the agglomeration
        * - stores who is the neighbor, the local face indices from outside and
        * inside*/
