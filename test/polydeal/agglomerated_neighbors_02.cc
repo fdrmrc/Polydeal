@@ -77,38 +77,35 @@ main()
   ah.define_agglomerate(cells_to_be_agglomerated3);
   ah.define_agglomerate(cells_to_be_agglomerated4);
 
-  std::vector<std::vector<typename Triangulation<2>::active_cell_iterator>>
-    agglomerations{cells_to_be_agglomerated,
-                   cells_to_be_agglomerated2,
-                   cells_to_be_agglomerated3,
-                   cells_to_be_agglomerated4};
 
   FE_DGQ<2> fe_dg(1);
   ah.distribute_agglomerated_dofs(fe_dg);
-  for (const auto &cell : ah.agglomeration_cell_iterators() |
-                            IteratorFilters::ActiveFEIndexEqualTo(
-                              ah.CellAgglomerationType::master))
+  const auto &interface = ah.get_interface();
+
+  for (const auto &polytope : ah.polytope_iterators())
     {
-      std::cout << "Cell with idx: " << cell->active_cell_index() << std::endl;
-      unsigned int n_agglomerated_faces_per_cell = ah.n_faces(cell);
+      std::cout << "Polytope with idx: " << polytope->index() << std::endl;
+      unsigned int n_agglomerated_faces_per_cell = polytope->n_faces();
       std::cout << "Number of faces for the agglomeration: "
                 << n_agglomerated_faces_per_cell << std::endl;
       for (unsigned int f = 0; f < n_agglomerated_faces_per_cell; ++f)
         {
-          std::cout << "Agglomerated face with idx: " << f << std::endl;
-          auto agglomerate_connectivity = ah.get_agglomerated_connectivity();
-          const auto &[local_face_idx, neigh, local_face_idx_out, dummy] =
-            agglomerate_connectivity[{cell, f}];
-          {
-            std::cout << "Face idx: " << local_face_idx << std::endl;
-            if (neigh.state() == IteratorState::valid)
-              {
-                std::cout << "Neighbor idx: " << neigh->active_cell_index()
-                          << std::endl;
-              }
-            std::cout << "Face idx from outside: " << local_face_idx_out
-                      << std::endl;
-          }
+          if (!polytope->at_boundary(f))
+            {
+              std::cout << "Agglomerated face with idx: " << f << std::endl;
+
+              const auto &neigh_polytope = polytope->neighbor(f);
+              const auto  vec_cells_and_faces =
+                interface.at({polytope->index(), neigh_polytope->index()});
+              for (const auto &cell_and_face : vec_cells_and_faces)
+                {
+                  std::cout << "deal.II cell idx: "
+                            << cell_and_face.first->active_cell_index()
+                            << std::endl;
+                  std::cout << "deal.II face idx: " << cell_and_face.second
+                            << std::endl;
+                }
+            }
           std::cout << std::endl;
         }
     }

@@ -1,144 +1,62 @@
-Cell with idx: 0
-Number of faces for the agglomeration: 8
-Agglomerated face with idx: 0
-Face idx: 1
-Neighbor idx: 4
-Face idx from outside: 0
+Polytope with idx: 0
+Number of faces for the agglomeration: 3
 
 Agglomerated face with idx: 1
-Face idx: 2
-Face idx from outside: 4294967295
+deal.II cell idx: 1
+deal.II face idx: 1
+deal.II cell idx: 3
+deal.II face idx: 1
 
 Agglomerated face with idx: 2
-Face idx: 0
-Face idx from outside: 4294967295
+deal.II cell idx: 2
+deal.II face idx: 3
+deal.II cell idx: 3
+deal.II face idx: 3
 
-Agglomerated face with idx: 3
-Face idx: 3
-Neighbor idx: 8
-Face idx from outside: 2
-
-Agglomerated face with idx: 4
-Face idx: 1
-Neighbor idx: 4
-Face idx from outside: 0
-
-Agglomerated face with idx: 5
-Face idx: 3
-Neighbor idx: 8
-Face idx from outside: 2
-
-Agglomerated face with idx: 6
-Face idx: 0
-Face idx from outside: 4294967295
-
-Agglomerated face with idx: 7
-Face idx: 2
-Face idx from outside: 4294967295
-
-Cell with idx: 4
-Number of faces for the agglomeration: 8
+Polytope with idx: 1
+Number of faces for the agglomeration: 3
 Agglomerated face with idx: 0
-Face idx: 1
-Face idx from outside: 4294967295
+deal.II cell idx: 4
+deal.II face idx: 0
+deal.II cell idx: 6
+deal.II face idx: 0
+
+
+Agglomerated face with idx: 2
+deal.II cell idx: 6
+deal.II face idx: 3
+deal.II cell idx: 7
+deal.II face idx: 3
+
+Polytope with idx: 2
+Number of faces for the agglomeration: 3
 
 Agglomerated face with idx: 1
-Face idx: 2
-Face idx from outside: 4294967295
+deal.II cell idx: 8
+deal.II face idx: 2
+deal.II cell idx: 9
+deal.II face idx: 2
 
 Agglomerated face with idx: 2
-Face idx: 0
-Neighbor idx: 0
-Face idx from outside: 1
+deal.II cell idx: 9
+deal.II face idx: 1
+deal.II cell idx: 11
+deal.II face idx: 1
 
-Agglomerated face with idx: 3
-Face idx: 3
-Neighbor idx: 12
-Face idx from outside: 2
-
-Agglomerated face with idx: 4
-Face idx: 1
-Face idx from outside: 4294967295
-
-Agglomerated face with idx: 5
-Face idx: 3
-Neighbor idx: 12
-Face idx from outside: 2
-
-Agglomerated face with idx: 6
-Face idx: 0
-Neighbor idx: 0
-Face idx from outside: 1
-
-Agglomerated face with idx: 7
-Face idx: 2
-Face idx from outside: 4294967295
-
-Cell with idx: 8
-Number of faces for the agglomeration: 8
+Polytope with idx: 3
+Number of faces for the agglomeration: 3
 Agglomerated face with idx: 0
-Face idx: 1
-Neighbor idx: 12
-Face idx from outside: 0
+deal.II cell idx: 12
+deal.II face idx: 0
+deal.II cell idx: 14
+deal.II face idx: 0
 
 Agglomerated face with idx: 1
-Face idx: 2
-Neighbor idx: 0
-Face idx from outside: 3
+deal.II cell idx: 12
+deal.II face idx: 2
+deal.II cell idx: 13
+deal.II face idx: 2
 
-Agglomerated face with idx: 2
-Face idx: 0
-Face idx from outside: 4294967295
-
-Agglomerated face with idx: 3
-Face idx: 3
-Face idx from outside: 4294967295
-
-Agglomerated face with idx: 4
-Face idx: 1
-Neighbor idx: 12
-Face idx from outside: 0
-
-Agglomerated face with idx: 5
-Face idx: 3
-Face idx from outside: 4294967295
-
-Agglomerated face with idx: 6
-Face idx: 0
-Face idx from outside: 4294967295
-
-Agglomerated face with idx: 7
-Face idx: 2
-Neighbor idx: 0
-Face idx from outside: 3
-
-Cell with idx: 12
-Number of faces for the agglomeration: 8
-Agglomerated face with idx: 0
-Face idx: 1
-Face idx from outside: 4294967295
-
-Agglomerated face with idx: 1
-Face idx: 2
-Neighbor idx: 4
-Face idx from outside: 3
-
-Agglomerated face with idx: 2
-Face idx: 0
-Neighbor idx: 8
-Face idx from outside: 1
-
-Agglomerated face with idx: 3
-Face idx: 3
-Face idx from outside: 4294967295
-
-Agglomerated face with idx: 4
-Face idx: 1
-Face idx from outside: 4294967295
-
-Agglomerated face with idx: 5
-Face idx: 3
-Face idx from outside: 4294967295
 
 Agglomerated face with idx: 6
 Face idx: 0

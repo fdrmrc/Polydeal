@@ -308,13 +308,6 @@ public:
   agglomeration_iterator
   define_agglomerate(const AgglomerationContainer &cells);
 
-  /**
-   * Get the connectivity of the agglomeration. TODO: this data structure should
-   * be private. Keep the getter just for the time being.
-   */
-  inline decltype(auto)
-  get_agglomerated_connectivity();
-
   inline decltype(auto)
   get_interface() const;
 
@@ -361,6 +354,12 @@ public:
    */
   inline const DoFHandler<dim, spacedim> &
   get_dof_handler() const;
+
+  /**
+   * Returns the number of agglomerate cells in the grid.
+   */
+  unsigned int
+  n_agglomerates() const;
 
   /**
    * Return the number of agglomerated faces for a generic deal.II cell. If it's
@@ -556,10 +555,6 @@ public:
   polytope_boundary(
     const typename Triangulation<dim>::active_cell_iterator &cell);
 
-  /**
-   * Record the number of agglomerations on the grid.
-   */
-  unsigned int n_agglomerations;
 
   /**
    * DoFHandler for the agglomerated space
@@ -669,6 +664,10 @@ private:
   void
   setup_connectivity_of_agglomeration();
 
+  /**
+   * Record the number of agglomerations on the grid.
+   */
+  unsigned int n_agglomerations;
 
 
   /**
@@ -890,22 +889,11 @@ private:
    * cells as (trivial) polytopes.
    */
   bool hybrid_mesh;
-
-
 };
 
 
 
 // ------------------------------ inline functions -------------------------
-template <int dim, int spacedim>
-inline decltype(auto)
-AgglomerationHandler<dim, spacedim>::get_agglomerated_connectivity()
-{
-  return master_neighbors;
-}
-
-
-
 template <int dim, int spacedim>
 inline decltype(auto)
 AgglomerationHandler<dim, spacedim>::get_interface() const
@@ -1104,6 +1092,15 @@ AgglomerationHandler<dim, spacedim>::are_cells_agglomerated(
   const
 {
   return (get_master_idx_of_cell(cell) == get_master_idx_of_cell(other_cell));
+}
+
+
+
+template <int dim, int spacedim>
+inline unsigned int
+AgglomerationHandler<dim, spacedim>::n_agglomerates() const
+{
+  return n_agglomerations;
 }
 
 

@@ -366,11 +366,7 @@ Poisson<dim>::setup_agglomeration()
   ah->insert_agglomerate(cells_to_be_agglomerated3);
   ah->insert_agglomerate(cells_to_be_agglomerated4);
 
-  std::vector<std::vector<typename Triangulation<2>::active_cell_iterator>>
-    agglomerations{cells_to_be_agglomerated,
-                   cells_to_be_agglomerated2,
-                   cells_to_be_agglomerated3,
-                   cells_to_be_agglomerated4};
+
 
   ah->distribute_agglomerated_dofs(*dg_fe);
   ah->create_agglomeration_sparsity_pattern(sparsity);

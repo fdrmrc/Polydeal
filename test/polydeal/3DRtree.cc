@@ -237,39 +237,6 @@ Poisson<dim>::setup_agglomeration()
     data_out.write_vtu(output);
   }
 
-
-  /*
-  #ifdef AGGLO_DEBUG
-  {
-     for (const auto &cell : ah->agglomeration_cell_iterators())
-       {
-         std::cout << "Cell with idx: " << cell->active_cell_index()
-                   << std::endl;
-         unsigned int n_agglomerated_faces_per_cell = ah->n_faces(cell);
-         std::cout << "Number of faces for the agglomeration: "
-                   << n_agglomerated_faces_per_cell << std::endl;
-         for (unsigned int f = 0; f < n_agglomerated_faces_per_cell; ++f)
-           {
-             std::cout << "Agglomerated face with idx: " << f << std::endl;
-             const auto &[local_face_idx, neigh, local_face_idx_out, dummy] =
-               ah->get_agglomerated_connectivity()[{cell, f}];
-             {
-               std::cout << "Face idx: " << local_face_idx << std::endl;
-               if (neigh.state() == IteratorState::valid)
-                 {
-                   std::cout << "Neighbor idx: " << neigh->active_cell_index()
-                             << std::endl;
-                 }
-
-               std::cout << "Face idx from outside: " << local_face_idx_out
-                         << std::endl;
-             }
-             std::cout << std::endl;
-           }
-       }
-   }
-   #endif
-   */
 }
 
 template <int dim>

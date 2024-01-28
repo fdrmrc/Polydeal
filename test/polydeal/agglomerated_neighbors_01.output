@@ -1,108 +1,90 @@
-Cell with idx: 3
-Number of faces for the agglomeration: 10
+Polytope with idx: 0
+Number of faces for the agglomeration: 9
 Agglomerated face with idx: 0
-Face idx: 1
-Neighbor idx: 7
-Face idx from outside: 0
+deal.II cell idx: 3
+deal.II face idx: 0
 
 Agglomerated face with idx: 1
-Face idx: 2
-Neighbor idx: 4
-Face idx from outside: 3
+deal.II cell idx: 3
+deal.II face idx: 2
 
 Agglomerated face with idx: 2
-Face idx: 0
-Neighbor idx: 8
-Face idx from outside: 1
+deal.II cell idx: 6
+deal.II face idx: 1
+deal.II cell idx: 13
+deal.II face idx: 2
 
 Agglomerated face with idx: 3
-Face idx: 3
-Neighbor idx: 11
-Face idx from outside: 2
+deal.II cell idx: 6
+deal.II face idx: 2
 
 Agglomerated face with idx: 4
-Face idx: 3
-Neighbor idx: 14
-Face idx from outside: 2
+deal.II cell idx: 9
+deal.II face idx: 0
 
 Agglomerated face with idx: 5
-Face idx: 1
-Neighbor idx: 24
-Face idx from outside: 0
+deal.II cell idx: 9
+deal.II face idx: 3
 
 Agglomerated face with idx: 6
-Face idx: 2
-Neighbor idx: 7
-Face idx from outside: 3
+deal.II cell idx: 12
+deal.II face idx: 3
 
 Agglomerated face with idx: 7
-Face idx: 3
-Neighbor idx: 15
-Face idx from outside: 2
+deal.II cell idx: 13
+deal.II face idx: 1
 
 Agglomerated face with idx: 8
-Face idx: 0
-Neighbor idx: 2
-Face idx from outside: 1
+deal.II cell idx: 13
+deal.II face idx: 3
 
-Agglomerated face with idx: 9
-Face idx: 2
-Neighbor idx: 1
-Face idx from outside: 3
-
-Cell with idx: 15
-Number of faces for the agglomeration: 8
+Polytope with idx: 1
+Number of faces for the agglomeration: 7
 Agglomerated face with idx: 0
-Face idx: 0
-Neighbor idx: 33
-Face idx from outside: 1
+deal.II cell idx: 15
+deal.II face idx: 0
+deal.II cell idx: 36
+deal.II face idx: 2
 
 Agglomerated face with idx: 1
-Face idx: 2
-Neighbor idx: 14
-Face idx from outside: 3
+deal.II cell idx: 15
+deal.II face idx: 1
 
 Agglomerated face with idx: 2
-Face idx: 3
-Neighbor idx: 38
-Face idx from outside: 2
+deal.II cell idx: 15
+deal.II face idx: 2
 
 Agglomerated face with idx: 3
-Face idx: 1
-Neighbor idx: 48
-Face idx from outside: 0
+deal.II cell idx: 36
+deal.II face idx: 0
 
 Agglomerated face with idx: 4
-Face idx: 3
-Neighbor idx: 39
-Face idx from outside: 2
+deal.II cell idx: 36
+deal.II face idx: 3
 
 Agglomerated face with idx: 5
-Face idx: 0
-Neighbor idx: 14
-Face idx from outside: 1
+deal.II cell idx: 37
+deal.II face idx: 1
 
 Agglomerated face with idx: 6
-Face idx: 1
-Neighbor idx: 26
-Face idx from outside: 0
+deal.II cell idx: 37
+deal.II face idx: 3
 
-Agglomerated face with idx: 7
-Face idx: 2
-Neighbor idx: 3
-Face idx from outside: 3
-
-Cell with idx: 19
-Number of faces for the agglomeration: 8
+Polytope with idx: 2
+Number of faces for the agglomeration: 7
 Agglomerated face with idx: 0
-Face idx: 1
-Neighbor idx: 23
-Face idx from outside: 0
+deal.II cell idx: 54
+deal.II face idx: 0
+deal.II cell idx: 57
+deal.II face idx: 2
 
 Agglomerated face with idx: 1
-Face idx: 2
-Neighbor idx: 20
-Face idx from outside: 3
+deal.II cell idx: 54
+deal.II face idx: 1
+
+Agglomerated face with idx: 2
+deal.II cell idx: 54
+deal.II face idx: 2
 
 Agglomerated face with idx: 2
 Face idx: 3
@@ -110,69 +92,842 @@ Neighbor idx: 28
 Face idx from outside: 2
 
 Agglomerated face with idx: 3
-Face idx: 0
-Neighbor idx: 24
-Face idx from outside: 1
+deal.II cell idx: 57
+deal.II face idx: 0
 
 Agglomerated face with idx: 4
-Face idx: 1
-Neighbor idx: 28
-Face idx from outside: 0
+deal.II cell idx: 57
+deal.II face idx: 3
 
 Agglomerated face with idx: 5
-Face idx: 3
-Neighbor idx: 27
-Face idx from outside: 2
+deal.II cell idx: 60
+deal.II face idx: 1
 
 Agglomerated face with idx: 6
-Face idx: 0
-Neighbor idx: 18
-Face idx from outside: 1
+deal.II cell idx: 60
+deal.II face idx: 3
 
-Agglomerated face with idx: 7
-Face idx: 2
-Neighbor idx: 17
-Face idx from outside: 3
-
-Cell with idx: 54
-Number of faces for the agglomeration: 8
+Polytope with idx: 3
+Number of faces for the agglomeration: 7
 Agglomerated face with idx: 0
-Face idx: 0
-Neighbor idx: 56
-Face idx from outside: 1
+deal.II cell idx: 19
+deal.II face idx: 0
 
 Agglomerated face with idx: 1
-Face idx: 2
-Neighbor idx: 51
-Face idx from outside: 3
+deal.II cell idx: 19
+deal.II face idx: 2
 
 Agglomerated face with idx: 2
-Face idx: 3
-Neighbor idx: 59
-Face idx from outside: 2
+deal.II cell idx: 22
+deal.II face idx: 1
 
 Agglomerated face with idx: 3
-Face idx: 1
-Neighbor idx: 61
-Face idx from outside: 0
+deal.II cell idx: 22
+deal.II face idx: 2
 
 Agglomerated face with idx: 4
-Face idx: 3
-Neighbor idx: 62
-Face idx from outside: 2
+deal.II cell idx: 22
+deal.II face idx: 3
+deal.II cell idx: 25
+deal.II face idx: 1
 
 Agglomerated face with idx: 5
-Face idx: 0
-Neighbor idx: 51
-Face idx from outside: 1
+deal.II cell idx: 25
+deal.II face idx: 0
 
 Agglomerated face with idx: 6
-Face idx: 1
-Neighbor idx: 55
-Face idx from outside: 0
+deal.II cell idx: 25
+deal.II face idx: 3
 
-Agglomerated face with idx: 7
-Face idx: 2
-Neighbor idx: 52
-Face idx from outside: 3
+Polytope with idx: 4
+Number of faces for the agglomeration: 3
+
+Agglomerated face with idx: 1
+deal.II cell idx: 0
+deal.II face idx: 1
+
+Agglomerated face with idx: 2
+deal.II cell idx: 0
+deal.II face idx: 3
+
+Polytope with idx: 5
+Number of faces for the agglomeration: 4
+Agglomerated face with idx: 0
+deal.II cell idx: 1
+deal.II face idx: 0
+
+Agglomerated face with idx: 1
+deal.II cell idx: 1
+deal.II face idx: 1
+
+
+Agglomerated face with idx: 3
+deal.II cell idx: 1
+deal.II face idx: 3
+
+Polytope with idx: 6
+Number of faces for the agglomeration: 4
+
+Agglomerated face with idx: 1
+deal.II cell idx: 2
+deal.II face idx: 1
+
+Agglomerated face with idx: 2
+deal.II cell idx: 2
+deal.II face idx: 2
+
+Agglomerated face with idx: 3
+deal.II cell idx: 2
+deal.II face idx: 3
+
+Polytope with idx: 7
+Number of faces for the agglomeration: 4
+Agglomerated face with idx: 0
+deal.II cell idx: 4
+deal.II face idx: 0
+
+Agglomerated face with idx: 1
+deal.II cell idx: 4
+deal.II face idx: 1
+
+
+Agglomerated face with idx: 3
+deal.II cell idx: 4
+deal.II face idx: 3
+
+Polytope with idx: 8
+Number of faces for the agglomeration: 4
+Agglomerated face with idx: 0
+deal.II cell idx: 5
+deal.II face idx: 0
+
+Agglomerated face with idx: 1
+deal.II cell idx: 5
+deal.II face idx: 1
+
+
+Agglomerated face with idx: 3
+deal.II cell idx: 5
+deal.II face idx: 3
+
+Polytope with idx: 9
+Number of faces for the agglomeration: 3
+Agglomerated face with idx: 0
+deal.II cell idx: 7
+deal.II face idx: 0
+deal.II cell idx: 7
+deal.II face idx: 3
+
+Agglomerated face with idx: 1
+deal.II cell idx: 7
+deal.II face idx: 1
+
+Agglomerated face with idx: 2
+deal.II cell idx: 7
+deal.II face idx: 2
+
+Polytope with idx: 10
+Number of faces for the agglomeration: 4
+
+Agglomerated face with idx: 1
+deal.II cell idx: 8
+deal.II face idx: 1
+
+Agglomerated face with idx: 2
+deal.II cell idx: 8
+deal.II face idx: 2
+
+Agglomerated face with idx: 3
+deal.II cell idx: 8
+deal.II face idx: 3
+
+Polytope with idx: 11
+Number of faces for the agglomeration: 4
+
+Agglomerated face with idx: 1
+deal.II cell idx: 10
+deal.II face idx: 1
+
+Agglomerated face with idx: 2
+deal.II cell idx: 10
+deal.II face idx: 2
+
+Agglomerated face with idx: 3
+deal.II cell idx: 10
+deal.II face idx: 3
+
+Polytope with idx: 12
+Number of faces for the agglomeration: 4
+Agglomerated face with idx: 0
+deal.II cell idx: 11
+deal.II face idx: 0
+
+Agglomerated face with idx: 1
+deal.II cell idx: 11
+deal.II face idx: 1
+
+Agglomerated face with idx: 2
+deal.II cell idx: 11
+deal.II face idx: 2
+
+Agglomerated face with idx: 3
+deal.II cell idx: 11
+deal.II face idx: 3
+
+Polytope with idx: 13
+Number of faces for the agglomeration: 3
+Agglomerated face with idx: 0
+deal.II cell idx: 14
+deal.II face idx: 0
+
+Agglomerated face with idx: 1
+deal.II cell idx: 14
+deal.II face idx: 1
+deal.II cell idx: 14
+deal.II face idx: 3
+
+Agglomerated face with idx: 2
+deal.II cell idx: 14
+deal.II face idx: 2
+
+Polytope with idx: 14
+Number of faces for the agglomeration: 4
+Agglomerated face with idx: 0
+deal.II cell idx: 16
+deal.II face idx: 0
+
+Agglomerated face with idx: 1
+deal.II cell idx: 16
+deal.II face idx: 1
+
+
+Agglomerated face with idx: 3
+deal.II cell idx: 16
+deal.II face idx: 3
+
+Polytope with idx: 15
+Number of faces for the agglomeration: 4
+Agglomerated face with idx: 0
+deal.II cell idx: 17
+deal.II face idx: 0
+
+Agglomerated face with idx: 1
+deal.II cell idx: 17
+deal.II face idx: 1
+
+
+Agglomerated face with idx: 3
+deal.II cell idx: 17
+deal.II face idx: 3
+
+Polytope with idx: 16
+Number of faces for the agglomeration: 4
+Agglomerated face with idx: 0
+deal.II cell idx: 18
+deal.II face idx: 0
+
+Agglomerated face with idx: 1
+deal.II cell idx: 18
+deal.II face idx: 1
+
+Agglomerated face with idx: 2
+deal.II cell idx: 18
+deal.II face idx: 2
+
+Agglomerated face with idx: 3
+deal.II cell idx: 18
+deal.II face idx: 3
+
+Polytope with idx: 17
+Number of faces for the agglomeration: 4
+Agglomerated face with idx: 0
+deal.II cell idx: 20
+deal.II face idx: 0
+
+Agglomerated face with idx: 1
+deal.II cell idx: 20
+deal.II face idx: 1
+
+
+Agglomerated face with idx: 3
+deal.II cell idx: 20
+deal.II face idx: 3
+
+Polytope with idx: 18
+Number of faces for the agglomeration: 3
+Agglomerated face with idx: 0
+deal.II cell idx: 21
+deal.II face idx: 0
+
+
+Agglomerated face with idx: 2
+deal.II cell idx: 21
+deal.II face idx: 3
+
+Polytope with idx: 19
+Number of faces for the agglomeration: 4
+Agglomerated face with idx: 0
+deal.II cell idx: 23
+deal.II face idx: 0
+
+
+Agglomerated face with idx: 2
+deal.II cell idx: 23
+deal.II face idx: 2
+
+Agglomerated face with idx: 3
+deal.II cell idx: 23
+deal.II face idx: 3
+
+Polytope with idx: 20
+Number of faces for the agglomeration: 4
+Agglomerated face with idx: 0
+deal.II cell idx: 24
+deal.II face idx: 0
+
+Agglomerated face with idx: 1
+deal.II cell idx: 24
+deal.II face idx: 1
+
+Agglomerated face with idx: 2
+deal.II cell idx: 24
+deal.II face idx: 2
+
+Agglomerated face with idx: 3
+deal.II cell idx: 24
+deal.II face idx: 3
+
+Polytope with idx: 21
+Number of faces for the agglomeration: 4
+Agglomerated face with idx: 0
+deal.II cell idx: 26
+deal.II face idx: 0
+
+Agglomerated face with idx: 1
+deal.II cell idx: 26
+deal.II face idx: 1
+
+Agglomerated face with idx: 2
+deal.II cell idx: 26
+deal.II face idx: 2
+
+Agglomerated face with idx: 3
+deal.II cell idx: 26
+deal.II face idx: 3
+
+Polytope with idx: 22
+Number of faces for the agglomeration: 4
+Agglomerated face with idx: 0
+deal.II cell idx: 27
+deal.II face idx: 0
+
+Agglomerated face with idx: 1
+deal.II cell idx: 27
+deal.II face idx: 1
+
+Agglomerated face with idx: 2
+deal.II cell idx: 27
+deal.II face idx: 2
+
+Agglomerated face with idx: 3
+deal.II cell idx: 27
+deal.II face idx: 3
+
+Polytope with idx: 23
+Number of faces for the agglomeration: 3
+Agglomerated face with idx: 0
+deal.II cell idx: 28
+deal.II face idx: 2
+deal.II cell idx: 28
+deal.II face idx: 0
+
+Agglomerated face with idx: 1
+deal.II cell idx: 28
+deal.II face idx: 1
+
+Agglomerated face with idx: 2
+deal.II cell idx: 28
+deal.II face idx: 3
+
+Polytope with idx: 24
+Number of faces for the agglomeration: 4
+Agglomerated face with idx: 0
+deal.II cell idx: 29
+deal.II face idx: 0
+
+
+Agglomerated face with idx: 2
+deal.II cell idx: 29
+deal.II face idx: 2
+
+Agglomerated face with idx: 3
+deal.II cell idx: 29
+deal.II face idx: 3
+
+Polytope with idx: 25
+Number of faces for the agglomeration: 4
+Agglomerated face with idx: 0
+deal.II cell idx: 30
+deal.II face idx: 0
+
+Agglomerated face with idx: 1
+deal.II cell idx: 30
+deal.II face idx: 1
+
+Agglomerated face with idx: 2
+deal.II cell idx: 30
+deal.II face idx: 2
+
+Agglomerated face with idx: 3
+deal.II cell idx: 30
+deal.II face idx: 3
+
+Polytope with idx: 26
+Number of faces for the agglomeration: 4
+Agglomerated face with idx: 0
+deal.II cell idx: 31
+deal.II face idx: 0
+
+
+Agglomerated face with idx: 2
+deal.II cell idx: 31
+deal.II face idx: 2
+
+Agglomerated face with idx: 3
+deal.II cell idx: 31
+deal.II face idx: 3
+
+Polytope with idx: 27
+Number of faces for the agglomeration: 4
+
+Agglomerated face with idx: 1
+deal.II cell idx: 32
+deal.II face idx: 1
+
+Agglomerated face with idx: 2
+deal.II cell idx: 32
+deal.II face idx: 2
+
+Agglomerated face with idx: 3
+deal.II cell idx: 32
+deal.II face idx: 3
+
+Polytope with idx: 28
+Number of faces for the agglomeration: 4
+Agglomerated face with idx: 0
+deal.II cell idx: 33
+deal.II face idx: 0
+
+Agglomerated face with idx: 1
+deal.II cell idx: 33
+deal.II face idx: 1
+
+Agglomerated face with idx: 2
+deal.II cell idx: 33
+deal.II face idx: 2
+
+Agglomerated face with idx: 3
+deal.II cell idx: 33
+deal.II face idx: 3
+
+Polytope with idx: 29
+Number of faces for the agglomeration: 4
+
+Agglomerated face with idx: 1
+deal.II cell idx: 34
+deal.II face idx: 1
+
+Agglomerated face with idx: 2
+deal.II cell idx: 34
+deal.II face idx: 2
+
+Agglomerated face with idx: 3
+deal.II cell idx: 34
+deal.II face idx: 3
+
+Polytope with idx: 30
+Number of faces for the agglomeration: 4
+Agglomerated face with idx: 0
+deal.II cell idx: 35
+deal.II face idx: 0
+
+Agglomerated face with idx: 1
+deal.II cell idx: 35
+deal.II face idx: 1
+
+Agglomerated face with idx: 2
+deal.II cell idx: 35
+deal.II face idx: 2
+
+Agglomerated face with idx: 3
+deal.II cell idx: 35
+deal.II face idx: 3
+
+Polytope with idx: 31
+Number of faces for the agglomeration: 4
+Agglomerated face with idx: 0
+deal.II cell idx: 38
+deal.II face idx: 0
+
+Agglomerated face with idx: 1
+deal.II cell idx: 38
+deal.II face idx: 1
+
+Agglomerated face with idx: 2
+deal.II cell idx: 38
+deal.II face idx: 2
+
+Agglomerated face with idx: 3
+deal.II cell idx: 38
+deal.II face idx: 3
+
+Polytope with idx: 32
+Number of faces for the agglomeration: 4
+Agglomerated face with idx: 0
+deal.II cell idx: 39
+deal.II face idx: 0
+
+Agglomerated face with idx: 1
+deal.II cell idx: 39
+deal.II face idx: 1
+
+Agglomerated face with idx: 2
+deal.II cell idx: 39
+deal.II face idx: 2
+
+Agglomerated face with idx: 3
+deal.II cell idx: 39
+deal.II face idx: 3
+
+Polytope with idx: 33
+Number of faces for the agglomeration: 4
+
+Agglomerated face with idx: 1
+deal.II cell idx: 40
+deal.II face idx: 1
+
+Agglomerated face with idx: 2
+deal.II cell idx: 40
+deal.II face idx: 2
+
+Agglomerated face with idx: 3
+deal.II cell idx: 40
+deal.II face idx: 3
+
+Polytope with idx: 34
+Number of faces for the agglomeration: 4
+Agglomerated face with idx: 0
+deal.II cell idx: 41
+deal.II face idx: 0
+
+Agglomerated face with idx: 1
+deal.II cell idx: 41
+deal.II face idx: 1
+
+Agglomerated face with idx: 2
+deal.II cell idx: 41
+deal.II face idx: 2
+
+Agglomerated face with idx: 3
+deal.II cell idx: 41
+deal.II face idx: 3
+
+Polytope with idx: 35
+Number of faces for the agglomeration: 3
+
+Agglomerated face with idx: 1
+deal.II cell idx: 42
+deal.II face idx: 1
+
+Agglomerated face with idx: 2
+deal.II cell idx: 42
+deal.II face idx: 2
+
+Polytope with idx: 36
+Number of faces for the agglomeration: 4
+Agglomerated face with idx: 0
+deal.II cell idx: 43
+deal.II face idx: 0
+
+Agglomerated face with idx: 1
+deal.II cell idx: 43
+deal.II face idx: 1
+
+Agglomerated face with idx: 2
+deal.II cell idx: 43
+deal.II face idx: 2
+
+
+Polytope with idx: 37
+Number of faces for the agglomeration: 4
+Agglomerated face with idx: 0
+deal.II cell idx: 44
+deal.II face idx: 0
+
+Agglomerated face with idx: 1
+deal.II cell idx: 44
+deal.II face idx: 1
+
+Agglomerated face with idx: 2
+deal.II cell idx: 44
+deal.II face idx: 2
+
+Agglomerated face with idx: 3
+deal.II cell idx: 44
+deal.II face idx: 3
+
+Polytope with idx: 38
+Number of faces for the agglomeration: 4
+Agglomerated face with idx: 0
+deal.II cell idx: 45
+deal.II face idx: 0
+
+Agglomerated face with idx: 1
+deal.II cell idx: 45
+deal.II face idx: 1
+
+Agglomerated face with idx: 2
+deal.II cell idx: 45
+deal.II face idx: 2
+
+Agglomerated face with idx: 3
+deal.II cell idx: 45
+deal.II face idx: 3
+
+Polytope with idx: 39
+Number of faces for the agglomeration: 4
+Agglomerated face with idx: 0
+deal.II cell idx: 46
+deal.II face idx: 0
+
+Agglomerated face with idx: 1
+deal.II cell idx: 46
+deal.II face idx: 1
+
+Agglomerated face with idx: 2
+deal.II cell idx: 46
+deal.II face idx: 2
+
+
+Polytope with idx: 40
+Number of faces for the agglomeration: 4
+Agglomerated face with idx: 0
+deal.II cell idx: 47
+deal.II face idx: 0
+
+Agglomerated face with idx: 1
+deal.II cell idx: 47
+deal.II face idx: 1
+
+Agglomerated face with idx: 2
+deal.II cell idx: 47
+deal.II face idx: 2
+
+
+Polytope with idx: 41
+Number of faces for the agglomeration: 4
+Agglomerated face with idx: 0
+deal.II cell idx: 48
+deal.II face idx: 0
+
+Agglomerated face with idx: 1
+deal.II cell idx: 48
+deal.II face idx: 1
+
+Agglomerated face with idx: 2
+deal.II cell idx: 48
+deal.II face idx: 2
+
+Agglomerated face with idx: 3
+deal.II cell idx: 48
+deal.II face idx: 3
+
+Polytope with idx: 42
+Number of faces for the agglomeration: 4
+Agglomerated face with idx: 0
+deal.II cell idx: 49
+deal.II face idx: 0
+
+Agglomerated face with idx: 1
+deal.II cell idx: 49
+deal.II face idx: 1
+
+Agglomerated face with idx: 2
+deal.II cell idx: 49
+deal.II face idx: 2
+
+Agglomerated face with idx: 3
+deal.II cell idx: 49
+deal.II face idx: 3
+
+Polytope with idx: 43
+Number of faces for the agglomeration: 4
+Agglomerated face with idx: 0
+deal.II cell idx: 50
+deal.II face idx: 0
+
+Agglomerated face with idx: 1
+deal.II cell idx: 50
+deal.II face idx: 1
+
+Agglomerated face with idx: 2
+deal.II cell idx: 50
+deal.II face idx: 2
+
+Agglomerated face with idx: 3
+deal.II cell idx: 50
+deal.II face idx: 3
+
+Polytope with idx: 44
+Number of faces for the agglomeration: 3
+Agglomerated face with idx: 0
+deal.II cell idx: 51
+deal.II face idx: 0
+
+Agglomerated face with idx: 1
+deal.II cell idx: 51
+deal.II face idx: 1
+deal.II cell idx: 51
+deal.II face idx: 3
+
+Agglomerated face with idx: 2
+deal.II cell idx: 51
+deal.II face idx: 2
+
+Polytope with idx: 45
+Number of faces for the agglomeration: 4
+Agglomerated face with idx: 0
+deal.II cell idx: 52
+deal.II face idx: 0
+
+Agglomerated face with idx: 1
+deal.II cell idx: 52
+deal.II face idx: 1
+
+Agglomerated face with idx: 2
+deal.II cell idx: 52
+deal.II face idx: 2
+
+Agglomerated face with idx: 3
+deal.II cell idx: 52
+deal.II face idx: 3
+
+Polytope with idx: 46
+Number of faces for the agglomeration: 4
+Agglomerated face with idx: 0
+deal.II cell idx: 53
+deal.II face idx: 0
+
+
+Agglomerated face with idx: 2
+deal.II cell idx: 53
+deal.II face idx: 2
+
+Agglomerated face with idx: 3
+deal.II cell idx: 53
+deal.II face idx: 3
+
+Polytope with idx: 47
+Number of faces for the agglomeration: 4
+Agglomerated face with idx: 0
+deal.II cell idx: 55
+deal.II face idx: 0
+
+
+Agglomerated face with idx: 2
+deal.II cell idx: 55
+deal.II face idx: 2
+
+Agglomerated face with idx: 3
+deal.II cell idx: 55
+deal.II face idx: 3
+
+Polytope with idx: 48
+Number of faces for the agglomeration: 4
+Agglomerated face with idx: 0
+deal.II cell idx: 56
+deal.II face idx: 0
+
+Agglomerated face with idx: 1
+deal.II cell idx: 56
+deal.II face idx: 1
+
+Agglomerated face with idx: 2
+deal.II cell idx: 56
+deal.II face idx: 2
+
+Agglomerated face with idx: 3
+deal.II cell idx: 56
+deal.II face idx: 3
+
+Polytope with idx: 49
+Number of faces for the agglomeration: 4
+Agglomerated face with idx: 0
+deal.II cell idx: 58
+deal.II face idx: 0
+
+Agglomerated face with idx: 1
+deal.II cell idx: 58
+deal.II face idx: 1
+
+Agglomerated face with idx: 2
+deal.II cell idx: 58
+deal.II face idx: 2
+
+
+Polytope with idx: 50
+Number of faces for the agglomeration: 4
+Agglomerated face with idx: 0
+deal.II cell idx: 59
+deal.II face idx: 0
+
+Agglomerated face with idx: 1
+deal.II cell idx: 59
+deal.II face idx: 1
+
+Agglomerated face with idx: 2
+deal.II cell idx: 59
+deal.II face idx: 2
+
+
+Polytope with idx: 51
+Number of faces for the agglomeration: 4
+Agglomerated face with idx: 0
+deal.II cell idx: 61
+deal.II face idx: 0
+
+
+Agglomerated face with idx: 2
+deal.II cell idx: 61
+deal.II face idx: 2
+
+Agglomerated face with idx: 3
+deal.II cell idx: 61
+deal.II face idx: 3
+
+Polytope with idx: 52
+Number of faces for the agglomeration: 4
+Agglomerated face with idx: 0
+deal.II cell idx: 62
+deal.II face idx: 0
+
+Agglomerated face with idx: 1
+deal.II cell idx: 62
+deal.II face idx: 1
+
+Agglomerated face with idx: 2
+deal.II cell idx: 62
+deal.II face idx: 2
+
+
+Polytope with idx: 53
+Number of faces for the agglomeration: 3
+Agglomerated face with idx: 0
+deal.II cell idx: 63
+deal.II face idx: 0
+
+
+Agglomerated face with idx: 2
+deal.II cell idx: 63
+deal.II face idx: 2
 
