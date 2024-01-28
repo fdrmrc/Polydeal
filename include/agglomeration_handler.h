@@ -121,8 +121,12 @@ namespace dealii
       /**
        * Destructor. It simply calls clear() for all of its members.
        */
-      ~PolytopeCache()
+      ~PolytopeCache() = default;
+
+      void
+      clear()
       {
+        // clear all the members
         cell_face_at_boundary.clear();
         interface.clear();
         visited_cell_and_faces.clear();

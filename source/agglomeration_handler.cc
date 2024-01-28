@@ -387,7 +387,7 @@ AgglomerationHandler<dim, spacedim>::initialize_agglomeration_data(
               -2); // identify all the tria with standard deal.II cells.
 
   master_neighbors.clear();
-  polytope_cache.interface.clear();
+  polytope_cache.clear();
   bboxes.clear();
 
   // First, update the pointer
