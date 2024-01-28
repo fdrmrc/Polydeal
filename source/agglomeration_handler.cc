@@ -30,6 +30,7 @@ AgglomerationHandler<dim, spacedim>::AgglomerationHandler(
          ExcMessage(
            "The triangulation must not be empty upon calling this function."));
   n_agglomerations = 0;
+  hybrid_mesh      = false;
   initialize_agglomeration_data(cached_tria);
 }
 
@@ -45,6 +46,13 @@ AgglomerationHandler<dim, spacedim>::define_agglomerate(
                     "constructor of this object has been called."));
   Assert(cells.size() > 0, ExcMessage("No cells to be agglomerated."));
 
+  if (cells.size() == 1)
+    hybrid_mesh = true; // mesh is made also by classical cells
+
+  // Get global index for each cell
+  std::vector<types::global_cell_index> global_indices;
+  for (const auto &cell : cells)
+    global_indices.push_back(cell->active_cell_index());
 
   // First index drives the selection of the master cell. After that, store the
   // master cell.
@@ -110,6 +118,15 @@ AgglomerationHandler<dim, spacedim>::initialize_fe_values(
     agglomeration_face_quad,
     update_quadrature_points | update_JxW_values |
       update_normal_vectors); // only for quadrature
+
+  if (hybrid_mesh)
+    {
+      // the mesh is composed by standard and agglomerate cells. initialize
+      // classes needed for standard cells in order to treat that finite element
+      // space as defined on a standard shape and not on the BoundingBox.
+      standard_scratch = std::make_unique<ScratchData>(
+        *mapping, *fe, cell_quadrature, flags, face_quadrature, face_flags);
+    }
 }
 
 
@@ -666,62 +683,31 @@ AgglomerationHandler<dim, spacedim>::reinit(
   const auto &deal_cell = polytope->as_dof_handler_iterator(agglo_dh);
 
   if (polytope->n_background_cells() == 1)
-    {
-      standard_scratch = std::make_unique<ScratchData>(*mapping,
-                                                       fe_collection[2],
-                                                       agglomeration_quad,
+    return standard_scratch->reinit(deal_cell);
+
+
+  const auto &agglo_cells = polytope->get_agglomerate();
+
+  Quadrature<dim> agglo_quad = agglomerated_quadrature(agglo_cells, deal_cell);
+
+  const double bbox_measure =
+    bboxes[master2polygon.at(deal_cell->active_cell_index())].volume();
+
+  // Scale weights with the volume of the BBox. This way, the euler_mapping
+  // defining the BBOx doesn't alter them.
+  std::vector<double> scaled_weights;
+  std::transform(agglo_quad.get_weights().begin(),
+                 agglo_quad.get_weights().end(),
+                 std::back_inserter(scaled_weights),
+                 [&bbox_measure](const double w) { return w / bbox_measure; });
+
+  Quadrature<dim> scaled_quad(agglo_quad.get_points(), scaled_weights);
+
+  agglomerated_scratch = std::make_unique<ScratchData>(*euler_mapping,
+                                                       fe_collection[0],
+                                                       scaled_quad,
                                                        agglomeration_flags);
-      return standard_scratch->reinit(deal_cell);
-    }
-
-  if (is_master_cell(deal_cell))
-    {
-      const auto &agglo_cells = polytope->get_agglomerate();
-
-      Quadrature<dim> agglo_quad =
-        agglomerated_quadrature(agglo_cells, deal_cell);
-
-      const double bbox_measure =
-        bboxes[master2polygon.at(deal_cell->active_cell_index())].volume();
-
-      // Scale weights with the volume of the BBox. This way, the euler_mapping
-      // defining the BBOx doesn't alter them.
-      std::vector<double> scaled_weights;
-      std::transform(agglo_quad.get_weights().begin(),
-                     agglo_quad.get_weights().end(),
-                     std::back_inserter(scaled_weights),
-                     [&bbox_measure](const double w) {
-                       return w / bbox_measure;
-                     });
-
-      Quadrature<dim> scaled_quad(agglo_quad.get_points(), scaled_weights);
-
-      agglomerated_scratch = std::make_unique<ScratchData>(*euler_mapping,
-                                                           fe_collection[0],
-                                                           scaled_quad,
-                                                           agglomeration_flags);
-      return agglomerated_scratch->reinit(deal_cell);
-    }
-  else if (is_standard_cell(deal_cell))
-    {
-      // ensure the DG space is the same we have from the other DoFHandler(s)
-      standard_scratch = std::make_unique<ScratchData>(*mapping,
-                                                       fe_collection[2],
-                                                       agglomeration_quad,
-                                                       agglomeration_flags);
-      return standard_scratch->reinit(deal_cell);
-    }
-  else
-    {
-      std::vector<Point<dim>> pts{{}};
-      std::vector<double>     wgts{0.};
-      Quadrature<dim>         dummy_quad(pts, wgts);
-      standard_scratch = std::make_unique<ScratchData>(*mapping,
-                                                       fe_collection[1],
-                                                       dummy_quad,
-                                                       agglomeration_flags);
-      return standard_scratch->reinit(deal_cell);
-    }
+  return agglomerated_scratch->reinit(deal_cell);
 }
 
 
