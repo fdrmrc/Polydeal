@@ -180,211 +180,6 @@ AgglomerationHandler<dim, spacedim>::n_agglomerated_faces_per_cell(
 }
 
 
-template <int dim, int spacedim>
-typename DoFHandler<dim, spacedim>::active_cell_iterator
-AgglomerationHandler<dim, spacedim>::agglomerated_neighbor(
-  const typename DoFHandler<dim, spacedim>::active_cell_iterator &cell,
-  const unsigned int                                              f) const
-{
-  Assert(!is_slave_cell(cell),
-         ExcMessage("This cells is not supposed to be a slave."));
-  if (!at_boundary(cell, f))
-    {
-      if (is_standard_cell(cell) && is_standard_cell(cell->neighbor(f)))
-        {
-          return cell->neighbor(f);
-        }
-      else if (is_master_cell(cell))
-        {
-          // const auto &neigh = std::get<1>(master_neighbors[{cell, f}]);
-          // typename DoFHandler<dim, spacedim>::active_cell_iterator cell_dh(
-          //   *neigh, &agglo_dh);
-          // return cell_dh;
-
-          // const auto &neigh = std::get<2>(info_cells[{cell, f}][0]);
-          const auto &neigh =
-            polytope_cache.cell_face_at_boundary
-              .at({master2polygon.at(cell->active_cell_index()), f})
-              .second;
-          typename DoFHandler<dim, spacedim>::active_cell_iterator cell_dh(
-            *neigh, &agglo_dh);
-          return cell_dh;
-        }
-      else
-        {
-          // If I fall here, I want to find the neighbor for a standard cell
-          // adjacent to an agglomeration
-          const auto &master_cell =
-            master_slave_relationships_iterators[cell->neighbor(f)
-                                                   ->active_cell_index()];
-          typename DoFHandler<dim, spacedim>::active_cell_iterator cell_dh(
-            *master_cell, &agglo_dh);
-          return cell_dh;
-        }
-    }
-  else
-    {
-      return {};
-    }
-}
-
-
-
-template <int dim, int spacedim>
-unsigned int
-AgglomerationHandler<dim, spacedim>::neighbor_of_agglomerated_neighbor(
-  const typename DoFHandler<dim, spacedim>::active_cell_iterator &cell,
-  const unsigned int                                              f) const
-{
-  Assert(!is_slave_cell(cell),
-         ExcMessage("This cells is not supposed to be a slave."));
-  // First, make sure it's not a boundary face.
-  if (!at_boundary(cell, f))
-    {
-      if (is_standard_cell(cell) && is_standard_cell(cell->neighbor(f)))
-        {
-          return cell->neighbor_of_neighbor(f);
-        }
-      else if (is_master_cell(cell) &&
-               is_master_cell(agglomerated_neighbor(cell, f)))
-        {
-          // const auto &current_agglo_info = master_neighbors[{cell, f}];
-          // const auto &local_f_idx        = std::get<0>(current_agglo_info);
-          // const auto &current_cell       = std::get<3>(current_agglo_info);
-
-          // const auto &agglo_neigh =
-          //   agglomerated_neighbor(cell,
-          //                         f); // returns the neighboring master
-          // const unsigned int n_faces_agglomerated_neighbor =
-          //   n_faces(agglo_neigh);
-          // // Loop over all cells of neighboring agglomerate
-          // for (unsigned int f_out = 0; f_out <
-          // n_faces_agglomerated_neighbor;
-          //      ++f_out)
-          //   {
-          //     if (agglomerated_neighbor(agglo_neigh, f_out).state() ==
-          //           IteratorState::valid &&
-          //         current_cell->neighbor(local_f_idx).state() ==
-          //           IteratorState::valid &&
-          //         current_cell.state() == IteratorState::valid)
-          //       {
-          //         const auto &neighboring_agglo_info =
-          //           master_neighbors[{agglo_neigh, f_out}];
-          //         const auto &local_f_out_idx =
-          //           std::get<0>(neighboring_agglo_info);
-          //         const auto &current_cell_out =
-          //           std::get<3>(neighboring_agglo_info);
-          //         const auto &other_standard =
-          //           std::get<1>(neighboring_agglo_info);
-
-          //         // Here, an extra condition is needed because there can
-          //         be
-          //         // more than one face index that returns the same
-          //         neighbor
-          //         // if you simply check who is f' s.t.
-          //         // cell->neigh(f)->neigh(f') == cell. Hence, an extra
-          //         // condition must be added.
-
-          //         if (other_standard.state() == IteratorState::valid &&
-          //             agglomerated_neighbor(agglo_neigh, f_out)
-          //                 ->active_cell_index() ==
-          //               cell->active_cell_index() &&
-          //             current_cell->active_cell_index() ==
-          //               current_cell_out->neighbor(local_f_out_idx)
-          //                 ->active_cell_index() &&
-          //             current_cell->neighbor(local_f_idx) ==
-          //             current_cell_out)
-          //           return f_out;
-          //       }
-          //   }
-          // Assert(false, ExcInternalError());
-          // return {}; // just to suppress warnings
-
-
-          // const auto &current_agglo_info = info_cells[{cell, f}][0];
-          // const auto &current_cell       = std::get<0>(current_agglo_info);
-          // const auto &local_f_idx        = std::get<1>(current_agglo_info);
-
-          const auto &agglo_neigh =
-            agglomerated_neighbor(cell,
-                                  f); // returns the neighboring master
-          AssertThrow(agglo_neigh.state() == IteratorState::valid,
-                      ExcInternalError());
-          const unsigned int n_faces_agglomerated_neighbor =
-            n_agglomerated_faces(agglo_neigh);
-          // Loop over all cells of neighboring agglomerate
-          for (unsigned int f_out = 0; f_out < n_faces_agglomerated_neighbor;
-               ++f_out)
-            {
-              // if (agglomerated_neighbor(agglo_neigh, f_out).state() ==
-              //       IteratorState::valid &&
-              //     current_cell->neighbor(local_f_idx).state() ==
-              //       IteratorState::valid &&
-              //     current_cell.state() == IteratorState::valid)
-              //   {
-              // const auto &neighbor_info = info_cells[{agglo_neigh,
-              // f_out}];
-
-              // Check if same master cell
-              if (agglomerated_neighbor(agglo_neigh, f_out).state() ==
-                  IteratorState::valid)
-                if (agglomerated_neighbor(agglo_neigh, f_out)
-                      ->active_cell_index() == cell->active_cell_index())
-                  return f_out;
-
-              // for (const auto &[other_deal,
-              //                   local_f_out_idx,
-              //                   neigh_out,
-              //                   dummy] : neighbor_info)
-              //   {
-              //     if (other_deal->neighbor(local_f_out_idx) ==
-              //           current_cell &&
-              //         other_deal.state() == IteratorState::valid)
-              //       return f_out;
-              //   }
-              // Here, an extra condition is needed because there can be
-              // more than one face index that returns the same neighbor
-              // if you simply check who is f' s.t.
-              // cell->neigh(f)->neigh(f') == cell. Hence, an extra
-              // condition must be added.
-
-              // if (other_deal.state() == IteratorState::valid &&
-              //     agglomerated_neighbor(agglo_neigh, f_out)
-              //         ->active_cell_index() ==
-              //       cell->active_cell_index() &&
-              //     current_cell->active_cell_index() ==
-              //       current_cell_out->neighbor(local_f_out_idx)
-              //         ->active_cell_index() &&
-              //     current_cell->neighbor(local_f_idx) ==
-              //     current_cell_out)
-              //   return f_out;
-              // }
-            }
-          return numbers::invalid_unsigned_int;
-        }
-      else if (is_master_cell(cell) &&
-               is_standard_cell(agglomerated_neighbor(cell, f)))
-        {
-          return std::get<2>(master_neighbors[{cell, f}]);
-        }
-      else
-        {
-          // If I fall here, I want to find the neighbor of neighbor for a
-          // standard cell adjacent to an agglomeration.
-          const auto &master_cell = agglomerated_neighbor(
-            cell, f); // this is the master of the neighboring agglomeration
-
-          return shared_face_agglomeration_idx[{master_cell, cell, f}];
-        }
-    }
-  else
-    {
-      // Face is at boundary
-      return numbers::invalid_unsigned_int;
-    }
-}
-
-
 
 template <int dim, int spacedim>
 void
@@ -995,7 +790,7 @@ namespace dealii
 
         // const auto  cells_and_faces = handler.info_cells.at({cell,
         // face_index});
-        const auto &neighbor = handler.agglomerated_neighbor(cell, face_index);
+        const auto &neighbor = agglomerated_neighbor(cell, face_index, handler);
 
         // std::cout << "reinit master " << cell->active_cell_index() <<
         // std::endl; std::cout << "agglomerate face " << face_index <<
@@ -1355,6 +1150,72 @@ namespace dealii
                   }
               }
           } // loop over all cells of agglomerate
+      }
+
+
+
+      static typename DoFHandler<dim, spacedim>::active_cell_iterator
+      agglomerated_neighbor(
+        const typename DoFHandler<dim, spacedim>::active_cell_iterator &cell,
+        const unsigned int                                              f,
+        const AgglomerationHandler<dim, spacedim> &                     handler)
+      {
+        Assert(handler.is_master_cell(cell),
+               ExcMessage("This cell must be a master one."));
+        if (!handler.at_boundary(cell, f))
+          {
+            const auto &neigh =
+              handler.polytope_cache.cell_face_at_boundary
+                .at({handler.master2polygon.at(cell->active_cell_index()), f})
+                .second;
+            typename DoFHandler<dim, spacedim>::active_cell_iterator cell_dh(
+              *neigh, &(handler.agglo_dh));
+            return cell_dh;
+          }
+        else
+          {
+            return {};
+          }
+      }
+
+
+
+      static unsigned int
+      neighbor_of_agglomerated_neighbor(
+        const typename DoFHandler<dim, spacedim>::active_cell_iterator &cell,
+        const unsigned int                                              f,
+        const AgglomerationHandler<dim, spacedim> &                     handler)
+      {
+        Assert(!is_slave_cell(cell),
+               ExcMessage("This cells is not supposed to be a slave."));
+        // First, make sure it's not a boundary face.
+        if (!at_boundary(cell, f))
+          {
+            const auto &agglo_neigh =
+              agglomerated_neighbor(cell,
+                                    f); // returns the neighboring master
+            AssertThrow(agglo_neigh.state() == IteratorState::valid,
+                        ExcInternalError());
+            const unsigned int n_faces_agglomerated_neighbor =
+              n_agglomerated_faces(agglo_neigh);
+            // Loop over all cells of neighboring agglomerate
+            for (unsigned int f_out = 0; f_out < n_faces_agglomerated_neighbor;
+                 ++f_out)
+              {
+                // Check if same master cell
+                if (agglomerated_neighbor(agglo_neigh, f_out).state() ==
+                    IteratorState::valid)
+                  if (agglomerated_neighbor(agglo_neigh, f_out)
+                        ->active_cell_index() == cell->active_cell_index())
+                    return f_out;
+              }
+            return numbers::invalid_unsigned_int;
+          }
+        else
+          {
+            // Face is at boundary
+            return numbers::invalid_unsigned_int;
+          }
       }
     };
 
