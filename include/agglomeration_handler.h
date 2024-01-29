@@ -380,37 +380,6 @@ public:
     const typename Triangulation<dim, spacedim>::active_cell_iterator
       &master_cell) const;
 
-  /**
-   * Find (if any) the cells that have the given master index. Note that `idx`
-   * is as it can be equal to -1 (meaning that the cell is a master one).
-   */
-  inline const std::vector<
-    typename Triangulation<dim, spacedim>::active_cell_iterator> &
-  get_slaves_of_idx(types::global_cell_index idx) const;
-
-  /**
-   * Helper function to determine whether or not a cell is a master or a slave
-   */
-  template <typename CellIterator>
-  inline bool
-  is_master_cell(const CellIterator &cell) const;
-
-  /**
-   * Helper function to determine if the given cell is a standard deal.II cell,
-   * that is: not master, nor slave.
-   *
-   */
-  template <typename CellIterator>
-  inline bool
-  is_standard_cell(const CellIterator &cell) const;
-
-  /**
-   * Helper function to determine whether or not a cell is a slave cell, without
-   * any information about his parents.
-   */
-  template <typename CellIterator>
-  inline bool
-  is_slave_cell(const CellIterator &cell) const;
 
   /**
    *
@@ -439,24 +408,6 @@ public:
    */
   void
   setup_output_interpolation_matrix();
-
-  /**
-   *
-   * Compute the volume of an agglomerate. This @p cell argument takes the
-   * deal.II cell that identifies an agglomerate. If it's a standard cell,
-   * than the this function is equivalent to cell->volume(). An exception is
-   * thrown is the given cell is a slave cell.
-   */
-  double
-  volume(const typename Triangulation<dim>::active_cell_iterator &cell) const;
-
-  /*
-   * Compute the diameter $h_K$ for a given agglomerate $K$. If $K$ is a
-   * standard cell, this is equivalent to call cell->diameter(). Otherwise, this
-   * function computes the diameter of the bounding box associated with $K$.
-   */
-  double
-  diameter(const typename Triangulation<dim>::active_cell_iterator &cell) const;
 
   /**
    * Return the collection of vertices describing the boundary of the polytope
@@ -567,6 +518,38 @@ private:
       &agglo_isv_ptr) const;
 
 
+  /**
+   * Find (if any) the cells that have the given master index. Note that `idx`
+   * is as it can be equal to -1 (meaning that the cell is a master one).
+   */
+  inline const std::vector<
+    typename Triangulation<dim, spacedim>::active_cell_iterator> &
+  get_slaves_of_idx(types::global_cell_index idx) const;
+
+  /**
+   * Helper function to determine whether or not a cell is a master or a slave
+   */
+  template <typename CellIterator>
+  inline bool
+  is_master_cell(const CellIterator &cell) const;
+
+  /**
+   * Helper function to determine if the given cell is a standard deal.II cell,
+   * that is: not master, nor slave.
+   *
+   */
+  template <typename CellIterator>
+  inline bool
+  is_standard_cell(const CellIterator &cell) const;
+
+  /**
+   * Helper function to determine whether or not a cell is a slave cell, without
+   * any information about his parents.
+   */
+  template <typename CellIterator>
+  inline bool
+  is_slave_cell(const CellIterator &cell) const;
+
 
   /**
    * Initialize all the necessary connectivity information for an
@@ -590,8 +573,6 @@ private:
    * `cell` is a slave cell.
    */
   std::vector<long int> master_slave_relationships;
-
-
 
   /**
    *  Same as the one above, but storing cell iterators rather than indices.
