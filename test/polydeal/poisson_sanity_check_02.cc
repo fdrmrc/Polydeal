@@ -138,7 +138,7 @@ LaplaceOperator<dim>::setup_agglomeration()
   PolyUtils::collect_cells_for_agglomeration(tria,
                                              idxs_to_be_agglomerated,
                                              cells_to_be_agglomerated);
-  ah->insert_agglomerate(cells_to_be_agglomerated);
+  ah->define_agglomerate(cells_to_be_agglomerated);
 
   std::vector<types::global_cell_index> idxs_to_be_agglomerated2 = {1, 3};
 
@@ -147,7 +147,7 @@ LaplaceOperator<dim>::setup_agglomeration()
   PolyUtils::collect_cells_for_agglomeration(tria,
                                              idxs_to_be_agglomerated2,
                                              cells_to_be_agglomerated2);
-  ah->insert_agglomerate(cells_to_be_agglomerated2);
+  ah->define_agglomerate(cells_to_be_agglomerated2);
 
   ah->distribute_agglomerated_dofs(dg_fe);
   ah->create_agglomeration_sparsity_pattern(sparsity);

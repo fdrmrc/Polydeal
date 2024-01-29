@@ -49,7 +49,7 @@ test()
                                                  cells_to_be_agglomerated);
 
 
-      auto polytope_iterator = ah.insert_agglomerate(cells_to_be_agglomerated);
+      auto polytope_iterator = ah.define_agglomerate(cells_to_be_agglomerated);
       const auto &bbox_agglomeration_pts =
         polytope_iterator->get_bounding_box().get_boundary_points();
       std::cout << "p0: =" << bbox_agglomeration_pts.first << std::endl;
@@ -64,7 +64,7 @@ test()
                                                  idxs_to_be_agglomerated,
                                                  cells_to_be_agglomerated);
 
-      auto polytope_iterator = ah.insert_agglomerate(cells_to_be_agglomerated);
+      auto polytope_iterator = ah.define_agglomerate(cells_to_be_agglomerated);
       const auto &bbox_agglomeration_pts =
         polytope_iterator->get_bounding_box().get_boundary_points();
       std::cout << "p0: =" << bbox_agglomeration_pts.first << std::endl;

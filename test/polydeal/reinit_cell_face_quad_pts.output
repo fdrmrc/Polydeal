@@ -4,37 +4,37 @@ Neighbor is: 2
 Cell with index 1 has 4 faces
 Neighbor is: 0
 Neighbor is: 4
-Neighbor is: 9
+Neighbor is: 3
 Cell with index 2 has 4 faces
-Neighbor is: 9
+Neighbor is: 3
 Neighbor is: 0
 Neighbor is: 8
-Cell with index 4 has 4 faces
-Neighbor is: 1
-Neighbor is: 5
-Neighbor is: 9
-Cell with index 5 has 4 faces
-Neighbor is: 4
-Neighbor is: 16
-Neighbor is: 7
-Cell with index 7 has 4 faces
-Neighbor is: 9
-Neighbor is: 18
-Neighbor is: 5
-Neighbor is: 13
-Cell with index 8 has 4 faces
-Neighbor is: 9
-Neighbor is: 2
-Neighbor is: 10
-Cell with index 9 has 8 faces
-Neighbor is: 2
-Neighbor is: 1
+Cell with index 3 has 8 faces
 Neighbor is: 7
 Neighbor is: 4
 Neighbor is: 12
 Neighbor is: 8
 Neighbor is: 12
 Neighbor is: 11
+Neighbor is: 2
+Neighbor is: 1
+Cell with index 4 has 4 faces
+Neighbor is: 1
+Neighbor is: 5
+Neighbor is: 3
+Cell with index 5 has 4 faces
+Neighbor is: 4
+Neighbor is: 16
+Neighbor is: 7
+Cell with index 7 has 4 faces
+Neighbor is: 3
+Neighbor is: 18
+Neighbor is: 5
+Neighbor is: 13
+Cell with index 8 has 4 faces
+Neighbor is: 3
+Neighbor is: 2
+Neighbor is: 10
 Cell with index 10 has 4 faces
 Neighbor is: 11
 Neighbor is: 8
@@ -42,12 +42,12 @@ Neighbor is: 32
 Cell with index 11 has 4 faces
 Neighbor is: 10
 Neighbor is: 14
-Neighbor is: 9
+Neighbor is: 3
 Neighbor is: 33
 Cell with index 12 has 4 faces
-Neighbor is: 9
+Neighbor is: 3
 Neighbor is: 13
-Neighbor is: 9
+Neighbor is: 3
 Neighbor is: 14
 Cell with index 13 has 4 faces
 Neighbor is: 12
@@ -58,12 +58,12 @@ Cell with index 14 has 4 faces
 Neighbor is: 11
 Neighbor is: 15
 Neighbor is: 12
-Neighbor is: 37
+Neighbor is: 36
 Cell with index 15 has 4 faces
 Neighbor is: 14
 Neighbor is: 26
 Neighbor is: 13
-Neighbor is: 37
+Neighbor is: 36
 Cell with index 16 has 4 faces
 Neighbor is: 5
 Neighbor is: 17
@@ -71,12 +71,19 @@ Neighbor is: 18
 Cell with index 17 has 4 faces
 Neighbor is: 16
 Neighbor is: 20
-Neighbor is: 25
+Neighbor is: 19
 Cell with index 18 has 4 faces
 Neighbor is: 7
-Neighbor is: 25
+Neighbor is: 19
 Neighbor is: 16
 Neighbor is: 24
+Cell with index 19 has 6 faces
+Neighbor is: 24
+Neighbor is: 28
+Neighbor is: 27
+Neighbor is: 18
+Neighbor is: 22
+Neighbor is: 17
 Cell with index 20 has 4 faces
 Neighbor is: 17
 Neighbor is: 21
@@ -85,7 +92,7 @@ Cell with index 21 has 4 faces
 Neighbor is: 20
 Neighbor is: 23
 Cell with index 22 has 4 faces
-Neighbor is: 25
+Neighbor is: 19
 Neighbor is: 23
 Neighbor is: 20
 Neighbor is: 28
@@ -95,16 +102,9 @@ Neighbor is: 21
 Neighbor is: 29
 Cell with index 24 has 4 faces
 Neighbor is: 13
-Neighbor is: 25
+Neighbor is: 19
 Neighbor is: 18
 Neighbor is: 26
-Cell with index 25 has 6 faces
-Neighbor is: 18
-Neighbor is: 22
-Neighbor is: 17
-Neighbor is: 24
-Neighbor is: 28
-Neighbor is: 27
 Cell with index 26 has 4 faces
 Neighbor is: 15
 Neighbor is: 27
@@ -113,10 +113,10 @@ Neighbor is: 48
 Cell with index 27 has 4 faces
 Neighbor is: 26
 Neighbor is: 30
-Neighbor is: 25
+Neighbor is: 19
 Neighbor is: 49
 Cell with index 28 has 4 faces
-Neighbor is: 25
+Neighbor is: 19
 Neighbor is: 29
 Neighbor is: 22
 Neighbor is: 30
@@ -139,7 +139,7 @@ Neighbor is: 10
 Neighbor is: 34
 Cell with index 33 has 4 faces
 Neighbor is: 32
-Neighbor is: 37
+Neighbor is: 36
 Neighbor is: 11
 Neighbor is: 35
 Cell with index 34 has 4 faces
@@ -151,22 +151,22 @@ Neighbor is: 34
 Neighbor is: 38
 Neighbor is: 33
 Neighbor is: 41
-Cell with index 37 has 6 faces
-Neighbor is: 33
-Neighbor is: 14
-Neighbor is: 38
+Cell with index 36 has 6 faces
 Neighbor is: 48
 Neighbor is: 15
 Neighbor is: 39
+Neighbor is: 33
+Neighbor is: 14
+Neighbor is: 38
 Cell with index 38 has 4 faces
 Neighbor is: 35
 Neighbor is: 39
-Neighbor is: 37
+Neighbor is: 36
 Neighbor is: 44
 Cell with index 39 has 4 faces
 Neighbor is: 38
 Neighbor is: 50
-Neighbor is: 37
+Neighbor is: 36
 Neighbor is: 45
 Cell with index 40 has 4 faces
 Neighbor is: 41
@@ -203,7 +203,7 @@ Neighbor is: 46
 Neighbor is: 58
 Neighbor is: 45
 Cell with index 48 has 4 faces
-Neighbor is: 37
+Neighbor is: 36
 Neighbor is: 49
 Neighbor is: 26
 Neighbor is: 50
