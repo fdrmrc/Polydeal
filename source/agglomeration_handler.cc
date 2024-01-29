@@ -138,30 +138,6 @@ AgglomerationHandler<dim, spacedim>::initialize_fe_values(
 
 template <int dim, int spacedim>
 unsigned int
-AgglomerationHandler<dim, spacedim>::n_faces(
-  const typename DoFHandler<dim, spacedim>::active_cell_iterator &cell) const
-{
-  Assert(!is_slave_cell(cell), ExcMessage("You cannot pass a slave cell."));
-  if (is_standard_cell(cell))
-    {
-      return cell->n_faces();
-    }
-  else
-    {
-      const auto & agglomeration = get_agglomerate(cell);
-      unsigned int n_neighbors   = 0;
-      for (const auto &cell : agglomeration)
-        {
-          n_neighbors += n_agglomerated_faces_per_cell(cell);
-        }
-      return n_neighbors;
-    }
-}
-
-
-
-template <int dim, int spacedim>
-unsigned int
 AgglomerationHandler<dim, spacedim>::n_agglomerated_faces_per_cell(
   const typename Triangulation<dim, spacedim>::active_cell_iterator &cell) const
 {
