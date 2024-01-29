@@ -378,26 +378,6 @@ AgglomerationAccessor<dim, spacedim>::get_agglomerate() const
 
 
 template <int dim, int spacedim>
-bool
-AgglomerationAccessor<dim, spacedim>::at_boundary(const unsigned int f) const
-{
-  Assert(!handler->is_slave_cell(master_cell),
-         ExcMessage("This function should not be called for a slave cell."));
-  if (handler->is_standard_cell(master_cell))
-    return master_cell->face(f)->at_boundary();
-  else
-    {
-      typename DoFHandler<dim, spacedim>::active_cell_iterator cell_dh(
-        *master_cell, &(handler->agglo_dh));
-      return handler->at_boundary(cell_dh, f);
-    }
-  // return std::get<2>(handler->master_neighbors[{master_cell, f}]) ==
-  //        std::numeric_limits<unsigned int>::max();
-}
-
-
-
-template <int dim, int spacedim>
 inline const std::vector<typename Triangulation<dim>::active_face_iterator> &
 AgglomerationAccessor<dim, spacedim>::polytope_boundary() const
 {
@@ -548,5 +528,17 @@ AgglomerationAccessor<dim, spacedim>::n_agglomerated_faces() const
 }
 
 
+
+template <int dim, int spacedim>
+inline bool
+AgglomerationAccessor<dim, spacedim>::at_boundary(const unsigned int f) const
+{
+  Assert(!handler->is_slave_cell(master_cell),
+         ExcMessage("This function should not be called for a slave cell."));
+
+  typename DoFHandler<dim, spacedim>::active_cell_iterator cell_dh(
+    *master_cell, &(handler->agglo_dh));
+  return handler->at_boundary(cell_dh, f);
+}
 
 #endif
