@@ -36,11 +36,25 @@ test()
   GridTools::Cache<dim>     cached_tria(tria, mapping);
   AgglomerationHandler<dim> ah(cached_tria);
 
+  std::vector<typename Triangulation<dim>::active_cell_iterator>
+    cells; // each cell = an agglomerate
+  for (const auto &cell : tria.active_cell_iterators())
+    cells.push_back(cell);
+
+  std::vector<types::global_cell_index> flagged_cells;
+  const auto                            store_flagged_cells =
+    [&flagged_cells](
+      const std::vector<types::global_cell_index> &idxs_to_be_agglomerated) {
+      for (const int idx : idxs_to_be_agglomerated)
+        flagged_cells.push_back(idx);
+    };
+
 
   if constexpr (dim == 2)
     {
       std::vector<types::global_cell_index> idxs_to_be_agglomerated = {
         3, 6, 9, 12, 13};
+      store_flagged_cells(idxs_to_be_agglomerated);
 
       std::vector<typename Triangulation<dim>::active_cell_iterator>
         cells_to_be_agglomerated;
@@ -51,6 +65,7 @@ test()
       std::vector<types::global_cell_index> idxs_to_be_agglomerated2 = {15,
                                                                         36,
                                                                         37};
+      store_flagged_cells(idxs_to_be_agglomerated2);
 
       std::vector<typename Triangulation<dim>::active_cell_iterator>
         cells_to_be_agglomerated2;
@@ -61,7 +76,7 @@ test()
       std::vector<types::global_cell_index> idxs_to_be_agglomerated3 = {57,
                                                                         60,
                                                                         54};
-
+      store_flagged_cells(idxs_to_be_agglomerated3);
       std::vector<typename Triangulation<dim>::active_cell_iterator>
         cells_to_be_agglomerated3;
       PolyUtils::collect_cells_for_agglomeration(tria,
@@ -71,6 +86,7 @@ test()
       std::vector<types::global_cell_index> idxs_to_be_agglomerated4 = {25,
                                                                         19,
                                                                         22};
+      store_flagged_cells(idxs_to_be_agglomerated4);
 
       std::vector<typename Triangulation<dim>::active_cell_iterator>
         cells_to_be_agglomerated4;
@@ -88,6 +104,8 @@ test()
     {
       std::vector<types::global_cell_index> idxs_to_be_agglomerated = {463,
                                                                        459};
+      store_flagged_cells(idxs_to_be_agglomerated);
+
       std::vector<typename Triangulation<dim>::active_cell_iterator>
         cells_to_be_agglomerated;
       PolyUtils::collect_cells_for_agglomeration(tria,
@@ -97,18 +115,41 @@ test()
       ah.define_agglomerate(cells_to_be_agglomerated);
     }
 
+  for (std::size_t i = 0; i < tria.n_active_cells(); ++i)
+    {
+      // If not present, agglomerate all the singletons
+      if (std::find(flagged_cells.begin(),
+                    flagged_cells.end(),
+                    cells[i]->active_cell_index()) == std::end(flagged_cells))
+        ah.insert_agglomerate({cells[i]});
+    }
+
   FE_DGQ<dim> fe_dg(1);
   ah.distribute_agglomerated_dofs(fe_dg);
   ah.initialize_fe_values(QGauss<dim>(1), update_JxW_values);
 
-  // Variant using iterators
-  for (const auto &polytope : ah.polytope_iterators())
+  // prints
+  const auto fu = [&](const types::global_cell_index given_index) {
+    for (const auto &polytope : ah.polytope_iterators())
+      {
+        if (polytope->index() <= given_index)
+          {
+            const auto &fev = ah.reinit(polytope);
+            double      sum = 0.;
+            for (const auto weight : fev.get_JxW_values())
+              sum += weight;
+            std::cout << "Sum is: " << sum << std::endl;
+          }
+      }
+  };
+
+  if constexpr (dim == 2)
     {
-      const auto &fev = ah.reinit(polytope);
-      double      sum = 0.;
-      for (const auto weight : fev.get_JxW_values())
-        sum += weight;
-      std::cout << "Sum is: " << sum << std::endl;
+      fu(3);
+    }
+  else if constexpr (dim == 3)
+    {
+      fu(0);
     }
 }
 

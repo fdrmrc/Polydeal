@@ -602,41 +602,6 @@ private:
 
   using ScratchData = MeshWorker::ScratchData<dim, spacedim>;
 
-  // In order to enumerate the faces of an agglomeration, we consider a map
-  // where the key is represented by an iterator to the (master) cell and the
-  // index of the agglomerated face.
-  using CellAndFace =
-    std::pair<const typename Triangulation<dim, spacedim>::active_cell_iterator,
-              types::global_cell_index>;
-
-  using MasterAndNeighborAndFace = std::tuple<
-    const typename Triangulation<dim, spacedim>::active_cell_iterator,
-    const typename Triangulation<dim, spacedim>::active_cell_iterator,
-    types::global_cell_index>;
-
-  // As value, we have a vector where each element identifies:
-  // - the local face index from the agglomeration
-  // - a cell_iterator to the neighboring cell (which is outside of the
-  // agglomeration)
-  // - the face index seen from outside
-  // This is necessary to compute quadrature rules on each agglomerated face.
-  using MasterNeighborInfo = std::tuple<
-    types::global_cell_index,
-    const typename Triangulation<dim, spacedim>::active_cell_iterator,
-    types::global_cell_index,
-    const typename Triangulation<dim, spacedim>::active_cell_iterator>;
-
-  /**
-   * For each pair (master_cell,agglo_face_number), give the following
-   * information:
-   * - local face index (standard deal.II indexing)
-   * - neighboring cell (standard deal.II cell)
-   * - neighbor of neighbor (for standard deal.II cell)
-   * - deal.II cell that owns that face of the agglomerate element
-   *
-   */
-  mutable std::map<CellAndFace, MasterNeighborInfo> master_neighbors;
-
   mutable std::vector<types::global_cell_index> number_of_agglomerated_faces;
 
   /**
