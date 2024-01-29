@@ -1060,12 +1060,6 @@ namespace dealii
 
                     // Now, link the index of the agglomerated face with the
                     // master and the neighboring cell.
-                    handler.shared_face_agglomeration_idx.emplace(
-                      typename AgglomerationHandler<dim, spacedim>::
-                        MasterAndNeighborAndFace(master_cell,
-                                                 neighboring_cell,
-                                                 nof),
-                      n_agglo_faces);
                     ++n_agglo_faces;
                   }
                 else if (cell->face(f)->at_boundary())
@@ -1172,8 +1166,11 @@ namespace dealii
                                     f); // returns the neighboring master
             AssertThrow(agglo_neigh.state() == IteratorState::valid,
                         ExcInternalError());
+
             const unsigned int n_faces_agglomerated_neighbor =
-              n_agglomerated_faces(agglo_neigh);
+              handler.number_of_agglomerated_faces[handler.master2polygon.at(
+                agglo_neigh->active_cell_index())];
+
             // Loop over all cells of neighboring agglomerate
             for (unsigned int f_out = 0; f_out < n_faces_agglomerated_neighbor;
                  ++f_out)
