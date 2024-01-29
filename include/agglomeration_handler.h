@@ -403,23 +403,7 @@ public:
    * Construct a finite element space on the agglomeration.
    */
   const FEValues<dim, spacedim> &
-  reinit(
-    const typename DoFHandler<dim, spacedim>::active_cell_iterator &cell) const;
-
-  /**
-   * Construct a finite element space on the agglomeration.
-   */
-  const FEValues<dim, spacedim> &
   reinit(const AgglomerationIterator<dim, spacedim> &polytope) const;
-
-  /**
-   * For a given master cell `cell` and agglomerated face
-   * `face_number`, initialize shape functions, normals and
-   * quadratures.
-   */
-  const FEValuesBase<dim, spacedim> &
-  reinit(const typename DoFHandler<dim, spacedim>::active_cell_iterator &cell,
-         const unsigned int face_index) const;
 
   /**
    * For a given polytope and face index, initialize shape functions, normals
@@ -428,19 +412,6 @@ public:
   const FEValuesBase<dim, spacedim> &
   reinit(const AgglomerationIterator<dim, spacedim> &polytope,
          const unsigned int                          face_index) const;
-
-  /**
-   *
-   * Return a pair of FEValuesBase object reinited from the two sides of the
-   * agglomeration.
-   */
-  std::pair<const FEValuesBase<dim, spacedim> &,
-            const FEValuesBase<dim, spacedim> &>
-  reinit_interface(
-    const typename DoFHandler<dim, spacedim>::active_cell_iterator &cell_in,
-    const typename DoFHandler<dim, spacedim>::active_cell_iterator &neigh_cell,
-    const unsigned int                                              local_in,
-    const unsigned int local_outside) const;
 
   /**
    *

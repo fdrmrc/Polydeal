@@ -1,3 +1,20 @@
+// /* ---------------------------------------------------------------------
+//  *
+//  * Copyright (C) 2022 by the deal.II authors
+//  *
+//  * This file is part of the deal.II library.
+//  *
+//  * The deal.II library is free software; you can use it, redistribute
+//  * it, and/or modify it under the terms of the GNU Lesser General
+//  * Public License as published by the Free Software Foundation; either
+//  * version 2.1 of the License, or (at your option) any later version.
+//  * The full text of the license can be found in the file LICENSE.md at
+//  * the top level directory of deal.II.
+//  *
+//  * ---------------------------------------------------------------------
+//  */
+
+
 #include <deal.II/grid/grid_generator.h>
 #include <deal.II/grid/grid_in.h>
 #include <deal.II/grid/grid_out.h>
@@ -686,15 +703,15 @@ Poisson<dim>::assemble_system()
 
   std::vector<types::global_dof_index> local_dof_indices(dofs_per_cell);
 
-  for (const auto &cell : ah->agglomeration_cell_iterators())
+  for (const auto &polytope : ah->polytope_iterators())
     {
 #ifdef AGGLO_DEBUG
-      std::cout << "Cell with idx: " << cell->active_cell_index() << std::endl;
+      std::cout << "Polytope with idx: " << polytope->index() << std::endl;
 #endif
       cell_matrix              = 0;
       cell_rhs                 = 0;
-      const auto &agglo_values = ah->reinit(cell);
-      cell->get_dof_indices(local_dof_indices);
+      const auto &agglo_values = ah->reinit(polytope);
+      polytope->get_dof_indices(local_dof_indices);
 
       const auto &        q_points  = agglo_values.get_quadrature_points();
       const unsigned int  n_qpoints = q_points.size();
@@ -718,24 +735,24 @@ Poisson<dim>::assemble_system()
 
 
       // Face terms
-      const unsigned int n_faces = ah->n_agglomerated_faces(cell);
+      const unsigned int n_faces = polytope->n_faces();
       AssertThrow(n_faces > 0,
                   ExcMessage(
                     "Invalid element: at least 4 faces are required."));
 
 
 #ifdef AGGLO_DEBUG
-      std::cout << "Face loop for " << cell->active_cell_index() << std::endl;
+      std::cout << "Face loop for " << polytope->index() << std::endl;
       std::cout << "n faces = " << n_faces << std::endl;
 #endif
 
-      auto polygon_boundary_vertices = ah->polytope_boundary(cell);
+      auto polygon_boundary_vertices = polytope->polytope_boundary();
       for (unsigned int f = 0; f < n_faces; ++f)
         {
-          if (ah->at_boundary(cell, f))
+          if (polytope->at_boundary(f))
             {
               // std::cout << "at boundary!" << std::endl;
-              const auto &fe_face = ah->reinit(cell, f);
+              const auto &fe_face = ah->reinit(polytope, f);
 
               const unsigned int dofs_per_cell = fe_face.dofs_per_cell;
               // std::cout << "With dofs_per_cell =" << fe_face.dofs_per_cell
@@ -757,7 +774,7 @@ Poisson<dim>::assemble_system()
               //                        normals[0]);
 
               const double penalty =
-                penalty_constant / std::fabs(ah->diameter(cell));
+                penalty_constant / std::fabs(polytope->diameter());
 
               for (unsigned int q_index : fe_face.quadrature_point_indices())
                 {
@@ -786,23 +803,23 @@ Poisson<dim>::assemble_system()
             }
           else
             {
-              const auto &neigh_cell = ah->agglomerated_neighbor(cell, f);
+              const auto &neigh_polytope = polytope->neighbor(f);
 #ifdef AGGLO_DEBUG
-              std::cout << "Neighbor is " << neigh_cell->active_cell_index()
+              std::cout << "Neighbor is " << neigh_polytope->index()
                         << std::endl;
 #endif
 
 
               // This is necessary to loop over internal faces only once.
-              if (cell->active_cell_index() < neigh_cell->active_cell_index())
+              if (polytope->index() < neigh_polytope->index())
                 {
                   unsigned int nofn =
-                    ah->neighbor_of_agglomerated_neighbor(cell, f);
+                    polytope->neighbor_of_agglomerated_neighbor(f);
 #ifdef AGGLO_DEBUG
                   std::cout << "Neighbor of neighbor is:" << nofn << std::endl;
 #endif
                   const auto &fe_faces =
-                    ah->reinit_interface(cell, neigh_cell, f, nofn);
+                    ah->reinit_interface(polytope, neigh_polytope, f, nofn);
 #ifdef AGGLO_DEBUG
                   std::cout << "Reinited the interface:" << nofn << std::endl;
 #endif
@@ -813,15 +830,14 @@ Poisson<dim>::assemble_system()
                   std::cout << "Local from current: " << f << std::endl;
                   std::cout << "Local from neighbor: " << nofn << std::endl;
 
-                  std::cout << "Jump between " << cell->active_cell_index()
-                            << " and " << neigh_cell->active_cell_index()
-                            << std::endl;
+                  std::cout << "Jump between " << polytope->index() << " and "
+                            << neigh_polytope->index() << std::endl;
                   {
-                    std::cout << "Quadrature points from first cell: "
+                    std::cout << "Quadrature points from first polytope: "
                               << std::endl;
                     for (const auto &q : fe_faces0.get_quadrature_points())
                       std::cout << q << std::endl;
-                    std::cout << "Quadrature points from second cell: "
+                    std::cout << "Quadrature points from second polytope: "
                               << std::endl;
                     for (const auto &q : fe_faces1.get_quadrature_points())
                       std::cout << q << std::endl;
@@ -860,7 +876,7 @@ Poisson<dim>::assemble_system()
                   //                                   polygon_boundary_vertices,
                   //                                   normals[0]);
                   const double penalty =
-                    penalty_constant / std::fabs(ah->diameter(cell));
+                    penalty_constant / std::fabs(polytope->diameter());
 
                   // M11
                   for (unsigned int q_index :
@@ -922,11 +938,7 @@ Poisson<dim>::assemble_system()
                         }
                     }
 
-                  // distribute DoFs accordingly
-                  // Retrieve DoFs info from the cell iterator.
-                  typename DoFHandler<dim>::cell_iterator neigh_dh(
-                    *neigh_cell, &(ah->agglo_dh));
-                  neigh_dh->get_dof_indices(local_dof_indices_neighbor);
+                  neigh_polytope->get_dof_indices(local_dof_indices_neighbor);
 
                   constraints.distribute_local_to_global(M11,
                                                          local_dof_indices,
@@ -1119,10 +1131,11 @@ main()
   // Testing p-convergence
   std::cout << "Testing p-convergence" << std::endl;
   {
-    for (unsigned int fe_degree : {1, 2, 3, 4, 5})
+    // for (unsigned int fe_degree : {1, 2, 3, 4, 5})
+    for (unsigned int fe_degree : {1})
       {
         std::cout << "Fe degree: " << fe_degree << std::endl;
-        Poisson<2> poisson_problem{GridType::unstructured,
+        Poisson<2> poisson_problem{GridType::grid_generator,
                                    PartitionerType::rtree,
                                    SolutionType::product_sine,
                                    5 /*extaction_level*/,

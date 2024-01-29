@@ -257,21 +257,11 @@ AgglomerationAccessor<dim, spacedim>::n_faces() const
 {
   Assert(!handler->is_slave_cell(master_cell),
          ExcMessage("You cannot pass a slave cell."));
-  if (handler->is_standard_cell(master_cell))
-    {
-      return master_cell->n_faces();
-    }
-  else
-    {
-      return handler->n_agglomerated_faces(master_cell);
-      // const auto & agglomeration = get_agglomerate();
-      // unsigned int n_neighbors   = 0;
-      // for (const auto &cell : agglomeration)
-      //   {
-      //     n_neighbors += n_agglomerated_faces_per_cell(cell);
-      //   }
-      // return n_neighbors;
-    }
+  // if (handler->is_standard_cell(master_cell))
+  //   {
+  //     return master_cell->n_faces();
+  //   }
+  return handler->number_of_agglomerated_faces[present_index];
 }
 
 
