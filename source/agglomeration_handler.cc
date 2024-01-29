@@ -359,8 +359,8 @@ AgglomerationHandler<dim, spacedim>::initialize_hp_structure()
   Assert(agglo_dh.get_triangulation().n_cells() > 0,
          ExcMessage(
            "Triangulation must not be empty upon calling this function."));
-  // Assert(n_agglomerations > 0,
-  //        ExcMessage("No agglomeration has been performed."));
+  Assert(n_agglomerations > 0,
+         ExcMessage("No agglomeration has been performed."));
   for (const auto &cell : agglo_dh.active_cell_iterators())
     if (is_master_cell(cell))
       cell->set_active_fe_index(CellAgglomerationType::master);
@@ -387,9 +387,10 @@ AgglomerationHandler<dim, spacedim>::reinit(
 
   const auto &deal_cell = polytope->as_dof_handler_iterator(agglo_dh);
 
+  // First check if the polytope is made just by a single cell. If so, use
+  // classical FEValues
   if (polytope->n_background_cells() == 1)
     return standard_scratch->reinit(deal_cell);
-
 
   const auto &agglo_cells = polytope->get_agglomerate();
 
@@ -463,8 +464,6 @@ AgglomerationHandler<dim, spacedim>::reinit_interface(
   const auto &neigh_cell = neigh_polytope->as_dof_handler_iterator(agglo_dh);
   Assert(is_master_cell(cell_in) && is_master_cell(neigh_cell),
          ExcMessage("Both cells should be masters."));
-  // both are masters. That means you want to compute the jumps or
-  // averages between a face shared by two neighboring agglomerations.
 
   const auto &fe_in =
     internal::AgglomerationHandlerImplementation<dim, spacedim>::reinit_master(
