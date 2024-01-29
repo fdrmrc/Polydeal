@@ -29,7 +29,6 @@
 #include <deal.II/fe/mapping_fe_field.h>
 #include <deal.II/fe/mapping_q.h>
 
-#include <deal.II/grid/filtered_iterator.h>
 #include <deal.II/grid/grid_tools_cache.h>
 #include <deal.II/grid/tria.h>
 
@@ -48,7 +47,6 @@
 #include <agglomeration_iterator.h>
 
 #include <fstream>
-#include <utility>
 
 using namespace dealii;
 
