@@ -487,8 +487,8 @@ void
 AgglomerationHandler<dim, spacedim>::create_agglomeration_sparsity_pattern(
   SparsityPattern &sparsity_pattern)
 {
-  // Assert(n_agglomerations > 0,
-  //        ExcMessage("The agglomeration has not been set up correctly."));
+  Assert(n_agglomerations > 0,
+         ExcMessage("The agglomeration has not been set up correctly."));
   Assert(sparsity_pattern.empty(),
          ExcMessage(
            "The Sparsity pattern must be empty upon calling this function."));
@@ -522,39 +522,62 @@ AgglomerationHandler<dim, spacedim>::create_agglomeration_sparsity_pattern(
                                        face_has_flux_coupling);
 
 
-  std::vector<types::global_dof_index> dof_indices_master(
-    agglo_dh.get_fe(0).n_dofs_per_cell());
-  std::vector<types::global_dof_index> dof_indices_neighbor(
-    agglo_dh.get_fe(2).n_dofs_per_cell());
+
+  const unsigned int dofs_per_cell = agglo_dh.get_fe(0).n_dofs_per_cell();
+  std::vector<types::global_dof_index> current_dof_indices(dofs_per_cell);
+  std::vector<types::global_dof_index> neighbor_dof_indices(dofs_per_cell);
 
   // Get the information about the neighboring
   // cells and add the corresponding entries to the sparsity pattern.
 
-  for (const auto &value : master_neighbors)
-    {
-      // value.first is a pair storing master_cell and agglo_face index.
-      // Another `first` is necessary to get the cell.
-      const auto &master_cell = (value.first).first;
-      typename DoFHandler<dim, spacedim>::cell_iterator master_cell_dh(
-        *master_cell, &agglo_dh);
-      master_cell_dh->get_dof_indices(dof_indices_master);
 
-      const auto &neigh = std::get<1>(value.second);
-      if (neigh.state() == IteratorState::valid)
+  for (const auto &polytope : polytope_iterators())
+    {
+      const unsigned int n_current_faces = polytope->n_faces();
+      polytope->get_dof_indices(current_dof_indices);
+      for (unsigned int f = 0; f < n_current_faces; ++f)
         {
-          typename DoFHandler<dim, spacedim>::cell_iterator cell_slave(
-            *neigh, &agglo_dh);
-          cell_slave->get_dof_indices(dof_indices_neighbor);
-          for (const unsigned int row_idx : dof_indices_master)
-            dsp.add_entries(row_idx,
-                            dof_indices_neighbor.begin(),
-                            dof_indices_neighbor.end());
-          for (const unsigned int col_idx : dof_indices_neighbor)
-            dsp.add_entries(col_idx,
-                            dof_indices_master.begin(),
-                            dof_indices_master.end());
+          const auto &neigh_polytope = polytope->neighbor(f);
+          if (neigh_polytope.state() == IteratorState::valid)
+            {
+              neigh_polytope->get_dof_indices(neighbor_dof_indices);
+              for (const unsigned int row_idx : current_dof_indices)
+                dsp.add_entries(row_idx,
+                                neighbor_dof_indices.begin(),
+                                neighbor_dof_indices.end());
+              for (const unsigned int col_idx : neighbor_dof_indices)
+                dsp.add_entries(col_idx,
+                                current_dof_indices.begin(),
+                                current_dof_indices.end());
+            }
         }
     }
+
+  // for (const auto &value : master_neighbors)
+  //   {
+  //     // value.first is a pair storing master_cell and agglo_face index.
+  //     // Another `first` is necessary to get the cell.
+  //     const auto &master_cell = (value.first).first;
+  //     typename DoFHandler<dim, spacedim>::cell_iterator master_cell_dh(
+  //       *master_cell, &agglo_dh);
+  //     master_cell_dh->get_dof_indices(dof_indices_master);
+
+  //     const auto &neigh = std::get<1>(value.second);
+  //     if (neigh.state() == IteratorState::valid)
+  //       {
+  //         typename DoFHandler<dim, spacedim>::cell_iterator cell_slave(
+  //           *neigh, &agglo_dh);
+  //         cell_slave->get_dof_indices(dof_indices_neighbor);
+  //         for (const unsigned int row_idx : dof_indices_master)
+  //           dsp.add_entries(row_idx,
+  //                           dof_indices_neighbor.begin(),
+  //                           dof_indices_neighbor.end());
+  //         for (const unsigned int col_idx : dof_indices_neighbor)
+  //           dsp.add_entries(col_idx,
+  //                           dof_indices_master.begin(),
+  //                           dof_indices_master.end());
+  //       }
+  //   }
 
 
   sparsity_pattern.copy_from(dsp);
