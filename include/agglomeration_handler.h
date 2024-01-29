@@ -68,38 +68,6 @@ namespace dealii
   } // namespace internal
 } // namespace dealii
 
-namespace dealii
-{
-  namespace IteratorFilters
-  {
-    /**
-     * This predicate returns true if the present cell is not-slave.
-     *
-     */
-    template <int dim, int spacedim>
-    class IsNotSlave
-    {
-    public:
-      IsNotSlave(AgglomerationHandler<dim, spacedim> *agglo_handler_ptr)
-      {
-        ah = agglo_handler_ptr;
-      }
-
-      template <typename CellIterator>
-      bool
-      operator()(const CellIterator &cell) const
-      {
-        return !ah->is_slave_cell(cell);
-      }
-
-    private:
-      AgglomerationHandler<dim, spacedim> *ah;
-    };
-
-  } // namespace IteratorFilters
-} // namespace dealii
-
-
 
 /**
  * Helper class for the storage of connectivity information of the polytopal
@@ -311,11 +279,6 @@ public:
   inline decltype(auto)
   get_interface() const;
 
-  inline decltype(auto)
-  n_agglomerated_faces(
-    const typename Triangulation<dim, spacedim>::active_cell_iterator
-      &master_cell) const;
-
   inline const std::vector<long int> &
   get_relationships() const;
 
@@ -462,9 +425,6 @@ public:
   at_boundary(
     const typename DoFHandler<dim, spacedim>::active_cell_iterator &cell,
     const unsigned int                                              f) const;
-
-  inline decltype(auto)
-  agglomeration_cell_iterators();
 
   inline unsigned int
   n_dofs_per_cell() const noexcept;
@@ -677,30 +637,6 @@ private:
    */
   mutable std::map<CellAndFace, MasterNeighborInfo> master_neighbors;
 
-
-  // /**
-  //  * Given a pair of neighboring cells, store the sequence of local face
-  //  indices
-  //  * and deal cells they share.
-  //  *
-  //  */
-  // mutable std::map<
-  //   std::pair<types::global_cell_index, types::global_cell_index>,
-  //   std::vector<
-  //     std::pair<typename Triangulation<dim, spacedim>::active_cell_iterator,
-  //               unsigned int>>>
-  //   agglomerated_faces;
-
-  /**
-   * (Agglo,face agglo) ->
-   * - deal cell,
-   * - local deal face idx
-   * - neighboring master
-   *
-   */
-
-
-
   mutable std::vector<types::global_cell_index> number_of_agglomerated_faces;
 
   /**
@@ -713,10 +649,6 @@ private:
     std::vector<typename Triangulation<dim>::active_face_iterator>>
     polygon_boundary;
 
-
-
-  mutable std::map<MasterAndNeighborAndFace, types::global_cell_index>
-    shared_face_agglomeration_idx;
 
   /**
    * Vector of `BoundingBoxes` s.t. `bboxes[idx]` equals BBOx associated to the
@@ -755,18 +687,6 @@ private:
    * and return the result of scratch.reinit(cell) for cells
    */
   mutable std::unique_ptr<ScratchData> standard_scratch;
-
-  mutable std::unique_ptr<ScratchData> standard_scratch_face;
-
-  mutable std::unique_ptr<ScratchData> standard_scratch_face_any;
-
-  mutable std::unique_ptr<ScratchData> standard_scratch_face_bdary;
-
-  mutable std::unique_ptr<ScratchData> standard_scratch_face_std;
-
-  mutable std::unique_ptr<ScratchData> standard_scratch_face_std_neigh;
-
-  mutable std::unique_ptr<ScratchData> standard_scratch_face_std_another;
 
   /**
    * Fill this up in reinit(cell), for agglomerated cells, using the custom
@@ -851,18 +771,6 @@ inline decltype(auto)
 AgglomerationHandler<dim, spacedim>::get_interface() const
 {
   return polytope_cache.interface;
-}
-
-
-
-template <int dim, int spacedim>
-inline decltype(auto)
-AgglomerationHandler<dim, spacedim>::n_agglomerated_faces(
-  const typename Triangulation<dim, spacedim>::active_cell_iterator
-    &master_cell) const
-{
-  return number_of_agglomerated_faces[master2polygon.at(
-    master_cell->active_cell_index())];
 }
 
 
@@ -955,33 +863,11 @@ AgglomerationHandler<dim, spacedim>::at_boundary(
 {
   Assert(!is_slave_cell(cell),
          ExcMessage("This function should not be called for a slave cell."));
-  if (is_standard_cell(cell))
-    return cell->face(face_index)->at_boundary();
-  else
-    {
-      // return std::get<2>(master_neighbors[{cell, f}]) ==
-      //        std::numeric_limits<unsigned int>::max();
 
-      // boundary cells are all clustered together
-      // const auto &[deal_cell, local_face_idx, dummy, dummy_] =
-      //   info_cells[{cell, f}][0];
-      // return deal_cell->at_boundary(local_face_idx);
-      return polytope_cache.cell_face_at_boundary
-        .at({master2polygon.at(cell->active_cell_index()), face_index})
-        .first;
-    }
+  return polytope_cache.cell_face_at_boundary
+    .at({master2polygon.at(cell->active_cell_index()), face_index})
+    .first;
 }
-
-
-
-template <int dim, int spacedim>
-inline decltype(auto)
-AgglomerationHandler<dim, spacedim>::agglomeration_cell_iterators()
-{
-  return agglo_dh.active_cell_iterators() |
-         IteratorFilters::IsNotSlave(this); // iterator range
-}
-
 
 
 template <int dim, int spacedim>
