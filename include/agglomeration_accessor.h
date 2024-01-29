@@ -69,6 +69,12 @@ public:
   n_faces() const;
 
   /**
+   * Return the number of deal.II faces that is building a polygon face.
+   */
+  unsigned int
+  n_agglomerated_faces() const;
+
+  /**
    * Return the agglomerate which shares face f.
    */
   const AgglomerationIterator<dim, spacedim>
@@ -187,14 +193,6 @@ private:
   AgglomerationHandler<dim, spacedim> *handler;
 
   /**
-   * Return the number of agglomerated faces.
-   */
-  unsigned int
-  n_agglomerated_faces_per_cell(
-    const typename Triangulation<dim, spacedim>::active_cell_iterator &cell)
-    const;
-
-  /**
    * Comparison operator for Accessor. Two accessors are equal if they refer to
    * the same polygonal element.
    */
@@ -225,6 +223,11 @@ private:
   const AgglomerationContainer &
   get_slaves() const;
 
+  unsigned int
+  n_agglomerated_faces_per_cell(
+    const typename Triangulation<dim, spacedim>::active_cell_iterator &cell)
+    const;
+
   template <int, int>
   friend class AgglomerationIterator;
 };
@@ -251,16 +254,13 @@ AgglomerationAccessor<dim, spacedim>::n_agglomerated_faces_per_cell(
 }
 
 
+
 template <int dim, int spacedim>
 unsigned int
 AgglomerationAccessor<dim, spacedim>::n_faces() const
 {
   Assert(!handler->is_slave_cell(master_cell),
          ExcMessage("You cannot pass a slave cell."));
-  // if (handler->is_standard_cell(master_cell))
-  //   {
-  //     return master_cell->n_faces();
-  //   }
   return handler->number_of_agglomerated_faces[present_index];
 }
 
@@ -532,6 +532,19 @@ AgglomerationAccessor<dim, spacedim>::n_background_cells() const
 {
   AssertThrow(get_agglomerate().size() > 0, ExcMessage("Empty agglomeration."));
   return get_agglomerate().size();
+}
+
+
+
+template <int dim, int spacedim>
+unsigned int
+AgglomerationAccessor<dim, spacedim>::n_agglomerated_faces() const
+{
+  const auto & agglomeration = get_agglomerate();
+  unsigned int n_neighbors   = 0;
+  for (const auto &cell : agglomeration)
+    n_neighbors += n_agglomerated_faces_per_cell(cell);
+  return n_neighbors;
 }
 
 
