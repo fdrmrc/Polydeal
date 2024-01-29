@@ -51,7 +51,7 @@ var searchData=
   ['_7efeevaluationbase_48',['~FEEvaluationBase',['http://www.dealii.org/developer/doxygen/deal.II/classFEEvaluationBase.html#ac95b7a0a74210b791e04517d7087db6d',1,'FEEvaluationBase']]],
   ['_7efeevaluationdata_49',['~FEEvaluationData',['http://www.dealii.org/developer/doxygen/deal.II/classFEEvaluationData.html#aacc52f6e002dc4f7dec2421139f445a6',1,'FEEvaluationData']]],
   ['_7efefactorybase_50',['~FEFactoryBase',['http://www.dealii.org/developer/doxygen/deal.II/classFETools_1_1FEFactoryBase.html#a089f9eed38cb331e02f6288360a09053',1,'FETools::FEFactoryBase']]],
-  ['_7efepointevaluation_51',['~FEPointEvaluation',['http://www.dealii.org/developer/doxygen/deal.II/classFEPointEvaluation.html#a7abf7ffc3d5eee338645fd1474dddb02',1,'FEPointEvaluation']]],
+  ['_7efepointevaluationbase_51',['~FEPointEvaluationBase',['http://www.dealii.org/developer/doxygen/deal.II/classFEPointEvaluationBase.html#a03b42882d7c9441a269744b82f9df05e',1,'FEPointEvaluationBase']]],
   ['_7efesystem_52',['~FESystem',['http://www.dealii.org/developer/doxygen/deal.II/classFESystem.html#af16ae6333666b8d042306c257f6dc286',1,'FESystem']]],
   ['_7efevaluesbase_53',['~FEValuesBase',['http://www.dealii.org/developer/doxygen/deal.II/classFEValuesBase.html#a510f4d901858ddb4ed0708cb228bd3e1',1,'FEValuesBase']]],
   ['_7efiniteelement_54',['~FiniteElement',['http://www.dealii.org/developer/doxygen/deal.II/classFiniteElement.html#aabf3a96e8baf4a638d458af63d0783a9',1,'FiniteElement']]],

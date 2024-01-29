@@ -270,10 +270,10 @@ $(function(){initNavTree('assembly__check_8cc_source.html',''); initResizable();
 <div class="line"><a id="l00148" name="l00148"></a><span class="lineno">  148</span>                                             cells_to_be_agglomerated4);</div>
 <div class="line"><a id="l00149" name="l00149"></a><span class="lineno">  149</span>  <span class="comment">// Agglomerate the cells just stored</span></div>
 <div class="line"><a id="l00150" name="l00150"></a><span class="lineno">  150</span>  ah = std::make_unique&lt;AgglomerationHandler&lt;dim&gt;&gt;(*cached_tria);</div>
-<div class="line"><a id="l00151" name="l00151"></a><span class="lineno">  151</span>  ah-&gt;insert_agglomerate(cells_to_be_agglomerated);</div>
-<div class="line"><a id="l00152" name="l00152"></a><span class="lineno">  152</span>  ah-&gt;insert_agglomerate(cells_to_be_agglomerated2);</div>
-<div class="line"><a id="l00153" name="l00153"></a><span class="lineno">  153</span>  ah-&gt;insert_agglomerate(cells_to_be_agglomerated3);</div>
-<div class="line"><a id="l00154" name="l00154"></a><span class="lineno">  154</span>  ah-&gt;insert_agglomerate(cells_to_be_agglomerated4);</div>
+<div class="line"><a id="l00151" name="l00151"></a><span class="lineno">  151</span>  ah-&gt;define_agglomerate(cells_to_be_agglomerated);</div>
+<div class="line"><a id="l00152" name="l00152"></a><span class="lineno">  152</span>  ah-&gt;define_agglomerate(cells_to_be_agglomerated2);</div>
+<div class="line"><a id="l00153" name="l00153"></a><span class="lineno">  153</span>  ah-&gt;define_agglomerate(cells_to_be_agglomerated3);</div>
+<div class="line"><a id="l00154" name="l00154"></a><span class="lineno">  154</span>  ah-&gt;define_agglomerate(cells_to_be_agglomerated4);</div>
 <div class="line"><a id="l00155" name="l00155"></a><span class="lineno">  155</span>  ah-&gt;distribute_agglomerated_dofs(dg_fe);</div>
 <div class="line"><a id="l00156" name="l00156"></a><span class="lineno">  156</span>  ah-&gt;create_agglomeration_sparsity_pattern(sparsity);</div>
 <div class="line"><a id="l00157" name="l00157"></a><span class="lineno">  157</span>  <span class="comment">// // sanity check</span></div>
@@ -888,7 +888,7 @@ $(function(){initNavTree('assembly__check_8cc_source.html',''); initResizable();
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="dir_aa394cd1d9abb8ffe941d9aaafca8d03.html">github</a></li><li class="navelem"><a class="el" href="dir_c52569aa89a7adbb6029022c2fa60a11.html">workspace</a></li><li class="navelem"><a class="el" href="dir_37bdb9d2191b5493db509660c6a8c15a.html">source</a></li><li class="navelem"><a class="el" href="assembly__check_8cc.html">assembly_check.cc</a></li>
-    <li class="footer">Generated on Wed Jan 24 2024 09:41:52 for PolyDEAL by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.10.0 </li>
+    <li class="footer">Generated on Mon Jan 29 2024 09:49:27 for PolyDEAL by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.10.0 </li>
   </ul>
 </div>
 </body>
