@@ -266,7 +266,7 @@ public:
    * about this is done.
    */
   agglomeration_iterator
-  insert_agglomerate(const AgglomerationContainer &cells);
+  define_agglomerate(const AgglomerationContainer &cells);
 
   /**
    * Get the connectivity of the agglomeration. TODO: this data structure should
@@ -982,12 +982,12 @@ private:
     std::vector<Point<spacedim>>         pts; // store all the vertices
     for (const auto &cell : polytope)
       {
-        typename DoFHandler<dim, spacedim>::cell_iterator cell_dh(*cell,
-                                                                  &euler_dh);
-        cell_dh->get_dof_indices(dof_indices);
         for (const auto i : cell->vertex_indices())
           pts.push_back(cell->vertex(i));
       }
+    typename DoFHandler<dim, spacedim>::cell_iterator cell_dh(*polytope[0],
+                                                              &euler_dh);
+    cell_dh->get_dof_indices(dof_indices);
 
     bboxes.emplace_back(pts);
 
@@ -995,6 +995,7 @@ private:
       bboxes[master2polygon.at(master_idx)].get_boundary_points().first;
     const auto &p1 =
       bboxes[master2polygon.at(master_idx)].get_boundary_points().second;
+
     if constexpr (dim == 2)
       {
         euler_vector[dof_indices[0]] = p0[0];
