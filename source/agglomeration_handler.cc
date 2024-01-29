@@ -49,11 +49,6 @@ AgglomerationHandler<dim, spacedim>::define_agglomerate(
   if (cells.size() == 1)
     hybrid_mesh = true; // mesh is made also by classical cells
 
-  // Get global index for each cell
-  std::vector<types::global_cell_index> global_indices;
-  for (const auto &cell : cells)
-    global_indices.push_back(cell->active_cell_index());
-
   // First index drives the selection of the master cell. After that, store the
   // master cell.
   const types::global_cell_index master_idx = cells[0]->active_cell_index();
@@ -95,10 +90,10 @@ AgglomerationHandler<dim, spacedim>::define_agglomerate(
 template <int dim, int spacedim>
 void
 AgglomerationHandler<dim, spacedim>::initialize_fe_values(
-  const Quadrature<dim> &    cell_quadrature,
-  const UpdateFlags &        flags,
+  const Quadrature<dim>     &cell_quadrature,
+  const UpdateFlags         &flags,
   const Quadrature<dim - 1> &face_quadrature,
-  const UpdateFlags &        face_flags)
+  const UpdateFlags         &face_flags)
 {
   agglomeration_quad       = cell_quadrature;
   agglomeration_flags      = flags;
@@ -195,7 +190,7 @@ AgglomerationHandler<dim, spacedim>::initialize_agglomeration_data(
 template <int dim, int spacedim>
 void
 AgglomerationHandler<dim, spacedim>::create_bounding_box(
-  const AgglomerationContainer & polytope,
+  const AgglomerationContainer  &polytope,
   const types::global_cell_index master_idx)
 {
   Assert(n_agglomerations > 0,
@@ -205,15 +200,15 @@ AgglomerationHandler<dim, spacedim>::create_bounding_box(
   std::vector<types::global_dof_index> dof_indices(euler_fe->dofs_per_cell);
   std::vector<Point<spacedim>>         pts; // store all the vertices
   for (const auto &cell : polytope)
-    {
-      typename DoFHandler<dim, spacedim>::cell_iterator cell_dh(*cell,
-                                                                &euler_dh);
-      cell_dh->get_dof_indices(dof_indices);
-      for (const auto i : cell->vertex_indices())
-        pts.push_back(cell->vertex(i));
-    }
+    for (const auto i : cell->vertex_indices())
+      pts.push_back(cell->vertex(i));
 
   bboxes.emplace_back(pts);
+
+  typename DoFHandler<dim, spacedim>::cell_iterator polytope_dh(*polytope[0],
+                                                                &euler_dh);
+  polytope_dh->get_dof_indices(dof_indices);
+
 
   const auto &p0 =
     bboxes[master2polygon.at(master_idx)].get_boundary_points().first;
@@ -340,7 +335,7 @@ AgglomerationHandler<dim, spacedim>::agglomerated_quadrature(
   // Map back each point in real space by using the map associated to the
   // bounding box.
   std::vector<Point<dim>> unit_points(vec_pts.size());
-  const auto &            bbox =
+  const auto             &bbox =
     bboxes[master2polygon.at(master_cell->active_cell_index())];
   unit_points.reserve(vec_pts.size());
 
@@ -679,7 +674,7 @@ namespace dealii
         const typename DoFHandler<dim, spacedim>::active_cell_iterator &cell,
         const unsigned int face_index,
         std::unique_ptr<NonMatching::FEImmersedSurfaceValues<spacedim>>
-          &                                        agglo_isv_ptr,
+                                                  &agglo_isv_ptr,
         const AgglomerationHandler<dim, spacedim> &handler)
       {
         Assert(handler.is_master_cell(cell),
@@ -788,7 +783,7 @@ namespace dealii
       static void
       setup_master_neighbor_connectivity(
         const typename Triangulation<dim, spacedim>::active_cell_iterator
-          &                                        master_cell,
+                                                  &master_cell,
         const AgglomerationHandler<dim, spacedim> &handler)
       {
         Assert(
@@ -1000,7 +995,7 @@ namespace dealii
       agglomerated_neighbor(
         const typename DoFHandler<dim, spacedim>::active_cell_iterator &cell,
         const unsigned int                                              f,
-        const AgglomerationHandler<dim, spacedim> &                     handler)
+        const AgglomerationHandler<dim, spacedim>                      &handler)
       {
         Assert(handler.is_master_cell(cell),
                ExcMessage("This cell must be a master one."));
@@ -1026,7 +1021,7 @@ namespace dealii
       neighbor_of_agglomerated_neighbor(
         const typename DoFHandler<dim, spacedim>::active_cell_iterator &cell,
         const unsigned int                                              f,
-        const AgglomerationHandler<dim, spacedim> &                     handler)
+        const AgglomerationHandler<dim, spacedim>                      &handler)
       {
         Assert(!is_slave_cell(cell),
                ExcMessage("This cells is not supposed to be a slave."));
