@@ -381,25 +381,6 @@ public:
     const typename DoFHandler<dim, spacedim>::active_cell_iterator &cell) const;
 
   /**
-   * Return, for each cell belonging to the same agllomeration, a cell belonging
-   * to the neighbor agglomeration
-   */
-  typename DoFHandler<dim, spacedim>::active_cell_iterator
-  agglomerated_neighbor(
-    const typename DoFHandler<dim, spacedim>::active_cell_iterator &cell,
-    const unsigned int                                              f) const;
-
-  /**
-   * Generalize the 'cell->neighbor_of_neighbor(f)' to the case where 'cell' is:
-   * - a master cell of an agglomeration.
-   * - a standard cell adjacent to an agglomeration.
-   */
-  unsigned int
-  neighbor_of_agglomerated_neighbor(
-    const typename DoFHandler<dim, spacedim>::active_cell_iterator &cell,
-    const unsigned int                                              f) const;
-
-  /**
    * Construct a finite element space on the agglomeration.
    */
   const FEValues<dim, spacedim> &
