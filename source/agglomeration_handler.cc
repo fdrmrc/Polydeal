@@ -476,9 +476,13 @@ AgglomerationHandler<dim, spacedim>::reinit_interface(
 
 
 template <int dim, int spacedim>
+template <typename Number>
 void
 AgglomerationHandler<dim, spacedim>::create_agglomeration_sparsity_pattern(
-  SparsityPattern &sparsity_pattern)
+  SparsityPattern &               sparsity_pattern,
+  const AffineConstraints<Number> constraints,
+  const bool                      keep_constrained_dofs,
+  const types::subdomain_id       subdomain_id)
 {
   Assert(n_agglomerations > 0,
          ExcMessage("The agglomeration has not been set up correctly."));
@@ -486,22 +490,20 @@ AgglomerationHandler<dim, spacedim>::create_agglomeration_sparsity_pattern(
          ExcMessage(
            "The Sparsity pattern must be empty upon calling this function."));
 
-  DynamicSparsityPattern    dsp(agglo_dh.n_dofs(), agglo_dh.n_dofs());
-  AffineConstraints<double> constraints;
-  const bool                keep_constrained_dofs = true;
+  DynamicSparsityPattern dsp(agglo_dh.n_dofs(), agglo_dh.n_dofs());
 
   const unsigned int           n_components = fe_collection.n_components();
-  Table<2, DoFTools::Coupling> cell_coupling(n_components, n_components);
-  Table<2, DoFTools::Coupling> face_coupling(n_components, n_components);
-  cell_coupling[0][0] = DoFTools::always;
-  face_coupling[0][0] = DoFTools::always;
+  Table<2, DoFTools::Coupling> cell_couplings{n_components, n_components};
+  Table<2, DoFTools::Coupling> face_couplings{n_components, n_components};
+  cell_couplings[0][0] = DoFTools::always;
+  face_couplings[0][0] = DoFTools::always;
   DoFTools::make_flux_sparsity_pattern(agglo_dh,
                                        dsp,
                                        constraints,
                                        keep_constrained_dofs,
-                                       cell_coupling,
-                                       face_coupling,
-                                       numbers::invalid_subdomain_id);
+                                       cell_couplings,
+                                       face_couplings,
+                                       subdomain_id);
 
 
   const unsigned int dofs_per_cell = agglo_dh.get_fe(0).n_dofs_per_cell();
@@ -525,14 +527,6 @@ AgglomerationHandler<dim, spacedim>::create_agglomeration_sparsity_pattern(
                                                       dsp,
                                                       keep_constrained_dofs,
                                                       {});
-              // for (const unsigned int row_idx : current_dof_indices)
-              //   dsp.add_entries(row_idx,
-              //                   neighbor_dof_indices.begin(),
-              //                   neighbor_dof_indices.end());
-              // for (const unsigned int col_idx : neighbor_dof_indices)
-              //   dsp.add_entries(col_idx,
-              //                   current_dof_indices.begin(),
-              //                   current_dof_indices.end());
             }
         }
     }
@@ -1067,5 +1061,25 @@ namespace dealii
 
 
 template class AgglomerationHandler<1>;
+template void
+AgglomerationHandler<1>::create_agglomeration_sparsity_pattern(
+  SparsityPattern &               sparsity_pattern,
+  const AffineConstraints<double> constraints,
+  const bool                      keep_constrained_dofs,
+  const types::subdomain_id       subdomain_id);
+
 template class AgglomerationHandler<2>;
+template void
+AgglomerationHandler<2>::create_agglomeration_sparsity_pattern(
+  SparsityPattern &               sparsity_pattern,
+  const AffineConstraints<double> constraints,
+  const bool                      keep_constrained_dofs,
+  const types::subdomain_id       subdomain_id);
+
 template class AgglomerationHandler<3>;
+template void
+AgglomerationHandler<3>::create_agglomeration_sparsity_pattern(
+  SparsityPattern &               sparsity_pattern,
+  const AffineConstraints<double> constraints,
+  const bool                      keep_constrained_dofs,
+  const types::subdomain_id       subdomain_id);
