@@ -259,8 +259,13 @@ public:
    * agglomerated cells are seen as one **unique** cell, with only the DoFs
    * associated to the master cell of the agglomeration.
    */
+  template <typename Number = double>
   void
-  create_agglomeration_sparsity_pattern(SparsityPattern &sparsity_pattern);
+  create_agglomeration_sparsity_pattern(
+    SparsityPattern &               sparsity_pattern,
+    const AffineConstraints<Number> constraints = AffineConstraints<Number>(),
+    const bool                      keep_constrained_dofs = true,
+    const types::subdomain_id subdomain_id = numbers::invalid_subdomain_id);
 
   /**
    * Store internally that the given cells are agglomerated. The convenction we
