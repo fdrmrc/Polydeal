@@ -153,6 +153,20 @@ public:
   unsigned int
   n_background_cells() const;
 
+  /* Returns true if this polygon is owned by the current processor. On a serial
+   * Triangulation this returs always true, but may yield false for a
+   * parallel::distributed::Triangulation.
+   */
+  bool
+  is_locally_owned() const;
+
+  /**
+   * The polygonal analogue of CellAccessor::id(). It provides a way to uniquely
+   * identify cells in a parallel Triangulation such as a
+   * parallel::distributed::Triangulation.
+   */
+  CellId
+  id() const;
 
 private:
   /**
@@ -540,5 +554,24 @@ AgglomerationAccessor<dim, spacedim>::at_boundary(const unsigned int f) const
     *master_cell, &(handler->agglo_dh));
   return handler->at_boundary(cell_dh, f);
 }
+
+
+
+template <int dim, int spacedim>
+inline bool
+AgglomerationAccessor<dim, spacedim>::is_locally_owned() const
+{
+  return master_cell->is_locally_owned();
+}
+
+
+
+template <int dim, int spacedim>
+inline CellId
+AgglomerationAccessor<dim, spacedim>::id() const
+{
+  return master_cell->id();
+}
+
 
 #endif
