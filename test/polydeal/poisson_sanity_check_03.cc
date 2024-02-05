@@ -103,8 +103,7 @@ LaplaceOperator<dim>::make_grid()
 {
   GridIn<dim> grid_in;
   grid_in.attach_triangulation(tria);
-  std::ifstream gmsh_file(
-    "../../../../meshes/t3.msh"); // unstructured square [0,1]^2
+  std::ifstream gmsh_file(SOURCE_DIR "/t3.msh"); // unstructured square [0,1]^2
   grid_in.read_msh(gmsh_file);
   tria.refine_global(3);
   cached_tria = std::make_unique<GridTools::Cache<dim>>(tria, mapping);
