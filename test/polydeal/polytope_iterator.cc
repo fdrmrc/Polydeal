@@ -210,13 +210,13 @@ TestIterator<dim>::setup_agglomeration()
 
 
   // Agglomerate the cells just stored
-  ah->insert_agglomerate(cells_to_be_agglomerated);
-  ah->insert_agglomerate(cells_to_be_agglomerated2);
-  ah->insert_agglomerate(cells_to_be_agglomerated3);
-  ah->insert_agglomerate(cells_to_be_agglomerated4);
-  ah->insert_agglomerate(cells_to_be_agglomerated5);
-  ah->insert_agglomerate(cells_to_be_agglomerated6);
-  ah->insert_agglomerate(cells_to_be_agglomerated7);
+  ah->define_agglomerate(cells_to_be_agglomerated);
+  ah->define_agglomerate(cells_to_be_agglomerated2);
+  ah->define_agglomerate(cells_to_be_agglomerated3);
+  ah->define_agglomerate(cells_to_be_agglomerated4);
+  ah->define_agglomerate(cells_to_be_agglomerated5);
+  ah->define_agglomerate(cells_to_be_agglomerated6);
+  ah->define_agglomerate(cells_to_be_agglomerated7);
 
   for (std::size_t i = 0; i < tria.n_active_cells(); ++i)
     {
@@ -224,7 +224,7 @@ TestIterator<dim>::setup_agglomeration()
       if (std::find(flagged_cells.begin(),
                     flagged_cells.end(),
                     cells[i]->active_cell_index()) == std::end(flagged_cells))
-        ah->insert_agglomerate({cells[i]});
+        ah->define_agglomerate({cells[i]});
     }
 
   ah->distribute_agglomerated_dofs(dg_fe);

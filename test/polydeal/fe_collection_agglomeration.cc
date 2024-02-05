@@ -97,7 +97,7 @@ test_hyper_cube(Triangulation<2> &tria)
       if (std::find(flagged_cells.begin(),
                     flagged_cells.end(),
                     cells[i]->active_cell_index()) == std::end(flagged_cells))
-        ah.insert_agglomerate({cells[i]});
+        ah.define_agglomerate({cells[i]});
     }
 
   FE_DGQ<2> fe_dg(0);
@@ -190,7 +190,7 @@ test_hyper_ball(Triangulation<2> &tria)
       if (std::find(flagged_cells.begin(),
                     flagged_cells.end(),
                     cells[i]->active_cell_index()) == std::end(flagged_cells))
-        ah.insert_agglomerate({cells[i]});
+        ah.define_agglomerate({cells[i]});
     }
 
   FE_DGQ<2> fe_dg(0);

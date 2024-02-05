@@ -95,7 +95,7 @@ test_q_points_agglomerated_face(Triangulation<dim> &tria)
       if (std::find(flagged_cells.begin(),
                     flagged_cells.end(),
                     cells[i]->active_cell_index()) == std::end(flagged_cells))
-        ah.insert_agglomerate({cells[i]});
+        ah.define_agglomerate({cells[i]});
     }
 
 

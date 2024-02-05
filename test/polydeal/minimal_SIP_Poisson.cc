@@ -227,7 +227,7 @@ Poisson<dim>::setup_agglomeration()
         cells.push_back(cell);
 
       for (std::size_t i = 0; i < tria.n_active_cells(); ++i)
-        ah->insert_agglomerate({cells[i]});
+        ah->define_agglomerate({cells[i]});
     }
 
   ah->distribute_agglomerated_dofs(dg_fe);
