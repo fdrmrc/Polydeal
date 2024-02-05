@@ -16,6 +16,7 @@
 #ifndef agglomeration_handler_h
 #define agglomeration_handler_h
 
+#include <deal.II/base/mpi.h>
 #include <deal.II/base/quadrature.h>
 #include <deal.II/base/subscriptor.h>
 
@@ -614,6 +615,8 @@ private:
   std::unique_ptr<FESystem<dim, spacedim>> euler_fe;
 
   std::unique_ptr<GridTools::Cache<dim, spacedim>> cached_tria;
+
+  const MPI_Comm communicator;
 
   // The FE_DGQ space we have on each cell
   std::unique_ptr<FE_DGQ<dim, spacedim>> fe;

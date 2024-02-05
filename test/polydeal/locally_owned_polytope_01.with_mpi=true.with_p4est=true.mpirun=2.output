@@ -1,0 +1,19 @@
+Running with 2 MPI ranks.
+Rank 0 owns 8 polygons with indices: 
+0
+1
+2
+3
+4
+5
+6
+7
+Rank 1 owns 8 polygons with indices: 
+0
+1
+2
+3
+4
+5
+6
+7
