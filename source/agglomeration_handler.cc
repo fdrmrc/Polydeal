@@ -90,10 +90,10 @@ AgglomerationHandler<dim, spacedim>::define_agglomerate(
 template <int dim, int spacedim>
 void
 AgglomerationHandler<dim, spacedim>::initialize_fe_values(
-  const Quadrature<dim>     &cell_quadrature,
-  const UpdateFlags         &flags,
+  const Quadrature<dim> &    cell_quadrature,
+  const UpdateFlags &        flags,
   const Quadrature<dim - 1> &face_quadrature,
-  const UpdateFlags         &face_flags)
+  const UpdateFlags &        face_flags)
 {
   agglomeration_quad       = cell_quadrature;
   agglomeration_flags      = flags;
@@ -190,7 +190,7 @@ AgglomerationHandler<dim, spacedim>::initialize_agglomeration_data(
 template <int dim, int spacedim>
 void
 AgglomerationHandler<dim, spacedim>::create_bounding_box(
-  const AgglomerationContainer  &polytope,
+  const AgglomerationContainer & polytope,
   const types::global_cell_index master_idx)
 {
   Assert(n_agglomerations > 0,
@@ -335,7 +335,7 @@ AgglomerationHandler<dim, spacedim>::agglomerated_quadrature(
   // Map back each point in real space by using the map associated to the
   // bounding box.
   std::vector<Point<dim>> unit_points(vec_pts.size());
-  const auto             &bbox =
+  const auto &            bbox =
     bboxes[master2polygon.at(master_cell->active_cell_index())];
   unit_points.reserve(vec_pts.size());
 
@@ -668,7 +668,7 @@ namespace dealii
         const typename DoFHandler<dim, spacedim>::active_cell_iterator &cell,
         const unsigned int face_index,
         std::unique_ptr<NonMatching::FEImmersedSurfaceValues<spacedim>>
-                                                  &agglo_isv_ptr,
+          &                                        agglo_isv_ptr,
         const AgglomerationHandler<dim, spacedim> &handler)
       {
         Assert(handler.is_master_cell(cell),
@@ -777,7 +777,7 @@ namespace dealii
       static void
       setup_master_neighbor_connectivity(
         const typename Triangulation<dim, spacedim>::active_cell_iterator
-                                                  &master_cell,
+          &                                        master_cell,
         const AgglomerationHandler<dim, spacedim> &handler)
       {
         Assert(
@@ -989,7 +989,7 @@ namespace dealii
       agglomerated_neighbor(
         const typename DoFHandler<dim, spacedim>::active_cell_iterator &cell,
         const unsigned int                                              f,
-        const AgglomerationHandler<dim, spacedim>                      &handler)
+        const AgglomerationHandler<dim, spacedim> &                     handler)
       {
         Assert(handler.is_master_cell(cell),
                ExcMessage("This cell must be a master one."));
@@ -1015,7 +1015,7 @@ namespace dealii
       neighbor_of_agglomerated_neighbor(
         const typename DoFHandler<dim, spacedim>::active_cell_iterator &cell,
         const unsigned int                                              f,
-        const AgglomerationHandler<dim, spacedim>                      &handler)
+        const AgglomerationHandler<dim, spacedim> &                     handler)
       {
         Assert(!is_slave_cell(cell),
                ExcMessage("This cells is not supposed to be a slave."));

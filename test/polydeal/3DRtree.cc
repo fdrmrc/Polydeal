@@ -236,7 +236,6 @@ Poisson<dim>::setup_agglomeration()
     data_out.build_patches(mapping);
     data_out.write_vtu(output);
   }
-
 }
 
 template <int dim>

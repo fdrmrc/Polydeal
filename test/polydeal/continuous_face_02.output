@@ -216,7 +216,7 @@ Ok
 - - - - - - - - - - - -
 Check on quadrature points:
 Ok
-End Test1
+End Test 1
 Master cell index = 3
 Number of agglomerated faces = 4
 Agglomerate face index = 0
@@ -363,7 +363,7 @@ Ok
 - - - - - - - - - - - -
 Check on quadrature points:
 Ok
-End Test2
+End Test 2
 Master cell index = 0
 Number of agglomerated faces = 4
 Agglomerate face index = 0
@@ -853,4 +853,4 @@ Ok
 - - - - - - - - - - - -
 Check on quadrature points:
 Ok
-End Test3
+End Test 3

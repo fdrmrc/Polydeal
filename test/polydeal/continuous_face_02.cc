@@ -371,7 +371,7 @@ main()
     test_neighbors(ah);
     std::cout << "- - - - - - - - - - - -" << std::endl;
     test_face_qpoints(ah);
-    std::cout << "End Test1" << std::endl;
+    std::cout << "End Test 1" << std::endl;
   }
 
   {
@@ -394,7 +394,7 @@ main()
     test_neighbors(ah);
     std::cout << "- - - - - - - - - - - -" << std::endl;
     test_face_qpoints(ah);
-    std::cout << "End Test2" << std::endl;
+    std::cout << "End Test 2" << std::endl;
   }
 
   {
@@ -425,6 +425,6 @@ main()
     test_neighbors(ah);
     std::cout << "- - - - - - - - - - - -" << std::endl;
     test_face_qpoints(ah);
-    std::cout << "End Test3" << std::endl;
+    std::cout << "End Test 3" << std::endl;
   }
 }
