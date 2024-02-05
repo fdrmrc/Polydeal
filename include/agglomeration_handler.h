@@ -16,6 +16,9 @@
 #ifndef agglomeration_handler_h
 #define agglomeration_handler_h
 
+#include <deal.II/base/bounding_box_data_out.h>
+#include <deal.II/base/iterator_range.h>
+#include <deal.II/base/mpi.h>
 #include <deal.II/base/quadrature.h>
 #include <deal.II/base/subscriptor.h>
 
@@ -909,6 +912,11 @@ private:
    */
   std::vector<typename Triangulation<dim, spacedim>::active_cell_iterator>
     master_cells_container;
+
+  /**
+   * Communicator attached to the given Triangulation
+   */
+  const MPI_Comm communicator;
 
   friend class internal::AgglomerationHandlerImplementation<dim, spacedim>;
 };
