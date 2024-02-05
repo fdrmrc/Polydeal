@@ -176,8 +176,8 @@ test0(const Triangulation<2> &tria, AgglomerationHandler<2> &ah)
                                              cells_to_be_agglomerated2);
 
   // Agglomerate the cells just stored
-  ah.insert_agglomerate(cells_to_be_agglomerated);
-  ah.insert_agglomerate(cells_to_be_agglomerated2);
+  ah.define_agglomerate(cells_to_be_agglomerated);
+  ah.define_agglomerate(cells_to_be_agglomerated2);
 }
 
 
@@ -225,10 +225,10 @@ test1(const Triangulation<2> &tria, AgglomerationHandler<2> &ah)
                                              cells_to_be_agglomerated4);
 
   // Agglomerate the cells just stored
-  ah.insert_agglomerate(cells_to_be_agglomerated);
-  ah.insert_agglomerate(cells_to_be_agglomerated2);
-  ah.insert_agglomerate(cells_to_be_agglomerated3);
-  ah.insert_agglomerate(cells_to_be_agglomerated4);
+  ah.define_agglomerate(cells_to_be_agglomerated);
+  ah.define_agglomerate(cells_to_be_agglomerated2);
+  ah.define_agglomerate(cells_to_be_agglomerated3);
+  ah.define_agglomerate(cells_to_be_agglomerated4);
 }
 
 int

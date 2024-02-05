@@ -69,14 +69,14 @@ test_internal_grid(Triangulation<dim> &tria)
   //   }
 
   // Agglomerate the cells just stored
-  ah.insert_agglomerate(cells_to_be_agglomerated);
+  ah.define_agglomerate(cells_to_be_agglomerated);
   for (std::size_t i = 0; i < tria.n_active_cells(); ++i)
     {
       // If not present, agglomerate all the singletons
       if (std::find(flagged_cells.begin(),
                     flagged_cells.end(),
                     cells[i]->active_cell_index()) == std::end(flagged_cells))
-        ah.insert_agglomerate({cells[i]});
+        ah.define_agglomerate({cells[i]});
     }
 
 
@@ -162,7 +162,7 @@ test_external_grid(Triangulation<2> &tria)
       if (std::find(flagged_cells.begin(),
                     flagged_cells.end(),
                     cells[i]->active_cell_index()) == std::end(flagged_cells))
-        ah.insert_agglomerate({cells[i]});
+        ah.define_agglomerate({cells[i]});
     }
 
   FE_DGQ<2> fe_dg(1);

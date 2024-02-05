@@ -183,12 +183,12 @@
 //                     flagged_cells.end(),
 //                     cells[i]->active_cell_index()) ==
 //                     std::end(flagged_cells))
-//         ah->insert_agglomerate({cells[i]});
+//         ah->define_agglomerate({cells[i]});
 //     }
 
-//   ah->insert_agglomerate(cells_to_be_agglomerated);
-//   ah->insert_agglomerate(cells_to_be_agglomerated2);
-//   ah->insert_agglomerate(cells_to_be_agglomerated3);
+//   ah->define_agglomerate(cells_to_be_agglomerated);
+//   ah->define_agglomerate(cells_to_be_agglomerated2);
+//   ah->define_agglomerate(cells_to_be_agglomerated3);
 //   ah->distribute_agglomerated_dofs(dg_fe);
 // }
 
@@ -427,12 +427,12 @@ test(const Triangulation<2> &tria, AgglomerationHandler<2> &ah)
       if (std::find(flagged_cells.begin(),
                     flagged_cells.end(),
                     cells[i]->active_cell_index()) == std::end(flagged_cells))
-        ah.insert_agglomerate({cells[i]});
+        ah.define_agglomerate({cells[i]});
     }
 
-  ah.insert_agglomerate(cells_to_be_agglomerated);
-  ah.insert_agglomerate(cells_to_be_agglomerated2);
-  ah.insert_agglomerate(cells_to_be_agglomerated3);
+  ah.define_agglomerate(cells_to_be_agglomerated);
+  ah.define_agglomerate(cells_to_be_agglomerated2);
+  ah.define_agglomerate(cells_to_be_agglomerated3);
 }
 
 

@@ -58,13 +58,3 @@ deal.II face idx: 0
 deal.II cell idx: 14
 deal.II face idx: 0
 
-Agglomerated face with idx: 6
-Face idx: 0
-Neighbor idx: 8
-Face idx from outside: 1
-
-Agglomerated face with idx: 7
-Face idx: 2
-Neighbor idx: 4
-Face idx from outside: 3
-

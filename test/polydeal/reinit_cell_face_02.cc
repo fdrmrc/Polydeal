@@ -113,7 +113,7 @@ reinit_on_neighbor(Triangulation<dim> &tria)
       if (std::find(flagged_cells.begin(),
                     flagged_cells.end(),
                     cells[i]->active_cell_index()) == std::end(flagged_cells))
-        ah.insert_agglomerate({cells[i]});
+        ah.define_agglomerate({cells[i]});
     }
 
   ah.distribute_agglomerated_dofs(fe_dg);

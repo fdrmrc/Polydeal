@@ -210,12 +210,12 @@ test0(const Triangulation<2> &tria, AgglomerationHandler<2> &ah)
                                              cells_to_be_agglomerated6);
 
   // Agglomerate the cells just stored
-  ah.insert_agglomerate(cells_to_be_agglomerated);
-  ah.insert_agglomerate(cells_to_be_agglomerated2);
-  ah.insert_agglomerate(cells_to_be_agglomerated3);
-  ah.insert_agglomerate(cells_to_be_agglomerated4);
-  ah.insert_agglomerate(cells_to_be_agglomerated5);
-  ah.insert_agglomerate(cells_to_be_agglomerated6);
+  ah.define_agglomerate(cells_to_be_agglomerated);
+  ah.define_agglomerate(cells_to_be_agglomerated2);
+  ah.define_agglomerate(cells_to_be_agglomerated3);
+  ah.define_agglomerate(cells_to_be_agglomerated4);
+  ah.define_agglomerate(cells_to_be_agglomerated5);
+  ah.define_agglomerate(cells_to_be_agglomerated6);
 }
 
 
@@ -254,9 +254,9 @@ test1(const Triangulation<2> &tria, AgglomerationHandler<2> &ah)
                                              cells_to_be_agglomerated3);
 
   // Agglomerate the cells just stored
-  ah.insert_agglomerate(cells_to_be_agglomerated);
-  ah.insert_agglomerate(cells_to_be_agglomerated2);
-  ah.insert_agglomerate(cells_to_be_agglomerated3);
+  ah.define_agglomerate(cells_to_be_agglomerated);
+  ah.define_agglomerate(cells_to_be_agglomerated2);
+  ah.define_agglomerate(cells_to_be_agglomerated3);
 }
 
 
@@ -302,11 +302,11 @@ test2(const Triangulation<2> &tria, AgglomerationHandler<2> &ah)
                                              cells_to_be_agglomerated5);
 
   // Agglomerate the cells just stored
-  ah.insert_agglomerate(cells_to_be_agglomerated);
-  ah.insert_agglomerate(cells_to_be_agglomerated2);
-  ah.insert_agglomerate(cells_to_be_agglomerated3);
-  ah.insert_agglomerate(cells_to_be_agglomerated4);
-  ah.insert_agglomerate(cells_to_be_agglomerated5);
+  ah.define_agglomerate(cells_to_be_agglomerated);
+  ah.define_agglomerate(cells_to_be_agglomerated2);
+  ah.define_agglomerate(cells_to_be_agglomerated3);
+  ah.define_agglomerate(cells_to_be_agglomerated4);
+  ah.define_agglomerate(cells_to_be_agglomerated5);
 }
 
 
@@ -322,7 +322,7 @@ test3(const Triangulation<2> & tria,
     cells_per_subdomain[cell->subdomain_id()].push_back(cell);
 
   for (std::size_t i = 0; i < cells_per_subdomain.size(); ++i)
-    ah.insert_agglomerate(cells_per_subdomain[i]);
+    ah.define_agglomerate(cells_per_subdomain[i]);
 }
 
 int
