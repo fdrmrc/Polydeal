@@ -120,7 +120,6 @@ $(function(){initNavTree('agglomeration__handler_8h.html',''); initResizable(); 
 <code>#include &lt;<a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/fe_2fe__values_8h.html">deal.II/fe/fe_values.h</a>&gt;</code><br />
 <code>#include &lt;<a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/mapping__fe__field_8h.html">deal.II/fe/mapping_fe_field.h</a>&gt;</code><br />
 <code>#include &lt;<a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/mapping__q_8h.html">deal.II/fe/mapping_q.h</a>&gt;</code><br />
-<code>#include &lt;<a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/filtered__iterator_8h.html">deal.II/grid/filtered_iterator.h</a>&gt;</code><br />
 <code>#include &lt;<a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/grid__tools__cache_8h.html">deal.II/grid/grid_tools_cache.h</a>&gt;</code><br />
 <code>#include &lt;<a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/grid_2tria_8h.html">deal.II/grid/tria.h</a>&gt;</code><br />
 <code>#include &lt;<a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/fe__collection_8h.html">deal.II/hp/fe_collection.h</a>&gt;</code><br />
@@ -133,26 +132,21 @@ $(function(){initNavTree('agglomeration__handler_8h.html',''); initResizable(); 
 <code>#include &lt;<a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/immersed__surface__quadrature_8h.html">deal.II/non_matching/immersed_surface_quadrature.h</a>&gt;</code><br />
 <code>#include &lt;<a class="el" href="agglomeration__iterator_8h_source.html">agglomeration_iterator.h</a>&gt;</code><br />
 <code>#include &lt;fstream&gt;</code><br />
-<code>#include &lt;utility&gt;</code><br />
 </div>
 <p><a href="agglomeration__handler_8h_source.html">Go to the source code of this file.</a></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
 Classes</h2></td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdealii_1_1_iterator_filters_1_1_is_not_slave.html">dealii::IteratorFilters::IsNotSlave&lt; dim, spacedim &gt;</a></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdealii_1_1internal_1_1_polytope_cache.html">dealii::internal::PolytopeCache&lt; dim, spacedim &gt;</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_agglomeration_handler.html">AgglomerationHandler&lt; dim, spacedim &gt;</a></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdealii_1_1internal_1_1_agglomeration_handler_implementation.html">dealii::internal::AgglomerationHandlerImplementation&lt; dim, spacedim &gt;</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="namespaces" name="namespaces"></a>
 Namespaces</h2></td></tr>
-<tr class="memitem:namespacedealii" id="r_namespacedealii"><td class="memItemLeft" align="right" valign="top">namespace &#160;</td><td class="memItemRight" valign="bottom"><a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/namespacedealii.html">dealii</a></td></tr>
+<tr class="memitem:namespacedealii" id="r_namespacedealii"><td class="memItemLeft" align="right" valign="top">namespace &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedealii.html">dealii</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:namespacedealii_1_1internal" id="r_namespacedealii_1_1internal"><td class="memItemLeft" align="right" valign="top">namespace &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedealii_1_1internal.html">dealii::internal</a></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:namespacedealii_1_1_iterator_filters" id="r_namespacedealii_1_1_iterator_filters"><td class="memItemLeft" align="right" valign="top">namespace &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedealii_1_1_iterator_filters.html">dealii::IteratorFilters</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 </div><!-- contents -->
@@ -161,7 +155,7 @@ Namespaces</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="dir_aa394cd1d9abb8ffe941d9aaafca8d03.html">github</a></li><li class="navelem"><a class="el" href="dir_c52569aa89a7adbb6029022c2fa60a11.html">workspace</a></li><li class="navelem"><a class="el" href="dir_7a95a9cc00fcc7af5a429eec361b64d1.html">include</a></li><li class="navelem"><a class="el" href="agglomeration__handler_8h.html">agglomeration_handler.h</a></li>
-    <li class="footer">Generated on Mon Jan 29 2024 09:49:27 for PolyDEAL by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.10.0 </li>
+    <li class="footer">Generated on Mon Feb 5 2024 17:20:21 for PolyDEAL by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.10.0 </li>
   </ul>
 </div>
 </body>

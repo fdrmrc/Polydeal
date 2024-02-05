@@ -1,11 +1,9 @@
 var annotated_dup =
 [
-    [ "dealii", null, [
+    [ "dealii", "namespacedealii.html", [
       [ "internal", "namespacedealii_1_1internal.html", [
-        [ "AgglomerationHandlerImplementation", "classdealii_1_1internal_1_1_agglomeration_handler_implementation.html", "classdealii_1_1internal_1_1_agglomeration_handler_implementation" ]
-      ] ],
-      [ "IteratorFilters", "namespacedealii_1_1_iterator_filters.html", [
-        [ "IsNotSlave", "classdealii_1_1_iterator_filters_1_1_is_not_slave.html", "classdealii_1_1_iterator_filters_1_1_is_not_slave" ]
+        [ "AgglomerationHandlerImplementation", "classdealii_1_1internal_1_1_agglomeration_handler_implementation.html", "classdealii_1_1internal_1_1_agglomeration_handler_implementation" ],
+        [ "PolytopeCache", "classdealii_1_1internal_1_1_polytope_cache.html", "classdealii_1_1internal_1_1_polytope_cache" ]
       ] ],
       [ "PolyUtils", "namespacedealii_1_1_poly_utils.html", [
         [ "Rtree_visitor", "structdealii_1_1_poly_utils_1_1_rtree__visitor.html", "structdealii_1_1_poly_utils_1_1_rtree__visitor" ]

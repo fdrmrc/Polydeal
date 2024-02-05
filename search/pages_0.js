@@ -25,5 +25,6 @@ var searchData=
   ['0_20and_209_201_201_22',['Changes between Version 9.1.0 and 9.1.1',['http://www.dealii.org/developer/doxygen/deal.II/changes_between_9_1_0_and_9_1_1.html',1,'']]],
   ['0_20and_209_203_200_23',['Changes between Version 9.2.0 and 9.3.0',['http://www.dealii.org/developer/doxygen/deal.II/changes_between_9_2_0_and_9_3_0.html',1,'']]],
   ['0_20and_209_203_201_24',['Changes between Version 9.3.0 and 9.3.1',['http://www.dealii.org/developer/doxygen/deal.II/changes_between_9_3_0_and_9_3_1.html',1,'']]],
-  ['0_20and_209_205_200_25',['Changes between Version 9.4.0 and 9.5.0',['http://www.dealii.org/developer/doxygen/deal.II/changes_between_9_4_0_and_9_5_0.html',1,'']]]
+  ['0_20and_209_205_200_25',['Changes between Version 9.4.0 and 9.5.0',['http://www.dealii.org/developer/doxygen/deal.II/changes_between_9_4_0_and_9_5_0.html',1,'']]],
+  ['0_20and_209_205_202_26',['Changes between Version 9.5.0 and 9.5.2',['http://www.dealii.org/developer/doxygen/deal.II/changes_between_9_5_0_and_9_5_2.html',1,'']]]
 ];
