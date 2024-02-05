@@ -86,11 +86,6 @@ Agglomerated face with idx: 2
 deal.II cell idx: 57
 deal.II face idx: 3
 
-Agglomerated face with idx: 2
-Face idx: 3
-Neighbor idx: 28
-Face idx from outside: 2
-
 Agglomerated face with idx: 3
 deal.II cell idx: 60
 deal.II face idx: 1
