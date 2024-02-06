@@ -161,7 +161,7 @@ public:
   is_locally_owned() const;
 
   /**
-   * The polygonal analogue of CellAccessor::id(). It provides a way to uniquely
+   * The polytopal analogue of CellAccessor::id(). It provides a way to uniquely
    * identify cells in a parallel Triangulation such as a
    * parallel::distributed::Triangulation.
    */
@@ -208,7 +208,7 @@ private:
 
   /**
    * Comparison operator for Accessor. Two accessors are equal if they refer to
-   * the same polygonal element.
+   * the same polytopal element.
    */
   bool
   operator==(const AgglomerationAccessor<dim, spacedim> &other) const;
@@ -220,13 +220,13 @@ private:
   operator!=(const AgglomerationAccessor<dim, spacedim> &other) const;
 
   /**
-   * Move to the next cell in the polygonal mesh.
+   * Move to the next cell in the polytopal mesh.
    */
   void
   next();
 
   /**
-   * Move to the previous cell in the polygonal mesh.
+   * Move to the previous cell in the polytopal mesh.
    */
   void
   prev();

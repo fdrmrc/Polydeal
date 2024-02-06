@@ -27,6 +27,9 @@ AgglomerationHandler<dim, spacedim>::AgglomerationHandler(
 {
   Assert(dim == spacedim, ExcNotImplemented("Not available with codim > 0"));
   Assert(dim == 2 || dim == 3, ExcImpossibleInDim(1));
+  Assert((dynamic_cast<const parallel::shared::Triangulation<dim, spacedim> *>(
+            &cached_tria->get_triangulation()) == nullptr),
+         ExcNotImplemented());
   Assert(cached_tria->get_triangulation().n_active_cells() > 0,
          ExcMessage(
            "The triangulation must not be empty upon calling this function."));
