@@ -450,6 +450,22 @@ public:
     euler_mapping;
 
 
+
+  std::vector<std::vector<BoundingBox<dim>>>
+  get_global_bboxes() const
+  {
+    auto global_bboxes = Utilities::MPI::all_gather(communicator, bboxes);
+    return global_bboxes;
+  }
+
+  /**
+   *
+   *
+   */
+  void
+  setup_ghost_polytopes();
+
+
 private:
   /**
    * Initialize connectivity informations
@@ -566,6 +582,8 @@ private:
   void
   setup_connectivity_of_agglomeration();
 
+
+
   /**
    * Record the number of agglomerations on the grid.
    */
@@ -610,6 +628,40 @@ private:
    *
    */
   std::vector<BoundingBox<spacedim>> bboxes;
+
+  ////////////////////////////////////////////////////////
+
+  /**
+   * Vector of vector of `BoundingBox` objects. The i-th entry contains the
+   * `BoundingBox`(es) locally owned by processor i.
+   */
+  std::vector<std::vector<BoundingBox<spacedim>>> global_bboxes;
+
+  mutable std::map<types::subdomain_id, std::vector<types::global_cell_index>>
+    local_ghost_indices;
+
+  mutable std::map<types::subdomain_id, std::vector<types::global_cell_index>>
+    recv_ghost_indices;
+
+  mutable std::map<types::subdomain_id, std::vector<types::global_cell_index>>
+    local_indices_ghosted_master_cells;
+
+  mutable std::map<types::subdomain_id, std::vector<types::global_cell_index>>
+    recv_indices_ghosted_master_cells;
+
+  // CellId
+  mutable std::map<types::subdomain_id, std::vector<CellId>>
+    local_cell_ids_ghosted_master_cells;
+
+  mutable std::map<types::subdomain_id, std::vector<CellId>>
+    recv_cell_ids_ghosted_master_cells;
+
+  mutable std::vector<
+    std::map<types::global_cell_index, types::global_cell_index>>
+    vec_master2polygon;
+
+
+  ////////////////////////////////////////////////////////
 
   SmartPointer<const Triangulation<dim, spacedim>> tria;
 
@@ -681,8 +733,7 @@ private:
     master2slaves;
 
   // Map the master cell index with the polytope index
-  std::unordered_map<types::global_cell_index, types::global_cell_index>
-    master2polygon;
+  std::map<types::global_cell_index, types::global_cell_index> master2polygon;
 
   // Dummy FiniteElement objects needed only to generate quadratures
 

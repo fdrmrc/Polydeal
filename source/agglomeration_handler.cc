@@ -71,6 +71,12 @@ AgglomerationHandler<dim, spacedim>::define_agglomerate(
         master_idx; // mark each slave
       master_slave_relationships_iterators[(*it)->active_cell_index()] =
         cells[0];
+
+      // If we have a p::d::T, check that all cells are in the same subdomain.
+      // If serial, just check that the subdomain_id is invalid.
+      Assert(((*it)->subdomain_id() == tria->locally_owned_subdomain() ||
+              tria->locally_owned_subdomain() == numbers::invalid_subdomain_id),
+             ExcInternalError());
     }
 
   master_slave_relationships_iterators[master_idx] =
@@ -303,6 +309,9 @@ AgglomerationHandler<dim, spacedim>::setup_connectivity_of_agglomeration()
       internal::AgglomerationHandlerImplementation<dim, spacedim>::
         setup_master_neighbor_connectivity(cell, *this);
     }
+
+
+  // global_bboxes = Utilities::MPI::all_gather(communicator, bboxes);
 }
 
 
@@ -361,12 +370,16 @@ AgglomerationHandler<dim, spacedim>::initialize_hp_structure()
   Assert(n_agglomerations > 0,
          ExcMessage("No agglomeration has been performed."));
   for (const auto &cell : agglo_dh.active_cell_iterators())
-    if (is_master_cell(cell))
-      cell->set_active_fe_index(CellAgglomerationType::master);
-    else if (is_slave_cell(cell))
-      cell->set_active_fe_index(CellAgglomerationType::slave); // slave cell
-    else
-      cell->set_active_fe_index(CellAgglomerationType::standard); // standard
+    if (cell->is_locally_owned())
+      {
+        if (is_master_cell(cell))
+          cell->set_active_fe_index(CellAgglomerationType::master);
+        else if (is_slave_cell(cell))
+          cell->set_active_fe_index(CellAgglomerationType::slave); // slave cell
+        else
+          cell->set_active_fe_index(
+            CellAgglomerationType::standard); // standard
+      }
 
   agglo_dh.distribute_dofs(fe_collection);
   euler_mapping =
@@ -659,6 +672,100 @@ AgglomerationHandler<dim, spacedim>::setup_output_interpolation_matrix()
 
 
 
+template <int dim, int spacedim>
+void
+AgglomerationHandler<dim, spacedim>::setup_ghost_polytopes()
+{
+  for (const auto &cell : agglo_dh.active_cell_iterators())
+    if (cell->is_locally_owned())
+      {
+        // interior, locally owned, cell
+        for (const auto &f : cell->face_indices())
+          {
+            if (!cell->at_boundary(f))
+              {
+                const auto &neighbor = cell->neighbor(f);
+                if (neighbor->is_ghost())
+                  {
+                    // key of the map: the rank to which send the data
+                    const types::subdomain_id neigh_rank =
+                      neighbor->subdomain_id();
+                    // send to neighboring process the ghosted (seen from the
+                    // neighbor) cell index
+
+                    // the present cell is a ghost cell for the neighboring
+                    // subdomain
+                    local_ghost_indices[neigh_rank].push_back(
+                      cell->active_cell_index());
+
+                    // send to neighboring process also the index of the master
+                    // cell of the present cell, which identifies the polytope
+
+                    // Notice: since cell is locally owned, I can call
+                    // get_master_idx_of_cell(cell) without harm
+                    local_indices_ghosted_master_cells[neigh_rank].push_back(
+                      get_master_idx_of_cell(cell));
+
+                    local_cell_ids_ghosted_master_cells[neigh_rank].push_back(
+                      cell->id());
+                  }
+              }
+          }
+      }
+
+  // exchange ghost indices with neighboring ranks
+  recv_ghost_indices =
+    Utilities::MPI::some_to_some(communicator, local_ghost_indices);
+
+  // exchange indices of master cells with neighboring ranks
+  recv_indices_ghosted_master_cells =
+    Utilities::MPI::some_to_some(communicator,
+                                 local_indices_ghosted_master_cells);
+
+  recv_cell_ids_ghosted_master_cells =
+    Utilities::MPI::some_to_some(communicator,
+                                 local_cell_ids_ghosted_master_cells);
+
+  // Let each rank own the map master2poly which allows the polytope number
+  vec_master2polygon = Utilities::MPI::all_gather(communicator, master2polygon);
+
+  // Let each rank own all of the bboxes
+  global_bboxes = Utilities::MPI::all_gather(communicator, bboxes);
+
+  MPI_Barrier(communicator);
+  std::cout << "ON RANK " << Utilities::MPI::this_mpi_process(communicator)
+            << std::endl;
+  for (const auto &[sender_rank, ghosted_indices] : recv_ghost_indices)
+    {
+      std::cout << "From " << sender_rank << " we have "
+                << ghosted_indices.size() << " ghosted indices"
+                << " and "
+                << recv_cell_ids_ghosted_master_cells.at(sender_rank).size()
+                << " CellId(s)" << std::endl;
+      for (const auto &idx : ghosted_indices)
+        std::cout << idx << std::endl;
+
+      std::cout << "With this master cells indices: " << std::endl;
+      for (const auto &idx : recv_indices_ghosted_master_cells.at(sender_rank))
+        std::cout << idx << std::endl;
+
+      // Neighboring bounding boxes
+      std::cout << "Let's see the neighboring bboxes" << std::endl;
+      for (const auto &idx : recv_indices_ghosted_master_cells.at(sender_rank))
+        {
+          // idx is the index of the master cell of a neighbor
+          unsigned int box_index = vec_master2polygon[sender_rank].at(idx);
+          const auto & points =
+            global_bboxes[sender_rank][box_index].get_boundary_points();
+          std::cout << points.first << std::endl;
+          std::cout << points.second << std::endl;
+        }
+    }
+  std::cout << std::endl;
+}
+
+
+
 namespace dealii
 {
   namespace internal
@@ -682,8 +789,8 @@ namespace dealii
 
         types::global_cell_index polytope_in =
           handler.master2polygon.at(cell->active_cell_index());
-        types::global_cell_index polytope_out;
 
+        types::global_cell_index polytope_out;
         if (neighbor.state() == IteratorState::valid)
           polytope_out =
             handler.master2polygon.at(neighbor->active_cell_index());
@@ -813,6 +920,10 @@ namespace dealii
                 if (neighboring_cell.state() == IteratorState::valid &&
                     !handler.are_cells_agglomerated(cell, neighboring_cell))
                   {
+                    // if (neighboring_cell->is_ghost())
+                    //   handler.ghosted_indices.push_back(
+                    //     neighboring_cell->active_cell_index());
+
                     // a new face of the agglomeration has been discovered.
                     handler.polygon_boundary[master_cell].push_back(
                       cell->face(f));
