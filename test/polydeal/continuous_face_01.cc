@@ -63,7 +63,7 @@ perimeter_test(AgglomerationHandler<2> &ah)
 
 
               const auto &common_face =
-                info.at({polytope->index(), neighbor->index()});
+                info.at({polytope.master_cell()->id(), neighbor.master_cell()->id()});
 
               for (const auto &[deal_cell, local_face_idx] : common_face)
                 {

@@ -787,18 +787,16 @@ namespace dealii
 
         const auto &neighbor = agglomerated_neighbor(cell, face_index, handler);
 
-        types::global_cell_index polytope_in =
-          handler.master2polygon.at(cell->active_cell_index());
+        CellId polytope_in_id = cell->id();
 
-        types::global_cell_index polytope_out;
+        CellId polytope_out_id;
         if (neighbor.state() == IteratorState::valid)
-          polytope_out =
-            handler.master2polygon.at(neighbor->active_cell_index());
+          polytope_out_id = neighbor->id();
         else
-          polytope_out = std::numeric_limits<unsigned int>::max();
+          polytope_out_id = polytope_in_id;
 
-        const auto common_face =
-          handler.polytope_cache.interface.at({polytope_in, polytope_out});
+        const auto common_face = handler.polytope_cache.interface.at(
+          {polytope_in_id, polytope_out_id});
 
         std::vector<Point<spacedim>> final_unit_q_points;
         std::vector<double>          final_weights;
@@ -901,6 +899,8 @@ namespace dealii
         const types::global_cell_index current_polytope_index =
           handler.master2polygon.at(master_cell->active_cell_index());
 
+        CellId current_polytope_id = master_cell->id();
+
 
         std::set<types::global_cell_index> visited_polygonal_neighbors;
 
@@ -946,6 +946,8 @@ namespace dealii
                           handler.master2polygon.at(
                             master_of_neighbor->active_cell_index());
 
+                        CellId neighbor_polytope_id = master_of_neighbor->id();
+
                         if (visited_polygonal_neighbors.find(
                               neighbor_polytope_index) ==
                             std::end(visited_polygonal_neighbors))
@@ -971,8 +973,8 @@ namespace dealii
                               handler.polytope_cache.visited_cell_and_faces))
                           {
                             handler.polytope_cache
-                              .interface[{current_polytope_index,
-                                          neighbor_polytope_index}]
+                              .interface[{current_polytope_id,
+                                          neighbor_polytope_id}]
                               .emplace_back(cell, f);
 
                             handler.polytope_cache.visited_cell_and_faces
@@ -986,8 +988,8 @@ namespace dealii
                               handler.polytope_cache.visited_cell_and_faces))
                           {
                             handler.polytope_cache
-                              .interface[{neighbor_polytope_index,
-                                          current_polytope_index}]
+                              .interface[{neighbor_polytope_id,
+                                          current_polytope_id}]
                               .emplace_back(neighboring_cell, nof);
 
                             handler.polytope_cache.visited_cell_and_faces
@@ -1001,6 +1003,8 @@ namespace dealii
                         // save the pair of neighboring cells
                         const types::global_cell_index neighbor_polytope_index =
                           handler.master2polygon.at(neighboring_cell_index);
+
+                        CellId neighbor_polytope_id = neighboring_cell->id();
 
                         if (visited_polygonal_neighbors.find(
                               neighbor_polytope_index) ==
@@ -1029,8 +1033,8 @@ namespace dealii
                               handler.polytope_cache.visited_cell_and_faces))
                           {
                             handler.polytope_cache
-                              .interface[{current_polytope_index,
-                                          neighbor_polytope_index}]
+                              .interface[{current_polytope_id,
+                                          neighbor_polytope_id}]
                               .emplace_back(cell, f);
 
                             handler.polytope_cache.visited_cell_and_faces
@@ -1043,8 +1047,8 @@ namespace dealii
                               handler.polytope_cache.visited_cell_and_faces))
                           {
                             handler.polytope_cache
-                              .interface[{neighbor_polytope_index,
-                                          current_polytope_index}]
+                              .interface[{neighbor_polytope_id,
+                                          current_polytope_id}]
                               .emplace_back(neighboring_cell, nof);
 
                             handler.polytope_cache.visited_cell_and_faces
@@ -1086,8 +1090,7 @@ namespace dealii
                         std::end(handler.polytope_cache.visited_cell_and_faces))
                       {
                         handler.polytope_cache
-                          .interface[{current_polytope_index,
-                                      std::numeric_limits<unsigned int>::max()}]
+                          .interface[{current_polytope_id, current_polytope_id}]
                           .emplace_back(cell, f);
 
                         handler.polytope_cache.visited_cell_and_faces.insert(

@@ -117,7 +117,7 @@ main()
 
               const auto &neigh_polytope = polytope->neighbor(f);
               const auto  vec_cells_and_faces =
-                interface.at({polytope->index(), neigh_polytope->index()});
+                interface.at({polytope->id(), neigh_polytope->id()});
               for (const auto &cell_and_face : vec_cells_and_faces)
                 {
                   std::cout << "deal.II cell idx: "
