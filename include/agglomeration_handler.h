@@ -137,7 +137,7 @@ namespace dealii
        *
        */
       mutable std::map<
-        std::pair<types::global_cell_index, types::global_cell_index>,
+        std::pair<CellId, CellId>,
         std::vector<
           std::pair<typename Triangulation<dim, spacedim>::active_cell_iterator,
                     unsigned int>>>
