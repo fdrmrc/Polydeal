@@ -10,6 +10,7 @@
 
 ## Getting started
 Assuming deal.II (version 9.5 onwards) is installed on your machine and you have a compiler C++17-compliant compiler, all is required to do is:
+
 ```bash
 git clone git@github.com:fdrmrc/Polydeal.git
 cd Polydeal/
@@ -27,5 +28,5 @@ A Doxygen generated documentation is built and deployed at each merge to the mai
 
 This project is maintained by:
 - [Marco Feder](https://www.math.sissa.it/users/marco-feder) ([@fdrmrc](https://github.com/fdrmrc)), SISSA, IT
-- [Luca Heltai](http://people.sissa.it/~heltai) ([@luca-heltai](https://github.com/luca-heltai)), SISSA, IT
+- [Luca Heltai](https://sites.google.com/view/luca-heltai) ([@luca-heltai](https://github.com/luca-heltai)), University of Pisa, IT
 - [Andrea Cangiani](https://people.sissa.it/~acangian/) ([@andreacangiani](https://github.com/andreacangiani)), SISSA, IT
