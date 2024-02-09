@@ -935,7 +935,11 @@ AgglomerationHandler<dim, spacedim>::are_cells_agglomerated(
   const typename Triangulation<dim, spacedim>::active_cell_iterator &other_cell)
   const
 {
-  return (get_master_idx_of_cell(cell) == get_master_idx_of_cell(other_cell));
+  // if different subdomain, then **by construction** they will not be together
+  // if (cell->subdomain_id() != other_cell->subdomain_id())
+  //   return false;
+  // else
+    return (get_master_idx_of_cell(cell) == get_master_idx_of_cell(other_cell));
 }
 
 
