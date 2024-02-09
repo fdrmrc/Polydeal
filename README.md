@@ -9,12 +9,13 @@
 
 
 ## Getting started
-Assuming deal.II (version 9.5 onwards) is installed on your machine, all is required to do is:
+Assuming deal.II (version 9.5 onwards) is installed on your machine and you have a compiler C++17-compliant compiler, all is required to do is:
 ```bash
 git clone git@github.com:fdrmrc/Polydeal.git
 cd Polydeal/
 mkdir build
 cd build/
+cmake -DDEAL_II_DIR=/path/to/deal.II ..
 make -j<N>
 ```
 
