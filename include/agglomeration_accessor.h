@@ -186,6 +186,14 @@ private:
     const AgglomerationHandler<dim, spacedim> *ah);
 
   /**
+   * Same as above, but for ghost ghosted cells.
+   */
+  AgglomerationAccessor(
+    const typename Triangulation<dim, spacedim>::active_cell_iterator &cell,
+    const CellId &                                                     cell_id,
+    const AgglomerationHandler<dim, spacedim> *                        ah);
+
+  /**
    * Default destructor.
    */
   ~AgglomerationAccessor() = default;
@@ -200,6 +208,11 @@ private:
    * The index of the present polytope.
    */
   types::global_cell_index present_index;
+
+  /**
+   * The index of the present polytope.
+   */
+  CellId present_id;
 
   /**
    * A pointer to the Handler.
@@ -286,13 +299,77 @@ AgglomerationAccessor<dim, spacedim>::neighbor(const unsigned int f) const
 {
   if (!at_boundary(f))
     {
+      if (master_cell->is_ghost())
+        {
+          // having neighbor_of_neighbor in mind
+          std::cout << "la master presente e' ghosted" << std::endl;
+
+          const unsigned int sender_rank = master_cell->subdomain_id();
+          std::cout << "e il sender e' " << sender_rank << std::endl;
+
+          const CellId &master_id_neighbor =
+            handler->recv_bdary_info.at(sender_rank)
+              .at(present_id)
+              .at({present_id, f})
+              .second;
+
+          // Use the id of the master cell to uniquely identify the neighboring
+          // agglomerate
+
+          std::cout << "id del neighbor preso" << std::endl;
+
+          // typename Triangulation<dim, spacedim>::active_cell_iterator
+          //   dummy_master;
+          return {master_cell, master_id_neighbor, handler}; // dummy master?
+        }
+
+
+
+      const types::global_cell_index polytope_index =
+        handler->master2polygon.at(master_cell->active_cell_index());
+      std::cout << "Poly index: " << polytope_index << std::endl;
+      std::cout << "Face index " << f << std::endl;
+
+      if (Utilities::MPI::this_mpi_process(handler->communicator) == 1)
+        for (const auto &[key, value] :
+             handler->polytope_cache.cell_face_at_boundary)
+          {
+            std::cout << "p.f = " << key.first << std::endl;
+            std::cout << "p.s = " << key.second << std::endl;
+          }
+
       const auto &neigh =
-        handler->polytope_cache.cell_face_at_boundary
-          .at({handler->master2polygon.at(master_cell->active_cell_index()), f})
+        handler->polytope_cache.cell_face_at_boundary.at({polytope_index, f})
           .second;
-      typename DoFHandler<dim, spacedim>::active_cell_iterator cell_dh(
-        *neigh, &(handler->agglo_dh));
-      return {cell_dh, handler};
+
+
+      if (neigh->is_locally_owned())
+        {
+          typename DoFHandler<dim, spacedim>::active_cell_iterator cell_dh(
+            *neigh, &(handler->agglo_dh));
+          return {cell_dh, handler};
+        }
+      else
+        {
+          std::cout << "before calling ghosted_masteer_id" << std::endl;
+          std::cout << "present_id = " << present_id << std::endl;
+          std::cout << "che master cell? " << master_cell << std::endl;
+
+          if (Utilities::MPI::this_mpi_process(handler->communicator) == 1)
+            for (const auto &[key, value] :
+                 handler->polytope_cache.ghosted_master_id)
+              {
+                std::cout << "poly_id = " << key.first << std::endl;
+                std::cout << "face_idx = " << key.second << std::endl;
+              }
+
+          const CellId &master_id_neighbor =
+            handler->polytope_cache.ghosted_master_id.at({present_id, f});
+          std::cout << "after calling ghosted_masteer_id" << std::endl;
+          // Use the id of the master cell to uniquely identify the neighboring
+          // agglomerate
+          return {neigh, master_id_neighbor, handler};
+        }
     }
   else
     {
@@ -315,16 +392,48 @@ AgglomerationAccessor<dim, spacedim>::neighbor_of_agglomerated_neighbor(
 
       AssertThrow(neigh_polytope.state() == IteratorState::valid,
                   ExcInternalError());
-      const unsigned int n_faces_agglomerated_neighbor =
-        neigh_polytope->n_faces();
 
-      // Loop over all cells of neighboring agglomerate
+      unsigned int n_faces_agglomerated_neighbor;
+
+      // if it's not locally owned, retrieve the number of faces
+      if (neigh_polytope->is_locally_owned())
+        {
+          n_faces_agglomerated_neighbor = neigh_polytope->n_faces();
+        }
+      else
+        {
+          // The neighboring polytope is not locally owned, get the number of
+          // its faces.
+          std::cout << "not locally owned" << std::endl;
+
+          const unsigned int sender_rank =
+            neigh_polytope.master_cell()->subdomain_id();
+          std::cout << "Sender rank = " << sender_rank << std::endl;
+
+
+          // Retrieve the CellId of the neighbor.
+          const CellId &master_id_neighbor =
+            handler->polytope_cache.ghosted_master_id.at({present_id, f});
+          std::cout << "Got following cellid from neighbor: "
+                    << master_id_neighbor << std::endl;
+
+          // From the neighboring rank, use the CellId of the neighboring
+          // polytope to get the number of faces.
+          n_faces_agglomerated_neighbor =
+            handler->recv_n_faces.at(sender_rank).at(master_id_neighbor);
+          std::cout << "Fatto con " << n_faces_agglomerated_neighbor
+                    << " facce." << std::endl;
+        }
+
+
+      // Loop over all faces of neighboring agglomerate
       for (unsigned int f_out = 0; f_out < n_faces_agglomerated_neighbor;
            ++f_out)
         {
-          // Check if same master cell
+          // Check if same CellId
+          std::cout << "Prima del neigh_polytope()" << std::endl;
           if (neigh_polytope->neighbor(f_out).state() == IteratorState::valid)
-            if (neigh_polytope->neighbor(f_out)->index() == index())
+            if (neigh_polytope->neighbor(f_out)->id() == present_id)
               return f_out;
         }
       return numbers::invalid_unsigned_int;
@@ -354,12 +463,37 @@ inline AgglomerationAccessor<dim, spacedim>::AgglomerationAccessor(
     {
       present_index = handler->master_cells_container.size();
       master_cell   = handler->master_cells_container[present_index];
+      present_id    = CellId(); // invalid id (TODO)
     }
   else
     {
+      if (Utilities::MPI::this_mpi_process(handler->communicator) == 1)
+        std::cout << "Qui con cell index " << cell->active_cell_index()
+                  << std::endl;
       present_index = handler->master2polygon.at(cell->active_cell_index());
       master_cell   = cell;
+      present_id    = master_cell->id();
+      if (Utilities::MPI::this_mpi_process(handler->communicator) == 1)
+        std::cout << "Settato come id(): " << present_id << std::endl;
     }
+}
+
+
+
+template <int dim, int spacedim>
+inline AgglomerationAccessor<dim, spacedim>::AgglomerationAccessor(
+  const typename Triangulation<dim, spacedim>::active_cell_iterator &neigh_cell,
+  const CellId &                             master_cell_id,
+  const AgglomerationHandler<dim, spacedim> *ah)
+{
+  Assert(neigh_cell->is_ghost(), ExcInternalError());
+  // neigh_cell is ghosted
+
+  handler       = const_cast<AgglomerationHandler<dim, spacedim> *>(ah);
+  master_cell   = neigh_cell;
+  present_index = numbers::invalid_unsigned_int;
+  // neigh_cell is ghosted, use the CellId of that agglomerate
+  present_id = master_cell_id;
 }
 
 
@@ -458,6 +592,12 @@ AgglomerationAccessor<dim, spacedim>::next()
   // Increment the present index and update the polytope
   ++present_index;
   master_cell = handler->master_cells_container[present_index];
+  std::cout << " before querying the id of master cell" << std::endl;
+  std::cout << "present index = " << present_index << " and total (local) size"
+            << handler->master_cells_container.size() << std::endl;
+  // Make sure not to query the CellId if it's past the last
+  if (present_index != handler->master_cells_container.size())
+    present_id = master_cell->id();
 }
 
 
@@ -469,6 +609,7 @@ AgglomerationAccessor<dim, spacedim>::prev()
   // Decrement the present index and update the polytope
   --present_index;
   master_cell = handler->master_cells_container[present_index];
+  present_id  = master_cell->id();
 }
 
 
@@ -547,12 +688,38 @@ template <int dim, int spacedim>
 inline bool
 AgglomerationAccessor<dim, spacedim>::at_boundary(const unsigned int f) const
 {
-  Assert(!handler->is_slave_cell(master_cell),
-         ExcMessage("This function should not be called for a slave cell."));
+  if (master_cell->is_ghost())
+    {
+      std::cout << "ghosted boundary!" << std::endl;
+      const unsigned int sender_rank = master_cell->subdomain_id();
+      const auto &       map_recv =
+        handler->recv_bdary_info.at(sender_rank).at(present_id);
+      std::cout << "size della mappa " << map_recv.size() << std::endl;
+      for (const auto &[key, value] : map_recv)
+        {
+          std::cout << "id: " << key.first << std::endl;
+          std::cout << "f: " << key.second << std::endl;
+        }
 
-  typename DoFHandler<dim, spacedim>::active_cell_iterator cell_dh(
-    *master_cell, &(handler->agglo_dh));
-  return handler->at_boundary(cell_dh, f);
+      std::cout << "il present_id e': " << present_id << "and size "
+                << map_recv.size() << std::endl;
+
+      return handler->recv_bdary_info.at(sender_rank)
+        .at(present_id)
+        .at({present_id, f})
+        .first;
+    }
+  else
+    {
+      Assert(!handler->is_slave_cell(master_cell),
+             ExcMessage(
+               "This function should not be called for a slave cell."));
+
+
+      typename DoFHandler<dim, spacedim>::active_cell_iterator cell_dh(
+        *master_cell, &(handler->agglo_dh));
+      return handler->at_boundary(cell_dh, f);
+    }
 }
 
 
@@ -570,7 +737,8 @@ template <int dim, int spacedim>
 inline CellId
 AgglomerationAccessor<dim, spacedim>::id() const
 {
-  return master_cell->id();
+            << master_cell->active_cell_index() << std::endl;
+  return present_id;
 }
 
 
