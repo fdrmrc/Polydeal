@@ -41,12 +41,21 @@ public:
   AgglomerationIterator();
 
   /**
-   * Constructor of the iterator. Takes a reference to the cells forming the
-   * actual polytope.
+   * Constructor of the iterator. Takes a reference to the master cell encoding
+   * the actual polytope.
    */
   AgglomerationIterator(
     const typename Triangulation<dim, spacedim>::active_cell_iterator &cell,
     const AgglomerationHandler<dim, spacedim> *                        handler);
+
+  /**
+   * Same as above, needed for ghosted elements.
+   */
+  AgglomerationIterator(
+    const typename Triangulation<dim, spacedim>::active_cell_iterator
+      &                                        master_cell,
+    const CellId &                             cell_id,
+    const AgglomerationHandler<dim, spacedim> *handler);
 
   /**
    * Dereferencing operator, returns a reference to an accessor. Usage is thus
@@ -167,6 +176,15 @@ inline AgglomerationIterator<dim, spacedim>::AgglomerationIterator(
     &                                        master_cell,
   const AgglomerationHandler<dim, spacedim> *handler)
   : accessor(master_cell, handler)
+{}
+
+template <int dim, int spacedim>
+inline AgglomerationIterator<dim, spacedim>::AgglomerationIterator(
+  const typename Triangulation<dim, spacedim>::active_cell_iterator
+    &                                        master_cell,
+  const CellId &                             cell_id,
+  const AgglomerationHandler<dim, spacedim> *handler)
+  : accessor(master_cell, cell_id, handler)
 {}
 
 

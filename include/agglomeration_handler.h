@@ -112,6 +112,12 @@ namespace dealii
       mutable std::set<std::pair<types::global_cell_index, unsigned int>>
         visited_cell_and_faces;
 
+
+      mutable std::set<std::pair<CellId, unsigned int>>
+        visited_cell_and_faces_id;
+
+
+
       /**
        * Map that associate the pair of (polytopal index, polytopal face) to
        * (b,cell). The latter pair indicates whether or not the present face is
@@ -125,6 +131,13 @@ namespace dealii
         std::pair<bool,
                   typename Triangulation<dim, spacedim>::active_cell_iterator>>
         cell_face_at_boundary;
+
+      /**
+       * Map that associate the **local** pair of (polytope id, polytopal face)
+       * to the master id of the neighboring **ghosted** cell.
+       */
+      mutable std::map<std::pair<CellId, unsigned int>, CellId>
+        ghosted_master_id;
 
       /**
        * Standard std::map that associated to a pair of neighboring polytopic
@@ -637,17 +650,26 @@ private:
    */
   std::vector<std::vector<BoundingBox<spacedim>>> global_bboxes;
 
+  // ghost indices
   mutable std::map<types::subdomain_id, std::vector<types::global_cell_index>>
     local_ghost_indices;
 
   mutable std::map<types::subdomain_id, std::vector<types::global_cell_index>>
     recv_ghost_indices;
 
+  // master cell indices
   mutable std::map<types::subdomain_id, std::vector<types::global_cell_index>>
     local_indices_ghosted_master_cells;
 
   mutable std::map<types::subdomain_id, std::vector<types::global_cell_index>>
     recv_indices_ghosted_master_cells;
+
+  // n_faces
+  mutable std::map<types::subdomain_id, std::map<CellId, unsigned int>>
+    local_n_faces;
+
+  mutable std::map<types::subdomain_id, std::map<CellId, unsigned int>>
+    recv_n_faces;
 
   // CellId
   mutable std::map<types::subdomain_id, std::vector<CellId>>
@@ -655,6 +677,29 @@ private:
 
   mutable std::map<types::subdomain_id, std::vector<CellId>>
     recv_cell_ids_ghosted_master_cells;
+
+  // CellId (including slaves)
+  mutable std::map<types::subdomain_id, std::map<CellId, CellId>>
+    local_cell_ids_neigh_cell;
+
+  mutable std::map<types::subdomain_id, std::map<CellId, CellId>>
+    recv_cell_ids_neigh_cell;
+
+
+
+  // CellIds from neighboring rank
+  mutable std::map<types::subdomain_id,
+                   std::map<CellId,
+                            std::map<std::pair<CellId, unsigned int>,
+                                     std::pair<bool, CellId>>>>
+    local_bdary_info;
+
+  mutable std::map<types::subdomain_id,
+                   std::map<CellId,
+                            std::map<std::pair<CellId, unsigned int>,
+                                     std::pair<bool, CellId>>>>
+    recv_bdary_info;
+
 
   mutable std::vector<
     std::map<types::global_cell_index, types::global_cell_index>>
@@ -939,7 +984,7 @@ AgglomerationHandler<dim, spacedim>::are_cells_agglomerated(
   // if (cell->subdomain_id() != other_cell->subdomain_id())
   //   return false;
   // else
-    return (get_master_idx_of_cell(cell) == get_master_idx_of_cell(other_cell));
+  return (get_master_idx_of_cell(cell) == get_master_idx_of_cell(other_cell));
 }
 
 
@@ -959,6 +1004,11 @@ AgglomerationHandler<dim, spacedim>::begin() const
 {
   Assert(n_agglomerations > 0,
          ExcMessage("No agglomeration has been performed."));
+
+  if (Utilities::MPI::this_mpi_process(communicator) == 1)
+    std::cout << "Dall' handler (begin) la size e': "
+              << master_cells_container.size() << std::endl;
+
   return {*master_cells_container.begin(), this};
 }
 
@@ -981,6 +1031,11 @@ AgglomerationHandler<dim, spacedim>::end() const
 {
   Assert(n_agglomerations > 0,
          ExcMessage("No agglomeration has been performed."));
+
+  if (Utilities::MPI::this_mpi_process(communicator) == 1)
+    std::cout << "Dall' handler (end) la size e': "
+              << master_cells_container.size() << std::endl;
+
   return {*master_cells_container.end(), this};
 }
 
@@ -1013,6 +1068,7 @@ IteratorRange<
   typename AgglomerationHandler<dim, spacedim>::agglomeration_iterator>
 AgglomerationHandler<dim, spacedim>::polytope_iterators() const
 {
+  std::cout << "Costruisco polytope iterators()" << std::endl;
   return IteratorRange<
     typename AgglomerationHandler<dim, spacedim>::agglomeration_iterator>(
     begin(), end());
