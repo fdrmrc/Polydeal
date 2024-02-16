@@ -686,18 +686,25 @@ private:
     recv_cell_ids_neigh_cell;
 
 
+  // send to neighborign rank the information that
+  // - current polytope id
+  // - face f
+  // has the following neighboring id.
+  mutable std::map<types::subdomain_id,
+                   std::map<CellId, std::map<unsigned int, CellId>>>
+    local_ghosted_master_id;
+
+  mutable std::map<types::subdomain_id,
+                   std::map<CellId, std::map<unsigned int, CellId>>>
+    recv_ghosted_master_id;
 
   // CellIds from neighboring rank
   mutable std::map<types::subdomain_id,
-                   std::map<CellId,
-                            std::map<std::pair<CellId, unsigned int>,
-                                     std::pair<bool, CellId>>>>
+                   std::map<CellId, std::map<unsigned int, bool>>>
     local_bdary_info;
 
   mutable std::map<types::subdomain_id,
-                   std::map<CellId,
-                            std::map<std::pair<CellId, unsigned int>,
-                                     std::pair<bool, CellId>>>>
+                   std::map<CellId, std::map<unsigned int, bool>>>
     recv_bdary_info;
 
 

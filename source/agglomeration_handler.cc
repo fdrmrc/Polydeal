@@ -317,6 +317,9 @@ AgglomerationHandler<dim, spacedim>::setup_connectivity_of_agglomeration()
   recv_bdary_info =
     Utilities::MPI::some_to_some(communicator, local_bdary_info);
 
+  recv_ghosted_master_id =
+    Utilities::MPI::some_to_some(communicator, local_ghosted_master_id);
+
 
   // global_bboxes = Utilities::MPI::all_gather(communicator, bboxes);
 }
@@ -941,8 +944,12 @@ namespace dealii
 
         std::set<types::global_cell_index> visited_polygonal_neighbors;
 
-        std::map<std::pair<CellId, unsigned int>, std::pair<bool, CellId>>
-          bdary_info_current_poly;
+        // std::map<std::pair<CellId, unsigned int>, std::pair<bool, CellId>>
+        //   bdary_info_current_poly;
+
+        std::map<unsigned int, CellId> face_to_neigh_id;
+
+        std::map<unsigned int, bool> is_face_at_boundary;
 
         // same as above, but with CellId
         std::set<CellId> visited_polygonal_neighbors_id;
@@ -1207,16 +1214,19 @@ namespace dealii
                               handler.number_of_agglomerated_faces
                                 [current_polytope_index];
 
+                            face_to_neigh_id[n_face] = check_neigh_polytope_id;
 
-                            std::pair<CellId, unsigned int> p{
-                              current_polytope_id, n_face};
+                            is_face_at_boundary[n_face] =false;
 
-                            // not on the dbdary, so give the neighboring
-                            // polytope id
-                            std::pair<bool, CellId> bdary_info{
-                              false, check_neigh_polytope_id};
+                            // std::pair<CellId, unsigned int> p{
+                            //   current_polytope_id, n_face};
 
-                            bdary_info_current_poly[p] = bdary_info;
+                            // // not on the dbdary, so give the neighboring
+                            // // polytope id
+                            // std::pair<bool, CellId> bdary_info{
+                            //   false, check_neigh_polytope_id};
+
+                            // bdary_info_current_poly[p] = bdary_info;
 
 
                             std::cout
@@ -1328,7 +1338,9 @@ namespace dealii
 
                         std::pair<bool, CellId> bdary_info{true, CellId()};
 
-                        bdary_info_current_poly[p] = bdary_info;
+                        // bdary_info_current_poly[p] = bdary_info;
+
+                        is_face_at_boundary[n_face]=true;
 
                         // handler.local_ghosted_bdary_info[neigh_rank].emplace(
                         //   p, bdary_info);
@@ -1396,11 +1408,12 @@ namespace dealii
                                                           n_faces_current_poly);
 
                 handler.local_bdary_info[neigh_rank].emplace(
-                  current_polytope_id, bdary_info_current_poly);
+                  current_polytope_id, is_face_at_boundary);
+
+                handler.local_ghosted_master_id[neigh_rank].emplace(
+                  current_polytope_id, face_to_neigh_id);
               }
           }
-        // }
-        // }
       }
 
 
