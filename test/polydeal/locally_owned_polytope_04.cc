@@ -54,13 +54,9 @@ main(int argc, char *argv[])
   unsigned int my_rank = Utilities::MPI::this_mpi_process(comm);
 
   // For each rank, store each locally owned cell as a polytope
-  for (unsigned int rank = 0; rank < Utilities::MPI::this_mpi_process(comm);
-       ++rank)
-    {
-      for (const auto &cell : tria.active_cell_iterators())
-        if (cell->is_locally_owned())
-          ah.define_agglomerate({cell});
-    }
+  for (const auto &cell : tria.active_cell_iterators())
+    if (cell->is_locally_owned())
+      ah.define_agglomerate({cell});
 
 
   FE_DGQ<2> fe_dg(0);
