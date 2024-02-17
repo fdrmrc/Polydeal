@@ -310,16 +310,18 @@ AgglomerationHandler<dim, spacedim>::setup_connectivity_of_agglomeration()
         setup_master_neighbor_connectivity(cell, *this);
     }
 
-  // communicate the number of faces
-  recv_n_faces = Utilities::MPI::some_to_some(communicator, local_n_faces);
+  if (Utilities::MPI::job_supports_mpi())
+    {
+      // communicate the number of faces
+      recv_n_faces = Utilities::MPI::some_to_some(communicator, local_n_faces);
 
-  // send information about boundaries and neighboring polytopes id
-  recv_bdary_info =
-    Utilities::MPI::some_to_some(communicator, local_bdary_info);
+      // send information about boundaries and neighboring polytopes id
+      recv_bdary_info =
+        Utilities::MPI::some_to_some(communicator, local_bdary_info);
 
-  recv_ghosted_master_id =
-    Utilities::MPI::some_to_some(communicator, local_ghosted_master_id);
-
+      recv_ghosted_master_id =
+        Utilities::MPI::some_to_some(communicator, local_ghosted_master_id);
+    }
 
   // global_bboxes = Utilities::MPI::all_gather(communicator, bboxes);
 }
@@ -757,7 +759,6 @@ AgglomerationHandler<dim, spacedim>::setup_ghost_polytopes()
   // Let each rank own all of the bboxes
   global_bboxes = Utilities::MPI::all_gather(communicator, bboxes);
 
-  MPI_Barrier(communicator);
   std::cout << "ON RANK " << Utilities::MPI::this_mpi_process(communicator)
             << std::endl;
   for (const auto &[sender_rank, ghosted_indices] : recv_ghost_indices)
