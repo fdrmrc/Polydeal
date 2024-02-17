@@ -254,6 +254,10 @@ public:
     fe_collection.push_back(*fe);                         // standard
 
     initialize_hp_structure();
+    // in case the job is running under MPI, compute ghost information from
+    // neighboring polytopes.
+    if (Utilities::MPI::job_supports_mpi())
+      setup_ghost_polytopes();
     setup_connectivity_of_agglomeration();
   }
 
@@ -472,8 +476,12 @@ public:
   }
 
   /**
-   *
-   *
+   * This function stores the information needed to identify which polytopes are
+   * ghosted w.r.t the local partition. The issue this function addresses is due
+   * to the fact that the layer of ghost cells is made by just one layer of
+   * deal.II cells. Therefore, the neighboring polytopes will always be made by
+   * some ghost cells and **artificial** ones. This implies that we need to
+   * communicate the missing information from the neighboring rank.
    */
   void
   setup_ghost_polytopes();

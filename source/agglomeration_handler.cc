@@ -785,21 +785,6 @@ AgglomerationHandler<dim, spacedim>::setup_ghost_polytopes()
           std::cout << points.first << std::endl;
           std::cout << points.second << std::endl;
         }
-
-
-      // remove duplicate ids
-      // auto &vec_ids = recv_cell_ids_ghosted_master_cells.at(sender_rank);
-      // std::sort(vec_ids.begin(), vec_ids.end());
-      // vec_ids.erase(std::unique(vec_ids.begin(), vec_ids.end()),
-      // vec_ids.end());
-
-      // // remove duplicate master indices
-      // auto &vec_master_indices =
-      //   recv_indices_ghosted_master_cells.at(sender_rank);
-      // std::sort(vec_master_indices.begin(), vec_master_indices.end());
-      // vec_master_indices.erase(std::unique(vec_master_indices.begin(),
-      //                                      vec_master_indices.end()),
-      //                          vec_master_indices.end());
     }
   std::cout << std::endl;
 }
@@ -1164,7 +1149,10 @@ namespace dealii
                           std::cout << idx << std::endl;
 
                         // from neighboring rank,receive the association between
-                        // standard cell ids and neighboring polytope
+                        // standard cell ids and neighboring polytope.
+                        // This tells to the current rank that the
+                        // neighboring cell has the following CellId as master
+                        // cell.
                         const auto &check_neigh_poly_ids =
                           handler.recv_cell_ids_neigh_cell.at(
                             neighboring_cell->subdomain_id());
@@ -1216,7 +1204,7 @@ namespace dealii
 
                             face_to_neigh_id[n_face] = check_neigh_polytope_id;
 
-                            is_face_at_boundary[n_face] =false;
+                            is_face_at_boundary[n_face] = false;
 
                             // std::pair<CellId, unsigned int> p{
                             //   current_polytope_id, n_face};
@@ -1340,7 +1328,7 @@ namespace dealii
 
                         // bdary_info_current_poly[p] = bdary_info;
 
-                        is_face_at_boundary[n_face]=true;
+                        is_face_at_boundary[n_face] = true;
 
                         // handler.local_ghosted_bdary_info[neigh_rank].emplace(
                         //   p, bdary_info);
