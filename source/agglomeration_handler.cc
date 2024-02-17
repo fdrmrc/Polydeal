@@ -1006,11 +1006,16 @@ namespace dealii
                                 std::end(visited_polygonal_neighbors))
                               {
                                 // found a neighbor
-                                handler.polytope_cache.cell_face_at_boundary[{
-                                  current_polytope_index,
+
+                                const unsigned int n_face =
                                   handler.number_of_agglomerated_faces
-                                    [current_polytope_index]}] = {
+                                    [current_polytope_index];
+
+                                handler.polytope_cache.cell_face_at_boundary[{
+                                  current_polytope_index, n_face}] = {
                                   false, master_of_neighbor};
+
+                                is_face_at_boundary[n_face] = true;
 
                                 ++handler.number_of_agglomerated_faces
                                     [current_polytope_index];
@@ -1067,12 +1072,16 @@ namespace dealii
                                 std::end(visited_polygonal_neighbors))
                               {
                                 // found a neighbor
+                                const unsigned int n_face =
+                                  handler.number_of_agglomerated_faces
+                                    [current_polytope_index];
+
 
                                 handler.polytope_cache.cell_face_at_boundary[{
-                                  current_polytope_index,
-                                  handler.number_of_agglomerated_faces
-                                    [current_polytope_index]}] = {
+                                  current_polytope_index, n_face}] = {
                                   false, neighboring_cell};
+
+                                is_face_at_boundary[n_face] = true;
 
                                 ++handler.number_of_agglomerated_faces
                                     [current_polytope_index];
