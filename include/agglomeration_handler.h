@@ -715,6 +715,14 @@ private:
   mutable std::map<types::subdomain_id, std::map<CellId, BoundingBox<dim>>>
     recv_ghosted_bbox;
 
+  // Exchange DoF indices with ghosted polytopes
+  mutable std::map<types::subdomain_id,
+                   std::map<CellId, std::vector<types::global_dof_index>>>
+    local_ghost_dofs;
+
+  mutable std::map<types::subdomain_id,
+                   std::map<CellId, std::vector<types::global_dof_index>>>
+    recv_ghost_dofs;
 
   ////////////////////////////////////////////////////////
 

@@ -530,10 +530,22 @@ AgglomerationAccessor<dim, spacedim>::get_dof_indices(
   Assert(dof_indices.size() > 0,
          ExcMessage(
            "The vector of DoFs indices must be already properly resized."));
-  // Forward the call to the master cell
-  typename DoFHandler<dim, spacedim>::cell_iterator master_cell_dh(
-    *master_cell, &(handler->agglo_dh));
-  master_cell_dh->get_dof_indices(dof_indices);
+  if (is_locally_owned())
+    {
+      // Forward the call to the master cell
+      typename DoFHandler<dim, spacedim>::cell_iterator master_cell_dh(
+        *master_cell, &(handler->agglo_dh));
+      master_cell_dh->get_dof_indices(dof_indices);
+    }
+  else
+    {
+      const std::vector<types::global_dof_index> &recv_dof_indices =
+        handler->recv_ghost_dofs.at(present_subdomain_id).at(present_id);
+
+      std::copy(recv_dof_indices.cbegin(),
+                recv_dof_indices.cend(),
+                dof_indices.begin());
+    }
 }
 
 
