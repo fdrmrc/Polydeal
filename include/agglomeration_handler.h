@@ -487,6 +487,13 @@ public:
   setup_ghost_polytopes();
 
 
+  // Exchange neighboring bounding boxes
+  mutable std::map<types::subdomain_id, std::map<CellId, BoundingBox<dim>>>
+    local_ghosted_bbox;
+
+  mutable std::map<types::subdomain_id, std::map<CellId, BoundingBox<dim>>>
+    recv_ghosted_bbox;
+
 private:
   /**
    * Initialize connectivity informations
@@ -652,12 +659,6 @@ private:
 
   ////////////////////////////////////////////////////////
 
-  /**
-   * Vector of vector of `BoundingBox` objects. The i-th entry contains the
-   * `BoundingBox`(es) locally owned by processor i.
-   */
-  std::vector<std::vector<BoundingBox<spacedim>>> global_bboxes;
-
   // ghost indices
   mutable std::map<types::subdomain_id, std::vector<types::global_cell_index>>
     local_ghost_indices;
@@ -714,11 +715,6 @@ private:
   mutable std::map<types::subdomain_id,
                    std::map<CellId, std::map<unsigned int, bool>>>
     recv_bdary_info;
-
-
-  mutable std::vector<
-    std::map<types::global_cell_index, types::global_cell_index>>
-    vec_master2polygon;
 
 
   ////////////////////////////////////////////////////////

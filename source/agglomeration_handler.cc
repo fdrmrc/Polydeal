@@ -323,7 +323,6 @@ AgglomerationHandler<dim, spacedim>::setup_connectivity_of_agglomeration()
         Utilities::MPI::some_to_some(communicator, local_ghosted_master_id);
     }
 
-  // global_bboxes = Utilities::MPI::all_gather(communicator, bboxes);
 }
 
 
@@ -692,6 +691,10 @@ AgglomerationHandler<dim, spacedim>::setup_ghost_polytopes()
     if (cell->is_locally_owned())
       {
         std::cout << " cellindex = " << cell->active_cell_index() << std::endl;
+
+        const types::global_cell_index master_idx =
+          get_master_idx_of_cell(cell);
+
         // interior, locally owned, cell
         for (const auto &f : cell->face_indices())
           {
@@ -716,8 +719,7 @@ AgglomerationHandler<dim, spacedim>::setup_ghost_polytopes()
 
                     // Notice: since cell is locally owned, I can call
                     // get_master_idx_of_cell(cell) without harm
-                    const unsigned int master_idx =
-                      get_master_idx_of_cell(cell);
+
                     local_indices_ghosted_master_cells[neigh_rank].push_back(
                       master_idx);
 
@@ -736,6 +738,20 @@ AgglomerationHandler<dim, spacedim>::setup_ghost_polytopes()
           }
       }
 
+
+  // bounding boxes: inform the neighboring rank that the
+  // present agglomerate, identified by the master cell CellId
+  // has a certaing bbox. TODO: do this more efficiently: talk
+  // directly to ghost_owners()
+  for (const auto &master_cell : master_cells_container)
+    {
+      const auto &bbox =
+        bboxes[master2polygon.at(master_cell->active_cell_index())];
+
+      for (const types::subdomain_id neigh_rank : tria->ghost_owners())
+        local_ghosted_bbox[neigh_rank].emplace(master_cell->id(), bbox);
+    }
+
   // exchange ghost indices with neighboring ranks
   recv_ghost_indices =
     Utilities::MPI::some_to_some(communicator, local_ghost_indices);
@@ -753,11 +769,11 @@ AgglomerationHandler<dim, spacedim>::setup_ghost_polytopes()
   recv_cell_ids_neigh_cell =
     Utilities::MPI::some_to_some(communicator, local_cell_ids_neigh_cell);
 
-  // Let each rank own the map master2poly which allows the polytope number
-  vec_master2polygon = Utilities::MPI::all_gather(communicator, master2polygon);
+  // Exchange with neighboring ranks the nrighboring bounding boxes
+  recv_ghosted_bbox =
+    Utilities::MPI::some_to_some(communicator, local_ghosted_bbox);
 
-  // Let each rank own all of the bboxes
-  global_bboxes = Utilities::MPI::all_gather(communicator, bboxes);
+
 
   std::cout << "ON RANK " << Utilities::MPI::this_mpi_process(communicator)
             << std::endl;
@@ -774,18 +790,6 @@ AgglomerationHandler<dim, spacedim>::setup_ghost_polytopes()
       std::cout << "With this master cells indices: " << std::endl;
       for (const auto &idx : recv_indices_ghosted_master_cells.at(sender_rank))
         std::cout << idx << std::endl;
-
-      // Neighboring bounding boxes
-      std::cout << "Let's see the neighboring bboxes" << std::endl;
-      for (const auto &idx : recv_indices_ghosted_master_cells.at(sender_rank))
-        {
-          // idx is the index of the master cell of a neighbor
-          unsigned int box_index = vec_master2polygon[sender_rank].at(idx);
-          const auto & points =
-            global_bboxes[sender_rank][box_index].get_boundary_points();
-          std::cout << points.first << std::endl;
-          std::cout << points.second << std::endl;
-        }
     }
   std::cout << std::endl;
 }
