@@ -1,0 +1,10 @@
+Running with 3 MPI ranks.
+deal.II cell index = 1
+Local face idx = 1
+deal.II cell index = 3
+Local face idx = 1
+deal.II cell index = 2
+Local face idx = 3
+deal.II cell index = 3
+Local face idx = 3
+Ok
