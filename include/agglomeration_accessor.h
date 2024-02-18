@@ -316,10 +316,10 @@ AgglomerationAccessor<dim, spacedim>::neighbor(const unsigned int f) const
         {
           // The following path is needed when the present function is called
           // from neighbor_of_neighbor()
-          std::cout << "la master presente e' ghosted" << std::endl;
+          // std::cout << "la master presente e' ghosted" << std::endl;
 
           const unsigned int sender_rank = master_cell->subdomain_id();
-          std::cout << "e il sender e' " << sender_rank << std::endl;
+          // std::cout << "e il sender e' " << sender_rank << std::endl;
 
           // const CellId &master_id_neighbor =
           //   handler->recv_bdary_info.at(sender_rank)
@@ -335,28 +335,28 @@ AgglomerationAccessor<dim, spacedim>::neighbor(const unsigned int f) const
           // Use the id of the master cell to uniquely identify the neighboring
           // agglomerate
 
-          std::cout << "id del neighbor preso" << std::endl;
+          // std::cout << "id del neighbor preso" << std::endl;
 
           return {master_cell,
                   master_id_ghosted_neighbor,
                   handler}; // dummy master?
         }
 
-
-#ifdef AGGLO_DEBUG
       const types::global_cell_index polytope_index =
         handler->master2polygon.at(master_cell->active_cell_index());
-      std::cout << "Poly index: " << polytope_index << std::endl;
-      std::cout << "Face index " << f << std::endl;
 
-      if (Utilities::MPI::this_mpi_process(handler->communicator) == 1)
-        for (const auto &[key, value] :
-             handler->polytope_cache.cell_face_at_boundary)
-          {
-            std::cout << "p.f = " << key.first << std::endl;
-            std::cout << "p.s = " << key.second << std::endl;
-          }
-#endif
+      // #ifdef AGGLO_DEBUG
+      //       std::cout << "Poly index: " << polytope_index << std::endl;
+      //       std::cout << "Face index " << f << std::endl;
+
+      //       if (Utilities::MPI::this_mpi_process(handler->communicator) == 1)
+      //         for (const auto &[key, value] :
+      //              handler->polytope_cache.cell_face_at_boundary)
+      //           {
+      //             std::cout << "p.f = " << key.first << std::endl;
+      //             std::cout << "p.s = " << key.second << std::endl;
+      //           }
+      // #endif
 
       const auto &neigh =
         handler->polytope_cache.cell_face_at_boundary.at({polytope_index, f})
@@ -371,23 +371,29 @@ AgglomerationAccessor<dim, spacedim>::neighbor(const unsigned int f) const
         }
       else
         {
-          std::cout << "before calling ghosted_masteer_id" << std::endl;
-          std::cout << "present_id = " << present_id << std::endl;
-          std::cout << "che master cell? " << master_cell << std::endl;
+          // #ifdef AGGLO_DEBUG
+          //           std::cout << "before calling ghosted_masteer_id" <<
+          //           std::endl; std::cout << "present_id = " << present_id <<
+          //           std::endl; std::cout << "che master cell? " <<
+          //           master_cell << std::endl;
 
-          if (Utilities::MPI::this_mpi_process(handler->communicator) == 1)
-            for (const auto &[key, value] :
-                 handler->polytope_cache.ghosted_master_id)
-              {
-                std::cout << "poly_id = " << key.first << std::endl;
-                std::cout << "face_idx = " << key.second << std::endl;
-              }
+          //           if
+          //           (Utilities::MPI::this_mpi_process(handler->communicator)
+          //           == 1)
+          //             for (const auto &[key, value] :
+          //                  handler->polytope_cache.ghosted_master_id)
+          //               {
+          //                 std::cout << "poly_id = " << key.first <<
+          //                 std::endl; std::cout << "face_idx = " << key.second
+          //                 << std::endl;
+          //               }
 
+          // #endif
           // Get master_id from the neighboring ghost polytope. This uniquely
           // identifies the neighboring polytope among all processors.
           const CellId &master_id_neighbor =
             handler->polytope_cache.ghosted_master_id.at({present_id, f});
-          std::cout << "after calling ghosted_masteer_id" << std::endl;
+
           // Use the id of the master cell to uniquely identify the neighboring
           // agglomerate
           return {neigh, master_id_neighbor, handler};
@@ -432,20 +438,20 @@ AgglomerationAccessor<dim, spacedim>::neighbor_of_agglomerated_neighbor(
             neigh_polytope
               ->id(); // handler->polytope_cache.ghosted_master_id.at({present_id,
                       // f});
-          std::cout << "Got following cellid from neighbor: "
-                    << master_id_neighbor << std::endl;
+          // std::cout << "Got following cellid from neighbor: "
+          //           << master_id_neighbor << std::endl;
 
           // Then, get the neighboring rank
           const unsigned int sender_rank =
             neigh_polytope.master_cell()->subdomain_id();
-          std::cout << "Sender rank = " << sender_rank << std::endl;
+          // std::cout << "Sender rank = " << sender_rank << std::endl;
 
           // From the neighboring rank, use the CellId of the neighboring
           // polytope to get the number of its faces.
           n_faces_agglomerated_neighbor =
             handler->recv_n_faces.at(sender_rank).at(master_id_neighbor);
-          std::cout << "Fatto con " << n_faces_agglomerated_neighbor
-                    << " facce." << std::endl;
+          // std::cout << "Fatto con " << n_faces_agglomerated_neighbor
+          //           << " facce." << std::endl;
         }
 
 
@@ -454,7 +460,7 @@ AgglomerationAccessor<dim, spacedim>::neighbor_of_agglomerated_neighbor(
            ++f_out)
         {
           // Check if same CellId
-          std::cout << "Prima del neigh_polytope()" << std::endl;
+          // std::cout << "Prima del neigh_polytope()" << std::endl;
           if (neigh_polytope->neighbor(f_out).state() == IteratorState::valid)
             if (neigh_polytope->neighbor(f_out)->id() == present_id)
               return f_out;
@@ -491,9 +497,6 @@ inline AgglomerationAccessor<dim, spacedim>::AgglomerationAccessor(
     }
   else
     {
-      if (Utilities::MPI::this_mpi_process(handler->communicator) == 1)
-        std::cout << "Qui con cell index " << cell->active_cell_index()
-                  << std::endl;
       present_index = handler->master2polygon.at(cell->active_cell_index());
       master_cell   = cell;
       present_id    = master_cell->id();
@@ -631,9 +634,11 @@ AgglomerationAccessor<dim, spacedim>::next()
   // Increment the present index and update the polytope
   ++present_index;
   master_cell = handler->master_cells_container[present_index];
-  std::cout << " before querying the id of master cell" << std::endl;
-  std::cout << "present index = " << present_index << " and total (local) size"
-            << handler->master_cells_container.size() << std::endl;
+  // std::cout << " before querying the id of master cell" << std::endl;
+  // std::cout << "present index = " << present_index << " and total (local)
+  // size"
+  //           << handler->master_cells_container.size() << std::endl;
+
   // Make sure not to query the CellId if it's past the last
   if (present_index != handler->master_cells_container.size())
     {
@@ -732,20 +737,23 @@ AgglomerationAccessor<dim, spacedim>::at_boundary(const unsigned int f) const
 {
   if (master_cell->is_ghost())
     {
-      std::cout << "ghosted boundary for face with index " << f << std::endl;
+      // std::cout << "ghosted boundary for face with index " << f << std::endl;
       const unsigned int sender_rank = master_cell->subdomain_id();
-      const auto &       map_recv =
-        handler->recv_bdary_info.at(sender_rank).at(present_id);
-      std::cout << "size della mappa " << map_recv.size() << std::endl;
-      for (const auto &[face_idx, boundary_or_not] : map_recv)
-        {
-          // std::cout << "id: " << face_idx << std::endl;
-          std::cout << "face: " << face_idx << std::endl;
-          std::cout << "boundary or not: " << boundary_or_not << std::endl;
-        }
+      // #ifdef AGGLO_DEBUG
+      // const auto &       map_recv =
+      //   handler->recv_bdary_info.at(sender_rank).at(present_id);
+      //       std::cout << "size of map " << map_recv.size() << std::endl;
+      //       for (const auto &[face_idx, boundary_or_not] : map_recv)
+      //         {
+      //           // std::cout << "id: " << face_idx << std::endl;
+      //           std::cout << "face: " << face_idx << std::endl;
+      //           std::cout << "boundary or not: " << boundary_or_not <<
+      //           std::endl;
+      //         }
 
-      std::cout << "il present_id e': " << present_id << "and size "
-                << map_recv.size() << std::endl;
+      //       std::cout << "il present_id e': " << present_id << "and size "
+      //                 << map_recv.size() << std::endl;
+      // #endif
 
       return handler->recv_bdary_info.at(sender_rank).at(present_id).at(f);
     }

@@ -706,7 +706,8 @@ AgglomerationHandler<dim, spacedim>::setup_ghost_polytopes()
   for (const auto &cell : agglo_dh.active_cell_iterators())
     if (cell->is_locally_owned())
       {
-        std::cout << " cellindex = " << cell->active_cell_index() << std::endl;
+        // std::cout << " cellindex = " << cell->active_cell_index() <<
+        // std::endl;
 
         const types::global_cell_index master_idx =
           get_master_idx_of_cell(cell);
@@ -807,23 +808,24 @@ AgglomerationHandler<dim, spacedim>::setup_ghost_polytopes()
     Utilities::MPI::some_to_some(communicator, local_ghost_dofs);
 
 
-  std::cout << "ON RANK " << Utilities::MPI::this_mpi_process(communicator)
-            << std::endl;
-  for (const auto &[sender_rank, ghosted_indices] : recv_ghost_indices)
-    {
-      std::cout << "From " << sender_rank << " we have "
-                << ghosted_indices.size() << " ghosted indices"
-                << " and "
-                << recv_cell_ids_ghosted_master_cells.at(sender_rank).size()
-                << " CellId(s)" << std::endl;
-      for (const auto &idx : ghosted_indices)
-        std::cout << idx << std::endl;
+  // std::cout << "ON RANK " << Utilities::MPI::this_mpi_process(communicator)
+  //           << std::endl;
+  // for (const auto &[sender_rank, ghosted_indices] : recv_ghost_indices)
+  //   {
+  //     std::cout << "From " << sender_rank << " we have "
+  //               << ghosted_indices.size() << " ghosted indices"
+  //               << " and "
+  //               << recv_cell_ids_ghosted_master_cells.at(sender_rank).size()
+  //               << " CellId(s)" << std::endl;
+  //     for (const auto &idx : ghosted_indices)
+  //       std::cout << idx << std::endl;
 
-      std::cout << "With this master cells indices: " << std::endl;
-      for (const auto &idx : recv_indices_ghosted_master_cells.at(sender_rank))
-        std::cout << idx << std::endl;
-    }
-  std::cout << std::endl;
+  //     std::cout << "With this master cells indices: " << std::endl;
+  //     for (const auto &idx :
+  //     recv_indices_ghosted_master_cells.at(sender_rank))
+  //       std::cout << idx << std::endl;
+  //   }
+  // std::cout << std::endl;
 }
 
 
@@ -999,14 +1001,15 @@ namespace dealii
                         // - cell is not on the boundary,
                         // - it's not agglomerated with the neighbor. If so,
                         // it's a neighbor of the present agglomeration
-                        std::cout << "interno (from rank) "
-                                  << Utilities::MPI::this_mpi_process(
-                                       handler.communicator)
-                                  << std::endl;
+                        // std::cout << " (from rank) "
+                        //           << Utilities::MPI::this_mpi_process(
+                        //                handler.communicator)
+                        //           << std::endl;
 
-                        std::cout
-                          << "neighbor locally owned? " << std::boolalpha
-                          << neighboring_cell->is_locally_owned() << std::endl;
+                        // std::cout
+                        //   << "neighbor locally owned? " << std::boolalpha
+                        //   << neighboring_cell->is_locally_owned() <<
+                        //   std::endl;
                         // if (neighboring_cell->is_ghost())
                         //   handler.ghosted_indices.push_back(
                         //     neighboring_cell->active_cell_index());
@@ -1159,16 +1162,17 @@ namespace dealii
                       }
                     else if (neighboring_cell->is_ghost())
                       {
-                        std::cout
-                          << "CELLA VISITATA: " << cell->active_cell_index()
-                          << std::endl;
-                        std::cout
-                          << "Sul rank: "
-                          << Utilities::MPI::this_mpi_process(
-                               handler.communicator)
-                          << "\n"
-                          << "Dal rank: " << neighboring_cell->subdomain_id()
-                          << std::endl;
+                        // std::cout
+                        //   << "CELLA VISITED: " << cell->active_cell_index()
+                        //   << std::endl;
+                        // std::cout
+                        //   << "On rank: "
+                        //   << Utilities::MPI::this_mpi_process(
+                        //        handler.communicator)
+                        //   << "\n"
+                        //   << "From rank: " <<
+                        //   neighboring_cell->subdomain_id()
+                        //   << std::endl;
 
                         const auto nof = cell->neighbor_of_neighbor(f);
 
@@ -1176,23 +1180,23 @@ namespace dealii
 
                         // retrieve from neighboring rank the master cell di
 
-                        const auto &master_indices =
-                          handler.recv_indices_ghosted_master_cells.at(
-                            neighboring_cell->subdomain_id());
+                        // const auto &master_indices =
+                        //   handler.recv_indices_ghosted_master_cells.at(
+                        //     neighboring_cell->subdomain_id());
 
 
                         // retrieve from neighboring rank the master cell id
-                        const auto &neighbor_ids =
-                          handler.recv_cell_ids_ghosted_master_cells.at(
-                            neighboring_cell->subdomain_id());
+                        // const auto &neighbor_ids =
+                        //   handler.recv_cell_ids_ghosted_master_cells.at(
+                        //     neighboring_cell->subdomain_id());
 
-                        std::cout << "Ho il seguente numero di ids: "
-                                  << neighbor_ids.size() << std::endl;
+                        // std::cout << "Ho il seguente numero di ids: "
+                        //           << neighbor_ids.size() << std::endl;
 
-                        std::cout << "Ho i seguenti master indices: "
-                                  << master_indices.size() << std::endl;
-                        for (const auto &idx : master_indices)
-                          std::cout << idx << std::endl;
+                        // std::cout << "Ho i seguenti master indices: "
+                        //           << master_indices.size() << std::endl;
+                        // for (const auto &idx : master_indices)
+                        //   std::cout << idx << std::endl;
 
                         // from neighboring rank,receive the association between
                         // standard cell ids and neighboring polytope.
@@ -1209,23 +1213,24 @@ namespace dealii
                         const CellId &check_neigh_polytope_id =
                           check_neigh_poly_ids.at(neighboring_cell_id);
 
-                        std::cout << "CellId del vicino trovato: "
-                                  << check_neigh_polytope_id << std::endl;
-                        std::cout << "rapido check" << std::boolalpha
-                                  << (visited_polygonal_neighbors_id.find(
-                                        check_neigh_polytope_id) ==
-                                      std::end(visited_polygonal_neighbors_id))
-                                  << std::endl;
+                        // std::cout << "CellId del vicino trovato: "
+                        //           << check_neigh_polytope_id << std::endl;
+                        // std::cout << "rapido check" << std::boolalpha
+                        //           << (visited_polygonal_neighbors_id.find(
+                        //                 check_neigh_polytope_id) ==
+                        //               std::end(visited_polygonal_neighbors_id))
+                        //           << std::endl;
 
-                        const auto master_index = master_indices[ghost_counter];
+                        // const auto master_index =
+                        // master_indices[ghost_counter];
 
                         if (visited_polygonal_neighbors_id.find(
                               check_neigh_polytope_id) ==
                             std::end(visited_polygonal_neighbors_id))
                           {
-                            std::cout << "Sono entrato dunque da "
-                                      << cell->active_cell_index()
-                                      << "con faccia " << f << std::endl;
+                            // std::cout << "Sono entrato dunque da "
+                            //           << cell->active_cell_index()
+                            //           << "con faccia " << f << std::endl;
                             // found a neighbor
 
 
@@ -1263,13 +1268,13 @@ namespace dealii
                             // bdary_info_current_poly[p] = bdary_info;
 
 
-                            std::cout
-                              << "Poly index: " << current_polytope_index
-                              << std::endl;
-                            std::cout << "Face index "
-                                      << handler.number_of_agglomerated_faces
-                                           [current_polytope_index]
-                                      << std::endl;
+                            // std::cout
+                            //   << "Poly index: " << current_polytope_index
+                            //   << std::endl;
+                            // std::cout << "Face index "
+                            //           << handler.number_of_agglomerated_faces
+                            //                [current_polytope_index]
+                            //           << std::endl;
 
 
 
@@ -1280,16 +1285,17 @@ namespace dealii
                             visited_polygonal_neighbors_id.insert(
                               check_neigh_polytope_id);
 
-                            std::cout << "Sul rank: "
-                                      << Utilities::MPI::this_mpi_process(
-                                           handler.communicator)
-                                      << "\n"
-                                      << "Dal rank: "
-                                      << neighboring_cell->subdomain_id()
-                                      << " aggiunto questo master index"
-                                      << master_index << std::endl;
-                            std::cout << "Cell index "
-                                      << cell->active_cell_index() << std::endl;
+                            // std::cout << "Sul rank: "
+                            //           << Utilities::MPI::this_mpi_process(
+                            //                handler.communicator)
+                            //           << "\n"
+                            //           << "Dal rank: "
+                            //           << neighboring_cell->subdomain_id()
+                            //           << " aggiunto questo master index"
+                            //           << master_index << std::endl;
+                            // std::cout << "Cell index "
+                            //           << cell->active_cell_index() <<
+                            //           std::endl;
 
                             // ghosted polytope has been found, increment ghost
                             // counter
@@ -1308,10 +1314,12 @@ namespace dealii
                                           check_neigh_polytope_id}]
                               .emplace_back(cell, f);
 
-                            std::cout << "AGGIUNTO ("
-                                      << cell->active_cell_index() << ") TRA "
-                                      << current_polytope_id << " e "
-                                      << check_neigh_polytope_id << std::endl;
+                            // std::cout << "ADDED ("
+                            //           << cell->active_cell_index() << ")
+                            //           BETWEEN "
+                            //           << current_polytope_id << " e "
+                            //           << check_neigh_polytope_id <<
+                            //           std::endl;
 
                             handler.polytope_cache.visited_cell_and_faces_id
                               .insert({cell_id, f});
@@ -1406,11 +1414,11 @@ namespace dealii
           }     // loop over all cells of agglomerate
 
 
-        std::cout << "ghost_counter from rank " +
-                       std::to_string(Utilities::MPI::this_mpi_process(
-                         handler.communicator)) +
-                       ": "
-                  << ghost_counter << std::endl;
+        // std::cout << "ghost_counter from rank " +
+        //                std::to_string(Utilities::MPI::this_mpi_process(
+        //                  handler.communicator)) +
+        //                ": "
+        //           << ghost_counter << std::endl;
 
 
         // TODO
