@@ -15,6 +15,8 @@
  */
 
 
+#include <deal.II/lac/sparsity_tools.h>
+
 #include <agglomeration_handler.h>
 
 template <int dim, int spacedim>
@@ -517,7 +519,11 @@ AgglomerationHandler<dim, spacedim>::create_agglomeration_sparsity_pattern(
          ExcMessage(
            "The Sparsity pattern must be empty upon calling this function."));
 
-  DynamicSparsityPattern dsp(agglo_dh.n_dofs(), agglo_dh.n_dofs());
+  const IndexSet &locally_owned_dofs = agglo_dh.locally_owned_dofs();
+  const IndexSet  locally_relevant_dofs =
+    DoFTools::extract_locally_relevant_dofs(agglo_dh);
+
+  DynamicSparsityPattern dsp(locally_relevant_dofs);
 
   const unsigned int           n_components = fe_collection.n_components();
   Table<2, DoFTools::Coupling> cell_couplings{n_components, n_components};
@@ -537,26 +543,37 @@ AgglomerationHandler<dim, spacedim>::create_agglomeration_sparsity_pattern(
   std::vector<types::global_dof_index> current_dof_indices(dofs_per_cell);
   std::vector<types::global_dof_index> neighbor_dof_indices(dofs_per_cell);
 
-  // Loop over all polytopes, find the neighbor and couple DoFs.
+  // Loop over all locally owned polytopes, find the neighbor (also ghosted) and
+  // couple DoFs.
 
   for (const auto &polytope : polytope_iterators())
     {
-      const unsigned int n_current_faces = polytope->n_faces();
-      polytope->get_dof_indices(current_dof_indices);
-      for (unsigned int f = 0; f < n_current_faces; ++f)
+      if (polytope->is_locally_owned())
         {
-          const auto &neigh_polytope = polytope->neighbor(f);
-          if (neigh_polytope.state() == IteratorState::valid)
+          const unsigned int n_current_faces = polytope->n_faces();
+          polytope->get_dof_indices(current_dof_indices);
+          for (unsigned int f = 0; f < n_current_faces; ++f)
             {
-              neigh_polytope->get_dof_indices(neighbor_dof_indices);
-              constraints.add_entries_local_to_global(current_dof_indices,
-                                                      neighbor_dof_indices,
-                                                      dsp,
-                                                      keep_constrained_dofs,
-                                                      {});
+              const auto &neigh_polytope = polytope->neighbor(f);
+              if (neigh_polytope.state() == IteratorState::valid)
+                {
+                  neigh_polytope->get_dof_indices(neighbor_dof_indices);
+                  constraints.add_entries_local_to_global(current_dof_indices,
+                                                          neighbor_dof_indices,
+                                                          dsp,
+                                                          keep_constrained_dofs,
+                                                          {});
+                }
             }
         }
     }
+
+  if (Utilities::MPI::job_supports_mpi())
+    SparsityTools::distribute_sparsity_pattern(dsp,
+                                               locally_owned_dofs,
+                                               communicator,
+                                               locally_relevant_dofs);
+
 
 
   sparsity_pattern.copy_from(dsp);
