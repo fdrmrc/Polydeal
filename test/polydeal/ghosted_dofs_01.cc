@@ -156,6 +156,9 @@ main(int argc, char *argv[])
     {
       if (polytope->is_locally_owned())
         {
+          std::cout << "Polytope with local index " << polytope->index()
+                    << " from rank " << Utilities::MPI::this_mpi_process(comm)
+                    << std::endl;
           unsigned int n_faces = polytope->n_faces();
           for (unsigned int f = 0; f < n_faces; ++f)
             {
@@ -171,8 +174,7 @@ main(int argc, char *argv[])
                          ExcMessage("Mismatch!"));
 
                   // If the neighborign polytope is not locally owned by the
-                  // current process, get its BoundingBox and display the
-                  // coordinates.
+                  // current process, get its DoFs and show them
                   if (!neighbor_polytope->is_locally_owned())
                     {
                       std::vector<types::global_dof_index> ghosted_dofs(
