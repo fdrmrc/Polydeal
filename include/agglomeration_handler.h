@@ -1022,11 +1022,6 @@ AgglomerationHandler<dim, spacedim>::begin() const
 {
   Assert(n_agglomerations > 0,
          ExcMessage("No agglomeration has been performed."));
-
-  if (Utilities::MPI::this_mpi_process(communicator) == 1)
-    std::cout << "Dall' handler (begin) la size e': "
-              << master_cells_container.size() << std::endl;
-
   return {*master_cells_container.begin(), this};
 }
 
@@ -1049,11 +1044,6 @@ AgglomerationHandler<dim, spacedim>::end() const
 {
   Assert(n_agglomerations > 0,
          ExcMessage("No agglomeration has been performed."));
-
-  if (Utilities::MPI::this_mpi_process(communicator) == 1)
-    std::cout << "Dall' handler (end) la size e': "
-              << master_cells_container.size() << std::endl;
-
   return {*master_cells_container.end(), this};
 }
 
@@ -1086,7 +1076,6 @@ IteratorRange<
   typename AgglomerationHandler<dim, spacedim>::agglomeration_iterator>
 AgglomerationHandler<dim, spacedim>::polytope_iterators() const
 {
-  std::cout << "Costruisco polytope iterators()" << std::endl;
   return IteratorRange<
     typename AgglomerationHandler<dim, spacedim>::agglomeration_iterator>(
     begin(), end());
