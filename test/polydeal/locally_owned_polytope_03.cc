@@ -59,8 +59,8 @@ main(int argc, char *argv[])
   Utilities::MPI::MPI_InitFinalize mpi_initialization(argc, argv, 1);
   const MPI_Comm &                 comm = MPI_COMM_WORLD;
   const unsigned n_ranks                = Utilities::MPI::n_mpi_processes(comm);
-  Assert(n_ranks == 3,
-         ExcMessage("This test is meant to be run with 3 ranks only."));
+  AssertThrow(n_ranks == 3,
+              ExcMessage("This test is meant to be run with 3 ranks only."));
   if (Utilities::MPI::this_mpi_process(comm) == 0)
     std::cout << "Running with " << n_ranks << " MPI ranks." << std::endl;
 
