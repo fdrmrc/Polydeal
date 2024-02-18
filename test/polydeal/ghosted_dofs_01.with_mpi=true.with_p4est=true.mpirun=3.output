@@ -1,0 +1,62 @@
+Running with 3 MPI ranks.
+DoFs indices from neighboring ghosted polytope:
+0
+1
+2
+3
+DoFs indices from neighboring ghosted polytope:
+24
+25
+26
+27
+DoFs indices from neighboring ghosted polytope:
+4
+5
+6
+7
+DoFs indices from neighboring ghosted polytope:
+24
+25
+26
+27
+DoFs indices from neighboring ghosted polytope:
+4
+5
+6
+7
+DoFs indices from neighboring ghosted polytope:
+28
+29
+30
+31
+DoFs indices from neighboring ghosted polytope:
+12
+13
+14
+15
+DoFs indices from neighboring ghosted polytope:
+16
+17
+18
+19
+DoFs indices from neighboring ghosted polytope:
+20
+21
+22
+23
+DoFs indices from neighboring ghosted polytope:
+8
+9
+10
+11
+DoFs indices from neighboring ghosted polytope:
+12
+13
+14
+15
+DoFs indices from neighboring ghosted polytope:
+16
+17
+18
+19
+Ok
