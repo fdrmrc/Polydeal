@@ -156,6 +156,9 @@ main(int argc, char *argv[])
     {
       if (polytope->is_locally_owned())
         {
+          std::cout << "Polytope with local index " << polytope->index()
+                    << " from rank " << Utilities::MPI::this_mpi_process(comm)
+                    << std::endl;
           unsigned int n_faces = polytope->n_faces();
           for (unsigned int f = 0; f < n_faces; ++f)
             {
