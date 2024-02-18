@@ -125,11 +125,12 @@ public:
   get_agglomerate() const;
 
   /**
-   * Return the BoundingBox which bounds the present polytope.
+   * Return the BoundingBox which bounds the present polytope. In case the
+   * present polytope is not locally owned, it returns the BoundingBox of that
+   * ghosted polytope.
    */
   const BoundingBox<dim> &
   get_bounding_box() const;
-
 
   /**
    * Return the index of the present polytope.
@@ -167,6 +168,13 @@ public:
    */
   CellId
   id() const;
+
+  /**
+   * The polytopal analogue of CellAccessor::subdomain_id(). In case of a serial
+   * Triangulation, it returns the numbers::invalid_subdomain_id.
+   */
+  types::subdomain_id
+  subdomain_id() const;
 
 private:
   /**
@@ -213,6 +221,11 @@ private:
    * The index of the present polytope.
    */
   CellId present_id;
+
+  /**
+   * The rank owning of the present polytope.
+   */
+  types::subdomain_id present_subdomain_id;
 
   /**
    * A pointer to the Handler.
@@ -471,9 +484,10 @@ inline AgglomerationAccessor<dim, spacedim>::AgglomerationAccessor(
   handler = const_cast<AgglomerationHandler<dim, spacedim> *>(ah);
   if (&(*handler->master_cells_container.end()) == std::addressof(cell))
     {
-      present_index = handler->master_cells_container.size();
-      master_cell   = handler->master_cells_container[present_index];
-      present_id    = CellId(); // invalid id (TODO)
+      present_index        = handler->master_cells_container.size();
+      master_cell          = handler->master_cells_container[present_index];
+      present_id           = CellId(); // invalid id (TODO)
+      present_subdomain_id = numbers::invalid_subdomain_id;
     }
   else
     {
@@ -483,6 +497,7 @@ inline AgglomerationAccessor<dim, spacedim>::AgglomerationAccessor(
       present_index = handler->master2polygon.at(cell->active_cell_index());
       master_cell   = cell;
       present_id    = master_cell->id();
+      present_subdomain_id = master_cell->subdomain_id();
     }
 }
 
@@ -501,7 +516,8 @@ inline AgglomerationAccessor<dim, spacedim>::AgglomerationAccessor(
   master_cell   = neigh_cell;
   present_index = numbers::invalid_unsigned_int;
   // neigh_cell is ghosted, use the CellId of that agglomerate
-  present_id = master_cell_id;
+  present_id           = master_cell_id;
+  present_subdomain_id = master_cell->subdomain_id();
 }
 
 
@@ -569,7 +585,10 @@ template <int dim, int spacedim>
 inline const BoundingBox<dim> &
 AgglomerationAccessor<dim, spacedim>::get_bounding_box() const
 {
-  return handler->bboxes[present_index];
+  if (is_locally_owned())
+    return handler->bboxes[present_index];
+  else
+    return handler->recv_ghosted_bbox.at(present_subdomain_id).at(present_id);
 }
 
 
@@ -605,7 +624,10 @@ AgglomerationAccessor<dim, spacedim>::next()
             << handler->master_cells_container.size() << std::endl;
   // Make sure not to query the CellId if it's past the last
   if (present_index != handler->master_cells_container.size())
-    present_id = master_cell->id();
+    {
+      present_id           = master_cell->id();
+      present_subdomain_id = master_cell->subdomain_id();
+    }
 }
 
 
@@ -698,7 +720,7 @@ AgglomerationAccessor<dim, spacedim>::at_boundary(const unsigned int f) const
 {
   if (master_cell->is_ghost())
     {
-      std::cout << "ghosted boundary!" << std::endl;
+      std::cout << "ghosted boundary for face with index " << f << std::endl;
       const unsigned int sender_rank = master_cell->subdomain_id();
       const auto &       map_recv =
         handler->recv_bdary_info.at(sender_rank).at(present_id);
@@ -744,6 +766,15 @@ inline CellId
 AgglomerationAccessor<dim, spacedim>::id() const
 {
   return present_id;
+}
+
+
+
+template <int dim, int spacedim>
+inline types::subdomain_id
+AgglomerationAccessor<dim, spacedim>::subdomain_id() const
+{
+  return present_subdomain_id;
 }
 
 

@@ -486,14 +486,6 @@ public:
   void
   setup_ghost_polytopes();
 
-
-  // Exchange neighboring bounding boxes
-  mutable std::map<types::subdomain_id, std::map<CellId, BoundingBox<dim>>>
-    local_ghosted_bbox;
-
-  mutable std::map<types::subdomain_id, std::map<CellId, BoundingBox<dim>>>
-    recv_ghosted_bbox;
-
 private:
   /**
    * Initialize connectivity informations
@@ -715,6 +707,13 @@ private:
   mutable std::map<types::subdomain_id,
                    std::map<CellId, std::map<unsigned int, bool>>>
     recv_bdary_info;
+
+  // Exchange neighboring bounding boxes
+  mutable std::map<types::subdomain_id, std::map<CellId, BoundingBox<dim>>>
+    local_ghosted_bbox;
+
+  mutable std::map<types::subdomain_id, std::map<CellId, BoundingBox<dim>>>
+    recv_ghosted_bbox;
 
 
   ////////////////////////////////////////////////////////
