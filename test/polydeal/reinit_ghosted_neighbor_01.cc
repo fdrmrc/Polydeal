@@ -159,7 +159,9 @@ main(int argc, char *argv[])
                           unsigned int nofn =
                             polytope->neighbor_of_agglomerated_neighbor(f);
 
-                          const auto &fe_faces0 = ah.reinit(polytope, f);
+                          const auto &fe_faces = ah.reinit_interface(
+                            polytope, neighbor_polytope, f, nofn);
+                          const auto &fe_faces0 = fe_faces.first;
 
                           types::subdomain_id neigh_rank =
                             neighbor_polytope->subdomain_id();
