@@ -147,7 +147,14 @@ main(int argc, char *argv[])
     }
 
 
-  FE_DGQ<2> fe_dg(1);
+  FE_DGQ<2>          fe_dg(1);
+  const unsigned int quadrature_degree      = 2 * fe_dg.get_degree() + 1;
+  const unsigned int face_quadrature_degree = 2 * fe_dg.get_degree() + 1;
+  ah.initialize_fe_values(QGauss<2>(quadrature_degree),
+                          update_gradients | update_JxW_values |
+                            update_quadrature_points | update_JxW_values |
+                            update_values,
+                          QGauss<1>(face_quadrature_degree));
   ah.distribute_agglomerated_dofs(fe_dg);
 
   SparsityPattern sparsity_pattern;
@@ -159,6 +166,7 @@ main(int argc, char *argv[])
   sparsity_pattern.print_svg(out);
 
   // Print (the locally owned part of) the sparsity pattern to the given stream,
-  // using the format (line,col).
-  sparsity_pattern.print(std::cout);
+  // using the format (line,col), only from rank 0
+  if (my_rank == 0)
+    sparsity_pattern.print(std::cout);
 }

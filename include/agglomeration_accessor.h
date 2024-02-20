@@ -316,16 +316,8 @@ AgglomerationAccessor<dim, spacedim>::neighbor(const unsigned int f) const
         {
           // The following path is needed when the present function is called
           // from neighbor_of_neighbor()
-          // std::cout << "la master presente e' ghosted" << std::endl;
 
           const unsigned int sender_rank = master_cell->subdomain_id();
-          // std::cout << "e il sender e' " << sender_rank << std::endl;
-
-          // const CellId &master_id_neighbor =
-          //   handler->recv_bdary_info.at(sender_rank)
-          //     .at(present_id)
-          //     .at({present_id, f})
-          //     .second;
 
           const CellId &master_id_ghosted_neighbor =
             handler->recv_ghosted_master_id.at(sender_rank)
@@ -334,8 +326,6 @@ AgglomerationAccessor<dim, spacedim>::neighbor(const unsigned int f) const
 
           // Use the id of the master cell to uniquely identify the neighboring
           // agglomerate
-
-          // std::cout << "id del neighbor preso" << std::endl;
 
           return {master_cell,
                   master_id_ghosted_neighbor,
@@ -434,24 +424,16 @@ AgglomerationAccessor<dim, spacedim>::neighbor_of_agglomerated_neighbor(
           // number of its faces from the neighboring rank.
 
           // First, retrieve the CellId of the neighboring polytope.
-          const CellId &master_id_neighbor =
-            neigh_polytope
-              ->id(); // handler->polytope_cache.ghosted_master_id.at({present_id,
-                      // f});
-          // std::cout << "Got following cellid from neighbor: "
-          //           << master_id_neighbor << std::endl;
+          const CellId &master_id_neighbor = neigh_polytope->id();
 
           // Then, get the neighboring rank
           const unsigned int sender_rank =
             neigh_polytope.master_cell()->subdomain_id();
-          // std::cout << "Sender rank = " << sender_rank << std::endl;
 
           // From the neighboring rank, use the CellId of the neighboring
           // polytope to get the number of its faces.
           n_faces_agglomerated_neighbor =
             handler->recv_n_faces.at(sender_rank).at(master_id_neighbor);
-          // std::cout << "Fatto con " << n_faces_agglomerated_neighbor
-          //           << " facce." << std::endl;
         }
 
 
@@ -460,7 +442,6 @@ AgglomerationAccessor<dim, spacedim>::neighbor_of_agglomerated_neighbor(
            ++f_out)
         {
           // Check if same CellId
-          // std::cout << "Prima del neigh_polytope()" << std::endl;
           if (neigh_polytope->neighbor(f_out).state() == IteratorState::valid)
             if (neigh_polytope->neighbor(f_out)->id() == present_id)
               return f_out;
@@ -634,10 +615,6 @@ AgglomerationAccessor<dim, spacedim>::next()
   // Increment the present index and update the polytope
   ++present_index;
   master_cell = handler->master_cells_container[present_index];
-  // std::cout << " before querying the id of master cell" << std::endl;
-  // std::cout << "present index = " << present_index << " and total (local)
-  // size"
-  //           << handler->master_cells_container.size() << std::endl;
 
   // Make sure not to query the CellId if it's past the last
   if (present_index != handler->master_cells_container.size())
@@ -737,7 +714,6 @@ AgglomerationAccessor<dim, spacedim>::at_boundary(const unsigned int f) const
 {
   if (master_cell->is_ghost())
     {
-      // std::cout << "ghosted boundary for face with index " << f << std::endl;
       const unsigned int sender_rank = master_cell->subdomain_id();
       // #ifdef AGGLO_DEBUG
       // const auto &       map_recv =
