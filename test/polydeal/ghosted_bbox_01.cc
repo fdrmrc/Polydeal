@@ -147,46 +147,55 @@ main(int argc, char *argv[])
     }
 
 
-  FE_DGQ<2> fe_dg(0);
+  FE_DGQ<2>          fe_dg(0);
+  const unsigned int quadrature_degree      = 2 * fe_dg.get_degree() + 1;
+  const unsigned int face_quadrature_degree = 2 * fe_dg.get_degree() + 1;
+  ah.initialize_fe_values(QGauss<2>(quadrature_degree),
+                          update_gradients | update_JxW_values |
+                            update_quadrature_points | update_values,
+                          QGauss<1>(face_quadrature_degree));
   ah.distribute_agglomerated_dofs(fe_dg);
 
 
   auto polytope = ah.begin();
-  for (; polytope != ah.end(); ++polytope)
+  if (my_rank == 1)
     {
-      if (polytope->is_locally_owned())
+      for (; polytope != ah.end(); ++polytope)
         {
-          std::cout << "Polytope with local index " << polytope->index()
-                    << " from rank " << Utilities::MPI::this_mpi_process(comm)
-                    << std::endl;
-          unsigned int n_faces = polytope->n_faces();
-          for (unsigned int f = 0; f < n_faces; ++f)
+          if (polytope->is_locally_owned())
             {
-              if (!polytope->at_boundary(f))
+              std::cout << "Polytope with local index " << polytope->index()
+                        << " from rank "
+                        << Utilities::MPI::this_mpi_process(comm) << std::endl;
+              unsigned int n_faces = polytope->n_faces();
+              for (unsigned int f = 0; f < n_faces; ++f)
                 {
-                  const auto &neighbor_polytope = polytope->neighbor(f);
-
-                  const unsigned int nofn =
-                    polytope->neighbor_of_agglomerated_neighbor(f);
-
-                  Assert((neighbor_polytope->neighbor(nofn)->id() ==
-                          polytope->id()),
-                         ExcMessage("Mismatch!"));
-
-                  // If the neighborign polytope is not locally owned by the
-                  // current process, get its BoundingBox and display the
-                  // coordinates.
-                  if (!neighbor_polytope->is_locally_owned())
+                  if (!polytope->at_boundary(f))
                     {
-                      const BoundingBox<2> &neigh_bbox =
-                        neighbor_polytope->get_bounding_box();
+                      const auto &neighbor_polytope = polytope->neighbor(f);
 
-                      std::cout << "Neighboring bbox has vertices:"
-                                << std::endl;
-                      const auto &bdary_points =
-                        neigh_bbox.get_boundary_points();
-                      std::cout << bdary_points.first << std::endl;
-                      std::cout << bdary_points.second << std::endl;
+                      const unsigned int nofn =
+                        polytope->neighbor_of_agglomerated_neighbor(f);
+
+                      Assert((neighbor_polytope->neighbor(nofn)->id() ==
+                              polytope->id()),
+                             ExcMessage("Mismatch!"));
+
+                      // If the neighborign polytope is not locally owned by the
+                      // current process, get its BoundingBox and display the
+                      // coordinates.
+                      if (!neighbor_polytope->is_locally_owned())
+                        {
+                          const BoundingBox<2> &neigh_bbox =
+                            neighbor_polytope->get_bounding_box();
+
+                          std::cout << "Neighboring bbox has vertices:"
+                                    << std::endl;
+                          const auto &bdary_points =
+                            neigh_bbox.get_boundary_points();
+                          std::cout << bdary_points.first << std::endl;
+                          std::cout << bdary_points.second << std::endl;
+                        }
                     }
                 }
             }

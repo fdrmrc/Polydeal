@@ -125,20 +125,6 @@ AgglomerationHandler<dim, spacedim>::initialize_fe_values(
     agglomeration_face_quad,
     update_quadrature_points | update_JxW_values |
       update_normal_vectors); // only for quadrature
-
-  if (hybrid_mesh)
-    {
-      // the mesh is composed by standard and agglomerate cells. initialize
-      // classes needed for standard cells in order to treat that finite element
-      // space as defined on a standard shape and not on the BoundingBox.
-      standard_scratch =
-        std::make_unique<ScratchData>(*mapping,
-                                      *fe,
-                                      cell_quadrature,
-                                      agglomeration_flags,
-                                      face_quadrature,
-                                      agglomeration_face_flags);
-    }
 }
 
 
@@ -329,6 +315,86 @@ AgglomerationHandler<dim, spacedim>::setup_connectivity_of_agglomeration()
 
 
 template <int dim, int spacedim>
+void
+AgglomerationHandler<dim, spacedim>::exchange_interface_values()
+{
+  const unsigned int dofs_per_cell = fe->dofs_per_cell;
+  for (const auto &polytope : polytope_iterators())
+    {
+      if (polytope->is_locally_owned())
+        {
+          const unsigned int n_faces = polytope->n_faces();
+          for (unsigned int f = 0; f < n_faces; ++f)
+            {
+              if (!polytope->at_boundary(f))
+                {
+                  const auto &neigh_polytope = polytope->neighbor(f);
+                  if (!neigh_polytope->is_locally_owned())
+                    {
+                      // Neighboring polytope is ghosted.
+
+                      // Compute shape functions at the interface
+                      const auto &current_fe = reinit(polytope, f);
+
+                      std::vector<Point<spacedim>> qpoints_to_send =
+                        current_fe.get_quadrature_points();
+
+                      std::vector<double> jxws_to_send =
+                        current_fe.get_JxW_values();
+
+                      // Sort qpoints according to their norm
+                      const std::vector<unsigned int> permuted_indices =
+                        internal::AgglomerationHandlerImplementation<dim,
+                                                                     spacedim>::
+                          sort_qpoints_and_get_permutations(qpoints_to_send);
+
+
+                      for (unsigned int i = 0; i < permuted_indices.size(); ++i)
+                        {
+                          jxws_to_send[i] = jxws_to_send[permuted_indices[i]];
+                        }
+
+
+                      const types::subdomain_id neigh_rank =
+                        neigh_polytope->subdomain_id();
+
+                      std::pair<CellId, unsigned int> cell_and_face{
+                        polytope->id(), f};
+                      // Prepare data to send
+                      local_qpoints[neigh_rank].emplace(cell_and_face,
+                                                        qpoints_to_send);
+
+                      local_jxws[neigh_rank].emplace(cell_and_face,
+                                                     jxws_to_send);
+
+                      const unsigned int n_qpoints = qpoints_to_send.size();
+
+                      std::vector<std::vector<double>> values_per_qpoints(
+                        dofs_per_cell);
+
+                      for (unsigned int i = 0; i < dofs_per_cell; ++i)
+                        {
+                          values_per_qpoints[i].reserve(n_qpoints);
+                          for (unsigned int q = 0; q < n_qpoints; ++q)
+                            {
+                              values_per_qpoints[i][q] =
+                                current_fe.shape_value(i, q);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+  // Finally, exchange with neighboring ranks
+  recv_qpoints = Utilities::MPI::some_to_some(communicator, local_qpoints);
+  recv_jxws    = Utilities::MPI::some_to_some(communicator, local_jxws);
+}
+
+
+
+template <int dim, int spacedim>
 Quadrature<dim>
 AgglomerationHandler<dim, spacedim>::agglomerated_quadrature(
   const typename AgglomerationHandler<dim, spacedim>::AgglomerationContainer
@@ -484,10 +550,15 @@ AgglomerationHandler<dim, spacedim>::reinit_interface(
   const unsigned int                          local_in,
   const unsigned int                          local_neigh) const
 {
+  // If current and neighboring polytopes are both locally owned, then compute
+  // the jump in the classical way without needing information about ghosted
+  // entities.
+  Assert((polytope_in->is_locally_owned() &&
+          neigh_polytope->is_locally_owned()),
+         ExcInternalError());
+
   const auto &cell_in    = polytope_in->as_dof_handler_iterator(agglo_dh);
   const auto &neigh_cell = neigh_polytope->as_dof_handler_iterator(agglo_dh);
-  Assert(is_master_cell(cell_in) && is_master_cell(neigh_cell),
-         ExcMessage("Both cells should be masters."));
 
   const auto &fe_in =
     internal::AgglomerationHandlerImplementation<dim, spacedim>::reinit_master(
@@ -543,8 +614,8 @@ AgglomerationHandler<dim, spacedim>::create_agglomeration_sparsity_pattern(
   std::vector<types::global_dof_index> current_dof_indices(dofs_per_cell);
   std::vector<types::global_dof_index> neighbor_dof_indices(dofs_per_cell);
 
-  // Loop over all locally owned polytopes, find the neighbor (also ghosted) and
-  // couple DoFs.
+  // Loop over all locally owned polytopes, find the neighbor (also ghosted)
+  // and couple DoFs.
 
   for (const auto &polytope : polytope_iterators())
     {
@@ -706,9 +777,8 @@ AgglomerationHandler<dim, spacedim>::setup_ghost_polytopes()
   for (const auto &cell : agglo_dh.active_cell_iterators())
     if (cell->is_locally_owned())
       {
-        // std::cout << " cellindex = " << cell->active_cell_index() <<
-        // std::endl;
-
+        // Notice: since cell is locally owned, I can call
+        // get_master_idx_of_cell(cell) without harm
         const types::global_cell_index master_idx =
           get_master_idx_of_cell(cell);
 
@@ -732,35 +802,21 @@ AgglomerationHandler<dim, spacedim>::setup_ghost_polytopes()
                     // key of the map: the rank to which send the data
                     const types::subdomain_id neigh_rank =
                       neighbor->subdomain_id();
-                    // send to neighboring process the ghosted (seen from the
-                    // neighbor) cell index
 
-                    // the present cell is a ghost cell for the neighboring
-                    // subdomain
-                    local_ghost_indices[neigh_rank].push_back(
-                      cell->active_cell_index());
+                    // send to neighboring process also the index of the
+                    // master cell of the present cell, which identifies the
+                    // polytope
 
-                    // send to neighboring process also the index of the master
-                    // cell of the present cell, which identifies the polytope
-
-                    // Notice: since cell is locally owned, I can call
-                    // get_master_idx_of_cell(cell) without harm
-
-                    local_indices_ghosted_master_cells[neigh_rank].push_back(
-                      master_idx);
 
                     const CellId &master_cell_id = master_cell->id();
-
-                    local_cell_ids_ghosted_master_cells[neigh_rank].push_back(
-                      master_cell_id); // send CellId of master cell
 
                     // inform the "standard" neighbor about the neighboring id
                     // and its master cell
                     local_cell_ids_neigh_cell[neigh_rank].emplace(
                       cell->id(), master_cell_id);
 
-                    // inform the neighboring rank that this master cell (hence
-                    // polytope) has the following DoF indices
+                    // inform the neighboring rank that this master cell
+                    // (hence polytope) has the following DoF indices
                     local_ghost_dofs[neigh_rank].emplace(master_cell_id,
                                                          global_dof_indices);
                   }
@@ -782,19 +838,7 @@ AgglomerationHandler<dim, spacedim>::setup_ghost_polytopes()
         local_ghosted_bbox[neigh_rank].emplace(master_cell->id(), bbox);
     }
 
-  // exchange ghost indices with neighboring ranks
-  recv_ghost_indices =
-    Utilities::MPI::some_to_some(communicator, local_ghost_indices);
-
   // exchange indices of master cells with neighboring ranks
-
-  recv_indices_ghosted_master_cells =
-    Utilities::MPI::some_to_some(communicator,
-                                 local_indices_ghosted_master_cells);
-
-  recv_cell_ids_ghosted_master_cells =
-    Utilities::MPI::some_to_some(communicator,
-                                 local_cell_ids_ghosted_master_cells);
 
   recv_cell_ids_neigh_cell =
     Utilities::MPI::some_to_some(communicator, local_cell_ids_neigh_cell);
@@ -806,26 +850,6 @@ AgglomerationHandler<dim, spacedim>::setup_ghost_polytopes()
   // Exchange with neighboring ranks the neighboring ghosted DoFs
   recv_ghost_dofs =
     Utilities::MPI::some_to_some(communicator, local_ghost_dofs);
-
-
-  // std::cout << "ON RANK " << Utilities::MPI::this_mpi_process(communicator)
-  //           << std::endl;
-  // for (const auto &[sender_rank, ghosted_indices] : recv_ghost_indices)
-  //   {
-  //     std::cout << "From " << sender_rank << " we have "
-  //               << ghosted_indices.size() << " ghosted indices"
-  //               << " and "
-  //               << recv_cell_ids_ghosted_master_cells.at(sender_rank).size()
-  //               << " CellId(s)" << std::endl;
-  //     for (const auto &idx : ghosted_indices)
-  //       std::cout << idx << std::endl;
-
-  //     std::cout << "With this master cells indices: " << std::endl;
-  //     for (const auto &idx :
-  //     recv_indices_ghosted_master_cells.at(sender_rank))
-  //       std::cout << idx << std::endl;
-  //   }
-  // std::cout << std::endl;
 }
 
 
@@ -849,13 +873,20 @@ namespace dealii
         Assert(handler.is_master_cell(cell),
                ExcMessage("This cell must be a master one."));
 
-        const auto &neighbor = agglomerated_neighbor(cell, face_index, handler);
+        AgglomerationIterator<dim, spacedim> it{cell, &handler};
+        const auto &neigh_polytope = it->neighbor(face_index);
 
         const CellId polytope_in_id = cell->id();
 
+        // Retrieve the bounding box of the agglomeration
+        const auto &bbox =
+          handler.bboxes[handler.master2polygon.at(cell->active_cell_index())];
+
+        const double bbox_measure = bbox.volume();
+
         CellId polytope_out_id;
-        if (neighbor.state() == IteratorState::valid)
-          polytope_out_id = neighbor->id();
+        if (neigh_polytope.state() == IteratorState::valid)
+          polytope_out_id = neigh_polytope->id();
         else
           polytope_out_id = polytope_in_id; // on the boundary. Same id
 
@@ -871,18 +902,14 @@ namespace dealii
           {
             // std::cout << "deal cell = " << deal_cell->active_cell_index()
             //           << std::endl;
-            // std::cout << "local face index = " << local_face_idx
-            //           << std::endl;
+            // std::cout << "local face index = " << local_face_idx <<
+            // std::endl;
+
             handler.no_face_values->reinit(deal_cell, local_face_idx);
-            auto q_points = handler.no_face_values->get_quadrature_points();
 
-            const auto &JxWs    = handler.no_face_values->get_JxW_values();
+            auto q_points    = handler.no_face_values->get_quadrature_points();
+            const auto &JxWs = handler.no_face_values->get_JxW_values();
             const auto &normals = handler.no_face_values->get_normal_vectors();
-
-            const auto &bbox =
-              handler
-                .bboxes[handler.master2polygon.at(cell->active_cell_index())];
-            const double bbox_measure = bbox.volume();
 
             std::vector<Point<spacedim>> unit_q_points;
             std::transform(q_points.begin(),
@@ -922,6 +949,23 @@ namespace dealii
               final_weights.push_back(weight);
             for (const auto &normal : scaled_normals)
               final_normals.push_back(normal);
+          }
+
+        // In order to have the same ordering of qpoints,JxWs, etc.
+        if (neigh_polytope.state() == IteratorState::valid)
+          {
+            if (!neigh_polytope->is_locally_owned())
+              {
+                const std::vector<unsigned int> permuted_indices =
+                  sort_qpoints_and_get_permutations(final_unit_q_points);
+
+                // Permute also other entities
+                for (unsigned int i = 0; i < permuted_indices.size(); ++i)
+                  {
+                    final_weights[i] = final_weights[permuted_indices[i]];
+                    final_normals[i] = final_normals[permuted_indices[i]];
+                  }
+              }
           }
 
         NonMatching::ImmersedSurfaceQuadrature<dim, spacedim> surface_quad(
@@ -968,9 +1012,6 @@ namespace dealii
 
         std::set<types::global_cell_index> visited_polygonal_neighbors;
 
-        // std::map<std::pair<CellId, unsigned int>, std::pair<bool, CellId>>
-        //   bdary_info_current_poly;
-
         std::map<unsigned int, CellId> face_to_neigh_id;
 
         std::map<unsigned int, bool> is_face_at_boundary;
@@ -989,7 +1030,7 @@ namespace dealii
             for (const auto f : cell->face_indices())
               {
                 const auto &neighboring_cell = cell->neighbor(f);
-                // Check if:
+
                 const bool valid_neighbor =
                   neighboring_cell.state() == IteratorState::valid;
 
@@ -1014,7 +1055,8 @@ namespace dealii
                         //   handler.ghosted_indices.push_back(
                         //     neighboring_cell->active_cell_index());
 
-                        // a new face of the agglomeration has been discovered.
+                        // a new face of the agglomeration has been
+                        // discovered.
                         handler.polygon_boundary[master_cell].push_back(
                           cell->face(f));
 
@@ -1162,44 +1204,10 @@ namespace dealii
                       }
                     else if (neighboring_cell->is_ghost())
                       {
-                        // std::cout
-                        //   << "CELLA VISITED: " << cell->active_cell_index()
-                        //   << std::endl;
-                        // std::cout
-                        //   << "On rank: "
-                        //   << Utilities::MPI::this_mpi_process(
-                        //        handler.communicator)
-                        //   << "\n"
-                        //   << "From rank: " <<
-                        //   neighboring_cell->subdomain_id()
-                        //   << std::endl;
-
                         const auto nof = cell->neighbor_of_neighbor(f);
 
-                        // TODO: neighboring cell is a master,slave?
-
-                        // retrieve from neighboring rank the master cell di
-
-                        // const auto &master_indices =
-                        //   handler.recv_indices_ghosted_master_cells.at(
-                        //     neighboring_cell->subdomain_id());
-
-
-                        // retrieve from neighboring rank the master cell id
-                        // const auto &neighbor_ids =
-                        //   handler.recv_cell_ids_ghosted_master_cells.at(
-                        //     neighboring_cell->subdomain_id());
-
-                        // std::cout << "Ho il seguente numero di ids: "
-                        //           << neighbor_ids.size() << std::endl;
-
-                        // std::cout << "Ho i seguenti master indices: "
-                        //           << master_indices.size() << std::endl;
-                        // for (const auto &idx : master_indices)
-                        //   std::cout << idx << std::endl;
-
-                        // from neighboring rank,receive the association between
-                        // standard cell ids and neighboring polytope.
+                        // from neighboring rank,receive the association
+                        // between standard cell ids and neighboring polytope.
                         // This tells to the current rank that the
                         // neighboring cell has the following CellId as master
                         // cell.
@@ -1213,14 +1221,6 @@ namespace dealii
                         const CellId &check_neigh_polytope_id =
                           check_neigh_poly_ids.at(neighboring_cell_id);
 
-                        // std::cout << "CellId del vicino trovato: "
-                        //           << check_neigh_polytope_id << std::endl;
-                        // std::cout << "rapido check" << std::boolalpha
-                        //           << (visited_polygonal_neighbors_id.find(
-                        //                 check_neigh_polytope_id) ==
-                        //               std::end(visited_polygonal_neighbors_id))
-                        //           << std::endl;
-
                         // const auto master_index =
                         // master_indices[ghost_counter];
 
@@ -1228,12 +1228,6 @@ namespace dealii
                               check_neigh_polytope_id) ==
                             std::end(visited_polygonal_neighbors_id))
                           {
-                            // std::cout << "Sono entrato dunque da "
-                            //           << cell->active_cell_index()
-                            //           << "con faccia " << f << std::endl;
-                            // found a neighbor
-
-
                             handler.polytope_cache.cell_face_at_boundary[{
                               current_polytope_index,
                               handler.number_of_agglomerated_faces
@@ -1257,26 +1251,6 @@ namespace dealii
 
                             is_face_at_boundary[n_face] = false;
 
-                            // std::pair<CellId, unsigned int> p{
-                            //   current_polytope_id, n_face};
-
-                            // // not on the dbdary, so give the neighboring
-                            // // polytope id
-                            // std::pair<bool, CellId> bdary_info{
-                            //   false, check_neigh_polytope_id};
-
-                            // bdary_info_current_poly[p] = bdary_info;
-
-
-                            // std::cout
-                            //   << "Poly index: " << current_polytope_index
-                            //   << std::endl;
-                            // std::cout << "Face index "
-                            //           << handler.number_of_agglomerated_faces
-                            //                [current_polytope_index]
-                            //           << std::endl;
-
-
 
                             // increment number of faces
                             ++handler.number_of_agglomerated_faces
@@ -1285,20 +1259,8 @@ namespace dealii
                             visited_polygonal_neighbors_id.insert(
                               check_neigh_polytope_id);
 
-                            // std::cout << "Sul rank: "
-                            //           << Utilities::MPI::this_mpi_process(
-                            //                handler.communicator)
-                            //           << "\n"
-                            //           << "Dal rank: "
-                            //           << neighboring_cell->subdomain_id()
-                            //           << " aggiunto questo master index"
-                            //           << master_index << std::endl;
-                            // std::cout << "Cell index "
-                            //           << cell->active_cell_index() <<
-                            //           std::endl;
-
-                            // ghosted polytope has been found, increment ghost
-                            // counter
+                            // ghosted polytope has been found, increment
+                            // ghost counter
                             ++ghost_counter;
                           }
 
@@ -1343,12 +1305,6 @@ namespace dealii
                   }
                 else if (cell->face(f)->at_boundary())
                   {
-                    // std::cout
-                    //   << "sul bdary (from rank) "
-                    //   <<
-                    //   Utilities::MPI::this_mpi_process(handler.communicator)
-                    //   << std::endl;
-
                     // Boundary face of a boundary cell.
                     // Note that the neighboring cell must be invalid.
 
@@ -1380,14 +1336,7 @@ namespace dealii
 
                         std::pair<bool, CellId> bdary_info{true, CellId()};
 
-                        // bdary_info_current_poly[p] = bdary_info;
-
                         is_face_at_boundary[n_face] = true;
-
-                        // handler.local_ghosted_bdary_info[neigh_rank].emplace(
-                        //   p, bdary_info);
-
-
 
                         ++handler.number_of_agglomerated_faces
                             [current_polytope_index];
@@ -1414,27 +1363,8 @@ namespace dealii
           }     // loop over all cells of agglomerate
 
 
-        // std::cout << "ghost_counter from rank " +
-        //                std::to_string(Utilities::MPI::this_mpi_process(
-        //                  handler.communicator)) +
-        //                ": "
-        //           << ghost_counter << std::endl;
-
-
-        // TODO
-        // handler.debu(cached_tria->get_triangulation());
-
-        // if constexpr (std::is_same_v<typename std::remove_reference<decltype(
-        //                                *handler.tria)>::type,
-        //                              typename dealii::parallel::distributed::
-        //                                Triangulation<dim, spacedim>>)
-        //   {
-        // if (dynamic_cast<const dealii::parallel::
-        //                    DistributedTriangulationBase<dim, spacedim> *>(
-        //       &handler.cached_tria->get_triangulation()) != nullptr)
-        //   {
-        // std::cout << "OK " << std::endl;
-        // Assert(false, ExcMessage("OKAY, REMOVE."));
+        // TODO: ghost_owners() is a member of parallel::TriangulationBase
+        // only...
         if (ghost_counter > 0)
           {
             const unsigned int n_faces_current_poly =
@@ -1460,71 +1390,39 @@ namespace dealii
 
 
 
-      static typename DoFHandler<dim, spacedim>::active_cell_iterator
-      agglomerated_neighbor(
-        const typename DoFHandler<dim, spacedim>::active_cell_iterator &cell,
-        const unsigned int                                              f,
-        const AgglomerationHandler<dim, spacedim> &                     handler)
+      /**
+       * Given a list of quadrature points, this function sorts them according
+       * to their norm and returns the permutation of the indices as a
+       * std::vector<unsigned int> such that
+       * {qpoints[index[0]],qpoints[index[1]],...} is the ordered vector of
+       * quadrature points.
+       *
+       * This function is used on ghosted boundaries in order to ensure that the
+       * ordering of quadrature points, normals, jacobians, and so one is the
+       * same from both sides of the interface.
+       *
+       */
+      inline static std::vector<unsigned int>
+      sort_qpoints_and_get_permutations(std::vector<Point<dim>> &qpoints)
       {
-        Assert(handler.is_master_cell(cell),
-               ExcMessage("This cell must be a master one."));
-        if (!handler.at_boundary(cell, f))
-          {
-            const auto &neigh =
-              handler.polytope_cache.cell_face_at_boundary
-                .at({handler.master2polygon.at(cell->active_cell_index()), f})
-                .second;
-            typename DoFHandler<dim, spacedim>::active_cell_iterator cell_dh(
-              *neigh, &(handler.agglo_dh));
-            return cell_dh;
-          }
-        else
-          {
-            return {};
-          }
-      }
+        // Fill vector of indices from 0 to qpoints.size()-1
+        std::vector<unsigned int> index(qpoints.size(), 0);
+        std::iota(index.begin(), index.end(), 0);
 
+        std::sort(index.begin(),
+                  index.end(),
+                  [&qpoints](const unsigned int a, const unsigned int b) {
+                    return qpoints[a].norm_square() < qpoints[b].norm_square();
+                  });
 
+        std::sort(qpoints.begin(),
+                  qpoints.end(),
+                  [](const Point<dim> &a, const Point<dim> &b) {
+                    return a.norm_square() < b.norm_square();
+                  });
 
-      static unsigned int
-      neighbor_of_agglomerated_neighbor(
-        const typename DoFHandler<dim, spacedim>::active_cell_iterator &cell,
-        const unsigned int                                              f,
-        const AgglomerationHandler<dim, spacedim> &                     handler)
-      {
-        Assert(!is_slave_cell(cell),
-               ExcMessage("This cells is not supposed to be a slave."));
-        // First, make sure it's not a boundary face.
-        if (!at_boundary(cell, f))
-          {
-            const auto &agglo_neigh =
-              agglomerated_neighbor(cell,
-                                    f); // returns the neighboring master
-            AssertThrow(agglo_neigh.state() == IteratorState::valid,
-                        ExcInternalError());
-
-            const unsigned int n_faces_agglomerated_neighbor =
-              handler.number_of_agglomerated_faces[handler.master2polygon.at(
-                agglo_neigh->active_cell_index())];
-
-            // Loop over all cells of neighboring agglomerate
-            for (unsigned int f_out = 0; f_out < n_faces_agglomerated_neighbor;
-                 ++f_out)
-              {
-                // Check if same master cell
-                if (agglomerated_neighbor(agglo_neigh, f_out).state() ==
-                    IteratorState::valid)
-                  if (agglomerated_neighbor(agglo_neigh, f_out)
-                        ->active_cell_index() == cell->active_cell_index())
-                    return f_out;
-              }
-            return numbers::invalid_unsigned_int;
-          }
-        else
-          {
-            // Face is at boundary
-            return numbers::invalid_unsigned_int;
-          }
+        // return the permuted indices s.t. {data[index[0]],data[index[1]],...}
+        return index;
       }
     };
 

@@ -249,6 +249,20 @@ public:
              "Currently, this interface supports only DG discretizations."));
     fe = std::make_unique<FE_DGQ<dim, spacedim>>(fe_space);
 
+    if (hybrid_mesh)
+      {
+        // the mesh is composed by standard and agglomerate cells. initialize
+        // classes needed for standard cells in order to treat that finite
+        // element space as defined on a standard shape and not on the
+        // BoundingBox.
+        standard_scratch =
+          std::make_unique<ScratchData>(*mapping,
+                                        *fe,
+                                        QGauss<dim>(2 * fe_space.degree + 2),
+                                        internal_agglomeration_flags);
+      }
+
+
     fe_collection.push_back(*fe);                         // master
     fe_collection.push_back(FE_Nothing<dim, spacedim>()); // slave
     fe_collection.push_back(*fe);                         // standard
@@ -259,6 +273,8 @@ public:
     if (Utilities::MPI::job_supports_mpi())
       setup_ghost_polytopes();
     setup_connectivity_of_agglomeration();
+    if (Utilities::MPI::job_supports_mpi())
+      exchange_interface_values();
   }
 
 
@@ -486,6 +502,20 @@ public:
   void
   setup_ghost_polytopes();
 
+  void
+  exchange_interface_values();
+
+  // TODO: move it to private interface
+  mutable std::map<
+    types::subdomain_id,
+    std::map<std::pair<CellId, unsigned int>, std::vector<Point<spacedim>>>>
+    recv_qpoints;
+
+  mutable std::map<
+    types::subdomain_id,
+    std::map<std::pair<CellId, unsigned int>, std::vector<double>>>
+    recv_jxws;
+
 private:
   /**
    * Initialize connectivity informations
@@ -651,19 +681,6 @@ private:
 
   ////////////////////////////////////////////////////////
 
-  // ghost indices
-  mutable std::map<types::subdomain_id, std::vector<types::global_cell_index>>
-    local_ghost_indices;
-
-  mutable std::map<types::subdomain_id, std::vector<types::global_cell_index>>
-    recv_ghost_indices;
-
-  // master cell indices
-  mutable std::map<types::subdomain_id, std::vector<types::global_cell_index>>
-    local_indices_ghosted_master_cells;
-
-  mutable std::map<types::subdomain_id, std::vector<types::global_cell_index>>
-    recv_indices_ghosted_master_cells;
 
   // n_faces
   mutable std::map<types::subdomain_id, std::map<CellId, unsigned int>>
@@ -672,12 +689,6 @@ private:
   mutable std::map<types::subdomain_id, std::map<CellId, unsigned int>>
     recv_n_faces;
 
-  // CellId
-  mutable std::map<types::subdomain_id, std::vector<CellId>>
-    local_cell_ids_ghosted_master_cells;
-
-  mutable std::map<types::subdomain_id, std::vector<CellId>>
-    recv_cell_ids_ghosted_master_cells;
 
   // CellId (including slaves)
   mutable std::map<types::subdomain_id, std::map<CellId, CellId>>
@@ -723,6 +734,20 @@ private:
   mutable std::map<types::subdomain_id,
                    std::map<CellId, std::vector<types::global_dof_index>>>
     recv_ghost_dofs;
+
+  // Exchange qpoints
+  mutable std::map<
+    types::subdomain_id,
+    std::map<std::pair<CellId, unsigned int>, std::vector<Point<spacedim>>>>
+    local_qpoints;
+
+  // Exchange jxws
+  mutable std::map<
+    types::subdomain_id,
+    std::map<std::pair<CellId, unsigned int>, std::vector<double>>>
+    local_jxws;
+
+
 
   ////////////////////////////////////////////////////////
 
@@ -778,6 +803,10 @@ private:
   boost::signals2::connection tria_listener;
 
   UpdateFlags agglomeration_flags;
+
+  const UpdateFlags internal_agglomeration_flags =
+    update_values | update_gradients | update_JxW_values |
+    update_quadrature_points;
 
   UpdateFlags agglomeration_face_flags;
 

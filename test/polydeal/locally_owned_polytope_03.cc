@@ -146,7 +146,14 @@ main(int argc, char *argv[])
     }
 
 
-  FE_DGQ<2> fe_dg(0);
+  FE_DGQ<2>          fe_dg(0);
+  const unsigned int quadrature_degree      = 2 * fe_dg.get_degree() + 1;
+  const unsigned int face_quadrature_degree = 2 * fe_dg.get_degree() + 1;
+  ah.initialize_fe_values(QGauss<2>(quadrature_degree),
+                          update_gradients | update_JxW_values |
+                            update_quadrature_points | update_JxW_values |
+                            update_values,
+                          QGauss<1>(face_quadrature_degree));
   ah.distribute_agglomerated_dofs(fe_dg);
   const auto &interface = ah.get_interface();
 
@@ -156,8 +163,6 @@ main(int argc, char *argv[])
     {
       if (polytope->is_locally_owned())
         {
-          const auto &info = ah.get_interface();
-
           unsigned int n_faces = polytope->n_faces();
           for (unsigned int f = 0; f < n_faces; ++f)
             {
@@ -173,7 +178,7 @@ main(int argc, char *argv[])
                          ExcMessage("Mismatch!"));
 
                   const auto &common_face =
-                    info.at({polytope->id(), neighbor_polytope->id()});
+                    interface.at({polytope->id(), neighbor_polytope->id()});
 
                   for (const auto &[deal_cell, local_face_idx] : common_face)
                     {
