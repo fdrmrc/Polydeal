@@ -339,20 +339,11 @@ AgglomerationHandler<dim, spacedim>::exchange_interface_values()
                       std::vector<Point<spacedim>> qpoints_to_send =
                         current_fe.get_quadrature_points();
 
-                      std::vector<double> jxws_to_send =
+                      const std::vector<double> &jxws_to_send =
                         current_fe.get_JxW_values();
 
-                      // Sort qpoints according to their norm
-                      const std::vector<unsigned int> permuted_indices =
-                        internal::AgglomerationHandlerImplementation<dim,
-                                                                     spacedim>::
-                          sort_qpoints_and_get_permutations(qpoints_to_send);
-
-
-                      for (unsigned int i = 0; i < permuted_indices.size(); ++i)
-                        {
-                          jxws_to_send[i] = jxws_to_send[permuted_indices[i]];
-                        }
+                      const std::vector<Tensor<1, spacedim>> &normals_to_send =
+                        current_fe.get_normal_vectors();
 
 
                       const types::subdomain_id neigh_rank =
@@ -366,6 +357,9 @@ AgglomerationHandler<dim, spacedim>::exchange_interface_values()
 
                       local_jxws[neigh_rank].emplace(cell_and_face,
                                                      jxws_to_send);
+
+                      local_normals[neigh_rank].emplace(cell_and_face,
+                                                        normals_to_send);
 
                       const unsigned int n_qpoints = qpoints_to_send.size();
 
@@ -390,6 +384,7 @@ AgglomerationHandler<dim, spacedim>::exchange_interface_values()
   // Finally, exchange with neighboring ranks
   recv_qpoints = Utilities::MPI::some_to_some(communicator, local_qpoints);
   recv_jxws    = Utilities::MPI::some_to_some(communicator, local_jxws);
+  recv_normals = Utilities::MPI::some_to_some(communicator, local_normals);
 }
 
 
@@ -553,24 +548,84 @@ AgglomerationHandler<dim, spacedim>::reinit_interface(
   // If current and neighboring polytopes are both locally owned, then compute
   // the jump in the classical way without needing information about ghosted
   // entities.
-  Assert((polytope_in->is_locally_owned() &&
-          neigh_polytope->is_locally_owned()),
-         ExcInternalError());
+  if (polytope_in->is_locally_owned() && neigh_polytope->is_locally_owned())
+    {
+      const auto &cell_in = polytope_in->as_dof_handler_iterator(agglo_dh);
+      const auto &neigh_cell =
+        neigh_polytope->as_dof_handler_iterator(agglo_dh);
 
-  const auto &cell_in    = polytope_in->as_dof_handler_iterator(agglo_dh);
-  const auto &neigh_cell = neigh_polytope->as_dof_handler_iterator(agglo_dh);
+      const auto &fe_in =
+        internal::AgglomerationHandlerImplementation<dim, spacedim>::
+          reinit_master(cell_in, local_in, agglomerated_isv, *this);
+      const auto &fe_out =
+        internal::AgglomerationHandlerImplementation<dim, spacedim>::
+          reinit_master(neigh_cell, local_neigh, agglomerated_isv_neigh, *this);
+      std::pair<const FEValuesBase<dim, spacedim> &,
+                const FEValuesBase<dim, spacedim> &>
+        my_p(fe_in, fe_out);
 
-  const auto &fe_in =
-    internal::AgglomerationHandlerImplementation<dim, spacedim>::reinit_master(
-      cell_in, local_in, agglomerated_isv, *this);
-  const auto &fe_out =
-    internal::AgglomerationHandlerImplementation<dim, spacedim>::reinit_master(
-      neigh_cell, local_neigh, agglomerated_isv_neigh, *this);
-  std::pair<const FEValuesBase<dim, spacedim> &,
-            const FEValuesBase<dim, spacedim> &>
-    my_p(fe_in, fe_out);
+      return my_p;
+    }
+  else
+    {
+      Assert((polytope_in->is_locally_owned() &&
+              !neigh_polytope->is_locally_owned()),
+             ExcInternalError());
 
-  return my_p;
+      const auto & cell = polytope_in->as_dof_handler_iterator(agglo_dh);
+      const auto & bbox = bboxes[master2polygon.at(cell->active_cell_index())];
+      const double bbox_measure = bbox.volume();
+
+      const unsigned int neigh_rank = neigh_polytope->subdomain_id();
+      const CellId &     neigh_id   = neigh_polytope->id();
+
+      std::vector<Point<spacedim>> &real_qpoints =
+        recv_qpoints.at(neigh_rank).at({neigh_id, local_neigh});
+
+      const auto &JxWs = recv_jxws.at(neigh_rank).at({neigh_id, local_neigh});
+
+      const std::vector<Tensor<1, spacedim>> &normals =
+        recv_normals.at(neigh_rank).at({neigh_id, local_neigh});
+
+      std::vector<Point<spacedim>> final_unit_q_points;
+      std::transform(real_qpoints.begin(),
+                     real_qpoints.end(),
+                     std::back_inserter(final_unit_q_points),
+                     [&](const Point<spacedim> &p) {
+                       return bbox.real_to_unit(p);
+                     });
+
+      std::vector<double>         scale_factors(final_unit_q_points.size());
+      std::vector<double>         scaled_weights(final_unit_q_points.size());
+      std::vector<Tensor<1, dim>> scaled_normals(final_unit_q_points.size());
+
+      for (unsigned int q = 0; q < final_unit_q_points.size(); ++q)
+        {
+          for (unsigned int direction = 0; direction < spacedim; ++direction)
+            scaled_normals[q][direction] =
+              normals[q][direction] * (bbox.side_length(direction));
+
+          scaled_weights[q] =
+            (JxWs[q] * scaled_normals[q].norm()) / bbox_measure;
+          scaled_normals[q] /= scaled_normals[q].norm();
+        }
+
+      NonMatching::ImmersedSurfaceQuadrature<dim, spacedim> surface_quad(
+        final_unit_q_points, scaled_weights, scaled_normals);
+
+      agglomerated_isv =
+        std::make_unique<NonMatching::FEImmersedSurfaceValues<spacedim>>(
+          *euler_mapping, *fe, surface_quad, agglomeration_face_flags);
+
+
+      agglomerated_isv->reinit(cell);
+
+      std::pair<const FEValuesBase<dim, spacedim> &,
+                const FEValuesBase<dim, spacedim> &>
+        my_p(*agglomerated_isv, *agglomerated_isv);
+
+      return my_p;
+    }
 }
 
 
@@ -949,23 +1004,6 @@ namespace dealii
               final_weights.push_back(weight);
             for (const auto &normal : scaled_normals)
               final_normals.push_back(normal);
-          }
-
-        // In order to have the same ordering of qpoints,JxWs, etc.
-        if (neigh_polytope.state() == IteratorState::valid)
-          {
-            if (!neigh_polytope->is_locally_owned())
-              {
-                const std::vector<unsigned int> permuted_indices =
-                  sort_qpoints_and_get_permutations(final_unit_q_points);
-
-                // Permute also other entities
-                for (unsigned int i = 0; i < permuted_indices.size(); ++i)
-                  {
-                    final_weights[i] = final_weights[permuted_indices[i]];
-                    final_normals[i] = final_normals[permuted_indices[i]];
-                  }
-              }
           }
 
         NonMatching::ImmersedSurfaceQuadrature<dim, spacedim> surface_quad(
@@ -1386,43 +1424,6 @@ namespace dealii
                   current_polytope_id, face_to_neigh_id);
               }
           }
-      }
-
-
-
-      /**
-       * Given a list of quadrature points, this function sorts them according
-       * to their norm and returns the permutation of the indices as a
-       * std::vector<unsigned int> such that
-       * {qpoints[index[0]],qpoints[index[1]],...} is the ordered vector of
-       * quadrature points.
-       *
-       * This function is used on ghosted boundaries in order to ensure that the
-       * ordering of quadrature points, normals, jacobians, and so one is the
-       * same from both sides of the interface.
-       *
-       */
-      inline static std::vector<unsigned int>
-      sort_qpoints_and_get_permutations(std::vector<Point<dim>> &qpoints)
-      {
-        // Fill vector of indices from 0 to qpoints.size()-1
-        std::vector<unsigned int> index(qpoints.size(), 0);
-        std::iota(index.begin(), index.end(), 0);
-
-        std::sort(index.begin(),
-                  index.end(),
-                  [&qpoints](const unsigned int a, const unsigned int b) {
-                    return qpoints[a].norm_square() < qpoints[b].norm_square();
-                  });
-
-        std::sort(qpoints.begin(),
-                  qpoints.end(),
-                  [](const Point<dim> &a, const Point<dim> &b) {
-                    return a.norm_square() < b.norm_square();
-                  });
-
-        // return the permuted indices s.t. {data[index[0]],data[index[1]],...}
-        return index;
       }
     };
 

@@ -516,6 +516,11 @@ public:
     std::map<std::pair<CellId, unsigned int>, std::vector<double>>>
     recv_jxws;
 
+  mutable std::map<
+    types::subdomain_id,
+    std::map<std::pair<CellId, unsigned int>, std::vector<Tensor<1, spacedim>>>>
+    recv_normals;
+
 private:
   /**
    * Initialize connectivity informations
@@ -746,6 +751,12 @@ private:
     types::subdomain_id,
     std::map<std::pair<CellId, unsigned int>, std::vector<double>>>
     local_jxws;
+
+  // Exchange normals
+  mutable std::map<
+    types::subdomain_id,
+    std::map<std::pair<CellId, unsigned int>, std::vector<Tensor<1, spacedim>>>>
+    local_normals;
 
 
 
