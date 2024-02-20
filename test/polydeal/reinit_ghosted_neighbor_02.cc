@@ -17,22 +17,29 @@
 
 
 // Check that you can query quadrature points and JxWs in the following case
+
 // ------------------------------------
 // |                 |               |
-// |                 |               |
-// |       K2        |      K3       |
+// |       K5        |      K7       |
 // |                 |               |
 // ------------------------------------
 // |                 |               |
-// |       K0        |      K1       |
+// |       K4        |      K6       |
 // |                 |               |
+// ------------------------------------
+// |                 |               |
+// |       K1        |      K3       |
+// |                 |               |
+// ------------------------------------
+// |                 |               |
+// |       K0        |      K2       |
 // |                 |               |
 // ------------------------------------
 
 // where:
-// K0 is owned by process 0
-// K1, K2 are owned by process 1
-// K3 is owned by process 2
+// K0, K1 are owned by process 0
+// K2, K3, K4, K5 are owned by process 1
+// K6, K7 are owned by process 2
 
 #include <deal.II/base/utilities.h>
 
@@ -52,8 +59,8 @@ main(int argc, char *argv[])
   Utilities::MPI::MPI_InitFinalize mpi_initialization(argc, argv, 1);
   const MPI_Comm &                 comm = MPI_COMM_WORLD;
   const unsigned n_ranks                = Utilities::MPI::n_mpi_processes(comm);
-  Assert(n_ranks == 3,
-         ExcMessage("This test is meant to be run with 3 ranks only."));
+  AssertThrow(n_ranks == 3,
+              ExcMessage("This test is meant to be run with 3 ranks only."));
   if (Utilities::MPI::this_mpi_process(comm) == 0)
     std::cout << "Running with " << n_ranks << " MPI ranks." << std::endl;
 
@@ -68,53 +75,74 @@ main(int argc, char *argv[])
   unsigned int my_rank = Utilities::MPI::this_mpi_process(comm);
   if (my_rank == 0)
     {
-      std::vector<types::global_cell_index> idxs_to_be_agglomerated = {0,
-                                                                       1,
-                                                                       2,
-                                                                       3};
+      std::vector<types::global_cell_index> idxs_to_be_agglomerated0 = {0, 1};
       std::vector<typename Triangulation<2>::active_cell_iterator>
-        cells_to_be_agglomerated;
+        cells_to_be_agglomerated0;
       PolyUtils::collect_cells_for_agglomeration(tria,
-                                                 idxs_to_be_agglomerated,
-                                                 cells_to_be_agglomerated);
-      ah.define_agglomerate(cells_to_be_agglomerated);
+                                                 idxs_to_be_agglomerated0,
+                                                 cells_to_be_agglomerated0);
+      ah.define_agglomerate(cells_to_be_agglomerated0);
+
+      std::vector<types::global_cell_index> idxs_to_be_agglomerated1 = {2, 3};
+      std::vector<typename Triangulation<2>::active_cell_iterator>
+        cells_to_be_agglomerated1;
+      PolyUtils::collect_cells_for_agglomeration(tria,
+                                                 idxs_to_be_agglomerated1,
+                                                 cells_to_be_agglomerated1);
+      ah.define_agglomerate(cells_to_be_agglomerated1);
     }
   else if (my_rank == 1)
     {
-      std::vector<types::global_cell_index> idxs_to_be_agglomerated = {4,
-                                                                       5,
-                                                                       6,
-                                                                       7};
+      std::vector<types::global_cell_index> idxs_to_be_agglomerated0 = {4, 5};
       std::vector<typename Triangulation<2>::active_cell_iterator>
-        cells_to_be_agglomerated;
+        cells_to_be_agglomerated0;
       PolyUtils::collect_cells_for_agglomeration(tria,
-                                                 idxs_to_be_agglomerated,
-                                                 cells_to_be_agglomerated);
-      ah.define_agglomerate(cells_to_be_agglomerated);
+                                                 idxs_to_be_agglomerated0,
+                                                 cells_to_be_agglomerated0);
+      ah.define_agglomerate(cells_to_be_agglomerated0);
 
-      std::vector<types::global_cell_index> idxs_to_be_agglomerated2 = {8,
-                                                                        9,
-                                                                        10,
-                                                                        11};
+      std::vector<types::global_cell_index> idxs_to_be_agglomerated1 = {6, 7};
+      std::vector<typename Triangulation<2>::active_cell_iterator>
+        cells_to_be_agglomerated1;
+      PolyUtils::collect_cells_for_agglomeration(tria,
+                                                 idxs_to_be_agglomerated1,
+                                                 cells_to_be_agglomerated1);
+      ah.define_agglomerate(cells_to_be_agglomerated1);
+
+
+      std::vector<types::global_cell_index> idxs_to_be_agglomerated2 = {8, 9};
       std::vector<typename Triangulation<2>::active_cell_iterator>
         cells_to_be_agglomerated2;
       PolyUtils::collect_cells_for_agglomeration(tria,
                                                  idxs_to_be_agglomerated2,
                                                  cells_to_be_agglomerated2);
       ah.define_agglomerate(cells_to_be_agglomerated2);
+
+      std::vector<types::global_cell_index> idxs_to_be_agglomerated3 = {10, 11};
+      std::vector<typename Triangulation<2>::active_cell_iterator>
+        cells_to_be_agglomerated3;
+      PolyUtils::collect_cells_for_agglomeration(tria,
+                                                 idxs_to_be_agglomerated3,
+                                                 cells_to_be_agglomerated3);
+      ah.define_agglomerate(cells_to_be_agglomerated3);
     }
   else
     {
-      std::vector<types::global_cell_index> idxs_to_be_agglomerated = {12,
-                                                                       13,
-                                                                       14,
-                                                                       15};
+      std::vector<types::global_cell_index> idxs_to_be_agglomerated0 = {12, 13};
       std::vector<typename Triangulation<2>::active_cell_iterator>
-        cells_to_be_agglomerated;
+        cells_to_be_agglomerated0;
       PolyUtils::collect_cells_for_agglomeration(tria,
-                                                 idxs_to_be_agglomerated,
-                                                 cells_to_be_agglomerated);
-      ah.define_agglomerate(cells_to_be_agglomerated);
+                                                 idxs_to_be_agglomerated0,
+                                                 cells_to_be_agglomerated0);
+      ah.define_agglomerate(cells_to_be_agglomerated0);
+
+      std::vector<types::global_cell_index> idxs_to_be_agglomerated1 = {14, 15};
+      std::vector<typename Triangulation<2>::active_cell_iterator>
+        cells_to_be_agglomerated1;
+      PolyUtils::collect_cells_for_agglomeration(tria,
+                                                 idxs_to_be_agglomerated1,
+                                                 cells_to_be_agglomerated1);
+      ah.define_agglomerate(cells_to_be_agglomerated1);
     }
 
 
