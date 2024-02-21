@@ -201,8 +201,4 @@ main(int argc, char *argv[])
             }
         }
     }
-
-  MPI_Barrier(comm);
-  if (Utilities::MPI::this_mpi_process(comm) == 0)
-    std::cout << "Ok" << std::endl;
 }
