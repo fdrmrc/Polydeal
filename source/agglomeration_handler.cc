@@ -35,6 +35,7 @@ AgglomerationHandler<dim, spacedim>::AgglomerationHandler(
   Assert(cached_tria->get_triangulation().n_active_cells() > 0,
          ExcMessage(
            "The triangulation must not be empty upon calling this function."));
+
   n_agglomerations = 0;
   hybrid_mesh      = false;
   initialize_agglomeration_data(cached_tria);
@@ -832,6 +833,11 @@ template <int dim, int spacedim>
 void
 AgglomerationHandler<dim, spacedim>::setup_ghost_polytopes()
 {
+#ifdef DEAL_II_WITH_MPI
+
+  const auto parallel_triangulation =
+    dynamic_cast<const parallel::TriangulationBase<dim, spacedim> *>(&*tria);
+
   for (const auto &cell : agglo_dh.active_cell_iterators())
     if (cell->is_locally_owned())
       {
@@ -887,12 +893,14 @@ AgglomerationHandler<dim, spacedim>::setup_ghost_polytopes()
   // present agglomerate, identified by the master cell CellId
   // has a certaing bbox. TODO: communicate only when you have a ghosted
   // neighbor.
+
   for (const auto &master_cell : master_cells_container)
     {
       const auto &bbox =
         bboxes[master2polygon.at(master_cell->active_cell_index())];
 
-      for (const types::subdomain_id neigh_rank : tria->ghost_owners())
+      for (const types::subdomain_id neigh_rank :
+           parallel_triangulation->ghost_owners())
         local_ghosted_bbox[neigh_rank].emplace(master_cell->id(), bbox);
     }
 
@@ -908,6 +916,8 @@ AgglomerationHandler<dim, spacedim>::setup_ghost_polytopes()
   // Exchange with neighboring ranks the neighboring ghosted DoFs
   recv_ghost_dofs =
     Utilities::MPI::some_to_some(communicator, local_ghost_dofs);
+
+#endif
 }
 
 
@@ -1404,10 +1414,13 @@ namespace dealii
           }     // loop over all cells of agglomerate
 
 
-        // TODO: ghost_owners() is a member of parallel::TriangulationBase
-        // only...
+
         if (ghost_counter > 0)
           {
+            const auto parallel_triangulation = dynamic_cast<
+              const dealii::parallel::TriangulationBase<dim, spacedim> *>(
+              &(*handler.tria));
+
             const unsigned int n_faces_current_poly =
               handler.number_of_agglomerated_faces[current_polytope_index];
 
@@ -1415,7 +1428,7 @@ namespace dealii
             // a number of faces equal to n_faces_current_poly faces:
             // current_polytope_id -> n_faces_current_poly
             for (const unsigned int neigh_rank :
-                 handler.cached_tria->get_triangulation().ghost_owners())
+                 parallel_triangulation->ghost_owners())
               {
                 handler.local_n_faces[neigh_rank].emplace(current_polytope_id,
                                                           n_faces_current_poly);
