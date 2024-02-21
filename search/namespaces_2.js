@@ -11,8 +11,7 @@ var searchData=
   ['concepts_3a_3ainternal_8',['internal',['http://www.dealii.org/developer/doxygen/deal.II/namespaceconcepts_1_1internal.html',1,'concepts']]],
   ['cudawrappers_9',['CUDAWrappers',['http://www.dealii.org/developer/doxygen/deal.II/namespaceCUDAWrappers.html',1,'']]],
   ['cudawrappers_3a_3ainternal_10',['internal',['http://www.dealii.org/developer/doxygen/deal.II/namespaceCUDAWrappers_1_1internal.html',1,'CUDAWrappers']]],
-  ['cudawrappers_3a_3amatrixfree_11',['MatrixFree',['http://www.dealii.org/developer/doxygen/deal.II/structCUDAWrappers_1_1MatrixFree_1_1AdditionalData.html',1,'CUDAWrappers']]],
-  ['cudawrappers_3a_3apreconditionic_12',['PreconditionIC',['http://www.dealii.org/developer/doxygen/deal.II/structCUDAWrappers_1_1PreconditionIC_1_1AdditionalData.html',1,'CUDAWrappers']]],
-  ['cudawrappers_3a_3apreconditionilu_13',['PreconditionILU',['http://www.dealii.org/developer/doxygen/deal.II/structCUDAWrappers_1_1PreconditionILU_1_1AdditionalData.html',1,'CUDAWrappers']]],
-  ['cudawrappers_3a_3asolverdirect_14',['SolverDirect',['http://www.dealii.org/developer/doxygen/deal.II/structCUDAWrappers_1_1SolverDirect_1_1AdditionalData.html',1,'CUDAWrappers']]]
+  ['cudawrappers_3a_3apreconditionic_11',['PreconditionIC',['http://www.dealii.org/developer/doxygen/deal.II/structCUDAWrappers_1_1PreconditionIC_1_1AdditionalData.html',1,'CUDAWrappers']]],
+  ['cudawrappers_3a_3apreconditionilu_12',['PreconditionILU',['http://www.dealii.org/developer/doxygen/deal.II/structCUDAWrappers_1_1PreconditionILU_1_1AdditionalData.html',1,'CUDAWrappers']]],
+  ['cudawrappers_3a_3asolverdirect_13',['SolverDirect',['http://www.dealii.org/developer/doxygen/deal.II/structCUDAWrappers_1_1SolverDirect_1_1AdditionalData.html',1,'CUDAWrappers']]]
 ];

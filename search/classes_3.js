@@ -1,8 +1,8 @@
 var searchData=
 [
-  ['data_0',['Data',['http://www.dealii.org/developer/doxygen/deal.II/structCUDAWrappers_1_1MatrixFree_1_1Data.html',1,'CUDAWrappers::MatrixFree']]],
+  ['data_0',['Data',['http://www.dealii.org/developer/doxygen/deal.II/structPortable_1_1MatrixFree_1_1Data.html',1,'Portable::MatrixFree']]],
   ['dataentrybase_1',['DataEntryBase',['http://www.dealii.org/developer/doxygen/deal.II/classinternal_1_1DataOutImplementation_1_1DataEntryBase.html',1,'internal::DataOutImplementation']]],
-  ['datahost_2',['DataHost',['http://www.dealii.org/developer/doxygen/deal.II/structCUDAWrappers_1_1DataHost.html',1,'CUDAWrappers']]],
+  ['datahost_2',['DataHost',['http://www.dealii.org/developer/doxygen/deal.II/structPortable_1_1DataHost.html',1,'Portable']]],
   ['dataout_3',['DataOut',['http://www.dealii.org/developer/doxygen/deal.II/classDataOut.html',1,'DataOut&lt; int dim, int spacedim &gt;'],['http://www.dealii.org/developer/doxygen/deal.II/classParticles_1_1DataOut.html',1,'Particles::DataOut&lt; int dim, int spacedim &gt;']]],
   ['dataout_3c_20dim_20_3e_4',['DataOut&lt; dim &gt;',['http://www.dealii.org/developer/doxygen/deal.II/classDataOut.html',1,'']]],
   ['dataout_3c_20patch_5fdim_2c_20spacedim_20_3e_5',['DataOut&lt; patch_dim, spacedim &gt;',['http://www.dealii.org/developer/doxygen/deal.II/classDataOut.html',1,'']]],
