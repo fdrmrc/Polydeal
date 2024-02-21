@@ -362,20 +362,34 @@ AgglomerationHandler<dim, spacedim>::exchange_interface_values()
                       local_normals[neigh_rank].emplace(cell_and_face,
                                                         normals_to_send);
 
+
                       const unsigned int n_qpoints = qpoints_to_send.size();
 
+                      // TODO: check `agglomeration_flags` before computing
+                      // values and gradients.
                       std::vector<std::vector<double>> values_per_qpoints(
                         dofs_per_cell);
 
+                      std::vector<std::vector<Tensor<1, spacedim>>>
+                        gradients_per_qpoints(dofs_per_cell);
+
                       for (unsigned int i = 0; i < dofs_per_cell; ++i)
                         {
-                          values_per_qpoints[i].reserve(n_qpoints);
+                          values_per_qpoints[i].resize(n_qpoints);
+                          gradients_per_qpoints[i].resize(n_qpoints);
                           for (unsigned int q = 0; q < n_qpoints; ++q)
                             {
                               values_per_qpoints[i][q] =
                                 current_fe.shape_value(i, q);
+                              gradients_per_qpoints[i][q] =
+                                current_fe.shape_grad(i, q);
                             }
                         }
+
+                      local_values[neigh_rank].emplace(cell_and_face,
+                                                       values_per_qpoints);
+                      local_gradients[neigh_rank].emplace(
+                        cell_and_face, gradients_per_qpoints);
                     }
                 }
             }
@@ -383,9 +397,11 @@ AgglomerationHandler<dim, spacedim>::exchange_interface_values()
     }
 
   // Finally, exchange with neighboring ranks
-  recv_qpoints = Utilities::MPI::some_to_some(communicator, local_qpoints);
-  recv_jxws    = Utilities::MPI::some_to_some(communicator, local_jxws);
-  recv_normals = Utilities::MPI::some_to_some(communicator, local_normals);
+  recv_qpoints   = Utilities::MPI::some_to_some(communicator, local_qpoints);
+  recv_jxws      = Utilities::MPI::some_to_some(communicator, local_jxws);
+  recv_normals   = Utilities::MPI::some_to_some(communicator, local_normals);
+  recv_values    = Utilities::MPI::some_to_some(communicator, local_values);
+  recv_gradients = Utilities::MPI::some_to_some(communicator, local_gradients);
 }
 
 
