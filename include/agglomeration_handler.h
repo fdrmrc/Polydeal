@@ -268,12 +268,18 @@ public:
     fe_collection.push_back(*fe);                         // standard
 
     initialize_hp_structure();
-    // in case the job is running under MPI, compute ghost information from
-    // neighboring polytopes.
-    if (Utilities::MPI::job_supports_mpi())
+
+    // in case the tria is distributed, communicate ghost information with
+    // neighboring ranks
+    const bool needs_ghost_info =
+      dynamic_cast<const parallel::TriangulationBase<dim, spacedim> *>(
+        &*tria) != nullptr;
+    if (needs_ghost_info)
       setup_ghost_polytopes();
+
     setup_connectivity_of_agglomeration();
-    if (Utilities::MPI::job_supports_mpi())
+
+    if (needs_ghost_info)
       exchange_interface_values();
   }
 

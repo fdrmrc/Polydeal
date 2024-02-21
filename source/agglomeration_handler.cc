@@ -655,18 +655,10 @@ AgglomerationHandler<dim, spacedim>::create_agglomeration_sparsity_pattern(
 
   DynamicSparsityPattern dsp(locally_relevant_dofs);
 
-  const unsigned int           n_components = fe_collection.n_components();
-  Table<2, DoFTools::Coupling> cell_couplings{n_components, n_components};
-  Table<2, DoFTools::Coupling> face_couplings{n_components, n_components};
-  cell_couplings[0][0] = DoFTools::always;
-  face_couplings[0][0] = DoFTools::always;
-  DoFTools::make_flux_sparsity_pattern(agglo_dh,
-                                       dsp,
-                                       constraints,
-                                       keep_constrained_dofs,
-                                       cell_couplings,
-                                       face_couplings,
-                                       subdomain_id);
+  // Create the sparsity pattern corresponding only to volumetric terms. The
+  // fluxes needed by DG methods will be filled later.
+  DoFTools::make_sparsity_pattern(
+    agglo_dh, dsp, constraints, keep_constrained_dofs, subdomain_id);
 
 
   const unsigned int dofs_per_cell = agglo_dh.get_fe(0).n_dofs_per_cell();
@@ -674,8 +666,7 @@ AgglomerationHandler<dim, spacedim>::create_agglomeration_sparsity_pattern(
   std::vector<types::global_dof_index> neighbor_dof_indices(dofs_per_cell);
 
   // Loop over all locally owned polytopes, find the neighbor (also ghosted)
-  // and couple DoFs.
-
+  // and add fluxes to the sparsity pattern.
   for (const auto &polytope : polytope_iterators())
     {
       if (polytope->is_locally_owned())
@@ -833,10 +824,10 @@ template <int dim, int spacedim>
 void
 AgglomerationHandler<dim, spacedim>::setup_ghost_polytopes()
 {
-#ifdef DEAL_II_WITH_MPI
-
   const auto parallel_triangulation =
     dynamic_cast<const parallel::TriangulationBase<dim, spacedim> *>(&*tria);
+
+  Assert(parallel_triangulation != nullptr, ExcInternalError());
 
   for (const auto &cell : agglo_dh.active_cell_iterators())
     if (cell->is_locally_owned())
@@ -916,8 +907,6 @@ AgglomerationHandler<dim, spacedim>::setup_ghost_polytopes()
   // Exchange with neighboring ranks the neighboring ghosted DoFs
   recv_ghost_dofs =
     Utilities::MPI::some_to_some(communicator, local_ghost_dofs);
-
-#endif
 }
 
 
