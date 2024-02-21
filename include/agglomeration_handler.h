@@ -527,6 +527,16 @@ public:
     std::map<std::pair<CellId, unsigned int>, std::vector<Tensor<1, spacedim>>>>
     recv_normals;
 
+  mutable std::map<
+    types::subdomain_id,
+    std::map<std::pair<CellId, unsigned int>, std::vector<std::vector<double>>>>
+    recv_values;
+
+  mutable std::map<types::subdomain_id,
+                   std::map<std::pair<CellId, unsigned int>,
+                            std::vector<std::vector<Tensor<1, spacedim>>>>>
+    recv_gradients;
+
 private:
   /**
    * Initialize connectivity informations
@@ -763,6 +773,17 @@ private:
     types::subdomain_id,
     std::map<std::pair<CellId, unsigned int>, std::vector<Tensor<1, spacedim>>>>
     local_normals;
+
+  // Exchange values
+  mutable std::map<
+    types::subdomain_id,
+    std::map<std::pair<CellId, unsigned int>, std::vector<std::vector<double>>>>
+    local_values;
+
+  mutable std::map<types::subdomain_id,
+                   std::map<std::pair<CellId, unsigned int>,
+                            std::vector<std::vector<Tensor<1, spacedim>>>>>
+    local_gradients;
 
 
 
