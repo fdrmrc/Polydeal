@@ -579,6 +579,8 @@ AgglomerationHandler<dim, spacedim>::reinit_interface(
       const unsigned int neigh_rank = neigh_polytope->subdomain_id();
       const CellId &     neigh_id   = neigh_polytope->id();
 
+      // Retrieve qpoints,JxWs, normals sent previously from the neighboring
+      // rank.
       std::vector<Point<spacedim>> &real_qpoints =
         recv_qpoints.at(neigh_rank).at({neigh_id, local_neigh});
 
@@ -587,6 +589,7 @@ AgglomerationHandler<dim, spacedim>::reinit_interface(
       const std::vector<Tensor<1, spacedim>> &normals =
         recv_normals.at(neigh_rank).at({neigh_id, local_neigh});
 
+      // Apply the necessary scalings due to the bbox.
       std::vector<Point<spacedim>> final_unit_q_points;
       std::transform(real_qpoints.begin(),
                      real_qpoints.end(),
