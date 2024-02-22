@@ -133,7 +133,7 @@ var searchData=
   ['neighbor_5findex_130',['neighbor_index',['http://www.dealii.org/developer/doxygen/deal.II/classCellAccessor.html#ad9c3e14735a8d0dc265e4436e69706ab',1,'CellAccessor']]],
   ['neighbor_5fis_5fcoarser_131',['neighbor_is_coarser',['http://www.dealii.org/developer/doxygen/deal.II/classCellAccessor.html#a570b9c4837247169156ae7c9d59ade33',1,'CellAccessor']]],
   ['neighbor_5flevel_132',['neighbor_level',['http://www.dealii.org/developer/doxygen/deal.II/classCellAccessor.html#aae0f773bc457f562f34a49fa841db9e3',1,'CellAccessor']]],
-  ['neighbor_5fof_5fagglomerated_5fneighbor_133',['neighbor_of_agglomerated_neighbor',['../classdealii_1_1internal_1_1_agglomeration_handler_implementation.html#ab761be8fb401aec669486506e7d82f5c',1,'dealii::internal::AgglomerationHandlerImplementation::neighbor_of_agglomerated_neighbor()'],['../class_agglomeration_accessor.html#a60a2593fdc8ad17122943cfc884ae4e1',1,'AgglomerationAccessor::neighbor_of_agglomerated_neighbor()']]],
+  ['neighbor_5fof_5fagglomerated_5fneighbor_133',['neighbor_of_agglomerated_neighbor',['../class_agglomeration_accessor.html#a60a2593fdc8ad17122943cfc884ae4e1',1,'AgglomerationAccessor']]],
   ['neighbor_5fof_5fcoarser_5fneighbor_134',['neighbor_of_coarser_neighbor',['http://www.dealii.org/developer/doxygen/deal.II/classCellAccessor.html#a653454d4633329469aaea5a27d61e2de',1,'CellAccessor']]],
   ['neighbor_5fof_5fneighbor_135',['neighbor_of_neighbor',['http://www.dealii.org/developer/doxygen/deal.II/classCellAccessor.html#a81e5dc97427e571da846e1fb0545aeb9',1,'CellAccessor']]],
   ['neighbor_5fof_5fneighbor_5finternal_136',['neighbor_of_neighbor_internal',['http://www.dealii.org/developer/doxygen/deal.II/classCellAccessor.html#a0dd9ea78cda7d19b9997bae1bf1d5fe0',1,'CellAccessor']]],

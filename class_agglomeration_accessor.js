@@ -3,6 +3,7 @@ var class_agglomeration_accessor =
     [ "AgglomerationContainer", "class_agglomeration_accessor.html#a310a627b54a0fc0992e2bd86b6ea8e3e", null ],
     [ "AgglomerationAccessor", "class_agglomeration_accessor.html#a509ec9c40a878c6f31506aba5a2f3ecd", null ],
     [ "AgglomerationAccessor", "class_agglomeration_accessor.html#a64faa0dae6efecc97a8814cd6291edec", null ],
+    [ "AgglomerationAccessor", "class_agglomeration_accessor.html#aed592c523c7813bcc9e0564974189c4a", null ],
     [ "~AgglomerationAccessor", "class_agglomeration_accessor.html#a2c72120cb409144f812c9d5015fe3cf6", null ],
     [ "as_dof_handler_iterator", "class_agglomeration_accessor.html#ad51676a7007bd3da58daac21703eb9c2", null ],
     [ "at_boundary", "class_agglomeration_accessor.html#a86e68918f8542e60e21bfa69cef0f609", null ],
@@ -11,7 +12,9 @@ var class_agglomeration_accessor =
     [ "get_bounding_box", "class_agglomeration_accessor.html#a87b1556f9f042519d9bf932e1da2faca", null ],
     [ "get_dof_indices", "class_agglomeration_accessor.html#ae88e624f09079c54ca4cbdcad75b6299", null ],
     [ "get_slaves", "class_agglomeration_accessor.html#af661bafd182a8b56e2af60c7411a6201", null ],
+    [ "id", "class_agglomeration_accessor.html#a269b59dc8c2ed712c3e9a19755ddba4e", null ],
     [ "index", "class_agglomeration_accessor.html#a269d727d712306ee542cedd45d8ea6a1", null ],
+    [ "is_locally_owned", "class_agglomeration_accessor.html#a81f08b6377358e4d6aea1da31cb3aa10", null ],
     [ "n_agglomerated_faces", "class_agglomeration_accessor.html#a0356103232aadf9542aecb49792d7184", null ],
     [ "n_agglomerated_faces_per_cell", "class_agglomeration_accessor.html#a545be53558b9b83c6e3eda8a13eee2cf", null ],
     [ "n_background_cells", "class_agglomeration_accessor.html#a5c109146f479d313601135a67ac7f6eb", null ],
@@ -23,9 +26,12 @@ var class_agglomeration_accessor =
     [ "operator==", "class_agglomeration_accessor.html#ac1f33b21f4f4ffcfde2012cfaa9a584a", null ],
     [ "polytope_boundary", "class_agglomeration_accessor.html#a7778d37f0ce1710a2b2146abc2c1bbd8", null ],
     [ "prev", "class_agglomeration_accessor.html#a0b551aa013fbcca2b75e976cd3163f4a", null ],
+    [ "subdomain_id", "class_agglomeration_accessor.html#ae95c0d26733f870457149fefbe847642", null ],
     [ "volume", "class_agglomeration_accessor.html#a8c1aae776fa2ac7693c79625335ff1c3", null ],
     [ "AgglomerationIterator", "class_agglomeration_accessor.html#aac27b07b6753ea5c7bff47ad8aa37457", null ],
     [ "handler", "class_agglomeration_accessor.html#acf36bcb316be6fc14da4407c2f6d28d7", null ],
     [ "master_cell", "class_agglomeration_accessor.html#afb6f4cdcd9d1e7a7b70315220fbd4fae", null ],
-    [ "present_index", "class_agglomeration_accessor.html#ac0c2e052e67083a722f22392b6fd3c23", null ]
+    [ "present_id", "class_agglomeration_accessor.html#ab0401be847e2548817a68118198bae04", null ],
+    [ "present_index", "class_agglomeration_accessor.html#ac0c2e052e67083a722f22392b6fd3c23", null ],
+    [ "present_subdomain_id", "class_agglomeration_accessor.html#afaead53ea128569c391746ffd978faa0", null ]
 ];

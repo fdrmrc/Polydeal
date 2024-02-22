@@ -107,7 +107,6 @@ $(function(){initNavTree('functions_func.html',''); initResizable(); });
 <div class="textblock">Here is a list of all functions with links to the classes they belong to:</div>
 
 <h3><a id="index_a" name="index_a"></a>- a -</h3><ul>
-<li>agglomerated_neighbor()&#160;:&#160;<a class="el" href="classdealii_1_1internal_1_1_agglomeration_handler_implementation.html#a2921ec2507a5c45a3b69005fd73b76d6">dealii::internal::AgglomerationHandlerImplementation&lt; dim, spacedim &gt;</a></li>
 <li>agglomerated_quadrature()&#160;:&#160;<a class="el" href="class_agglomeration_handler.html#a5396c415dbab5b4e34ef923a326a704e">AgglomerationHandler&lt; dim, spacedim &gt;</a></li>
 <li>AgglomerationAccessor()&#160;:&#160;<a class="el" href="class_agglomeration_accessor.html#a509ec9c40a878c6f31506aba5a2f3ecd">AgglomerationAccessor&lt; dim, spacedim &gt;</a></li>
 <li>AgglomerationHandler()&#160;:&#160;<a class="el" href="class_agglomeration_handler.html#a6bf1f62b04aad1dd097a59146ff8e34c">AgglomerationHandler&lt; dim, spacedim &gt;</a></li>
@@ -142,6 +141,7 @@ $(function(){initNavTree('functions_func.html',''); initResizable(); });
 
 <h3><a id="index_e" name="index_e"></a>- e -</h3><ul>
 <li>end()&#160;:&#160;<a class="el" href="class_agglomeration_handler.html#a97321be6501d254bdd5bd4453b42c5bc">AgglomerationHandler&lt; dim, spacedim &gt;</a></li>
+<li>exchange_interface_values()&#160;:&#160;<a class="el" href="class_agglomeration_handler.html#a49277a83b9c54ecfe3e92ac41dcac63c">AgglomerationHandler&lt; dim, spacedim &gt;</a></li>
 </ul>
 
 
@@ -150,6 +150,7 @@ $(function(){initNavTree('functions_func.html',''); initResizable(); });
 <li>get_bounding_box()&#160;:&#160;<a class="el" href="class_agglomeration_accessor.html#a87b1556f9f042519d9bf932e1da2faca">AgglomerationAccessor&lt; dim, spacedim &gt;</a></li>
 <li>get_dof_handler()&#160;:&#160;<a class="el" href="class_agglomeration_handler.html#a0c180e9024f48de6d2cae44443f90078">AgglomerationHandler&lt; dim, spacedim &gt;</a></li>
 <li>get_dof_indices()&#160;:&#160;<a class="el" href="class_agglomeration_accessor.html#ae88e624f09079c54ca4cbdcad75b6299">AgglomerationAccessor&lt; dim, spacedim &gt;</a></li>
+<li>get_global_bboxes()&#160;:&#160;<a class="el" href="class_agglomeration_handler.html#ae6aeab6cbd977fedf4f40837281fb176">AgglomerationHandler&lt; dim, spacedim &gt;</a></li>
 <li>get_interface()&#160;:&#160;<a class="el" href="class_agglomeration_handler.html#abe6a9923b3556d00f71f911e147f86cb">AgglomerationHandler&lt; dim, spacedim &gt;</a></li>
 <li>get_master_idx_of_cell()&#160;:&#160;<a class="el" href="class_agglomeration_handler.html#a16c253f23f53a1c14a03a1cbba4e9bd6">AgglomerationHandler&lt; dim, spacedim &gt;</a></li>
 <li>get_relationships()&#160;:&#160;<a class="el" href="class_agglomeration_handler.html#a2f87454e1998f253d9d2c843a811653c">AgglomerationHandler&lt; dim, spacedim &gt;</a></li>
@@ -159,10 +160,12 @@ $(function(){initNavTree('functions_func.html',''); initResizable(); });
 
 
 <h3><a id="index_i" name="index_i"></a>- i -</h3><ul>
+<li>id()&#160;:&#160;<a class="el" href="class_agglomeration_accessor.html#a269b59dc8c2ed712c3e9a19755ddba4e">AgglomerationAccessor&lt; dim, spacedim &gt;</a></li>
 <li>index()&#160;:&#160;<a class="el" href="class_agglomeration_accessor.html#a269d727d712306ee542cedd45d8ea6a1">AgglomerationAccessor&lt; dim, spacedim &gt;</a></li>
 <li>initialize_agglomeration_data()&#160;:&#160;<a class="el" href="class_agglomeration_handler.html#abf5173be176fefcc24ac4d7cffd20632">AgglomerationHandler&lt; dim, spacedim &gt;</a></li>
 <li>initialize_fe_values()&#160;:&#160;<a class="el" href="class_agglomeration_handler.html#ac46da6a55b39bb5d9f3e4fb481e905b6">AgglomerationHandler&lt; dim, spacedim &gt;</a></li>
 <li>initialize_hp_structure()&#160;:&#160;<a class="el" href="class_agglomeration_handler.html#adc4360820f6bf2f44c11ef8312a31d52">AgglomerationHandler&lt; dim, spacedim &gt;</a></li>
+<li>is_locally_owned()&#160;:&#160;<a class="el" href="class_agglomeration_accessor.html#a81f08b6377358e4d6aea1da31cb3aa10">AgglomerationAccessor&lt; dim, spacedim &gt;</a></li>
 <li>is_master_cell()&#160;:&#160;<a class="el" href="class_agglomeration_handler.html#ab3acbb48749640838a732ed05dff3dd4">AgglomerationHandler&lt; dim, spacedim &gt;</a></li>
 <li>is_slave_cell()&#160;:&#160;<a class="el" href="class_agglomeration_handler.html#a262985d804df7684e88ed35f66a8b04f">AgglomerationHandler&lt; dim, spacedim &gt;</a></li>
 <li>is_slave_cell_of()&#160;:&#160;<a class="el" href="class_agglomeration_handler.html#adfc12d830c2a7d7323235cf8f0317ba0">AgglomerationHandler&lt; dim, spacedim &gt;</a></li>
@@ -190,7 +193,7 @@ $(function(){initNavTree('functions_func.html',''); initResizable(); });
 <li>n_dofs_per_cell()&#160;:&#160;<a class="el" href="class_agglomeration_handler.html#a01db6ee2e69c86fc59afd947af6fa26c">AgglomerationHandler&lt; dim, spacedim &gt;</a></li>
 <li>n_faces()&#160;:&#160;<a class="el" href="class_agglomeration_accessor.html#afe96e5b90b05551ebbc1684bb69a1842">AgglomerationAccessor&lt; dim, spacedim &gt;</a>, <a class="el" href="class_agglomeration_handler.html#a488d91e24a54a0c8de4305ddd713cdab">AgglomerationHandler&lt; dim, spacedim &gt;</a></li>
 <li>neighbor()&#160;:&#160;<a class="el" href="class_agglomeration_accessor.html#a84bbc03fb9c04d8c8b1837c74cdfa4dc">AgglomerationAccessor&lt; dim, spacedim &gt;</a></li>
-<li>neighbor_of_agglomerated_neighbor()&#160;:&#160;<a class="el" href="class_agglomeration_accessor.html#a60a2593fdc8ad17122943cfc884ae4e1">AgglomerationAccessor&lt; dim, spacedim &gt;</a>, <a class="el" href="classdealii_1_1internal_1_1_agglomeration_handler_implementation.html#ab761be8fb401aec669486506e7d82f5c">dealii::internal::AgglomerationHandlerImplementation&lt; dim, spacedim &gt;</a></li>
+<li>neighbor_of_agglomerated_neighbor()&#160;:&#160;<a class="el" href="class_agglomeration_accessor.html#a60a2593fdc8ad17122943cfc884ae4e1">AgglomerationAccessor&lt; dim, spacedim &gt;</a></li>
 <li>next()&#160;:&#160;<a class="el" href="class_agglomeration_accessor.html#a26bc4f44cdb187f60bc87827b506f810">AgglomerationAccessor&lt; dim, spacedim &gt;</a></li>
 </ul>
 
@@ -230,10 +233,12 @@ $(function(){initNavTree('functions_func.html',''); initResizable(); });
 <h3><a id="index_s" name="index_s"></a>- s -</h3><ul>
 <li>setup_agglomeration()&#160;:&#160;<a class="el" href="class_poisson.html#ab3834a09a1d72f968627636c07896056">Poisson&lt; dim &gt;</a></li>
 <li>setup_connectivity_of_agglomeration()&#160;:&#160;<a class="el" href="class_agglomeration_handler.html#a73228c3cb5a7af60aa788aa9a26794ec">AgglomerationHandler&lt; dim, spacedim &gt;</a></li>
+<li>setup_ghost_polytopes()&#160;:&#160;<a class="el" href="class_agglomeration_handler.html#a86dc2ec3d6356a9058dfd72c2f87d9f6">AgglomerationHandler&lt; dim, spacedim &gt;</a></li>
 <li>setup_master_neighbor_connectivity()&#160;:&#160;<a class="el" href="classdealii_1_1internal_1_1_agglomeration_handler_implementation.html#a52470157179345b63f62edcb86d3d7a5">dealii::internal::AgglomerationHandlerImplementation&lt; dim, spacedim &gt;</a></li>
 <li>setup_output_interpolation_matrix()&#160;:&#160;<a class="el" href="class_agglomeration_handler.html#adb1c4bcd2c0f56fa1f9dc90a89cc679a">AgglomerationHandler&lt; dim, spacedim &gt;</a></li>
 <li>solve()&#160;:&#160;<a class="el" href="class_poisson.html#a402141445c0487efe4694ba4bea2a0df">Poisson&lt; dim &gt;</a></li>
 <li>state()&#160;:&#160;<a class="el" href="class_agglomeration_iterator.html#a051574ced125e26b7b9dcc826088950e">AgglomerationIterator&lt; dim, spacedim &gt;</a></li>
+<li>subdomain_id()&#160;:&#160;<a class="el" href="class_agglomeration_accessor.html#ae95c0d26733f870457149fefbe847642">AgglomerationAccessor&lt; dim, spacedim &gt;</a></li>
 </ul>
 
 
@@ -253,7 +258,7 @@ $(function(){initNavTree('functions_func.html',''); initResizable(); });
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Wed Feb 21 2024 00:37:57 for PolyDEAL by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.10.0 </li>
+    <li class="footer">Generated on Thu Feb 22 2024 16:07:20 for PolyDEAL by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.10.0 </li>
   </ul>
 </div>
 </body>

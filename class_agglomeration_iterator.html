@@ -136,6 +136,8 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a69cb5ece32a938510e3bb8bbaaca3d99"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa13b69a35750698fcaee513c6a2cc6e9" id="r_aa13b69a35750698fcaee513c6a2cc6e9"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aa13b69a35750698fcaee513c6a2cc6e9">AgglomerationIterator</a> (const typename <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classTriangulation.html">Triangulation</a>&lt; dim, spacedim &gt;::active_cell_iterator &amp;cell, const <a class="el" href="class_agglomeration_handler.html">AgglomerationHandler</a>&lt; dim, spacedim &gt; *handler)</td></tr>
 <tr class="separator:aa13b69a35750698fcaee513c6a2cc6e9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5e91daeb9bea8a205764f21f19358ba4" id="r_a5e91daeb9bea8a205764f21f19358ba4"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a5e91daeb9bea8a205764f21f19358ba4">AgglomerationIterator</a> (const typename <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classTriangulation.html">Triangulation</a>&lt; dim, spacedim &gt;::active_cell_iterator &amp;<a class="el" href="#a129ba4cc3629370f7a9eebfb95f4a34b">master_cell</a>, const <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classCellId.html">CellId</a> &amp;cell_id, const <a class="el" href="class_agglomeration_handler.html">AgglomerationHandler</a>&lt; dim, spacedim &gt; *handler)</td></tr>
+<tr class="separator:a5e91daeb9bea8a205764f21f19358ba4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8cc79859358be86c0e82a863819f770a" id="r_a8cc79859358be86c0e82a863819f770a"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="class_agglomeration_accessor.html">AgglomerationAccessor</a>&lt; dim, spacedim &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a8cc79859358be86c0e82a863819f770a">operator*</a> () const</td></tr>
 <tr class="separator:a8cc79859358be86c0e82a863819f770a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:adb4cdc538ee8fcc1b559b05cca6756a0" id="r_adb4cdc538ee8fcc1b559b05cca6756a0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="class_agglomeration_accessor.html">AgglomerationAccessor</a>&lt; dim, spacedim &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#adb4cdc538ee8fcc1b559b05cca6756a0">operator*</a> ()</td></tr>
@@ -207,7 +209,7 @@ template&lt;int dim, int spacedim = dim&gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__iterator_8h_source.html#l00142">142</a> of file <a class="el" href="agglomeration__iterator_8h_source.html">agglomeration_iterator.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__iterator_8h_source.html#l00151">151</a> of file <a class="el" href="agglomeration__iterator_8h_source.html">agglomeration_iterator.h</a>.</p>
 
 </div>
 </div>
@@ -226,7 +228,7 @@ template&lt;int dim, int spacedim = dim&gt; </div>
 </div><div class="memdoc">
 <p>Mark the class as bidirectional iterator and declare some alias which are standard for iterators and are used by algorithms to enquire about the specifics of the iterators they work on. </p>
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__iterator_8h_source.html#l00140">140</a> of file <a class="el" href="agglomeration__iterator_8h_source.html">agglomeration_iterator.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__iterator_8h_source.html#l00149">149</a> of file <a class="el" href="agglomeration__iterator_8h_source.html">agglomeration_iterator.h</a>.</p>
 
 </div>
 </div>
@@ -244,7 +246,7 @@ template&lt;int dim, int spacedim = dim&gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__iterator_8h_source.html#l00143">143</a> of file <a class="el" href="agglomeration__iterator_8h_source.html">agglomeration_iterator.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__iterator_8h_source.html#l00152">152</a> of file <a class="el" href="agglomeration__iterator_8h_source.html">agglomeration_iterator.h</a>.</p>
 
 </div>
 </div>
@@ -262,7 +264,7 @@ template&lt;int dim, int spacedim = dim&gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__iterator_8h_source.html#l00144">144</a> of file <a class="el" href="agglomeration__iterator_8h_source.html">agglomeration_iterator.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__iterator_8h_source.html#l00153">153</a> of file <a class="el" href="agglomeration__iterator_8h_source.html">agglomeration_iterator.h</a>.</p>
 
 </div>
 </div>
@@ -280,13 +282,13 @@ template&lt;int dim, int spacedim = dim&gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__iterator_8h_source.html#l00141">141</a> of file <a class="el" href="agglomeration__iterator_8h_source.html">agglomeration_iterator.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__iterator_8h_source.html#l00150">150</a> of file <a class="el" href="agglomeration__iterator_8h_source.html">agglomeration_iterator.h</a>.</p>
 
 </div>
 </div>
 <h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a69cb5ece32a938510e3bb8bbaaca3d99" name="a69cb5ece32a938510e3bb8bbaaca3d99"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a69cb5ece32a938510e3bb8bbaaca3d99">&#9670;&#160;</a></span>AgglomerationIterator() <span class="overload">[1/2]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a69cb5ece32a938510e3bb8bbaaca3d99">&#9670;&#160;</a></span>AgglomerationIterator() <span class="overload">[1/3]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -311,12 +313,12 @@ template&lt;int dim, int spacedim&gt; </div>
 </div><div class="memdoc">
 <p>Empty constructor. This constructore creates an iterator pointing to an invalid object. </p>
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__iterator_8h_source.html#l00158">158</a> of file <a class="el" href="agglomeration__iterator_8h_source.html">agglomeration_iterator.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__iterator_8h_source.html#l00167">167</a> of file <a class="el" href="agglomeration__iterator_8h_source.html">agglomeration_iterator.h</a>.</p>
 
 </div>
 </div>
 <a id="aa13b69a35750698fcaee513c6a2cc6e9" name="aa13b69a35750698fcaee513c6a2cc6e9"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aa13b69a35750698fcaee513c6a2cc6e9">&#9670;&#160;</a></span>AgglomerationIterator() <span class="overload">[2/2]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#aa13b69a35750698fcaee513c6a2cc6e9">&#9670;&#160;</a></span>AgglomerationIterator() <span class="overload">[2/3]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -343,9 +345,48 @@ template&lt;int dim, int spacedim&gt; </div>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Constructor of the iterator. Takes a reference to the cells forming the actual polytope. </p>
+<p>Constructor of the iterator. Takes a reference to the master cell encoding the actual polytope. </p>
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__iterator_8h_source.html#l00165">165</a> of file <a class="el" href="agglomeration__iterator_8h_source.html">agglomeration_iterator.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__iterator_8h_source.html#l00174">174</a> of file <a class="el" href="agglomeration__iterator_8h_source.html">agglomeration_iterator.h</a>.</p>
+
+</div>
+</div>
+<a id="a5e91daeb9bea8a205764f21f19358ba4" name="a5e91daeb9bea8a205764f21f19358ba4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5e91daeb9bea8a205764f21f19358ba4">&#9670;&#160;</a></span>AgglomerationIterator() <span class="overload">[3/3]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;int dim, int spacedim&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="class_agglomeration_iterator.html">AgglomerationIterator</a>&lt; dim, spacedim &gt;<a class="el" href="class_agglomeration_iterator.html">::AgglomerationIterator</a> </td>
+          <td>(</td>
+          <td class="paramtype">const typename <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classTriangulation.html">Triangulation</a>&lt; dim, spacedim &gt;::active_cell_iterator &amp;</td>          <td class="paramname"><span class="paramname"><em>master_cell</em>, </span></td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classCellId.html">CellId</a> &amp;</td>          <td class="paramname"><span class="paramname"><em>cell_id</em>, </span></td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="class_agglomeration_handler.html">AgglomerationHandler</a>&lt; dim, spacedim &gt; *</td>          <td class="paramname"><span class="paramname"><em>handler</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Same as above, needed for ghosted elements. </p>
+
+<p class="definition">Definition at line <a class="el" href="agglomeration__iterator_8h_source.html#l00182">182</a> of file <a class="el" href="agglomeration__iterator_8h_source.html">agglomeration_iterator.h</a>.</p>
 
 </div>
 </div>
@@ -376,9 +417,9 @@ template&lt;int dim, int spacedim&gt; </div>
 </div><div class="memdoc">
 <p>Return the master cell associated to the present polytope. </p>
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__iterator_8h_source.html#l00285">285</a> of file <a class="el" href="agglomeration__iterator_8h_source.html">agglomeration_iterator.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__iterator_8h_source.html#l00303">303</a> of file <a class="el" href="agglomeration__iterator_8h_source.html">agglomeration_iterator.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="agglomeration__accessor_8h_source.html#l00334">AgglomerationAccessor&lt; dim, spacedim &gt;::AgglomerationAccessor()</a>, <a class="el" href="agglomeration__accessor_8h_source.html#l00490">AgglomerationAccessor&lt; dim, spacedim &gt;::as_dof_handler_iterator()</a>, <a class="el" href="agglomeration__accessor_8h_source.html#l00534">AgglomerationAccessor&lt; dim, spacedim &gt;::at_boundary()</a>, <a class="el" href="agglomeration__accessor_8h_source.html#l00391">AgglomerationAccessor&lt; dim, spacedim &gt;::diameter()</a>, <a class="el" href="agglomeration__accessor_8h_source.html#l00371">AgglomerationAccessor&lt; dim, spacedim &gt;::get_agglomerate()</a>, <a class="el" href="agglomeration__accessor_8h_source.html#l00355">AgglomerationAccessor&lt; dim, spacedim &gt;::get_dof_indices()</a>, <a class="el" href="agglomeration__accessor_8h_source.html#l00502">AgglomerationAccessor&lt; dim, spacedim &gt;::get_slaves()</a>, <a class="el" href="agglomeration__accessor_8h_source.html#l00260">AgglomerationAccessor&lt; dim, spacedim &gt;::n_faces()</a>, <a class="el" href="agglomeration__accessor_8h_source.html#l00271">AgglomerationAccessor&lt; dim, spacedim &gt;::neighbor()</a>, <a class="el" href="agglomeration__accessor_8h_source.html#l00442">AgglomerationAccessor&lt; dim, spacedim &gt;::next()</a>, <a class="el" href="agglomeration__accessor_8h_source.html#l00382">AgglomerationAccessor&lt; dim, spacedim &gt;::polytope_boundary()</a>, <a class="el" href="agglomeration__accessor_8h_source.html#l00453">AgglomerationAccessor&lt; dim, spacedim &gt;::prev()</a>, <a class="el" href="agglomeration__iterator_8h_source.html#l00276">AgglomerationIterator&lt; dim, spacedim &gt;::state()</a>, and <a class="el" href="agglomeration__accessor_8h_source.html#l00423">AgglomerationAccessor&lt; dim, spacedim &gt;::volume()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="agglomeration__accessor_8h_source.html#l00491">AgglomerationAccessor&lt; dim, spacedim &gt;::AgglomerationAccessor()</a>, <a class="el" href="agglomeration__accessor_8h_source.html#l00467">AgglomerationAccessor&lt; dim, spacedim &gt;::AgglomerationAccessor()</a>, <a class="el" href="agglomeration__accessor_8h_source.html#l00669">AgglomerationAccessor&lt; dim, spacedim &gt;::as_dof_handler_iterator()</a>, <a class="el" href="agglomeration__accessor_8h_source.html#l00713">AgglomerationAccessor&lt; dim, spacedim &gt;::at_boundary()</a>, <a class="el" href="agglomeration__accessor_8h_source.html#l00559">AgglomerationAccessor&lt; dim, spacedim &gt;::diameter()</a>, <a class="el" href="agglomeration__accessor_8h_source.html#l00539">AgglomerationAccessor&lt; dim, spacedim &gt;::get_agglomerate()</a>, <a class="el" href="agglomeration__accessor_8h_source.html#l00511">AgglomerationAccessor&lt; dim, spacedim &gt;::get_dof_indices()</a>, <a class="el" href="agglomeration__accessor_8h_source.html#l00681">AgglomerationAccessor&lt; dim, spacedim &gt;::get_slaves()</a>, <a class="el" href="agglomeration__accessor_8h_source.html#l00753">AgglomerationAccessor&lt; dim, spacedim &gt;::is_locally_owned()</a>, <a class="el" href="agglomeration__accessor_8h_source.html#l00300">AgglomerationAccessor&lt; dim, spacedim &gt;::n_faces()</a>, <a class="el" href="agglomeration__accessor_8h_source.html#l00311">AgglomerationAccessor&lt; dim, spacedim &gt;::neighbor()</a>, <a class="el" href="agglomeration__accessor_8h_source.html#l00613">AgglomerationAccessor&lt; dim, spacedim &gt;::next()</a>, <a class="el" href="agglomeration__accessor_8h_source.html#l00550">AgglomerationAccessor&lt; dim, spacedim &gt;::polytope_boundary()</a>, <a class="el" href="agglomeration__accessor_8h_source.html#l00631">AgglomerationAccessor&lt; dim, spacedim &gt;::prev()</a>, <a class="el" href="agglomeration__iterator_8h_source.html#l00294">AgglomerationIterator&lt; dim, spacedim &gt;::state()</a>, and <a class="el" href="agglomeration__accessor_8h_source.html#l00594">AgglomerationAccessor&lt; dim, spacedim &gt;::volume()</a>.</p>
 
 </div>
 </div>
@@ -408,9 +449,9 @@ template&lt;int dim, int spacedim&gt; </div>
 </div><div class="memdoc">
 <p>Compare for inequality. </p>
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__iterator_8h_source.html#l00212">212</a> of file <a class="el" href="agglomeration__iterator_8h_source.html">agglomeration_iterator.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__iterator_8h_source.html#l00230">230</a> of file <a class="el" href="agglomeration__iterator_8h_source.html">agglomeration_iterator.h</a>.</p>
 
-<p class="reference">References <a class="el" href="agglomeration__iterator_8h_source.html#l00150">AgglomerationIterator&lt; dim, spacedim &gt;::accessor</a>.</p>
+<p class="reference">References <a class="el" href="agglomeration__iterator_8h_source.html#l00159">AgglomerationIterator&lt; dim, spacedim &gt;::accessor</a>.</p>
 
 </div>
 </div>
@@ -440,7 +481,7 @@ template&lt;int dim, int spacedim&gt; </div>
 </div><div class="memdoc">
 <p>Dereferencing operator, non-<code>const</code> version. </p>
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__iterator_8h_source.html#l00176">176</a> of file <a class="el" href="agglomeration__iterator_8h_source.html">agglomeration_iterator.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__iterator_8h_source.html#l00194">194</a> of file <a class="el" href="agglomeration__iterator_8h_source.html">agglomeration_iterator.h</a>.</p>
 
 </div>
 </div>
@@ -470,7 +511,7 @@ template&lt;int dim, int spacedim&gt; </div>
 </div><div class="memdoc">
 <p>Dereferencing operator, returns a reference to an accessor. Usage is thus like <code>(*i).get_dof_indices ();</code> </p>
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__iterator_8h_source.html#l00194">194</a> of file <a class="el" href="agglomeration__iterator_8h_source.html">agglomeration_iterator.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__iterator_8h_source.html#l00212">212</a> of file <a class="el" href="agglomeration__iterator_8h_source.html">agglomeration_iterator.h</a>.</p>
 
 </div>
 </div>
@@ -500,7 +541,7 @@ template&lt;int dim, int spacedim&gt; </div>
 </div><div class="memdoc">
 <p>Prefix <code>++</code> operator: <code>++iterator</code>. This operator advances the iterator to the next element and returns a reference to <code>*this</code>. </p>
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__iterator_8h_source.html#l00232">232</a> of file <a class="el" href="agglomeration__iterator_8h_source.html">agglomeration_iterator.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__iterator_8h_source.html#l00250">250</a> of file <a class="el" href="agglomeration__iterator_8h_source.html">agglomeration_iterator.h</a>.</p>
 
 </div>
 </div>
@@ -530,7 +571,7 @@ template&lt;int dim, int spacedim&gt; </div>
 </div><div class="memdoc">
 <p>Postfix <code>++</code> operator: <code>iterator++</code>. This operator advances the iterator to the next element, but returns an iterator to the element previously pointed to. </p>
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__iterator_8h_source.html#l00242">242</a> of file <a class="el" href="agglomeration__iterator_8h_source.html">agglomeration_iterator.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__iterator_8h_source.html#l00260">260</a> of file <a class="el" href="agglomeration__iterator_8h_source.html">agglomeration_iterator.h</a>.</p>
 
 <p class="reference">References <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/synchronous__iterator_8h.html#a574336a8166e3537d57c0d677df48ce9">operator++()</a>.</p>
 
@@ -562,7 +603,7 @@ template&lt;int dim, int spacedim&gt; </div>
 </div><div class="memdoc">
 <p>Prefix <code>--</code> operator: <code>--iterator</code>. This operator moves the iterator to the previous element and returns a reference to <code>*this</code>. </p>
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__iterator_8h_source.html#l00254">254</a> of file <a class="el" href="agglomeration__iterator_8h_source.html">agglomeration_iterator.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__iterator_8h_source.html#l00272">272</a> of file <a class="el" href="agglomeration__iterator_8h_source.html">agglomeration_iterator.h</a>.</p>
 
 </div>
 </div>
@@ -592,7 +633,7 @@ template&lt;int dim, int spacedim&gt; </div>
 </div><div class="memdoc">
 <p>Postfix <code>--</code> operator: <code>iterator--</code>. This operator moves the iterator to the previous element, but returns an iterator to the element previously pointed to. </p>
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__iterator_8h_source.html#l00264">264</a> of file <a class="el" href="agglomeration__iterator_8h_source.html">agglomeration_iterator.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__iterator_8h_source.html#l00282">282</a> of file <a class="el" href="agglomeration__iterator_8h_source.html">agglomeration_iterator.h</a>.</p>
 
 </div>
 </div>
@@ -622,7 +663,7 @@ template&lt;int dim, int spacedim&gt; </div>
 </div><div class="memdoc">
 <p>Dereferencing operator, non-<code>const</code> version. </p>
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__iterator_8h_source.html#l00185">185</a> of file <a class="el" href="agglomeration__iterator_8h_source.html">agglomeration_iterator.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__iterator_8h_source.html#l00203">203</a> of file <a class="el" href="agglomeration__iterator_8h_source.html">agglomeration_iterator.h</a>.</p>
 
 <p class="reference">References <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/complex__overloads_8h.html#ac54920a4d54b45c43d2abb842eb39930">operator*()</a>.</p>
 
@@ -655,7 +696,7 @@ template&lt;int dim, int spacedim&gt; </div>
 <p>Dereferencing operator, returns a pointer of the particle pointed to. Usage is thus like <code>i-&gt;get_dof_indices ();</code></p>
 <p>There is a <code>const</code> and a non-<code>const</code> version. </p>
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__iterator_8h_source.html#l00203">203</a> of file <a class="el" href="agglomeration__iterator_8h_source.html">agglomeration_iterator.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__iterator_8h_source.html#l00221">221</a> of file <a class="el" href="agglomeration__iterator_8h_source.html">agglomeration_iterator.h</a>.</p>
 
 <p class="reference">References <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/complex__overloads_8h.html#ac54920a4d54b45c43d2abb842eb39930">operator*()</a>.</p>
 
@@ -687,9 +728,9 @@ template&lt;int dim, int spacedim&gt; </div>
 </div><div class="memdoc">
 <p>Compare for equality. </p>
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__iterator_8h_source.html#l00222">222</a> of file <a class="el" href="agglomeration__iterator_8h_source.html">agglomeration_iterator.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__iterator_8h_source.html#l00240">240</a> of file <a class="el" href="agglomeration__iterator_8h_source.html">agglomeration_iterator.h</a>.</p>
 
-<p class="reference">References <a class="el" href="agglomeration__iterator_8h_source.html#l00150">AgglomerationIterator&lt; dim, spacedim &gt;::accessor</a>.</p>
+<p class="reference">References <a class="el" href="agglomeration__iterator_8h_source.html#l00159">AgglomerationIterator&lt; dim, spacedim &gt;::accessor</a>.</p>
 
 </div>
 </div>
@@ -719,9 +760,11 @@ template&lt;int dim, int spacedim&gt; </div>
 </div><div class="memdoc">
 <p>Return the state of the present iterator. </p>
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__iterator_8h_source.html#l00276">276</a> of file <a class="el" href="agglomeration__iterator_8h_source.html">agglomeration_iterator.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__iterator_8h_source.html#l00294">294</a> of file <a class="el" href="agglomeration__iterator_8h_source.html">agglomeration_iterator.h</a>.</p>
 
-<p class="reference">References <a class="el" href="agglomeration__iterator_8h_source.html#l00285">AgglomerationIterator&lt; dim, spacedim &gt;::master_cell()</a>.</p>
+<p class="reference">References <a class="el" href="agglomeration__iterator_8h_source.html#l00303">AgglomerationIterator&lt; dim, spacedim &gt;::master_cell()</a>.</p>
+
+<p class="reference">Referenced by <a class="el" href="agglomeration__handler_8cc_source.html#l00939">dealii::internal::AgglomerationHandlerImplementation&lt; dim, spacedim &gt;::reinit_master()</a>.</p>
 
 </div>
 </div>
@@ -749,9 +792,9 @@ template&lt;int dim, int spacedim = dim&gt; </div>
 </div><div class="memdoc">
 <p>The accessor to the actual polytope. </p>
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__iterator_8h_source.html#l00150">150</a> of file <a class="el" href="agglomeration__iterator_8h_source.html">agglomeration_iterator.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__iterator_8h_source.html#l00159">159</a> of file <a class="el" href="agglomeration__iterator_8h_source.html">agglomeration_iterator.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="agglomeration__iterator_8h_source.html#l00212">AgglomerationIterator&lt; dim, spacedim &gt;::operator!=()</a>, and <a class="el" href="agglomeration__iterator_8h_source.html#l00222">AgglomerationIterator&lt; dim, spacedim &gt;::operator==()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="agglomeration__iterator_8h_source.html#l00230">AgglomerationIterator&lt; dim, spacedim &gt;::operator!=()</a>, and <a class="el" href="agglomeration__iterator_8h_source.html#l00240">AgglomerationIterator&lt; dim, spacedim &gt;::operator==()</a>.</p>
 
 </div>
 </div>
@@ -765,7 +808,7 @@ template&lt;int dim, int spacedim = dim&gt; </div>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="class_agglomeration_iterator.html">AgglomerationIterator</a></li>
-    <li class="footer">Generated on Wed Feb 21 2024 00:37:57 for PolyDEAL by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.10.0 </li>
+    <li class="footer">Generated on Thu Feb 22 2024 16:07:20 for PolyDEAL by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.10.0 </li>
   </ul>
 </div>
 </body>

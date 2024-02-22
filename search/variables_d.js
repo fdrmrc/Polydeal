@@ -59,7 +59,7 @@ var searchData=
   ['mass_5fsolver_56',['mass_solver',['http://www.dealii.org/developer/doxygen/deal.II/classSUNDIALS_1_1ARKode.html#a7884fd6cdfbd98186e4ca97da177db94',1,'SUNDIALS::ARKode']]],
   ['mass_5ftimes_5fsetup_57',['mass_times_setup',['http://www.dealii.org/developer/doxygen/deal.II/classSUNDIALS_1_1ARKode.html#aadf81a9f005d80a9467a33a1a64500ba',1,'SUNDIALS::ARKode']]],
   ['mass_5ftimes_5fvector_58',['mass_times_vector',['http://www.dealii.org/developer/doxygen/deal.II/classSUNDIALS_1_1ARKode.html#ac25674d94b09546052bde6cbb47a3fe8',1,'SUNDIALS::ARKode']]],
-  ['master2polygon_59',['master2polygon',['../class_agglomeration_handler.html#abcac9b03392844da900ff4ace6725ca0',1,'AgglomerationHandler']]],
+  ['master2polygon_59',['master2polygon',['../class_agglomeration_handler.html#a5cab788fa7aa258c88b5a777544ddbc0',1,'AgglomerationHandler']]],
   ['master2slaves_60',['master2slaves',['../class_agglomeration_handler.html#a58a8e13314a10fa7ae09c7fa7daea120',1,'AgglomerationHandler']]],
   ['master_5fcell_61',['master_cell',['../class_agglomeration_accessor.html#afb6f4cdcd9d1e7a7b70315220fbd4fae',1,'AgglomerationAccessor']]],
   ['master_5fcells_5fcontainer_62',['master_cells_container',['../class_agglomeration_handler.html#aa9f699a555ca6fce0bc1aa437e656208',1,'AgglomerationHandler']]],

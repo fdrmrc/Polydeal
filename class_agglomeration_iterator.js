@@ -8,6 +8,7 @@ var class_agglomeration_iterator =
     [ "value_type", "class_agglomeration_iterator.html#aeb62b8fe0fa66666c0e82638dd123607", null ],
     [ "AgglomerationIterator", "class_agglomeration_iterator.html#a69cb5ece32a938510e3bb8bbaaca3d99", null ],
     [ "AgglomerationIterator", "class_agglomeration_iterator.html#aa13b69a35750698fcaee513c6a2cc6e9", null ],
+    [ "AgglomerationIterator", "class_agglomeration_iterator.html#a5e91daeb9bea8a205764f21f19358ba4", null ],
     [ "master_cell", "class_agglomeration_iterator.html#a129ba4cc3629370f7a9eebfb95f4a34b", null ],
     [ "operator!=", "class_agglomeration_iterator.html#a37f2fc9b93fa6a7c631bba2b317d35c0", null ],
     [ "operator*", "class_agglomeration_iterator.html#adb4cdc538ee8fcc1b559b05cca6756a0", null ],
