@@ -1,0 +1,3 @@
+Running with 3 MPI ranks.
+Test with f(x,y)=x: 1
+Test with f(x,y)=x+y: 2
