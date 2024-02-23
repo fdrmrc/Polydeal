@@ -41,6 +41,7 @@
 #include <deal.II/lac/dynamic_sparsity_pattern.h>
 #include <deal.II/lac/sparse_matrix.h>
 #include <deal.II/lac/sparsity_pattern.h>
+#include <deal.II/lac/trilinos_sparse_matrix.h>
 #include <deal.II/lac/vector.h>
 
 #include <deal.II/meshworker/scratch_data.h>
@@ -322,8 +323,47 @@ public:
   agglomeration_iterator
   define_agglomerate(const AgglomerationContainer &cells);
 
+  inline const Triangulation<dim, spacedim> &
+  get_triangulation() const;
+
+  inline const FiniteElement<dim, spacedim> &
+  get_fe() const;
+
+  inline const std::vector<BoundingBox<dim>> &
+  get_local_bboxes() const;
+
+  inline types::global_cell_index
+  cell_to_polytope_index(
+    const typename Triangulation<dim, spacedim>::active_cell_iterator &cell)
+    const;
+
   inline decltype(auto)
   get_interface() const;
+
+  /**
+   * Helper function to determine whether or not a cell is a master or a slave
+   */
+  template <typename CellIterator>
+  inline bool
+  is_master_cell(const CellIterator &cell) const;
+
+  /**
+   * Helper function to determine if the given cell is a standard deal.II cell,
+   * that is: not master, nor slave.
+   *
+   */
+  template <typename CellIterator>
+  inline bool
+  is_standard_cell(const CellIterator &cell) const;
+
+  /**
+   * Find (if any) the cells that have the given master index. Note that `idx`
+   * is as it can be equal to -1 (meaning that the cell is a master one).
+   */
+  inline const std::vector<
+    typename Triangulation<dim, spacedim>::active_cell_iterator> &
+  get_slaves_of_idx(types::global_cell_index idx) const;
+
 
   inline const std::vector<long int> &
   get_relationships() const;
@@ -447,13 +487,7 @@ public:
   inline types::global_dof_index
   n_dofs() const noexcept;
 
-  /**
-   * Interpolate the solution defined on the agglomerates onto a classical
-   * deal.II DoFHandler.
-   * #TODO: place this in a helper function
-   */
-  void
-  setup_output_interpolation_matrix();
+  
 
   /**
    * Return the collection of vertices describing the boundary of the polytope
@@ -475,27 +509,10 @@ public:
    */
   DoFHandler<dim, spacedim> output_dh;
 
-  /**
-   * Sparsity to interpolate on the output dh.
-   */
-  SparsityPattern output_interpolation_sparsity;
-
-  /**
-   * Interpolation matrix for the output dh.
-   */
-  SparseMatrix<double> output_interpolation_matrix;
 
   std::unique_ptr<MappingFEField<dim, spacedim> /*, Vector<double>*/>
     euler_mapping;
 
-
-
-  std::vector<std::vector<BoundingBox<dim>>>
-  get_global_bboxes() const
-  {
-    auto global_bboxes = Utilities::MPI::all_gather(communicator, bboxes);
-    return global_bboxes;
-  }
 
   /**
    * This function stores the information needed to identify which polytopes are
@@ -612,29 +629,6 @@ private:
       &agglo_isv_ptr) const;
 
 
-  /**
-   * Find (if any) the cells that have the given master index. Note that `idx`
-   * is as it can be equal to -1 (meaning that the cell is a master one).
-   */
-  inline const std::vector<
-    typename Triangulation<dim, spacedim>::active_cell_iterator> &
-  get_slaves_of_idx(types::global_cell_index idx) const;
-
-  /**
-   * Helper function to determine whether or not a cell is a master or a slave
-   */
-  template <typename CellIterator>
-  inline bool
-  is_master_cell(const CellIterator &cell) const;
-
-  /**
-   * Helper function to determine if the given cell is a standard deal.II cell,
-   * that is: not master, nor slave.
-   *
-   */
-  template <typename CellIterator>
-  inline bool
-  is_standard_cell(const CellIterator &cell) const;
 
   /**
    * Helper function to determine whether or not a cell is a slave cell, without
@@ -902,6 +896,42 @@ private:
 
 
 // ------------------------------ inline functions -------------------------
+template <int dim, int spacedim>
+inline const FiniteElement<dim, spacedim> &
+AgglomerationHandler<dim, spacedim>::get_fe() const
+{
+  return *fe;
+}
+
+
+
+template <int dim, int spacedim>
+inline const Triangulation<dim, spacedim> &
+AgglomerationHandler<dim, spacedim>::get_triangulation() const
+{
+  return *tria;
+}
+
+
+template <int dim, int spacedim>
+inline const std::vector<BoundingBox<dim>> &
+AgglomerationHandler<dim, spacedim>::get_local_bboxes() const
+{
+  return bboxes;
+}
+
+
+
+template <int dim, int spacedim>
+inline types::global_cell_index
+AgglomerationHandler<dim, spacedim>::cell_to_polytope_index(
+  const typename Triangulation<dim, spacedim>::active_cell_iterator &cell) const
+{
+  return master2polygon.at(cell->active_cell_index());
+}
+
+
+
 template <int dim, int spacedim>
 inline decltype(auto)
 AgglomerationHandler<dim, spacedim>::get_interface() const
