@@ -22,11 +22,24 @@
 #include <deal.II/base/config.h>
 
 #include <deal.II/base/point.h>
+#include <deal.II/base/quadrature.h>
 #include <deal.II/base/std_cxx20/iota_view.h>
 
 #include <deal.II/boost_adaptors/bounding_box.h>
 #include <deal.II/boost_adaptors/point.h>
 #include <deal.II/boost_adaptors/segment.h>
+
+#include <deal.II/distributed/tria.h>
+
+#include <deal.II/dofs/dof_handler.h>
+
+#include <deal.II/fe/fe_values.h>
+
+#include <deal.II/lac/dynamic_sparsity_pattern.h>
+#include <deal.II/lac/sparse_matrix.h>
+#include <deal.II/lac/sparsity_pattern.h>
+#include <deal.II/lac/sparsity_tools.h>
+#include <deal.II/lac/trilinos_sparse_matrix.h>
 
 #include <boost/geometry/algorithms/distance.hpp>
 #include <boost/geometry/index/detail/rtree/utilities/print.hpp>
@@ -422,6 +435,219 @@ namespace dealii::PolyUtils
     (void)polygon_boundary;
     return {};
 #endif
+  }
+
+
+  /**
+   * Given a vector @p src, typically the solution stemming after the
+   * agglomerate problem has been solved, this function interpolates @p src
+   * onto the finer grid and stores the result in vector @p dst.
+   *
+   * @note Supported parallel types are TrilinosWrappers::SparseMatrix and TrilinosWrappers::MPI::Vector
+   */
+  template <int dim, int spacedim, typename VectorType>
+  void
+  interpolate_to_fine_grid(
+    const AgglomerationHandler<dim, spacedim> &agglomeration_handler,
+    VectorType &                               dst,
+    const VectorType &                         src)
+  {
+    Assert((dim == spacedim), ExcNotImplemented());
+    using NumberType = typename VectorType::value_type;
+    using MatrixType = std::conditional_t<
+      std::is_same_v<VectorType, TrilinosWrappers::MPI::Vector>,
+      TrilinosWrappers::SparseMatrix,
+      SparseMatrix<NumberType>>;
+
+    MatrixType interpolation_matrix;
+
+    std::conditional_t<
+      !std::is_same_v<VectorType, TrilinosWrappers::MPI::Vector>,
+      SparsityPattern,
+      void *>
+      sp;
+
+    // Get some info from the handler
+    const DoFHandler<dim, spacedim> &agglo_dh = agglomeration_handler.agglo_dh;
+
+    DoFHandler<dim, spacedim> *output_dh =
+      const_cast<DoFHandler<dim, spacedim> *>(&agglomeration_handler.output_dh);
+    const FiniteElement<dim, spacedim> &fe = agglomeration_handler.get_fe();
+    const Triangulation<dim, spacedim> &tria =
+      agglomeration_handler.get_triangulation();
+    const auto &bboxes = agglomeration_handler.get_local_bboxes();
+
+    // Setup an auxiliary DoFHandler for output purposes
+    output_dh->reinit(tria);
+    output_dh->distribute_dofs(fe);
+
+    const IndexSet &locally_owned_dofs = output_dh->locally_owned_dofs();
+    const IndexSet  locally_relevant_dofs =
+      DoFTools::extract_locally_relevant_dofs(*output_dh);
+
+    const IndexSet &locally_owned_dofs_agglo = agglo_dh.locally_owned_dofs();
+
+
+    DynamicSparsityPattern dsp(output_dh->n_dofs(), agglo_dh.n_dofs());
+
+    std::vector<types::global_dof_index> agglo_dof_indices(fe.dofs_per_cell);
+    std::vector<types::global_dof_index> standard_dof_indices(fe.dofs_per_cell);
+    std::vector<types::global_dof_index> output_dof_indices(fe.dofs_per_cell);
+
+    Quadrature<dim>         quad(fe.get_unit_support_points());
+    FEValues<dim, spacedim> output_fe_values(fe,
+                                             quad,
+                                             update_quadrature_points);
+
+    for (const auto &cell : agglo_dh.active_cell_iterators())
+      if (cell->is_locally_owned())
+        {
+          if (agglomeration_handler.is_master_cell(cell))
+            {
+              auto slaves = agglomeration_handler.get_slaves_of_idx(
+                cell->active_cell_index());
+              slaves.emplace_back(cell);
+
+              cell->get_dof_indices(agglo_dof_indices);
+
+              for (const auto &slave : slaves)
+                {
+                  // addd master-slave relationship
+                  const auto slave_output =
+                    slave->as_dof_handler_iterator(*output_dh);
+                  slave_output->get_dof_indices(output_dof_indices);
+                  for (const auto row : output_dof_indices)
+                    dsp.add_entries(row,
+                                    agglo_dof_indices.begin(),
+                                    agglo_dof_indices.end());
+                }
+            }
+          else if (agglomeration_handler.is_standard_cell(cell))
+            {
+              cell->get_dof_indices(agglo_dof_indices);
+              const auto standard_output =
+                cell->as_dof_handler_iterator(*output_dh);
+              standard_output->get_dof_indices(standard_dof_indices);
+              for (const auto row : standard_dof_indices)
+                dsp.add_entries(row,
+                                agglo_dof_indices.begin(),
+                                agglo_dof_indices.end());
+            }
+        }
+
+
+    const auto assemble_interpolation_matrix = [&]() {
+      FullMatrix<NumberType>  local_matrix(fe.dofs_per_cell, fe.dofs_per_cell);
+      std::vector<Point<dim>> reference_q_points(fe.dofs_per_cell);
+
+      // Dummy AffineConstraints, only needed for loc2glb
+      AffineConstraints<NumberType> c;
+      c.close();
+
+      for (const auto &cell : agglo_dh.active_cell_iterators())
+        if (cell->is_locally_owned())
+          {
+            if (agglomeration_handler.is_master_cell(cell))
+              {
+                auto slaves = agglomeration_handler.get_slaves_of_idx(
+                  cell->active_cell_index());
+                slaves.emplace_back(cell);
+
+                cell->get_dof_indices(agglo_dof_indices);
+
+                const types::global_cell_index polytope_index =
+                  agglomeration_handler.cell_to_polytope_index(cell);
+
+                // Get the box of this agglomerate.
+                const BoundingBox<dim> &box = bboxes[polytope_index];
+
+                for (const auto &slave : slaves)
+                  {
+                    // add master-slave relationship
+                    const auto slave_output =
+                      slave->as_dof_handler_iterator(*output_dh);
+
+                    slave_output->get_dof_indices(output_dof_indices);
+                    output_fe_values.reinit(slave_output);
+
+                    local_matrix = 0.;
+
+                    const auto &q_points =
+                      output_fe_values.get_quadrature_points();
+                    for (const auto i : output_fe_values.dof_indices())
+                      {
+                        const auto &p = box.real_to_unit(q_points[i]);
+                        for (const auto j : output_fe_values.dof_indices())
+                          {
+                            local_matrix(i, j) = fe.shape_value(j, p);
+                          }
+                      }
+                    c.distribute_local_to_global(local_matrix,
+                                                 output_dof_indices,
+                                                 agglo_dof_indices,
+                                                 interpolation_matrix);
+                  }
+              }
+            else if (agglomeration_handler.is_standard_cell(cell))
+              {
+                cell->get_dof_indices(agglo_dof_indices);
+
+                const auto standard_output =
+                  cell->as_dof_handler_iterator(*output_dh);
+
+                standard_output->get_dof_indices(standard_dof_indices);
+                output_fe_values.reinit(standard_output);
+
+                local_matrix = 0.;
+                for (const auto i : output_fe_values.dof_indices())
+                  local_matrix(i, i) = 1.;
+                c.distribute_local_to_global(local_matrix,
+                                             standard_dof_indices,
+                                             agglo_dof_indices,
+                                             interpolation_matrix);
+              }
+          }
+    };
+
+
+    if constexpr (std::is_same_v<MatrixType, TrilinosWrappers::SparseMatrix>)
+      {
+        const MPI_Comm &communicator = tria.get_communicator();
+        SparsityTools::distribute_sparsity_pattern(dsp,
+                                                   locally_owned_dofs,
+                                                   communicator,
+                                                   locally_relevant_dofs);
+
+        interpolation_matrix.reinit(locally_owned_dofs,
+                                    locally_owned_dofs_agglo,
+                                    dsp,
+                                    communicator);
+        dst.reinit(locally_owned_dofs_agglo);
+        assemble_interpolation_matrix();
+      }
+    else if constexpr (std::is_same_v<MatrixType, SparseMatrix<NumberType>>)
+      {
+        sp.copy_from(dsp);
+        interpolation_matrix.reinit(sp);
+        dst.reinit(output_dh->n_dofs());
+        assemble_interpolation_matrix();
+      }
+    else
+      {
+        // PETSc, LA::d::v options not implemented.
+        (void)agglomeration_handler;
+        (void)dst;
+        (void)src;
+        AssertThrow(false, ExcNotImplemented());
+      }
+
+    // If tria is distributed
+    if (dynamic_cast<const parallel::TriangulationBase<dim, spacedim> *>(
+          &tria) != nullptr)
+      interpolation_matrix.compress(VectorOperation::add);
+
+    // Finally, perform the interpolation.
+    interpolation_matrix.vmult(dst, src);
   }
 
 
