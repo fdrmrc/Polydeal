@@ -619,11 +619,15 @@ AgglomerationHandler<dim, spacedim>::reinit_interface(
       std::vector<double>         scaled_weights(final_unit_q_points.size());
       std::vector<Tensor<1, dim>> scaled_normals(final_unit_q_points.size());
 
+      // Since we received normal vectors from a neighbor, we have to swap the
+      // sign of the vector in order to have outward normals.
       for (unsigned int q = 0; q < final_unit_q_points.size(); ++q)
         {
           for (unsigned int direction = 0; direction < spacedim; ++direction)
             scaled_normals[q][direction] =
               normals[q][direction] * (bbox.side_length(direction));
+
+          scaled_normals[q] *= -1;
 
           scaled_weights[q] =
             (JxWs[q] * scaled_normals[q].norm()) / bbox_measure;
