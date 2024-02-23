@@ -1,0 +1,5 @@
+Running with 3 MPI ranks.
+Volumetric check: 1
+Boundary check: 4
+Integral check: 1
+Linear: OK
