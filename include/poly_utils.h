@@ -453,6 +453,11 @@ namespace dealii::PolyUtils
     const VectorType &                         src)
   {
     Assert((dim == spacedim), ExcNotImplemented());
+    Assert(
+      dst.size() == 0,
+      ExcMessage(
+        "The destination vector must the empt upon calling this function."));
+
     using NumberType = typename VectorType::value_type;
     using MatrixType = std::conditional_t<
       std::is_same_v<VectorType, TrilinosWrappers::MPI::Vector>,
