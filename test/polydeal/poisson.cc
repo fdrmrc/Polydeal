@@ -480,9 +480,9 @@ Poisson<dim>::output_results()
 
 
     DataOut<dim> data_out;
-    ah->setup_output_interpolation_matrix();
-    Vector<double> interpolated_solution(ah->output_dh.n_dofs());
-    ah->output_interpolation_matrix.vmult(interpolated_solution, solution);
+
+    Vector<double> interpolated_solution;
+    PolyUtils::interpolate_to_fine_grid(*ah, interpolated_solution, solution);
 
     Vector<float> difference_per_cell(tria.n_active_cells());
     Solution<dim> analytical_solution;

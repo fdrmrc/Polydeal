@@ -1022,10 +1022,9 @@ Poisson<dim>::output_results()
                                  std::to_string(n_subdomains) + ".vtu";
     std::ofstream output(filename);
 
-    DataOut<dim> data_out;
-    ah->setup_output_interpolation_matrix();
-    Vector<double> interpolated_solution(ah->output_dh.n_dofs());
-    ah->output_interpolation_matrix.vmult(interpolated_solution, solution);
+    DataOut<dim>   data_out;
+    Vector<double> interpolated_solution;
+    PolyUtils::interpolate_to_fine_grid(*ah, interpolated_solution, solution);
     data_out.attach_dof_handler(ah->output_dh);
     data_out.add_data_vector(interpolated_solution,
                              "u",

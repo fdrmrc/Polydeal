@@ -669,9 +669,8 @@ Poisson<dim>::output_results()
   // Compute errors.
 
   // Prepare interpolation matrix onto the finer grid.
-  ah->setup_output_interpolation_matrix();
-  Vector<double> interpolated_solution(ah->output_dh.n_dofs());
-  ah->output_interpolation_matrix.vmult(interpolated_solution, solution);
+  Vector<double> interpolated_solution;
+  PolyUtils::interpolate_to_fine_grid(*ah, interpolated_solution, solution);
 
   // L2 error
   Vector<float> difference_per_cell(tria.n_active_cells());
