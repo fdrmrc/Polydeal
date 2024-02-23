@@ -487,7 +487,7 @@ public:
   inline types::global_dof_index
   n_dofs() const noexcept;
 
-  
+
 
   /**
    * Return the collection of vertices describing the boundary of the polytope
