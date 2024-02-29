@@ -728,76 +728,54 @@ AgglomerationHandler<dim, spacedim>::setup_ghost_polytopes()
 {
   const auto parallel_triangulation =
     dynamic_cast<const parallel::TriangulationBase<dim, spacedim> *>(&*tria);
-
   Assert(parallel_triangulation != nullptr, ExcInternalError());
 
-  for (const auto &cell : agglo_dh.active_cell_iterators())
-    if (cell->is_locally_owned())
+  const unsigned int                   n_dofs_per_cell = fe->dofs_per_cell;
+  std::vector<types::global_dof_index> global_dof_indices(n_dofs_per_cell);
+  for (const auto &polytope : polytope_iterators())
+    if (polytope->is_locally_owned())
       {
-        // Notice: since cell is locally owned, I can call
-        // get_master_idx_of_cell(cell) without harm
-        const types::global_cell_index master_idx =
-          get_master_idx_of_cell(cell);
+        const CellId &master_cell_id = polytope->id();
 
-        std::vector<types::global_dof_index> global_dof_indices(
-          fe->dofs_per_cell);
+        const auto polytope_dh = polytope->as_dof_handler_iterator(agglo_dh);
+        polytope_dh->get_dof_indices(global_dof_indices);
 
-        const auto &master_cell =
-          master_slave_relationships_iterators[master_idx];
-        const auto master_cell_dh =
-          master_cell->as_dof_handler_iterator(agglo_dh);
-        master_cell_dh->get_dof_indices(global_dof_indices);
 
-        // interior, locally owned, cell
-        for (const auto &f : cell->face_indices())
+        const auto &agglomerate = polytope->get_agglomerate();
+
+        for (const auto &cell : agglomerate)
           {
-            if (!cell->at_boundary(f))
+            // interior, locally owned, cell
+            for (const auto &f : cell->face_indices())
               {
-                const auto &neighbor = cell->neighbor(f);
-                if (neighbor->is_ghost())
+                if (!cell->at_boundary(f))
                   {
-                    // key of the map: the rank to which send the data
-                    const types::subdomain_id neigh_rank =
-                      neighbor->subdomain_id();
+                    const auto &neighbor = cell->neighbor(f);
+                    if (neighbor->is_ghost())
+                      {
+                        // key of the map: the rank to which send the data
+                        const types::subdomain_id neigh_rank =
+                          neighbor->subdomain_id();
 
-                    // send to neighboring process also the index of the
-                    // master cell of the present cell, which identifies the
-                    // polytope
+                        // inform the "standard" neighbor about the neighboring
+                        // id and its master cell
+                        local_cell_ids_neigh_cell[neigh_rank].emplace(
+                          cell->id(), master_cell_id);
 
+                        // inform the neighboring rank that this master cell
+                        // (hence polytope) has the following DoF indices
+                        local_ghost_dofs[neigh_rank].emplace(
+                          master_cell_id, global_dof_indices);
 
-                    const CellId &master_cell_id = master_cell->id();
-
-                    // inform the "standard" neighbor about the neighboring id
-                    // and its master cell
-                    local_cell_ids_neigh_cell[neigh_rank].emplace(
-                      cell->id(), master_cell_id);
-
-                    // inform the neighboring rank that this master cell
-                    // (hence polytope) has the following DoF indices
-                    local_ghost_dofs[neigh_rank].emplace(master_cell_id,
-                                                         global_dof_indices);
+                        // ...same for bounding boxes
+                        const auto &bbox = bboxes[polytope->index()];
+                        local_ghosted_bbox[neigh_rank].emplace(master_cell_id,
+                                                               bbox);
+                      }
                   }
               }
           }
       }
-
-
-  // bounding boxes: inform the neighboring rank that the
-  // present agglomerate, identified by the master cell CellId
-  // has a certaing bbox. TODO: communicate only when you have a ghosted
-  // neighbor.
-
-  for (const auto &master_cell : master_cells_container)
-    {
-      const auto &bbox =
-        bboxes[master2polygon.at(master_cell->active_cell_index())];
-
-      for (const types::subdomain_id neigh_rank :
-           parallel_triangulation->ghost_owners())
-        local_ghosted_bbox[neigh_rank].emplace(master_cell->id(), bbox);
-    }
-
-  // exchange indices of master cells with neighboring ranks
 
   recv_cell_ids_neigh_cell =
     Utilities::MPI::some_to_some(communicator, local_cell_ids_neigh_cell);
