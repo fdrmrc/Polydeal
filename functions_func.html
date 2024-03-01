@@ -124,6 +124,7 @@ $(function(){initNavTree('functions_func.html',''); initResizable(); });
 
 
 <h3><a id="index_c" name="index_c"></a>- c -</h3><ul>
+<li>cell_to_polytope_index()&#160;:&#160;<a class="el" href="class_agglomeration_handler.html#a08705e23478edb766411fd934459d662">AgglomerationHandler&lt; dim, spacedim &gt;</a></li>
 <li>clear()&#160;:&#160;<a class="el" href="classdealii_1_1internal_1_1_polytope_cache.html#a47d3985eb8c9bbe65fc203292089f9b9">dealii::internal::PolytopeCache&lt; dim, spacedim &gt;</a></li>
 <li>connect_to_tria_signals()&#160;:&#160;<a class="el" href="class_agglomeration_handler.html#aa3b80d09fb52aabe72a63d203fb13625">AgglomerationHandler&lt; dim, spacedim &gt;</a></li>
 <li>create_agglomeration_sparsity_pattern()&#160;:&#160;<a class="el" href="class_agglomeration_handler.html#aa6ab6845da42a3d4de340ff0a96bdf6d">AgglomerationHandler&lt; dim, spacedim &gt;</a></li>
@@ -150,12 +151,14 @@ $(function(){initNavTree('functions_func.html',''); initResizable(); });
 <li>get_bounding_box()&#160;:&#160;<a class="el" href="class_agglomeration_accessor.html#a87b1556f9f042519d9bf932e1da2faca">AgglomerationAccessor&lt; dim, spacedim &gt;</a></li>
 <li>get_dof_handler()&#160;:&#160;<a class="el" href="class_agglomeration_handler.html#a0c180e9024f48de6d2cae44443f90078">AgglomerationHandler&lt; dim, spacedim &gt;</a></li>
 <li>get_dof_indices()&#160;:&#160;<a class="el" href="class_agglomeration_accessor.html#ae88e624f09079c54ca4cbdcad75b6299">AgglomerationAccessor&lt; dim, spacedim &gt;</a></li>
-<li>get_global_bboxes()&#160;:&#160;<a class="el" href="class_agglomeration_handler.html#ae6aeab6cbd977fedf4f40837281fb176">AgglomerationHandler&lt; dim, spacedim &gt;</a></li>
+<li>get_fe()&#160;:&#160;<a class="el" href="class_agglomeration_handler.html#aa47a47ac05a08a00de4db6b20c3141f2">AgglomerationHandler&lt; dim, spacedim &gt;</a></li>
 <li>get_interface()&#160;:&#160;<a class="el" href="class_agglomeration_handler.html#abe6a9923b3556d00f71f911e147f86cb">AgglomerationHandler&lt; dim, spacedim &gt;</a></li>
+<li>get_local_bboxes()&#160;:&#160;<a class="el" href="class_agglomeration_handler.html#a895d98dbcebb5d11fd45d8d42a36d51c">AgglomerationHandler&lt; dim, spacedim &gt;</a></li>
 <li>get_master_idx_of_cell()&#160;:&#160;<a class="el" href="class_agglomeration_handler.html#a16c253f23f53a1c14a03a1cbba4e9bd6">AgglomerationHandler&lt; dim, spacedim &gt;</a></li>
 <li>get_relationships()&#160;:&#160;<a class="el" href="class_agglomeration_handler.html#a2f87454e1998f253d9d2c843a811653c">AgglomerationHandler&lt; dim, spacedim &gt;</a></li>
 <li>get_slaves()&#160;:&#160;<a class="el" href="class_agglomeration_accessor.html#af661bafd182a8b56e2af60c7411a6201">AgglomerationAccessor&lt; dim, spacedim &gt;</a></li>
 <li>get_slaves_of_idx()&#160;:&#160;<a class="el" href="class_agglomeration_handler.html#a12e67f57d0752e50c56a55d7de72e983">AgglomerationHandler&lt; dim, spacedim &gt;</a></li>
+<li>get_triangulation()&#160;:&#160;<a class="el" href="class_agglomeration_handler.html#a7709e59ad857c81d552b394ddc2b7c3f">AgglomerationHandler&lt; dim, spacedim &gt;</a></li>
 </ul>
 
 
@@ -235,7 +238,6 @@ $(function(){initNavTree('functions_func.html',''); initResizable(); });
 <li>setup_connectivity_of_agglomeration()&#160;:&#160;<a class="el" href="class_agglomeration_handler.html#a73228c3cb5a7af60aa788aa9a26794ec">AgglomerationHandler&lt; dim, spacedim &gt;</a></li>
 <li>setup_ghost_polytopes()&#160;:&#160;<a class="el" href="class_agglomeration_handler.html#a86dc2ec3d6356a9058dfd72c2f87d9f6">AgglomerationHandler&lt; dim, spacedim &gt;</a></li>
 <li>setup_master_neighbor_connectivity()&#160;:&#160;<a class="el" href="classdealii_1_1internal_1_1_agglomeration_handler_implementation.html#a52470157179345b63f62edcb86d3d7a5">dealii::internal::AgglomerationHandlerImplementation&lt; dim, spacedim &gt;</a></li>
-<li>setup_output_interpolation_matrix()&#160;:&#160;<a class="el" href="class_agglomeration_handler.html#adb1c4bcd2c0f56fa1f9dc90a89cc679a">AgglomerationHandler&lt; dim, spacedim &gt;</a></li>
 <li>solve()&#160;:&#160;<a class="el" href="class_poisson.html#a402141445c0487efe4694ba4bea2a0df">Poisson&lt; dim &gt;</a></li>
 <li>state()&#160;:&#160;<a class="el" href="class_agglomeration_iterator.html#a051574ced125e26b7b9dcc826088950e">AgglomerationIterator&lt; dim, spacedim &gt;</a></li>
 <li>subdomain_id()&#160;:&#160;<a class="el" href="class_agglomeration_accessor.html#ae95c0d26733f870457149fefbe847642">AgglomerationAccessor&lt; dim, spacedim &gt;</a></li>
@@ -258,7 +260,7 @@ $(function(){initNavTree('functions_func.html',''); initResizable(); });
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Fri Feb 23 2024 18:10:29 for PolyDEAL by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.10.0 </li>
+    <li class="footer">Generated on Fri Mar 1 2024 08:40:14 for PolyDEAL by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.10.0 </li>
   </ul>
 </div>
 </body>

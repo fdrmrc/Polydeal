@@ -113,10 +113,19 @@ $(function(){initNavTree('poly__utils_8h.html',''); initResizable(); });
 <div class="contents">
 <div class="textblock"><code>#include &lt;<a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/config_8h.html">deal.II/base/config.h</a>&gt;</code><br />
 <code>#include &lt;<a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/base_2point_8h.html">deal.II/base/point.h</a>&gt;</code><br />
+<code>#include &lt;<a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/include_2deal_8II_2base_2quadrature_8h.html">deal.II/base/quadrature.h</a>&gt;</code><br />
 <code>#include &lt;<a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/iota__view_8h.html">deal.II/base/std_cxx20/iota_view.h</a>&gt;</code><br />
 <code>#include &lt;<a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/boost__adaptors_2bounding__box_8h.html">deal.II/boost_adaptors/bounding_box.h</a>&gt;</code><br />
 <code>#include &lt;<a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/boost__adaptors_2point_8h.html">deal.II/boost_adaptors/point.h</a>&gt;</code><br />
 <code>#include &lt;<a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/segment_8h.html">deal.II/boost_adaptors/segment.h</a>&gt;</code><br />
+<code>#include &lt;<a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/distributed_2tria_8h.html">deal.II/distributed/tria.h</a>&gt;</code><br />
+<code>#include &lt;<a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/dof__handler_8h.html">deal.II/dofs/dof_handler.h</a>&gt;</code><br />
+<code>#include &lt;<a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/fe_2fe__values_8h.html">deal.II/fe/fe_values.h</a>&gt;</code><br />
+<code>#include &lt;<a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/dynamic__sparsity__pattern_8h.html">deal.II/lac/dynamic_sparsity_pattern.h</a>&gt;</code><br />
+<code>#include &lt;<a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/sparse__matrix_8h.html">deal.II/lac/sparse_matrix.h</a>&gt;</code><br />
+<code>#include &lt;<a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/sparsity__pattern_8h.html">deal.II/lac/sparsity_pattern.h</a>&gt;</code><br />
+<code>#include &lt;<a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/sparsity__tools_8h.html">deal.II/lac/sparsity_tools.h</a>&gt;</code><br />
+<code>#include &lt;<a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/trilinos__sparse__matrix_8h.html">deal.II/lac/trilinos_sparse_matrix.h</a>&gt;</code><br />
 <code>#include &lt;boost/geometry/algorithms/distance.hpp&gt;</code><br />
 <code>#include &lt;boost/geometry/index/detail/rtree/utilities/print.hpp&gt;</code><br />
 <code>#include &lt;boost/geometry/index/rtree.hpp&gt;</code><br />
@@ -146,6 +155,9 @@ Functions</h2></td></tr>
 <tr class="memitem:a4bbefeeca37b82d5391b9002f6a4db3f" id="r_a4bbefeeca37b82d5391b9002f6a4db3f"><td class="memTemplParams" colspan="2">template&lt;int dim, typename Kernel  = CGAL::Exact_predicates_exact_constructions_kernel, typename Number  = double&gt; </td></tr>
 <tr class="memitem:a4bbefeeca37b82d5391b9002f6a4db3f"><td class="memTemplItemLeft" align="right" valign="top">Number&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacedealii_1_1_poly_utils.html#a4bbefeeca37b82d5391b9002f6a4db3f">dealii::PolyUtils::compute_h_orthogonal</a> (const unsigned int face_index, const std::vector&lt; typename <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classTriangulation.html">Triangulation</a>&lt; dim &gt;::active_face_iterator &gt; &amp;polygon_boundary, const <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classTensor.html">Tensor</a>&lt; 1, dim &gt; &amp;deal_normal)</td></tr>
 <tr class="separator:a4bbefeeca37b82d5391b9002f6a4db3f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad10be894e09c9fd78712c6e4ad8fad14" id="r_ad10be894e09c9fd78712c6e4ad8fad14"><td class="memTemplParams" colspan="2">template&lt;int dim, int spacedim, typename VectorType &gt; </td></tr>
+<tr class="memitem:ad10be894e09c9fd78712c6e4ad8fad14"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacedealii_1_1_poly_utils.html#ad10be894e09c9fd78712c6e4ad8fad14">dealii::PolyUtils::interpolate_to_fine_grid</a> (const <a class="el" href="class_agglomeration_handler.html">AgglomerationHandler</a>&lt; dim, spacedim &gt; &amp;agglomeration_handler, VectorType &amp;dst, const VectorType &amp;src)</td></tr>
+<tr class="separator:ad10be894e09c9fd78712c6e4ad8fad14"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9b1f017e9d2cedf0e4362bf8a7d62419" id="r_a9b1f017e9d2cedf0e4362bf8a7d62419"><td class="memTemplParams" colspan="2">template&lt;int dim, int spacedim = dim&gt; </td></tr>
 <tr class="memitem:a9b1f017e9d2cedf0e4362bf8a7d62419"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacedealii_1_1_poly_utils.html#a9b1f017e9d2cedf0e4362bf8a7d62419">dealii::PolyUtils::collect_cells_for_agglomeration</a> (const <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classTriangulation.html">Triangulation</a>&lt; dim, spacedim &gt; &amp;tria, const std::vector&lt; <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/namespacetypes.html#a88f8129eb3e40ecc8022e92a1e15d70e">types::global_cell_index</a> &gt; &amp;cell_idxs, std::vector&lt; typename <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classTriangulation.html">Triangulation</a>&lt; dim, spacedim &gt;::active_cell_iterator &gt; &amp;cells_to_be_agglomerated)</td></tr>
 <tr class="separator:a9b1f017e9d2cedf0e4362bf8a7d62419"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -156,7 +168,7 @@ Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="dir_aa394cd1d9abb8ffe941d9aaafca8d03.html">github</a></li><li class="navelem"><a class="el" href="dir_c52569aa89a7adbb6029022c2fa60a11.html">workspace</a></li><li class="navelem"><a class="el" href="dir_7a95a9cc00fcc7af5a429eec361b64d1.html">include</a></li><li class="navelem"><a class="el" href="poly__utils_8h.html">poly_utils.h</a></li>
-    <li class="footer">Generated on Fri Feb 23 2024 18:10:28 for PolyDEAL by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.10.0 </li>
+    <li class="footer">Generated on Fri Mar 1 2024 08:40:14 for PolyDEAL by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.10.0 </li>
   </ul>
 </div>
 </body>
