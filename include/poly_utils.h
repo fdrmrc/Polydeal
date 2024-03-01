@@ -61,6 +61,44 @@
 #include <memory>
 
 
+namespace dealii::PolyUtils::internal
+{
+  template <int dim, int spacedim>
+  void
+  get_face_connectivity_of_cells(
+    const Triangulation<dim, spacedim> &triangulation,
+    DynamicSparsityPattern &            cell_connectivity)
+  {
+    cell_connectivity.reinit(triangulation.n_locally_owned_active_cells(),
+                             triangulation.n_locally_owned_active_cells());
+
+    // loop over all cells and their neighbors to build the sparsity
+    // pattern. note that it's a bit hard to enter all the connections when a
+    // neighbor has children since we would need to find out which of its
+    // children is adjacent to the current cell. this problem can be omitted
+    // if we only do something if the neighbor has no children -- in that case
+    // it is either on the same or a coarser level than we are. in return, we
+    // have to add entries in both directions for both cells
+    for (const auto &cell : triangulation.active_cell_iterators())
+      {
+        if (cell->is_locally_owned())
+          {
+            const unsigned int index = cell->active_cell_index();
+            cell_connectivity.add(index, index);
+            for (auto f : cell->face_indices())
+              if ((cell->at_boundary(f) == false) &&
+                  (cell->neighbor(f)->has_children() == false))
+                {
+                  const unsigned int other_index =
+                    cell->neighbor(f)->active_cell_index();
+                  cell_connectivity.add(index, other_index);
+                  cell_connectivity.add(other_index, index);
+                }
+          }
+      }
+  }
+} // namespace dealii::PolyUtils::internal
+
 
 namespace dealii::PolyUtils
 {
@@ -677,6 +715,58 @@ namespace dealii::PolyUtils
         {
           cells_to_be_agglomerated.push_back(cell);
         }
+  }
+
+
+
+  /**
+   * Partition with METIS the locally owned regions of the given triangulation.
+   *
+   */
+  template <int dim, int spacedim>
+  void
+  partition_locally_owned_regions(const unsigned int            n_partitions,
+                                  Triangulation<dim, spacedim> &triangulation,
+                                  const SparsityTools::Partitioner partitioner)
+  {
+    AssertDimension(dim, spacedim);
+    Assert(n_partitions > 0,
+           ExcMessage("Invalid number of partitions, you provided " +
+                      std::string(n_partitions)));
+    Assert((dynamic_cast<parallel::shared::Triangulation<dim, spacedim> *>(
+              &triangulation) == nullptr),
+           ExcMessage("Only distributed triangulations can be partitioned."));
+
+    // check for an easy return
+    if (n_partitions == 1)
+      {
+        for (const auto &cell : triangulation.active_cell_iterators())
+          if (cell->is_locally_owned())
+            cell->set_subdomain_id(0);
+        return;
+      }
+
+
+    DynamicSparsityPattern cell_connectivity;
+    internal::get_face_connectivity_of_cells(triangulation, cell_connectivity);
+
+    SparsityPattern sp_cell_connectivity;
+    sp_cell_connectivity.copy_from(cell_connectivity);
+
+    std::vector<unsigned int> partition_indices(
+      triangulation.n_locally_owned_active_cells());
+
+    std::vector<unsigned int> cell_weights; // dummy cell_weights
+    SparsityTools::partition(sp_cell_connectivity,
+                             cell_weights,
+                             n_partitions,
+                             partition_indices,
+                             partitioner);
+
+    // finally loop over all cells and set the subdomain ids
+    for (const auto &cell : triangulation.active_cell_iterators())
+      if (cell->is_locally_owned())
+        cell->set_material_id(partition_indices[cell->active_cell_index()]);
   }
 } // namespace dealii::PolyUtils
 
