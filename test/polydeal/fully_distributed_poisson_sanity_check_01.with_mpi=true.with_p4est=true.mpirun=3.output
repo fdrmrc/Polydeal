@@ -1,0 +1,4 @@
+Running with 3 MPI ranks.
+Number of cells: 256
+Test with f(x,y)=x: 1
+Test with f(x,y)=x+y: 2
