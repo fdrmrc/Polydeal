@@ -459,17 +459,16 @@ namespace dealii::PolyUtils
         "The destination vector must the empt upon calling this function."));
 
     using NumberType = typename VectorType::value_type;
-    using MatrixType = std::conditional_t<
-      std::is_same_v<VectorType, TrilinosWrappers::MPI::Vector>,
-      TrilinosWrappers::SparseMatrix,
-      SparseMatrix<NumberType>>;
+    constexpr bool is_trilinos_vector =
+      std::is_same_v<VectorType, TrilinosWrappers::MPI::Vector>;
+    using MatrixType = std::conditional_t<is_trilinos_vector,
+                                          TrilinosWrappers::SparseMatrix,
+                                          SparseMatrix<NumberType>>;
 
     MatrixType interpolation_matrix;
 
-    std::conditional_t<
-      !std::is_same_v<VectorType, TrilinosWrappers::MPI::Vector>,
-      SparsityPattern,
-      void *>
+    [[maybe_unused]]
+    typename std::conditional_t<!is_trilinos_vector, SparsityPattern, void *>
       sp;
 
     // Get some info from the handler
