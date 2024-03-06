@@ -320,10 +320,7 @@ main(int argc, char *argv[])
 
   const IndexSet &locally_owned_dofs = ah.agglo_dh.locally_owned_dofs();
 
-  system_matrix.reinit(locally_owned_dofs,
-                       locally_owned_dofs,
-                       dsp,
-                       comm);
+  system_matrix.reinit(locally_owned_dofs, locally_owned_dofs, dsp, comm);
 
   std::ofstream out("sparsity_agglomeration_from_rank_" +
                     std::to_string(Utilities::MPI::this_mpi_process(comm)) +
