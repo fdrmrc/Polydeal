@@ -665,7 +665,7 @@ main(int argc, char *argv[])
 
     Vector<double> cellwise_error(locally_relevant_solution.size());
     VectorTools::integrate_difference(ah.output_dh,
-                                      locally_relevant_solution,
+                                      interpolated_solution,
                                       SolutionLinear<2>(),
                                       cellwise_error,
                                       QGauss<2>(2 * fe_dg.degree + 1),
