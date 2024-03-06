@@ -658,14 +658,14 @@ template <int dim, int spacedim>
 template <typename Number>
 void
 AgglomerationHandler<dim, spacedim>::create_agglomeration_sparsity_pattern(
-  SparsityPattern &               sparsity_pattern,
+  DynamicSparsityPattern &               dsp,
   const AffineConstraints<Number> constraints,
   const bool                      keep_constrained_dofs,
   const types::subdomain_id       subdomain_id)
 {
   Assert(n_agglomerations > 0,
          ExcMessage("The agglomeration has not been set up correctly."));
-  Assert(sparsity_pattern.empty(),
+  Assert(dsp.empty(),
          ExcMessage(
            "The Sparsity pattern must be empty upon calling this function."));
 
@@ -673,7 +673,7 @@ AgglomerationHandler<dim, spacedim>::create_agglomeration_sparsity_pattern(
   const IndexSet  locally_relevant_dofs =
     DoFTools::extract_locally_relevant_dofs(agglo_dh);
 
-  DynamicSparsityPattern dsp(locally_relevant_dofs);
+  dsp.reinit(locally_owned_dofs.size(),locally_owned_dofs.size(),locally_owned_dofs);
 
   // Create the sparsity pattern corresponding only to volumetric terms. The
   // fluxes needed by DG methods will be filled later.
@@ -717,7 +717,6 @@ AgglomerationHandler<dim, spacedim>::create_agglomeration_sparsity_pattern(
 
 
 
-  sparsity_pattern.copy_from(dsp);
 }
 
 
@@ -1322,7 +1321,7 @@ namespace dealii
 template class AgglomerationHandler<1>;
 template void
 AgglomerationHandler<1>::create_agglomeration_sparsity_pattern(
-  SparsityPattern &               sparsity_pattern,
+  DynamicSparsityPattern &               sparsity_pattern,
   const AffineConstraints<double> constraints,
   const bool                      keep_constrained_dofs,
   const types::subdomain_id       subdomain_id);
@@ -1330,7 +1329,7 @@ AgglomerationHandler<1>::create_agglomeration_sparsity_pattern(
 template class AgglomerationHandler<2>;
 template void
 AgglomerationHandler<2>::create_agglomeration_sparsity_pattern(
-  SparsityPattern &               sparsity_pattern,
+  DynamicSparsityPattern &               sparsity_pattern,
   const AffineConstraints<double> constraints,
   const bool                      keep_constrained_dofs,
   const types::subdomain_id       subdomain_id);
@@ -1338,7 +1337,7 @@ AgglomerationHandler<2>::create_agglomeration_sparsity_pattern(
 template class AgglomerationHandler<3>;
 template void
 AgglomerationHandler<3>::create_agglomeration_sparsity_pattern(
-  SparsityPattern &               sparsity_pattern,
+  DynamicSparsityPattern &               sparsity_pattern,
   const AffineConstraints<double> constraints,
   const bool                      keep_constrained_dofs,
   const types::subdomain_id       subdomain_id);
