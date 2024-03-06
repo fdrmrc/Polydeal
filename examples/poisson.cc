@@ -375,6 +375,7 @@ private:
   std::unique_ptr<AgglomerationHandler<dim>> ah;
   AffineConstraints<double>                  constraints;
   SparsityPattern                            sparsity;
+  DynamicSparsityPattern                            dsp;
   SparseMatrix<double>                       system_matrix;
   Vector<double>                             solution;
   Vector<double>                             system_rhs;
@@ -598,7 +599,8 @@ Poisson<dim>::setup_agglomeration()
     }
 
   ah->distribute_agglomerated_dofs(dg_fe);
-  ah->create_agglomeration_sparsity_pattern(sparsity);
+  ah->create_agglomeration_sparsity_pattern(dsp);
+  sparsity.copy_from(dsp);
 
   {
     std::string partitioner;
