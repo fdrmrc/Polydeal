@@ -157,13 +157,8 @@ main(int argc, char *argv[])
                           QGauss<1>(face_quadrature_degree));
   ah.distribute_agglomerated_dofs(fe_dg);
 
-  SparsityPattern sparsity_pattern;
+  DynamicSparsityPattern sparsity_pattern;
   ah.create_agglomeration_sparsity_pattern(sparsity_pattern);
-
-  std::ofstream out("sparsity_agglomeration_from_rank_" +
-                    std::to_string(Utilities::MPI::this_mpi_process(comm)) +
-                    ".svg");
-  sparsity_pattern.print_svg(out);
 
   // Print (the locally owned part of) the sparsity pattern to the given stream,
   // using the format (line,col), only from rank 0
