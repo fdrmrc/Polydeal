@@ -375,7 +375,7 @@ private:
   std::unique_ptr<AgglomerationHandler<dim>> ah;
   AffineConstraints<double>                  constraints;
   SparsityPattern                            sparsity;
-  DynamicSparsityPattern                            dsp;
+  DynamicSparsityPattern                     dsp;
   SparseMatrix<double>                       system_matrix;
   Vector<double>                             solution;
   Vector<double>                             system_rhs;
