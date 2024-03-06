@@ -690,7 +690,7 @@ namespace dealii::PolyUtils
                                     locally_owned_dofs_agglo,
                                     dsp,
                                     communicator);
-        dst.reinit(locally_owned_dofs_agglo);
+        dst.reinit(locally_owned_dofs);
         assemble_interpolation_matrix();
       }
     else if constexpr (std::is_same_v<MatrixType, SparseMatrix<NumberType>>)
