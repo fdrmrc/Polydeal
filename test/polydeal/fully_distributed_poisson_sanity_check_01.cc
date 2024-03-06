@@ -200,7 +200,7 @@ main(int argc, char *argv[])
   ah.distribute_agglomerated_dofs(
     fe_dg); // setup_ghost_polytopes has been called here
 
-  SparsityPattern sparsity_pattern;
+  DynamicSparsityPattern sparsity_pattern;
   ah.create_agglomeration_sparsity_pattern(sparsity_pattern);
 
   const IndexSet &locally_owned_dofs = ah.agglo_dh.locally_owned_dofs();
@@ -239,8 +239,6 @@ main(int argc, char *argv[])
           cell_matrix = 0.;
 
           const auto &agglo_values = ah.reinit(polytope);
-
-          const auto &q_points = agglo_values.get_quadrature_points();
 
           for (unsigned int q_index : agglo_values.quadrature_point_indices())
             {

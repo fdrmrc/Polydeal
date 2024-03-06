@@ -223,7 +223,7 @@ main(int argc, char *argv[])
 
   ah.distribute_agglomerated_dofs(fe_dg);
 
-  SparsityPattern sparsity_pattern;
+  DynamicSparsityPattern sparsity_pattern;
   ah.create_agglomeration_sparsity_pattern(sparsity_pattern);
 
   const IndexSet &locally_owned_dofs = ah.agglo_dh.locally_owned_dofs();

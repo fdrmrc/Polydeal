@@ -87,6 +87,7 @@ private:
   // so we can use the distribute_local_to_global() directly.
   AffineConstraints<double>              constraints;
   SparsityPattern                        sparsity;
+  DynamicSparsityPattern                        dsp;
   SparseMatrix<double>                   system_matrix;
   Vector<double>                         solution;
   Vector<double>                         system_rhs;
@@ -150,7 +151,8 @@ LaplaceOperator<dim>::setup_agglomeration()
   ah->define_agglomerate(cells_to_be_agglomerated2);
 
   ah->distribute_agglomerated_dofs(dg_fe);
-  ah->create_agglomeration_sparsity_pattern(sparsity);
+  ah->create_agglomeration_sparsity_pattern(dsp);
+  sparsity.copy_from(dsp);
 }
 
 
