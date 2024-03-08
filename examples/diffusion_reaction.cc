@@ -698,7 +698,7 @@ DiffusionReactionProblem<dim>::solve()
                                    comm);
 
   pcout << "Start solver" << std::endl;
-  SolverControl                                     control(5000, 1e-12);
+  SolverControl                                     control(10000, 1e-12);
   SolverCG<TrilinosWrappers::MPI::Vector>           solver(control);
   TrilinosWrappers::PreconditionAMG                 precondition;
   TrilinosWrappers::PreconditionAMG::AdditionalData additional_data;
@@ -739,7 +739,19 @@ DiffusionReactionProblem<dim>::solve()
                                       cellwise_error,
                                       VectorTools::NormType::L2_norm);
 
+  VectorTools::integrate_difference(ah->output_dh,
+                                    interpolated_solution,
+                                    Solution<dim>(),
+                                    cellwise_error,
+                                    QGauss<dim>(2 * fe_dg.degree + 1),
+                                    VectorTools::NormType::H1_seminorm);
+  const double semiH1error =
+    VectorTools::compute_global_error(tria_pft,
+                                      cellwise_error,
+                                      VectorTools::NormType::H1_seminorm);
+
   pcout << "L2 error (exponential solution): " << error << std::endl;
+  pcout << "Semi H1 error (exponential solution): " << semiH1error << std::endl;
 }
 
 
@@ -817,12 +829,14 @@ main(int argc, char *argv[])
 
 
   // number of agglomerates in each local subdomain
-  const unsigned int            n_local_agglomerates = 10;
-  const unsigned int            fe_degree            = 3;
-  const unsigned int            reaction_coefficient = .5;
-  DiffusionReactionProblem<dim> problem(n_local_agglomerates,
-                                        fe_degree,
-                                        reaction_coefficient,
-                                        comm);
-  problem.run();
+  const unsigned int n_local_agglomerates = 10;
+  const unsigned int reaction_coefficient = .5;
+  for (unsigned int degree : {1, 2, 3, 4})
+    {
+      DiffusionReactionProblem<dim> problem(n_local_agglomerates,
+                                            degree,
+                                            reaction_coefficient,
+                                            comm);
+      problem.run();
+    }
 }
