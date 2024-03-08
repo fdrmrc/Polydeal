@@ -167,20 +167,19 @@ SolutionLinear<dim>::value_list(const std::vector<Point<dim>> &points,
     values[i] = this->value(points[i]);
 }
 
-
-
-int
-main(int argc, char *argv[])
+template <int dim>
+void
+do_test()
 {
-  Utilities::MPI::MPI_InitFinalize mpi_initialization(argc, argv, 1);
-  const MPI_Comm &                 comm = MPI_COMM_WORLD;
-  const unsigned n_ranks                = Utilities::MPI::n_mpi_processes(comm);
+  const MPI_Comm &comm    = MPI_COMM_WORLD;
+  const unsigned  n_ranks = Utilities::MPI::n_mpi_processes(comm);
   Assert(n_ranks == 3,
          ExcMessage("This test is meant to be run with 3 ranks only."));
   if (Utilities::MPI::this_mpi_process(comm) == 0)
-    std::cout << "Running with " << n_ranks << " MPI ranks." << std::endl;
+    std::cout << "Running with " << n_ranks
+              << " MPI ranks in " + std::to_string(dim) << "D." << std::endl;
 
-  parallel::distributed::Triangulation<2> tria(comm);
+  parallel::distributed::Triangulation<dim> tria(comm);
 
   GridGenerator::hyper_cube(tria);
   tria.refine_global(3);
@@ -190,18 +189,9 @@ main(int argc, char *argv[])
   TrilinosWrappers::SparseMatrix system_matrix;
   TrilinosWrappers::MPI::Vector  system_rhs;
 
-  GridTools::Cache<2>     cached_tria(tria);
-  AgglomerationHandler<2> ah(cached_tria);
+  GridTools::Cache<dim>     cached_tria(tria);
+  AgglomerationHandler<dim> ah(cached_tria);
 
-  const auto &get_all_locally_owned_indices = [&tria]() {
-    std::vector<types::global_cell_index> local_indices;
-    for (const auto &cell : tria.active_cell_iterators())
-      {
-        if (cell->is_locally_owned())
-          local_indices.push_back(cell->active_cell_index());
-      }
-    return local_indices;
-  };
 
   // For each rank, store each locally owned cell as a polytope
   for (const auto &cell : tria.active_cell_iterators())
@@ -211,14 +201,14 @@ main(int argc, char *argv[])
 
 
   // Check ghosted indices
-  FE_DGQ<2> fe_dg(1);
+  FE_DGQ<dim> fe_dg(1);
 
   const unsigned int quadrature_degree      = 2 * fe_dg.get_degree() + 1;
   const unsigned int face_quadrature_degree = 2 * fe_dg.get_degree() + 1;
-  ah.initialize_fe_values(QGauss<2>(quadrature_degree),
+  ah.initialize_fe_values(QGauss<dim>(quadrature_degree),
                           update_values | update_gradients | update_JxW_values |
                             update_quadrature_points,
-                          QGauss<1>(face_quadrature_degree),
+                          QGauss<dim - 1>(face_quadrature_degree),
                           update_JxW_values);
 
   ah.distribute_agglomerated_dofs(fe_dg);
@@ -236,8 +226,8 @@ main(int argc, char *argv[])
                        comm);
   system_rhs.reinit(locally_owned_dofs, comm);
 
-  std::unique_ptr<const RightHandSide<2>> rhs_function;
-  rhs_function = std::make_unique<const RightHandSide<2>>();
+  std::unique_ptr<const RightHandSide<dim>> rhs_function;
+  rhs_function = std::make_unique<const RightHandSide<dim>>();
 
 
 
@@ -258,12 +248,12 @@ main(int argc, char *argv[])
     dofs_per_cell);
 
 
-  SolutionLinear<2> analytical_solution;
-  auto              polytope   = ah.begin();
-  double            test_bdary = 0.;
-  LinearFunction<2> linear_func{{1, 1}};
-  double            test_integral = 0.;
-  double            test_volume   = 0.;
+  SolutionLinear<dim> analytical_solution;
+  auto                polytope   = ah.begin();
+  double              test_bdary = 0.;
+  LinearFunction<dim> linear_func{{1, 1}};
+  double              test_integral = 0.;
+  double              test_volume   = 0.;
 
   for (; polytope != ah.end(); ++polytope)
     {
@@ -666,9 +656,9 @@ main(int argc, char *argv[])
     Vector<double> cellwise_error(locally_relevant_solution.size());
     VectorTools::integrate_difference(ah.output_dh,
                                       interpolated_solution,
-                                      SolutionLinear<2>(),
+                                      SolutionLinear<dim>(),
                                       cellwise_error,
-                                      QGauss<2>(2 * fe_dg.degree + 1),
+                                      QGauss<dim>(2 * fe_dg.degree + 1),
                                       VectorTools::NormType::L2_norm);
     const double error =
       VectorTools::compute_global_error(tria,
@@ -685,7 +675,16 @@ main(int argc, char *argv[])
         std::cout << "Boundary check: " << bdary_accumulated << std::endl;
         std::cout << "Integral check: " << integral_accumulated << std::endl;
 
-        std::cout << "Linear: OK" << std::endl;
+        std::cout << "Linear in " + std::to_string(dim) << "D: OK" << std::endl;
       }
   }
+}
+
+
+int
+main(int argc, char *argv[])
+{
+  Utilities::MPI::MPI_InitFinalize mpi_initialization(argc, argv, 1);
+  do_test<2>();
+  do_test<3>();
 }
