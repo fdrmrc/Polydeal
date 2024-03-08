@@ -1,5 +1,10 @@
-Running with 3 MPI ranks.
+Running with 3 MPI ranks in 2D.
 Volumetric check: 1
 Boundary check: 4
 Integral check: 1
-Linear: OK
+Linear in 2D: OK
+Running with 3 MPI ranks in 3D.
+Volumetric check: 1
+Boundary check: 6
+Integral check: 1
+Linear in 3D: OK
