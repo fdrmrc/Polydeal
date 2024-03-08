@@ -27,7 +27,7 @@ var searchData=
   ['mgtools_24',['MGTools',['http://www.dealii.org/developer/doxygen/deal.II/namespaceMGTools.html',1,'']]],
   ['mgtools_3a_3ainternal_25',['internal',['http://www.dealii.org/developer/doxygen/deal.II/namespaceMGTools_1_1internal.html',1,'MGTools']]],
   ['mgtransferglobalcoarseningtools_26',['MGTransferGlobalCoarseningTools',['http://www.dealii.org/developer/doxygen/deal.II/namespaceMGTransferGlobalCoarseningTools.html',1,'']]],
-  ['mgtwoleveltransfer_27',['MGTwoLevelTransfer',['http://www.dealii.org/developer/doxygen/deal.II/structMGTwoLevelTransfer_3_01dim_00_01LinearAlgebra_1_1distributed_1_1Vector_3_01Number_01_4_01_4_1_1MGTransferScheme.html',1,'']]],
-  ['mgtwoleveltransfernonnested_28',['MGTwoLevelTransferNonNested',['http://www.dealii.org/developer/doxygen/deal.II/structMGTwoLevelTransferNonNested_3_01dim_00_01LinearAlgebra_1_1distributed_1_1Vector_3_01Number_01_4_01_4_1_1AdditionalData.html',1,'']]],
+  ['mgtwoleveltransfer_27',['MGTwoLevelTransfer',['http://www.dealii.org/developer/doxygen/deal.II/structMGTwoLevelTransfer_1_1MGTransferScheme.html',1,'']]],
+  ['mgtwoleveltransfernonnested_28',['MGTwoLevelTransferNonNested',['http://www.dealii.org/developer/doxygen/deal.II/structMGTwoLevelTransferNonNested_1_1AdditionalData.html',1,'']]],
   ['multipleparameterloop_29',['MultipleParameterLoop',['http://www.dealii.org/developer/doxygen/deal.II/classMultipleParameterLoop_1_1Entry.html',1,'']]]
 ];

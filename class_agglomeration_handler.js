@@ -18,7 +18,7 @@ var class_agglomeration_handler =
     [ "begin", "class_agglomeration_handler.html#ab456734d57669bec4d5ae0fb73c1f1da", null ],
     [ "cell_to_polytope_index", "class_agglomeration_handler.html#a08705e23478edb766411fd934459d662", null ],
     [ "connect_to_tria_signals", "class_agglomeration_handler.html#aa3b80d09fb52aabe72a63d203fb13625", null ],
-    [ "create_agglomeration_sparsity_pattern", "class_agglomeration_handler.html#aa6ab6845da42a3d4de340ff0a96bdf6d", null ],
+    [ "create_agglomeration_sparsity_pattern", "class_agglomeration_handler.html#ab9c322ef9bde157e46c58c60114430a8", null ],
     [ "create_bounding_box", "class_agglomeration_handler.html#a4ac96c54e21cc1b8d648d92a27c2467c", null ],
     [ "define_agglomerate", "class_agglomeration_handler.html#ab5f4328866192a65f067a46b4c24f00f", null ],
     [ "distribute_agglomerated_dofs", "class_agglomeration_handler.html#a4d0a88c14fbc0946c636dfaeb56c09bb", null ],
