@@ -724,7 +724,7 @@ template <int dim, int spacedim>
 void
 AgglomerationHandler<dim, spacedim>::setup_ghost_polytopes()
 {
-  const auto parallel_triangulation =
+  [[maybe_unused]] const auto parallel_triangulation =
     dynamic_cast<const parallel::TriangulationBase<dim, spacedim> *>(&*tria);
   Assert(parallel_triangulation != nullptr, ExcInternalError());
 
