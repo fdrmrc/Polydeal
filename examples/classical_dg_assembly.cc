@@ -1,5 +1,6 @@
 #include <deal.II/base/config.h>
 
+#include <deal.II/base/conditional_ostream.h>
 #include <deal.II/base/function.h>
 
 #include <deal.II/distributed/tria.h>
@@ -22,10 +23,7 @@
 #include <deal.II/numerics/data_out.h>
 #include <deal.II/numerics/vector_tools_integrate_difference.h>
 
-
 // Trilinos linear algebra is employed for parallel computations
-#include <deal.II/base/conditional_ostream.h>
-
 #include <deal.II/lac/trilinos_solver.h>
 #include <deal.II/lac/trilinos_sparse_matrix.h>
 #include <deal.II/lac/trilinos_vector.h>
@@ -129,6 +127,7 @@ RightHandSide<dim>::value_list(const std::vector<Point<dim>> &points,
                 std::sin(2. * numbers::PI * points[i][0]) *
                 std::sin(2. * numbers::PI * points[i][1]);
 }
+
 
 
 template <int dim>
@@ -250,6 +249,7 @@ Poisson<dim>::assemble_system()
 
   std::vector<types::global_dof_index> local_dof_indices(dofs_per_cell);
 
+  Solution<dim> analytical_solution;
   // Loop over standard deal.II cells
   for (const auto &cell : classical_dh.active_cell_iterators())
     {
@@ -290,6 +290,14 @@ Poisson<dim>::assemble_system()
                 {
                   fe_faces0.reinit(cell, f);
 
+                  const auto &face_q_points = fe_faces0.get_quadrature_points();
+
+                  std::vector<double> analytical_solution_values(
+                    face_q_points.size());
+                  analytical_solution.value_list(face_q_points,
+                                                 analytical_solution_values,
+                                                 1);
+
                   const auto &normals = fe_faces0.get_normal_vectors();
                   for (unsigned int q_index :
                        fe_faces0.quadrature_point_indices())
@@ -310,6 +318,14 @@ Poisson<dim>::assemble_system()
                                    fe_faces0.shape_value(j, q_index)) *
                                 fe_faces0.JxW(q_index);
                             }
+                          cell_rhs(i) +=
+                            ((penalty / hf) *
+                               analytical_solution_values[q_index] *
+                               fe_faces0.shape_value(i, q_index) -
+                             fe_faces0.shape_grad(i, q_index) *
+                               normals[q_index] *
+                               analytical_solution_values[q_index]) *
+                            fe_faces0.JxW(q_index);
                         }
                     }
                 }
@@ -317,8 +333,8 @@ Poisson<dim>::assemble_system()
                 {
                   const auto &neigh_cell = cell->neighbor(f);
 
-                  if (cell->active_cell_index() <
-                      neigh_cell->active_cell_index())
+                  if (cell->global_active_cell_index() <
+                      neigh_cell->global_active_cell_index())
                     {
                       fe_faces0.reinit(cell, f);
                       fe_faces1.reinit(neigh_cell,
