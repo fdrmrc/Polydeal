@@ -383,10 +383,7 @@ namespace dealii::PolyUtils
   }
 
 
-
-  template <int dim,
-            typename Kernel = CGAL::Exact_predicates_exact_constructions_kernel,
-            typename Number = double>
+  template <int dim, typename Number = double>
   Number
   compute_h_orthogonal(
     const unsigned int face_index,
@@ -396,6 +393,7 @@ namespace dealii::PolyUtils
   {
 #ifdef DEAL_II_WITH_CGAL
 
+    using Kernel = CGAL::Exact_predicates_exact_constructions_kernel;
     std::vector<typename Kernel::FT> candidates;
     candidates.reserve(polygon_boundary.size() - 1);
 
