@@ -53,7 +53,7 @@
 #  include <CGAL/Constrained_Delaunay_triangulation_2.h>
 #  include <CGAL/Constrained_triangulation_plus_2.h>
 #  include <CGAL/Exact_predicates_exact_constructions_kernel.h>
-#  include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
+#  include <CGAL/Exact_predicates_exact_constructions_kernel_with_sqrt.h>
 #  include <CGAL/Polygon_2.h>
 #  include <CGAL/Polygon_with_holes_2.h>
 #  include <CGAL/Segment_Delaunay_graph_2.h>
@@ -832,7 +832,7 @@ namespace dealii::PolyUtils
   {
     static_assert(dim == 2); // only 2D case is implemented.
 #ifdef DEAL_II_WITH_CGAL
-    using Kernel = CGAL::Exact_predicates_inexact_constructions_kernel;
+    using Kernel = CGAL::Exact_predicates_exact_constructions_kernel_with_sqrt;
     using Polygon_with_holes = typename CGAL::Polygon_with_holes_2<Kernel>;
     using Gt    = typename CGAL::Segment_Delaunay_graph_traits_2<Kernel>;
     using SDG2  = typename CGAL::Segment_Delaunay_graph_2<Gt>;
