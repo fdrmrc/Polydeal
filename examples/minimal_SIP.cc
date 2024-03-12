@@ -717,6 +717,30 @@ Poisson<dim>::output_results()
   //   double value = system_matrix.matrix_scalar_product(interpx, interpx);
   //   std::cout << "Test = " << value << std::endl;
   // }
+
+  // Compute some quality metrics:
+  std::cout << "Computing quality metrics:" << std::endl;
+  auto metrics = PolyUtils::compute_quality_metrics(*ah);
+
+  // uniformity factors
+  const auto &uf = metrics.first;
+  std::cout << "Average Uniformity Factor: "
+            << std::accumulate(uf.begin(), uf.end(), 0.) / uf.size()
+            << std::endl;
+#ifdef AGGLO_DEBUG
+  for (const auto &m : uf)
+    std::cout << m << std::endl;
+#endif
+
+  // circle ratios
+  const auto &cr = metrics.second;
+  std::cout << "Average Circle Ratio: "
+            << std::accumulate(cr.begin(), cr.end(), 0.) / cr.size()
+            << std::endl;
+#ifdef AGGLO_DEBUG
+  for (const auto &m : cr)
+    std::cout << m << std::endl;
+#endif
 }
 
 template <int dim>

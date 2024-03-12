@@ -50,7 +50,14 @@
 
 #ifdef DEAL_II_WITH_CGAL
 
+#  include <CGAL/Constrained_Delaunay_triangulation_2.h>
+#  include <CGAL/Constrained_triangulation_plus_2.h>
 #  include <CGAL/Exact_predicates_exact_constructions_kernel.h>
+#  include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
+#  include <CGAL/Polygon_2.h>
+#  include <CGAL/Polygon_with_holes_2.h>
+#  include <CGAL/Segment_Delaunay_graph_2.h>
+#  include <CGAL/Segment_Delaunay_graph_traits_2.h>
 #  include <CGAL/intersections.h>
 #  include <CGAL/squared_distance_2.h>
 #  include <CGAL/squared_distance_3.h>
@@ -816,6 +823,132 @@ namespace dealii::PolyUtils
           partition_indices[internal::get_index(locally_owned_cells,
                                                 cell->active_cell_index())]);
   }
+
+
+
+  template <int dim>
+  std::pair<std::vector<double>, std::vector<double>>
+  compute_quality_metrics(const AgglomerationHandler<dim> &ah)
+  {
+    static_assert(dim == 2); // only 2D case is implemented.
+#ifdef DEAL_II_WITH_CGAL
+    using Kernel = CGAL::Exact_predicates_inexact_constructions_kernel;
+    using Polygon_with_holes = typename CGAL::Polygon_with_holes_2<Kernel>;
+    using Gt    = typename CGAL::Segment_Delaunay_graph_traits_2<Kernel>;
+    using SDG2  = typename CGAL::Segment_Delaunay_graph_2<Gt>;
+    using CDT   = typename CGAL::Constrained_Delaunay_triangulation_2<Kernel>;
+    using CDTP  = typename CGAL::Constrained_triangulation_plus_2<CDT>;
+    using Point = typename CDTP::Point;
+    using Cid   = typename CDTP::Constraint_id;
+    using Vertex_handle = typename CDTP::Vertex_handle;
+
+
+    const auto compute_radius_inscribed_circle =
+      [](const CGAL::Polygon_2<Kernel> &polygon) -> double {
+      SDG2 sdg;
+
+      sdg.insert_segments(polygon.edges_begin(), polygon.edges_end());
+
+      double                               sd = 0, sqdist = 0;
+      typename SDG2::Finite_faces_iterator fit = sdg.finite_faces_begin();
+      for (; fit != sdg.finite_faces_end(); ++fit)
+        {
+          typename Kernel::Point_2 pp = sdg.primal(fit);
+          for (int i = 0; i < 3; ++i)
+            {
+              assert(!sdg.is_infinite(fit->vertex(i)));
+              if (fit->vertex(i)->site().is_segment())
+                {
+                  typename Kernel::Segment_2 s =
+                    fit->vertex(i)->site().segment();
+                  sqdist = CGAL::to_double(CGAL::squared_distance(pp, s));
+                }
+              else
+                {
+                  typename Kernel::Point_2 p = fit->vertex(i)->site().point();
+                  sqdist = CGAL::to_double(CGAL::squared_distance(pp, p));
+                }
+            }
+
+          if (polygon.bounded_side(pp) == CGAL::ON_BOUNDED_SIDE)
+            sd = std::max(sqdist, sd);
+        }
+
+      return std::sqrt(sd);
+    };
+
+    const auto mesh_size = [&ah]() -> double {
+      double hmax = 0.;
+      for (const auto &polytope : ah.polytope_iterators())
+        if (polytope->is_locally_owned())
+          {
+            const double diameter = polytope->diameter();
+            if (diameter > hmax)
+              hmax = diameter;
+          }
+      return hmax;
+    }();
+
+
+    // vectors holding quality metrics
+
+    // ration between radius of radius_inscribed_circle and circumscribed circle
+    std::vector<double> circle_ratios;
+    std::vector<double> unformity_factors; // diameter of element over mesh size
+
+    // Loop over all polytopes and compute radius of inscribed circle.
+    for (const auto &polytope : ah.polytope_iterators())
+      {
+        if (polytope->is_locally_owned())
+          {
+            const std::vector<typename Triangulation<dim>::active_face_iterator>
+              &boundary = polytope->polytope_boundary();
+
+            const double diameter                    = polytope->diameter();
+            const double radius_circumscribed_circle = .5 * diameter;
+
+            CDTP cdtp;
+            for (unsigned int f = 0; f < boundary.size(); f += 1)
+              {
+                // polyline
+                cdtp.insert_constraint(
+                  {boundary[f]->vertex(0)[0], boundary[f]->vertex(0)[1]},
+                  {boundary[f]->vertex(1)[0], boundary[f]->vertex(1)[1]});
+              }
+            cdtp.split_subconstraint_graph_into_constraints();
+
+            CGAL::Polygon_2<Kernel> outer_polygon;
+            auto                    it = outer_polygon.vertices_begin();
+            for (typename CDTP::Constraint_id cid : cdtp.constraints())
+              {
+                for (typename CDTP::Vertex_handle vh :
+                     cdtp.vertices_in_constraint(cid))
+                  {
+                    it = outer_polygon.insert(outer_polygon.vertices_end(),
+                                              vh->point());
+                  }
+              }
+            outer_polygon.erase(it); // remove duplicate final point
+
+            const double radius_inscribed_circle =
+              compute_radius_inscribed_circle(outer_polygon);
+
+            circle_ratios.push_back(radius_inscribed_circle /
+                                    radius_circumscribed_circle);
+            unformity_factors.push_back(diameter / mesh_size);
+          }
+      }
+
+
+    return {unformity_factors, circle_ratios};
+#else
+
+    (void)ah;
+    return {};
+#endif
+  }
+
+
 } // namespace dealii::PolyUtils
 
 #endif
