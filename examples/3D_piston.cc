@@ -433,20 +433,13 @@ DiffusionReactionProblem<dim>::setup_agglomerated_problem()
 
   if (agglomeration_data.partitioning_strategy == PartitionerType::metis)
     {
+      cells_per_material_id.resize(agglomeration_data.agglomeration_parameter);
+
       // Call the METIS partitioner to agglomerate within each processor.
       PolyUtils::partition_locally_owned_regions(
         agglomeration_data.agglomeration_parameter,
         tria_pft,
         SparsityTools::Partitioner::metis);
-
-      cells_per_material_id.resize(agglomeration_data.agglomeration_parameter);
-      for (const auto &cell : tria_pft.active_cell_iterators())
-        if (cell->is_locally_owned())
-          cells_per_material_id[cell->material_id()].push_back(cell);
-
-      // Agglomerate elements with same id
-      for (std::size_t i = 0; i < cells_per_material_id.size(); ++i)
-        ah->define_agglomerate(cells_per_material_id[i]);
     }
   else if (agglomeration_data.partitioning_strategy == PartitionerType::rtree)
     {
@@ -933,18 +926,26 @@ main(int argc, char *argv[])
   static constexpr unsigned int    dim  = 3;
 
 
-  // number of agglomerates in each local subdomain
+  // Setup agglomeration data for rtree and METIS
   AgglomerationData rtree_data;
   rtree_data.partitioning_strategy   = PartitionerType::rtree;
   rtree_data.agglomeration_parameter = 2; // extraction level
 
+  AgglomerationData metis_data;
+  metis_data.partitioning_strategy = PartitionerType::metis;
+  metis_data.agglomeration_parameter =
+    static_cast<unsigned int>(722. / Utilities::MPI::n_mpi_processes(
+                                       comm)); // number of local agglomerates
+
   const unsigned int reaction_coefficient = 0.;
-  for (unsigned int degree : {1, 2, 3, 4})
-    {
-      DiffusionReactionProblem<dim> problem(rtree_data,
-                                            degree,
-                                            reaction_coefficient,
-                                            comm);
-      problem.run();
-    }
+  for (const AgglomerationData &agglomeration_strategy :
+       {metis_data, rtree_data})
+    for (unsigned int degree : {1, 2, 3, 4})
+      {
+        DiffusionReactionProblem<dim> problem(agglomeration_strategy,
+                                              degree,
+                                              reaction_coefficient,
+                                              comm);
+        problem.run();
+      }
 }
