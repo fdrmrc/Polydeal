@@ -413,6 +413,8 @@ DiffusionReactionProblem<dim>::make_fine_grid()
       tria, comm);
 
   tria_pft.create_triangulation(description);
+  pcout << "Total number of fine cells: " << tria_pft.n_global_active_cells()
+        << std::endl;
 }
 
 
@@ -849,8 +851,8 @@ DiffusionReactionProblem<dim>::solve()
                                       cellwise_error,
                                       VectorTools::NormType::H1_seminorm);
 
-  pcout << "L2 error (exponential solution): " << error << std::endl;
-  pcout << "Semi H1 error (exponential solution): " << semiH1error << std::endl;
+  pcout << "L2 error: " << error << std::endl;
+  pcout << "Semi H1 error: " << semiH1error << std::endl;
 }
 
 
