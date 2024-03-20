@@ -949,6 +949,78 @@ namespace dealii::PolyUtils
   }
 
 
+  template <int dim, typename Number = double>
+  Number
+  integrate_homogeneous_function(
+    const unsigned int intrinsic_dim,
+    const std::vector<typename Triangulation<dim>::active_face_iterator>
+      &                                polytope_boundary,
+    const std::vector<Tensor<1, dim>> &deal_normals,
+    const std::vector<unsigned int> &  powers)
+  {
+    Assert(dim == 2, ExcNotImplemented());
+    Assert(polytope_boundary.size() > 1, ExcInternalError());
+    Assert((powers.size() == dim), ExcInternalError());
+
+    const unsigned int n_faces_polytope = polytope_boundary.size();
+    const unsigned int den =
+      std::accumulate(powers.cbegin(), powers.cend(), 0.);
+
+
+    const auto &pointwise_evaluation = [&](const Point<dim> &p) -> double {
+      double prod = std::pow(p[0], powers[0]) * std::pow(p[1], powers[1]);
+      // std::cout << "p: " << p[d] << " and " << prod << std::endl;
+
+
+      std::cout << "Pointwise: " << prod << std::endl;
+      return prod;
+    };
+
+
+
+    const auto &integrate_homogeneous_function_edge =
+      [&](const typename Triangulation<dim>::active_face_iterator &face)
+      -> double {
+      double inner_sum = 0.;
+      for (unsigned int f = 0; f < n_faces_polytope; ++f)
+        {
+          // First, compute point-line distance
+          const Point<dim> &p1 = face->vertex(0);
+          const Point<dim> &p2 = face->vertex(1);
+          double            d_f =
+            std::fabs((p2[0] - p1[0]) * p1[1] - p1[0] * (p2[1] - p1[1])) /
+            (p2 - p1).norm();
+          inner_sum += d_f * pointwise_evaluation(face->vertex(0));
+        }
+      // std::cout << "Edge: " << (inner_sum / den) << std::endl;
+      return inner_sum / (1 + den);
+    };
+
+
+    if (intrinsic_dim == dim)
+      {
+        double inner_sum = 0.;
+        // b_f = n_f \cdot v, v chosen vertex
+        for (unsigned int f = 0; f < n_faces_polytope; ++f)
+          {
+            Tensor<1, dim> vertex;
+            vertex[0] = polytope_boundary[f]->vertex(0)[0];
+            vertex[1] = polytope_boundary[f]->vertex(0)[1];
+
+            // perform dot product
+            double b_f = 0.;
+            for (unsigned int i = 0; i < dim; i++)
+              b_f += deal_normals[f][i] * vertex[i];
+
+            inner_sum +=
+              b_f * integrate_homogeneous_function_edge(polytope_boundary[f]);
+          }
+
+        return inner_sum / (intrinsic_dim + den);
+      }
+  }
+
+
 } // namespace dealii::PolyUtils
 
 #endif
