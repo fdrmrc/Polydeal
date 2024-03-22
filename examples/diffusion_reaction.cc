@@ -54,10 +54,10 @@ using namespace dealii;
  */
 template <int dim>
 void
-assemble_local_jumps_and_averages(FullMatrix<double> &     M11,
-                                  FullMatrix<double> &     M12,
-                                  FullMatrix<double> &     M21,
-                                  FullMatrix<double> &     M22,
+assemble_local_jumps_and_averages(FullMatrix<double>      &M11,
+                                  FullMatrix<double>      &M12,
+                                  FullMatrix<double>      &M21,
+                                  FullMatrix<double>      &M22,
                                   const FEValuesBase<dim> &fe_faces0,
                                   const FEValuesBase<dim> &fe_faces1,
                                   const double             penalty_constant,
@@ -124,14 +124,14 @@ assemble_local_jumps_and_averages(FullMatrix<double> &     M11,
 template <int dim>
 void
 assemble_local_jumps_and_averages_ghost(
-  FullMatrix<double> &                            M11,
-  FullMatrix<double> &                            M12,
-  FullMatrix<double> &                            M21,
-  FullMatrix<double> &                            M22,
-  const FEValuesBase<dim> &                       fe_faces0,
-  const std::vector<std::vector<double>> &        recv_values,
+  FullMatrix<double>                             &M11,
+  FullMatrix<double>                             &M12,
+  FullMatrix<double>                             &M21,
+  FullMatrix<double>                             &M22,
+  const FEValuesBase<dim>                        &fe_faces0,
+  const std::vector<std::vector<double>>         &recv_values,
   const std::vector<std::vector<Tensor<1, dim>>> &recv_gradients,
-  const std::vector<double> &                     recv_jxws,
+  const std::vector<double>                      &recv_jxws,
   const double                                    penalty_constant,
   const double                                    h_f)
 {
@@ -203,7 +203,7 @@ public:
 
   virtual void
   value_list(const std::vector<Point<dim>> &points,
-             std::vector<double> &          values,
+             std::vector<double>           &values,
              const unsigned int /*component*/ = 0) const override;
 
 private:
@@ -214,7 +214,7 @@ private:
 template <int dim>
 void
 RightHandSide<dim>::value_list(const std::vector<Point<dim>> &points,
-                               std::vector<double> &          values,
+                               std::vector<double>           &values,
                                const unsigned int /*component*/) const
 {
   for (unsigned int i = 0; i < values.size(); ++i)
@@ -245,11 +245,11 @@ public:
 
   virtual void
   value_list(const std::vector<Point<dim>> &points,
-             std::vector<double> &          values,
+             std::vector<double>           &values,
              const unsigned int /*component*/) const override;
 
   virtual Tensor<1, dim>
-  gradient(const Point<dim> & p,
+  gradient(const Point<dim>  &p,
            const unsigned int component = 0) const override;
 };
 
@@ -276,7 +276,7 @@ Solution<dim>::gradient(const Point<dim> &p, const unsigned int) const
 template <int dim>
 void
 Solution<dim>::value_list(const std::vector<Point<dim>> &points,
-                          std::vector<double> &          values,
+                          std::vector<double>           &values,
                           const unsigned int /*component*/) const
 {
   for (unsigned int i = 0; i < values.size(); ++i)
@@ -471,7 +471,7 @@ DiffusionReactionProblem<dim>::assemble_system()
 
           const auto &agglo_values = ah->reinit(polytope);
 
-          const auto &        q_points  = agglo_values.get_quadrature_points();
+          const auto         &q_points  = agglo_values.get_quadrature_points();
           const unsigned int  n_qpoints = q_points.size();
           std::vector<double> rhs(n_qpoints);
           rhs_function->value_list(q_points, rhs);
@@ -830,7 +830,7 @@ main(int argc, char *argv[])
 
   // number of agglomerates in each local subdomain
   const unsigned int n_local_agglomerates = 10;
-  const unsigned int reaction_coefficient = .5;
+  const double       reaction_coefficient = .5;
   for (unsigned int degree : {1, 2, 3, 4})
     {
       DiffusionReactionProblem<dim> problem(n_local_agglomerates,

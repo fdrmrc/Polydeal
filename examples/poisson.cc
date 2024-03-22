@@ -88,7 +88,7 @@ public:
 
   virtual void
   value_list(const std::vector<Point<dim>> &points,
-             std::vector<double> &          values,
+             std::vector<double>           &values,
              const unsigned int /*component*/) const override;
 
 private:
@@ -100,7 +100,7 @@ private:
 template <int dim>
 void
 RightHandSide<dim>::value_list(const std::vector<Point<dim>> &points,
-                               std::vector<double> &          values,
+                               std::vector<double>           &values,
                                const unsigned int /*component*/) const
 {
   if (solution_type == SolutionType::linear)
@@ -148,11 +148,11 @@ public:
 
   virtual void
   value_list(const std::vector<Point<dim>> &points,
-             std::vector<double> &          values,
+             std::vector<double>           &values,
              const unsigned int /*component*/) const override;
 
   virtual Tensor<1, dim>
-  gradient(const Point<dim> & p,
+  gradient(const Point<dim>  &p,
            const unsigned int component = 0) const override;
 };
 
@@ -182,7 +182,7 @@ SolutionLinear<dim>::gradient(const Point<dim> &p, const unsigned int) const
 template <int dim>
 void
 SolutionLinear<dim>::value_list(const std::vector<Point<dim>> &points,
-                                std::vector<double> &          values,
+                                std::vector<double>           &values,
                                 const unsigned int /*component*/) const
 {
   for (unsigned int i = 0; i < values.size(); ++i)
@@ -206,11 +206,11 @@ public:
 
   virtual void
   value_list(const std::vector<Point<dim>> &points,
-             std::vector<double> &          values,
+             std::vector<double>           &values,
              const unsigned int /*component*/) const override;
 
   virtual Tensor<1, dim>
-  gradient(const Point<dim> & p,
+  gradient(const Point<dim>  &p,
            const unsigned int component = 0) const override;
 };
 
@@ -235,7 +235,7 @@ SolutionQuadratic<dim>::gradient(const Point<dim> &p, const unsigned int) const
 template <int dim>
 void
 SolutionQuadratic<dim>::value_list(const std::vector<Point<dim>> &points,
-                                   std::vector<double> &          values,
+                                   std::vector<double>           &values,
                                    const unsigned int /*component*/) const
 {
   for (unsigned int i = 0; i < values.size(); ++i)
@@ -259,11 +259,11 @@ public:
 
   virtual void
   value_list(const std::vector<Point<dim>> &points,
-             std::vector<double> &          values,
+             std::vector<double>           &values,
              const unsigned int /*component*/) const override;
 
   virtual Tensor<1, dim>
-  gradient(const Point<dim> & p,
+  gradient(const Point<dim>  &p,
            const unsigned int component = 0) const override;
 };
 
@@ -288,7 +288,7 @@ SolutionProduct<dim>::gradient(const Point<dim> &p, const unsigned int) const
 template <int dim>
 void
 SolutionProduct<dim>::value_list(const std::vector<Point<dim>> &points,
-                                 std::vector<double> &          values,
+                                 std::vector<double>           &values,
                                  const unsigned int /*component*/) const
 {
   for (unsigned int i = 0; i < values.size(); ++i)
@@ -312,11 +312,11 @@ public:
 
   virtual void
   value_list(const std::vector<Point<dim>> &points,
-             std::vector<double> &          values,
+             std::vector<double>           &values,
              const unsigned int /*component*/) const override;
 
   virtual Tensor<1, dim>
-  gradient(const Point<dim> & p,
+  gradient(const Point<dim>  &p,
            const unsigned int component = 0) const override;
 };
 
@@ -344,7 +344,7 @@ SolutionProductSine<dim>::gradient(const Point<dim> &p,
 template <int dim>
 void
 SolutionProductSine<dim>::value_list(const std::vector<Point<dim>> &points,
-                                     std::vector<double> &          values,
+                                     std::vector<double>           &values,
                                      const unsigned int /*component*/) const
 {
   for (unsigned int i = 0; i < values.size(); ++i)
@@ -384,9 +384,9 @@ private:
   std::unique_ptr<const Function<dim>>       analytical_solution;
 
 public:
-  Poisson(const GridType &       grid_type        = GridType::grid_generator,
+  Poisson(const GridType        &grid_type        = GridType::grid_generator,
           const PartitionerType &partitioner_type = PartitionerType::rtree,
-          const SolutionType &   solution_type    = SolutionType::linear,
+          const SolutionType    &solution_type    = SolutionType::linear,
           const unsigned int                      = 0,
           const unsigned int                      = 0,
           const unsigned int fe_degree            = 1);
@@ -404,9 +404,9 @@ public:
 
 
 template <int dim>
-Poisson<dim>::Poisson(const GridType &       grid_type,
+Poisson<dim>::Poisson(const GridType        &grid_type,
                       const PartitionerType &partitioner_type,
-                      const SolutionType &   solution_type,
+                      const SolutionType    &solution_type,
                       const unsigned int     extraction_level,
                       const unsigned int     n_subdomains,
                       const unsigned int     fe_degree)
@@ -561,7 +561,8 @@ Poisson<dim>::make_grid()
         }
     }
   else if (partitioner_type == PartitionerType::no_partition)
-    {}
+    {
+    }
   else
     {
       Assert(false, ExcMessage("Wrong partitioning."));
@@ -715,7 +716,7 @@ Poisson<dim>::assemble_system()
       const auto &agglo_values = ah->reinit(polytope);
       polytope->get_dof_indices(local_dof_indices);
 
-      const auto &        q_points  = agglo_values.get_quadrature_points();
+      const auto         &q_points  = agglo_values.get_quadrature_points();
       const unsigned int  n_qpoints = q_points.size();
       std::vector<double> rhs(n_qpoints);
       rhs_function->value_list(q_points, rhs);
@@ -1115,7 +1116,7 @@ main()
 {
   std::cout << "Benchmarking with Rtree:" << std::endl;
 
-  const unsigned int fe_degree = 1;
+  // const unsigned int fe_degree = 1;
   // for (const unsigned int extraction_level : {2, 3})
   // for (const unsigned int extraction_level : {2, 3, 4, 5, 6, 7})
   //   {
