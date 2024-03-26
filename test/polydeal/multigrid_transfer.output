@@ -1,0 +1,11 @@
+N elements (coarse) = 4
+N elements (fine) = 16
+Construct transfer operator
+f= 1
+Norm of error(L2): 0
+f= x+y
+Norm of error(L2): 0
+f= x
+Norm of error(L2): 0
+f= y
+Norm of error(L2): 0
