@@ -283,13 +283,13 @@ namespace dealii
    * Class implementing transfer between consecutive agglomerated levels.
    */
   template <int dim, typename VectorType>
-  class MGAgglomerationTransfer : public MGTransferBase<VectorType>
+  class MGTwoLevelTransferAgglomeration
   {
   public:
     /**
      * Constructor.
      */
-    MGAgglomerationTransfer(const RtreeInfo<dim> &rtree_info);
+    MGTwoLevelTransferAgglomeration(const RtreeInfo<dim> &rtree_info);
 
     /**
      * Initialize transfer operator from coarse to fine level.
@@ -301,7 +301,7 @@ namespace dealii
     /**
      * Destructor.
      */
-    virtual ~MGAgglomerationTransfer() override = default;
+    ~MGTwoLevelTransferAgglomeration() = default;
 
 
     /**
@@ -325,14 +325,10 @@ namespace dealii
      * finer level.
      */
     virtual void
-    prolongate(const unsigned int to_level,
-               VectorType &       dst,
-               const VectorType & src) const override;
+    prolongate(VectorType &dst, const VectorType &src) const;
 
     virtual void
-    prolongate_and_add(const unsigned int to_level,
-                       VectorType &       dst,
-                       const VectorType & src) const override;
+    prolongate_and_add(VectorType &dst, const VectorType &src) const;
 
     /**
      * Restrict a vector from level <tt>from_level</tt> to level
@@ -353,9 +349,7 @@ namespace dealii
      * coarser level.
      */
     virtual void
-    restrict_and_add(const unsigned int from_level,
-                     VectorType &       dst,
-                     const VectorType & src) const override;
+    restrict_and_add(VectorType &dst, const VectorType &src) const;
 
 
   private:
@@ -399,8 +393,8 @@ namespace dealii
 
 
   template <int dim, typename VectorType>
-  MGAgglomerationTransfer<dim, VectorType>::MGAgglomerationTransfer(
-    const RtreeInfo<dim> &info)
+  MGTwoLevelTransferAgglomeration<dim, VectorType>::
+    MGTwoLevelTransferAgglomeration(const RtreeInfo<dim> &info)
     : crss(info.crss)
     , agglomerates(info.agglomerates)
   {
@@ -416,7 +410,7 @@ namespace dealii
 
   template <int dim, typename VectorType>
   void
-  MGAgglomerationTransfer<dim, VectorType>::reinit(
+  MGTwoLevelTransferAgglomeration<dim, VectorType>::reinit(
     const AgglomerationHandler<dim> &agglo_handler_fine_,
     const AgglomerationHandler<dim> &agglo_handler_coarse_)
   {
@@ -583,10 +577,9 @@ namespace dealii
 
   template <int dim, typename VectorType>
   void
-  MGAgglomerationTransfer<dim, VectorType>::prolongate(
-    const unsigned int to_level,
-    VectorType &       dst,
-    const VectorType & src) const
+  MGTwoLevelTransferAgglomeration<dim, VectorType>::prolongate(
+    VectorType &      dst,
+    const VectorType &src) const
   {
     Assert(prolongation_matrix != nullptr,
            ExcMessage("Matrix has not been initialized."));
@@ -597,10 +590,9 @@ namespace dealii
 
   template <int dim, typename VectorType>
   void
-  MGAgglomerationTransfer<dim, VectorType>::prolongate_and_add(
-    const unsigned int to_level,
-    VectorType &       dst,
-    const VectorType & src) const
+  MGTwoLevelTransferAgglomeration<dim, VectorType>::prolongate_and_add(
+    VectorType &      dst,
+    const VectorType &src) const
   {
     Assert(prolongation_matrix != nullptr,
            ExcMessage("Matrix has not been initialized."));
@@ -611,10 +603,9 @@ namespace dealii
 
   template <int dim, typename VectorType>
   void
-  MGAgglomerationTransfer<dim, VectorType>::restrict_and_add(
-    const unsigned int to_level,
-    VectorType &       dst,
-    const VectorType & src) const
+  MGTwoLevelTransferAgglomeration<dim, VectorType>::restrict_and_add(
+    VectorType &      dst,
+    const VectorType &src) const
   {
     Assert(prolongation_matrix != nullptr,
            ExcMessage("Matrix has not been initialized."));
@@ -625,7 +616,7 @@ namespace dealii
 
   template <int dim, typename VectorType>
   void
-  MGAgglomerationTransfer<dim, VectorType>::clear()
+  MGTwoLevelTransferAgglomeration<dim, VectorType>::clear()
   {
     prolongation_matrix.reset();
     prolongation_sparsity.reset();
