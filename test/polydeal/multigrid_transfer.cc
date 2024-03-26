@@ -76,7 +76,7 @@ private:
   void
   make_grid();
   void
-  setup_agglomeration();
+  check_transfer();
 
 
   Triangulation<dim>                         tria;
@@ -89,8 +89,6 @@ private:
 
 public:
   Test(const unsigned int = 0, const unsigned int fe_degree = 1);
-  void
-  check_transfer();
   void
   run();
 
@@ -237,7 +235,7 @@ Test<dim>::check_transfer()
   std::cout << "Construct transfer operator" << std::endl;
   RtreeInfo<2> rtree_info{csr_and_agglomerates.first,
                           csr_and_agglomerates.second};
-  MGAgglomerationTransfer<dim, Vector<double>> agglomeration_transfer(
+  MGTwoLevelTransferAgglomeration<dim, Vector<double>> agglomeration_transfer(
     rtree_info);
   agglomeration_transfer.reinit(*ah_fine, *ah_coarse);
 
@@ -252,7 +250,7 @@ Test<dim>::check_transfer()
                              interp_coarse);
 
     Vector<double> dst(ah_fine->agglo_dh.n_dofs());
-    agglomeration_transfer.prolongate(extraction_level, dst, interp_coarse);
+    agglomeration_transfer.prolongate(dst, interp_coarse);
 
 
 #ifdef FALSE
