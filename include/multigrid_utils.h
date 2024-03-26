@@ -25,6 +25,54 @@
 
 #include <deal.II/multigrid/mg_base.h>
 
+#include <agglomeration_handler.h>
+#include <poly_utils.h>
+
+namespace dealii
+{
+  namespace internal
+  {
+    template <typename VectorType>
+    struct MatrixSelectorAgglomeration
+    {
+      using Sparsity = ::dealii::SparsityPattern;
+      using Matrix   = ::dealii::SparseMatrix<typename VectorType::value_type>;
+    };
+  } // namespace internal
+} // namespace dealii
+
+
+/**
+ * Struct storing information such as agglomerates and sub agglomerates.
+ */
+namespace dealii
+{
+  template <int dim>
+  struct RtreeInfo
+  {
+    RtreeInfo() = delete;
+    RtreeInfo(const std::vector<std::vector<unsigned int>> &crss_,
+              const std::vector<
+                std::vector<typename Triangulation<dim>::active_cell_iterator>>
+                &agglomerates_)
+      : crss(crss_)
+      , agglomerates(agglomerates_)
+    {}
+
+    /**
+     * CRS like data structure for every agglomerates.
+     */
+    const std::vector<std::vector<unsigned int>> &crss;
+
+    /**
+     * Agglomerates.
+     */
+    const std::vector<
+      std::vector<typename Triangulation<dim>::active_cell_iterator>>
+      &agglomerates;
+  };
+} // namespace dealii
+
 
 namespace dealii
 {
@@ -228,6 +276,365 @@ namespace dealii
     internal::MGCoarseGridIterativeSolverLO::solve(
       *solver, *linear_op, *preconditioner, dst, src);
   }
+
+
+
+  /**
+   * Class implementing transfer between consecutive agglomerated levels.
+   */
+  template <int dim, typename VectorType>
+  class MGAgglomerationTransfer : public MGTransferBase<VectorType>
+  {
+  public:
+    /**
+     * Constructor.
+     */
+    MGAgglomerationTransfer(const RtreeInfo<dim> &rtree_info);
+
+    /**
+     * Initialize transfer operator from coarse to fine level.
+     */
+    void
+    reinit(const AgglomerationHandler<dim> &agglo_handler_fine,
+           const AgglomerationHandler<dim> &agglo_handler_coarse);
+
+    /**
+     * Destructor.
+     */
+    virtual ~MGAgglomerationTransfer() override = default;
+
+
+    /**
+     * Reset the object.
+     */
+    void
+    clear();
+
+    /**
+     * Prolongate a vector from level <tt>to_level-1</tt> to level
+     * <tt>to_level</tt> using the embedding matrices of the underlying finite
+     * element. The previous content of <tt>dst</tt> is overwritten.
+     *
+     * @param to_level The index of the level to prolongate to, which is the
+     * level of @p dst.
+     *
+     * @param src is a vector with as many elements as there are degrees of
+     * freedom on the coarser level involved.
+     *
+     * @param dst has as many elements as there are degrees of freedom on the
+     * finer level.
+     */
+    virtual void
+    prolongate(const unsigned int to_level,
+               VectorType &       dst,
+               const VectorType & src) const override;
+
+    virtual void
+    prolongate_and_add(const unsigned int to_level,
+                       VectorType &       dst,
+                       const VectorType & src) const override;
+
+    /**
+     * Restrict a vector from level <tt>from_level</tt> to level
+     * <tt>from_level-1</tt> using the transpose operation of the prolongate()
+     * method. If the region covered by cells on level <tt>from_level</tt> is
+     * smaller than that of level <tt>from_level-1</tt> (local refinement),
+     * then some degrees of freedom in <tt>dst</tt> are active and will not be
+     * altered. For the other degrees of freedom, the result of the
+     * restriction is added.
+     *
+     * @param from_level The index of the level to restrict from, which is the
+     * level of @p src.
+     *
+     * @param src is a vector with as many elements as there are degrees of
+     * freedom on the finer level involved.
+     *
+     * @param dst has as many elements as there are degrees of freedom on the
+     * coarser level.
+     */
+    virtual void
+    restrict_and_add(const unsigned int from_level,
+                     VectorType &       dst,
+                     const VectorType & src) const override;
+
+
+  private:
+    /**
+     * Pointer to coarse AgglomerationHandler
+     */
+    const AgglomerationHandler<dim> *agglo_handler_coarse;
+
+    /**
+     * Pointer to fine AgglomerationHandler
+     */
+    const AgglomerationHandler<dim> *agglo_handler_fine;
+
+    /**
+     * CRS like data structure for every agglomerates.
+     */
+    std::vector<std::vector<unsigned int>> crss;
+
+    /**
+     * Agglomerates.
+     */
+    std::vector<std::vector<typename Triangulation<dim>::active_cell_iterator>>
+      agglomerates;
+
+    /**
+     * Sparsity patterns for transfer matrices.
+     */
+    std::shared_ptr<
+      typename internal::MatrixSelectorAgglomeration<VectorType>::Sparsity>
+      prolongation_sparsity;
+
+    /**
+     * The actual prolongation matrix.  column indices belong to the dof
+     * indices of the coarse level, while row indices belong to the fine level.
+     */
+    std::shared_ptr<
+      typename internal::MatrixSelectorAgglomeration<VectorType>::Matrix>
+      prolongation_matrix;
+  };
+
+
+
+  template <int dim, typename VectorType>
+  MGAgglomerationTransfer<dim, VectorType>::MGAgglomerationTransfer(
+    const RtreeInfo<dim> &info)
+    : crss(info.crss)
+    , agglomerates(info.agglomerates)
+  {
+    static_assert(dim != 1);
+
+    prolongation_sparsity = std::make_shared<
+      typename internal::MatrixSelectorAgglomeration<VectorType>::Sparsity>();
+    prolongation_matrix = std::make_shared<
+      typename internal::MatrixSelectorAgglomeration<VectorType>::Matrix>();
+  }
+
+
+
+  template <int dim, typename VectorType>
+  void
+  MGAgglomerationTransfer<dim, VectorType>::reinit(
+    const AgglomerationHandler<dim> &agglo_handler_fine_,
+    const AgglomerationHandler<dim> &agglo_handler_coarse_)
+  {
+    agglo_handler_fine   = &agglo_handler_fine_;
+    agglo_handler_coarse = &agglo_handler_coarse_;
+
+    const DoFHandler<dim> &agglo_dh_fine   = agglo_handler_fine->agglo_dh;
+    const DoFHandler<dim> &agglo_dh_coarse = agglo_handler_coarse->agglo_dh;
+    Assert((agglo_dh_fine.n_dofs() > agglo_dh_coarse.n_dofs()),
+           ExcMessage(
+             "Coarse DoFHandler has more DoFs than finer DoFHandler."));
+
+    // Setup sparsity pattern
+    DynamicSparsityPattern dsp(agglo_dh_fine.n_dofs(),
+                               agglo_dh_coarse.n_dofs());
+
+    const auto &       fe            = agglo_dh_coarse.get_fe();
+    const unsigned int dofs_per_cell = fe.dofs_per_cell;
+
+    for (std::size_t i = 0; i < agglomerates.size(); ++i)
+      {
+        // coarse agglomerate
+        const auto &                          agglo = agglomerates[i];
+        std::vector<types::global_cell_index> cell_indices;
+        for (const auto &cell : agglo)
+          cell_indices.push_back(cell->active_cell_index());
+
+        const auto &dof_cell_coarse =
+          agglo[std::distance(std::begin(cell_indices),
+                              std::min_element(std::begin(cell_indices),
+                                               std::end(cell_indices)))]
+            ->as_dof_handler_iterator(
+              agglo_dh_coarse); // min index is master cell
+
+        std::vector<types::global_dof_index> dof_indices_coarse(dofs_per_cell);
+        dof_cell_coarse->get_dof_indices(dof_indices_coarse);
+
+        const auto &crs = crss[i]; // vector of indices for current agglomerate
+
+        for (unsigned int k = 0; k < crs.size() - 1; ++k)
+          {
+            std::vector<types::global_dof_index> dof_indices_fine(
+              dofs_per_cell);
+
+
+            // collect indices of one sub-agglomerate
+            std::vector<types::global_cell_index> cell_indices_fine;
+            for (unsigned int j = crs[k]; j < crs[k + 1]; ++j)
+              cell_indices_fine.push_back(agglo[j]->active_cell_index());
+
+            const unsigned int master_idx =
+              std::distance(std::begin(cell_indices_fine),
+                            std::min_element(std::begin(cell_indices_fine),
+                                             std::end(cell_indices_fine)));
+
+            const auto &dof_cell_fine =
+              agglo[crs[k] + master_idx]->as_dof_handler_iterator(
+                agglo_dh_fine);
+
+            dof_cell_fine->get_dof_indices(dof_indices_fine);
+
+
+            for (const auto row : dof_indices_fine)
+              dsp.add_entries(row,
+                              dof_indices_coarse.begin(),
+                              dof_indices_coarse.end());
+          }
+      }
+
+    prolongation_sparsity->copy_from(dsp);
+    prolongation_matrix->reinit(*prolongation_sparsity);
+
+
+
+    // Fill prolongation_matrix
+    AffineConstraints<typename VectorType::value_type>
+      c; // dummy constraint, needed only for loc2glb operations.
+    c.close();
+    FullMatrix<typename VectorType::value_type> local_matrix(dofs_per_cell,
+                                                             dofs_per_cell);
+    const std::vector<Point<dim>> &             unit_support_points =
+      fe.get_unit_support_points();
+
+    const std::vector<BoundingBox<dim>> bboxes =
+      agglo_handler_coarse->get_local_bboxes();
+
+    for (unsigned int i = 0; i < agglomerates.size(); ++i)
+      {
+        // coarse agglomerate
+        const auto &                          agglo = agglomerates[i];
+        std::vector<types::global_cell_index> cell_indices;
+        for (const auto &cell : agglo)
+          cell_indices.push_back(cell->active_cell_index());
+
+        const auto &master_cell_coarse =
+          agglo[std::distance(std::begin(cell_indices),
+                              std::min_element(std::begin(cell_indices),
+                                               std::end(cell_indices)))];
+        const auto dof_cell_coarse =
+          master_cell_coarse->as_dof_handler_iterator(
+            agglo_dh_coarse); // min index is master cell
+
+        std::vector<types::global_dof_index> dof_indices_coarse(dofs_per_cell);
+        dof_cell_coarse->get_dof_indices(dof_indices_coarse);
+
+
+
+        const auto &crs = crss[i]; // vector of indices for current agglomerate
+
+        for (unsigned int k = 0; k < crs.size() - 1; ++k)
+          {
+            local_matrix = 0.;
+            std::vector<types::global_dof_index> dof_indices_fine(
+              dofs_per_cell);
+
+            // collect indices of one sub-agglomerate
+            std::vector<types::global_cell_index> cell_indices_fine;
+            for (unsigned int j = crs[k]; j < crs[k + 1]; ++j)
+              cell_indices_fine.push_back(agglo[j]->active_cell_index());
+
+
+            const unsigned int master_idx =
+              std::distance(std::begin(cell_indices_fine),
+                            std::min_element(std::begin(cell_indices_fine),
+                                             std::end(cell_indices_fine)));
+
+            const auto &master_cell_fine = agglo[crs[k] + master_idx];
+
+            const auto &dof_cell_fine =
+              master_cell_fine->as_dof_handler_iterator(
+                agglo_dh_fine); // min index is master cell
+
+            dof_cell_fine->get_dof_indices(dof_indices_fine);
+
+            // compute real location of support points
+            std::vector<Point<dim>> real_qpoints;
+            for (const Point<dim> &p : unit_support_points)
+              real_qpoints.push_back(
+                agglo_handler_fine->euler_mapping->transform_unit_to_real_cell(
+                  dof_cell_fine, p));
+            // real_qpoints.push_back(box_fine.unit_to_real(p));
+
+            for (unsigned int i = 0; i < dof_indices_coarse.size(); ++i)
+              {
+                const auto &p =
+                  agglo_handler_coarse->euler_mapping
+                    ->transform_real_to_unit_cell(dof_cell_coarse,
+                                                  real_qpoints[i]);
+                for (unsigned int j = 0; j < dof_indices_fine.size(); ++j)
+                  {
+                    local_matrix(i, j) = fe.shape_value(j, p);
+                  }
+              }
+
+            c.distribute_local_to_global(local_matrix,
+                                         dof_indices_fine,
+                                         dof_indices_coarse,
+                                         *prolongation_matrix);
+          }
+      }
+  }
+
+
+
+  template <int dim, typename VectorType>
+  void
+  MGAgglomerationTransfer<dim, VectorType>::prolongate(
+    const unsigned int to_level,
+    VectorType &       dst,
+    const VectorType & src) const
+  {
+    Assert(prolongation_matrix != nullptr,
+           ExcMessage("Matrix has not been initialized."));
+    prolongation_matrix->vmult(dst, src);
+  }
+
+
+
+  template <int dim, typename VectorType>
+  void
+  MGAgglomerationTransfer<dim, VectorType>::prolongate_and_add(
+    const unsigned int to_level,
+    VectorType &       dst,
+    const VectorType & src) const
+  {
+    Assert(prolongation_matrix != nullptr,
+           ExcMessage("Matrix has not been initialized."));
+    prolongation_matrix->vmult_add(dst, src);
+  }
+
+
+
+  template <int dim, typename VectorType>
+  void
+  MGAgglomerationTransfer<dim, VectorType>::restrict_and_add(
+    const unsigned int to_level,
+    VectorType &       dst,
+    const VectorType & src) const
+  {
+    Assert(prolongation_matrix != nullptr,
+           ExcMessage("Matrix has not been initialized."));
+    prolongation_matrix->Tvmult_add(dst, src);
+  }
+
+
+
+  template <int dim, typename VectorType>
+  void
+  MGAgglomerationTransfer<dim, VectorType>::clear()
+  {
+    prolongation_matrix.reset();
+    prolongation_sparsity.reset();
+    agglo_handler_fine   = nullptr;
+    agglo_handler_coarse = nullptr;
+    crss.clear();
+    agglomerates.clear();
+  }
+
 
 
 } // namespace dealii
