@@ -628,6 +628,100 @@ namespace dealii
 
 
 
+  template <int dim, typename VectorType>
+  class MGTransferAgglomeration : public MGTransferBase<VectorType>
+  {
+  public:
+    /**
+     * Constructor. It takes a sequence of two level transfers between
+     * agglomerated meshes.
+     */
+    MGTransferAgglomeration(
+      const MGLevelObject<MGTwoLevelTransferAgglomeration<dim, VectorType>>
+        &transfer);
+
+    /**
+     * Perform prolongation.
+     */
+    void
+    prolongate(const unsigned int to_level,
+               VectorType &       dst,
+               const VectorType & src) const override;
+
+    /**
+     * Perform prolongation.
+     */
+    void
+    prolongate_and_add(const unsigned int to_level,
+                       VectorType &       dst,
+                       const VectorType & src) const override;
+
+    /**
+     * Perform restriction.
+     */
+    void
+    restrict_and_add(const unsigned int from_level,
+                     VectorType &       dst,
+                     const VectorType & src) const override;
+
+  private:
+    MGLevelObject<
+      SmartPointer<MGTwoLevelTransferAgglomeration<dim, VectorType>>>
+      transfer;
+  };
+
+
+  template <int dim, typename VectorType>
+  MGTransferAgglomeration<dim, VectorType>::MGTransferAgglomeration(
+    const MGLevelObject<MGTwoLevelTransferAgglomeration<dim, VectorType>>
+      &transfer)
+  {
+    const unsigned int min_level = transfer.min_level();
+    const unsigned int max_level = transfer.max_level();
+
+    this->transfer.resize(min_level, max_level);
+
+    for (unsigned int l = min_level; l <= max_level; ++l)
+      this->transfer[l] =
+        &const_cast<MGTwoLevelTransferAgglomeration<dim, VectorType> &>(
+          static_cast<const MGTwoLevelTransferAgglomeration<dim, VectorType> &>(
+            Utilities::get_underlying_value(transfer[l])));
+  }
+
+
+  template <int dim, typename VectorType>
+  void
+  MGTransferAgglomeration<dim, VectorType>::prolongate(
+    const unsigned int to_level,
+    VectorType &       dst,
+    const VectorType & src) const
+  {
+    dst = typename VectorType::value_type(0.0);
+    prolongate_and_add(to_level, dst, src);
+  }
+
+  template <int dim, typename VectorType>
+  void
+  MGTransferAgglomeration<dim, VectorType>::prolongate_and_add(
+    const unsigned int to_level,
+    VectorType &       dst,
+    const VectorType & src) const
+  {
+    this->transfer[to_level]->prolongate_and_add(dst, src);
+  }
+
+  template <int dim, typename VectorType>
+  void
+  MGTransferAgglomeration<dim, VectorType>::restrict_and_add(
+    const unsigned int from_level,
+    VectorType &       dst,
+    const VectorType & src) const
+  {
+    this->transfer[from_level]->restrict_and_add(dst, src);
+  }
+
+
+
 } // namespace dealii
 
 #endif
