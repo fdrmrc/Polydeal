@@ -283,7 +283,7 @@ namespace dealii
    * Class implementing transfer between consecutive agglomerated levels.
    */
   template <int dim, typename VectorType>
-  class MGTwoLevelTransferAgglomeration
+  class MGTwoLevelTransferAgglomeration : public Subscriptor
   {
   public:
     /**
@@ -350,7 +350,6 @@ namespace dealii
      */
     virtual void
     restrict_and_add(VectorType &dst, const VectorType &src) const;
-
 
   private:
     /**
@@ -419,6 +418,7 @@ namespace dealii
 
     const DoFHandler<dim> &agglo_dh_fine   = agglo_handler_fine->agglo_dh;
     const DoFHandler<dim> &agglo_dh_coarse = agglo_handler_coarse->agglo_dh;
+
     Assert((agglo_dh_fine.n_dofs() > agglo_dh_coarse.n_dofs()),
            ExcMessage(
              "Coarse DoFHandler has more DoFs than finer DoFHandler."));
@@ -636,9 +636,10 @@ namespace dealii
      * Constructor. It takes a sequence of two level transfers between
      * agglomerated meshes.
      */
+    template <typename MGTwoLevelTransferObject>
     MGTransferAgglomeration(
-      const MGLevelObject<MGTwoLevelTransferAgglomeration<dim, VectorType>>
-        &transfer);
+      const MGLevelObject<MGTwoLevelTransferObject> &transfer,
+      const std::vector<const DoFHandler<dim> *> &   dof_handlers);
 
     /**
      * Perform prolongation.
@@ -664,20 +665,44 @@ namespace dealii
                      VectorType &       dst,
                      const VectorType & src) const override;
 
+    /**
+     *
+     */
+    void
+    copy_to_mg(const DoFHandler<dim> &    dof_handler,
+               MGLevelObject<VectorType> &dst,
+               const VectorType &         src) const;
+
+    /**
+     *
+     */
+    void
+    copy_from_mg(const DoFHandler<dim> &          dof_handler,
+                 VectorType &                     dst,
+                 const MGLevelObject<VectorType> &src) const;
+
   private:
     MGLevelObject<
       SmartPointer<MGTwoLevelTransferAgglomeration<dim, VectorType>>>
       transfer;
+
+    std::vector<const DoFHandler<dim> *> dof_handlers;
   };
 
 
+
   template <int dim, typename VectorType>
+  template <typename MGTwoLevelTransferObject>
   MGTransferAgglomeration<dim, VectorType>::MGTransferAgglomeration(
-    const MGLevelObject<MGTwoLevelTransferAgglomeration<dim, VectorType>>
-      &transfer)
+    const MGLevelObject<MGTwoLevelTransferObject> &transfer,
+    const std::vector<const DoFHandler<dim> *> &   dof_handlers_)
   {
     const unsigned int min_level = transfer.min_level();
     const unsigned int max_level = transfer.max_level();
+
+    Assert((dof_handlers_.size() == max_level - min_level + 1),
+           ExcMessage("Wrong number of DoFHanders"));
+    dof_handlers = dof_handlers_;
 
     this->transfer.resize(min_level, max_level);
 
@@ -687,6 +712,7 @@ namespace dealii
           static_cast<const MGTwoLevelTransferAgglomeration<dim, VectorType> &>(
             Utilities::get_underlying_value(transfer[l])));
   }
+
 
 
   template <int dim, typename VectorType>
@@ -700,6 +726,8 @@ namespace dealii
     prolongate_and_add(to_level, dst, src);
   }
 
+
+
   template <int dim, typename VectorType>
   void
   MGTransferAgglomeration<dim, VectorType>::prolongate_and_add(
@@ -709,6 +737,8 @@ namespace dealii
   {
     this->transfer[to_level]->prolongate_and_add(dst, src);
   }
+
+
 
   template <int dim, typename VectorType>
   void
@@ -721,6 +751,36 @@ namespace dealii
   }
 
 
+
+  template <int dim, typename VectorType>
+  void
+  MGTransferAgglomeration<dim, VectorType>::copy_to_mg(
+    const DoFHandler<dim> &    dof_handler,
+    MGLevelObject<VectorType> &dst,
+    const VectorType &         src) const
+  {
+    (void)dof_handler;
+    for (unsigned int level = dst.min_level(); level <= dst.max_level();
+         ++level)
+      {
+        dst[level].reinit(dof_handlers[level]->n_dofs());
+      }
+
+    dst[dst.max_level()] = src;
+  }
+
+
+
+  template <int dim, typename VectorType>
+  void
+  MGTransferAgglomeration<dim, VectorType>::copy_from_mg(
+    const DoFHandler<dim> &          dof_handler,
+    VectorType &                     dst,
+    const MGLevelObject<VectorType> &src) const
+  {
+    (void)dof_handler;
+    dst = src[src.max_level()];
+  }
 
 } // namespace dealii
 
