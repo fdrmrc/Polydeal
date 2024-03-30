@@ -827,7 +827,7 @@ namespace dealii::PolyUtils
 
 
   template <int dim>
-  std::pair<std::vector<double>, std::vector<double>>
+  std::tuple<std::vector<double>, std::vector<double>, double>
   compute_quality_metrics(const AgglomerationHandler<dim> &ah)
   {
     static_assert(dim == 2); // only 2D case is implemented.
@@ -940,7 +940,19 @@ namespace dealii::PolyUtils
       }
 
 
-    return {unformity_factors, circle_ratios};
+
+    // Get all of the bounding boxes
+    double                               covering_bboxes = 0.;
+    const std::vector<BoundingBox<dim>> &bboxes = ah.get_local_bboxes();
+    for (unsigned int i = 0; i < bboxes.size(); ++i)
+      covering_bboxes += bboxes[i].volume();
+
+    const double covering_factor =
+      covering_bboxes /
+      GridTools::volume(ah.get_triangulation()); // assuming a linear mapping
+
+
+    return {unformity_factors, circle_ratios, covering_factor};
 #else
 
     (void)ah;
