@@ -723,7 +723,7 @@ Poisson<dim>::output_results()
   auto metrics = PolyUtils::compute_quality_metrics(*ah);
 
   // uniformity factors
-  const auto &uf = metrics.first;
+  const auto &uf = std::get<0>(metrics);
   std::cout << "Average Uniformity Factor: "
             << std::accumulate(uf.begin(), uf.end(), 0.) / uf.size()
             << std::endl;
@@ -733,10 +733,14 @@ Poisson<dim>::output_results()
 #endif
 
   // circle ratios
-  const auto &cr = metrics.second;
+  const auto &cr = std::get<1>(metrics);
   std::cout << "Average Circle Ratio: "
             << std::accumulate(cr.begin(), cr.end(), 0.) / cr.size()
             << std::endl;
+
+  // overlap factor
+  const double of = std::get<2>(metrics);
+  std::cout << "Overlap factor: " << of << std::endl;
 #ifdef AGGLO_DEBUG
   for (const auto &m : cr)
     std::cout << m << std::endl;
