@@ -313,7 +313,7 @@ Mesh<dim>::compute_metrics()
   auto metrics = PolyUtils::compute_quality_metrics(*ah);
 
   // uniformity factors
-  const auto &uf = metrics.first;
+  const auto &uf = std::get<0>(metrics);
   double      average_uniformity_factor =
     std::accumulate(uf.begin(), uf.end(), 0.) / uf.size();
 
@@ -324,7 +324,7 @@ Mesh<dim>::compute_metrics()
 
   std::cout << std::endl;
   // circle ratios
-  const auto &cr = metrics.second;
+  const auto &cr = std::get<1>(metrics);
 
   double average_circle_ratio =
     std::accumulate(cr.begin(), cr.end(), 0.) / cr.size();
@@ -332,6 +332,12 @@ Mesh<dim>::compute_metrics()
             << "Min: " << *std::min_element(cr.begin(), cr.end()) << "\n"
             << "Max: " << *std::max_element(cr.begin(), cr.end()) << "\n"
             << "Average: " << average_circle_ratio << std::endl;
+  std::cout << std::endl;
+
+  // coverage
+  const double coverage = std::get<2>(metrics);
+
+  std::cout << "Coverage factor: " << coverage << std::endl;
 }
 
 template <int dim>
