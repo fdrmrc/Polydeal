@@ -35,6 +35,8 @@
 
 #include <deal.II/fe/fe_values.h>
 
+#include <deal.II/grid/grid_tools.h>
+
 #include <deal.II/lac/dynamic_sparsity_pattern.h>
 #include <deal.II/lac/sparse_matrix.h>
 #include <deal.II/lac/sparsity_pattern.h>
@@ -941,14 +943,15 @@ namespace dealii::PolyUtils
 
 
 
-    // Get all of the bounding boxes
+    // Get all of the local bounding boxes
     double                               covering_bboxes = 0.;
     const std::vector<BoundingBox<dim>> &bboxes = ah.get_local_bboxes();
     for (unsigned int i = 0; i < bboxes.size(); ++i)
       covering_bboxes += bboxes[i].volume();
 
     const double covering_factor =
-      covering_bboxes /
+      Utilities::MPI::sum(covering_bboxes,
+                          ah.get_dof_handler().get_communicator()) /
       GridTools::volume(ah.get_triangulation()); // assuming a linear mapping
 
 
