@@ -89,7 +89,7 @@ namespace dealii
     /**
      * Reference to the linear operator.
      */
-    std::unique_ptr<const LinearOperator<VectorType>> linear_op;
+  const LinearOperator<VectorType> linear_op;
 
     /**
      * Reference to the preconditioner.
@@ -111,7 +111,7 @@ namespace dealii
   MGCoarseGridIterativeSolverLO<VectorType, SolverType, PreconditionerType>::
     MGCoarseGridIterativeSolverLO()
     : solver(0, typeid(*this).name())
-    , linear_op(nullptr)
+    , linear_op()
     , preconditioner(0, typeid(*this).name())
   {}
 
@@ -125,7 +125,7 @@ namespace dealii
                                   const LinearOperator<VectorType> &linear_op,
                                   const PreconditionerType &preconditioner)
     : solver(&solver, typeid(*this).name())
-    , linear_op(std::make_unique<LinearOperator<VectorType>>(linear_op))
+    , linear_op(linear_op)
     , preconditioner(&preconditioner, typeid(*this).name())
   {}
 
@@ -141,7 +141,7 @@ namespace dealii
                const PreconditionerType &        preconditioner_)
   {
     solver = &solver_;
-    linear_op.reset(&linear_op_);
+    linear_op = linear_op_;
     preconditioner = &preconditioner_;
   }
 
@@ -155,7 +155,7 @@ namespace dealii
     clear()
   {
     solver         = 0;
-    linear_op      = nullptr;
+    linear_op      = null_operator(linear_op);
     preconditioner = 0;
   }
 
@@ -226,7 +226,7 @@ namespace dealii
 
     dst = 0;
     internal::MGCoarseGridIterativeSolverLO::solve(
-      *solver, *linear_op, *preconditioner, dst, src);
+      *solver, linear_op, *preconditioner, dst, src);
   }
 
 
