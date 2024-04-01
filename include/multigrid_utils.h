@@ -89,7 +89,7 @@ namespace dealii
     /**
      * Reference to the linear operator.
      */
-  const LinearOperator<VectorType> linear_op;
+    const LinearOperator<VectorType> linear_op;
 
     /**
      * Reference to the preconditioner.
@@ -140,8 +140,8 @@ namespace dealii
                const LinearOperator<VectorType> &linear_op_,
                const PreconditionerType &        preconditioner_)
   {
-    solver = &solver_;
-    linear_op = linear_op_;
+    solver         = &solver_;
+    linear_op      = linear_op_;
     preconditioner = &preconditioner_;
   }
 
@@ -221,7 +221,7 @@ namespace dealii
              const VectorType &src) const
   {
     Assert(solver != nullptr, ExcNotInitialized());
-    Assert((linear_op.is_null_operator()==false), ExcNotInitialized());
+    Assert((linear_op.is_null_operator == false), ExcNotInitialized());
     Assert(preconditioner != nullptr, ExcNotInitialized());
 
     dst = 0;
