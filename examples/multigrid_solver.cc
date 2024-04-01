@@ -520,11 +520,11 @@ Test<dim>::check_transfer()
   ah_coarse->create_agglomeration_sparsity_pattern(dsp_coarse);
   sparsity_coarse.copy_from(dsp_coarse);
 
-// #ifdef FALSE
-//   std::cout << "Master cells coarse level: " << std::endl;
-//   for (const auto &cell : ah_coarse->master_cells_container)
-//     std::cout << cell->active_cell_index() << std::endl;
-// #endif
+  // #ifdef FALSE
+  //   std::cout << "Master cells coarse level: " << std::endl;
+  //   for (const auto &cell : ah_coarse->master_cells_container)
+  //     std::cout << cell->active_cell_index() << std::endl;
+  // #endif
 
   std::cout << "Construct transfer operator test->coarse" << std::endl;
   const auto &csr_and_agglomerates_test =
@@ -637,11 +637,11 @@ Test<dim>::check_transfer()
   ah_fine->create_agglomeration_sparsity_pattern(dsp_fine);
   sparsity_fine.copy_from(dsp_fine);
 
-// #ifdef FALSE
-//   std::cout << "Master cells fine: " << std::endl;
-//   for (const auto &cell : ah_fine->master_cells_container)
-//     std::cout << cell->active_cell_index() << std::endl;
-// #endif
+  // #ifdef FALSE
+  //   std::cout << "Master cells fine: " << std::endl;
+  //   for (const auto &cell : ah_fine->master_cells_container)
+  //     std::cout << cell->active_cell_index() << std::endl;
+  // #endif
 
 
   // Check construction of transfer operator
