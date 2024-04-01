@@ -221,7 +221,7 @@ namespace dealii
              const VectorType &src) const
   {
     Assert(solver != nullptr, ExcNotInitialized());
-    Assert(linear_op != nullptr, ExcNotInitialized());
+    Assert((linear_op.is_null_operator()==false), ExcNotInitialized());
     Assert(preconditioner != nullptr, ExcNotInitialized());
 
     dst = 0;
