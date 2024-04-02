@@ -798,7 +798,7 @@ AgglomerationHandler<dim, spacedim>::get_mesh_size() const
         if (h_new > local_hmax)
           local_hmax = h_new;
       }
-  return Utilities::MPI::max(local_hmax, comm);
+  return Utilities::MPI::max(local_hmax, communicator);
 }
 
 
