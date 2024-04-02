@@ -332,6 +332,13 @@ public:
   inline const std::vector<BoundingBox<dim>> &
   get_local_bboxes() const;
 
+  /**
+   * Return the mesh size of the polytopal mesh. It simply takes the maximum
+   * diameter over all the polytopes.
+   */
+  double
+  get_mesh_size() const;
+
   inline types::global_cell_index
   cell_to_polytope_index(
     const typename Triangulation<dim, spacedim>::active_cell_iterator &cell)

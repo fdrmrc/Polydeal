@@ -789,6 +789,24 @@ AgglomerationHandler<dim, spacedim>::setup_ghost_polytopes()
 
 
 
+template <int dim, int spacedim>
+double
+AgglomerationHandler<dim, spacedim>::get_mesh_size() const
+{
+  double local_hmax = 0.;
+  double h_new      = std::numeric_limits<double>::min();
+  for (const auto &polytope : polytope_iterators())
+    if (polytope->is_locally_owned())
+      {
+        h_new = polytope->diameter();
+        if (h_new > local_hmax)
+          local_hmax = h_new;
+      }
+  return Utilities::MPI::max(local_hmax, comm);
+}
+
+
+
 namespace dealii
 {
   namespace internal
