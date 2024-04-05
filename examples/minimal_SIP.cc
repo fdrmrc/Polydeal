@@ -738,9 +738,16 @@ Poisson<dim>::output_results()
             << std::accumulate(cr.begin(), cr.end(), 0.) / cr.size()
             << std::endl;
 
+  // box ratios
+  const auto &br = std::get<2>(metrics);
+  std::cout << "Average Box Ratio: "
+            << std::accumulate(br.begin(), br.end(), 0.) / br.size()
+            << std::endl;
+
   // overlap factor
-  const double of = std::get<2>(metrics);
+  const double of = std::get<3>(metrics);
   std::cout << "Overlap factor: " << of << std::endl;
+
 #ifdef AGGLO_DEBUG
   for (const auto &m : cr)
     std::cout << m << std::endl;

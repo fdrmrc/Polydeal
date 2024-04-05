@@ -310,6 +310,8 @@ void
 Mesh<dim>::compute_metrics()
 {
   // Check metrics
+  ah->initialize_fe_values(QGauss<dim>(2 * dg_fe.degree + 1),
+                           update_JxW_values);
   auto metrics = PolyUtils::compute_quality_metrics(*ah);
 
   // uniformity factors
@@ -323,6 +325,7 @@ Mesh<dim>::compute_metrics()
             << "Average: " << average_uniformity_factor << std::endl;
 
   std::cout << std::endl;
+
   // circle ratios
   const auto &cr = std::get<1>(metrics);
 
@@ -334,8 +337,19 @@ Mesh<dim>::compute_metrics()
             << "Average: " << average_circle_ratio << std::endl;
   std::cout << std::endl;
 
+  // box ratios
+  const auto &br = std::get<2>(metrics);
+
+  double average_box_ratio =
+    std::accumulate(br.begin(), br.end(), 0.) / br.size();
+  std::cout << "Box ratio:\n"
+            << "Min: " << *std::min_element(br.begin(), br.end()) << "\n"
+            << "Max: " << *std::max_element(br.begin(), br.end()) << "\n"
+            << "Average: " << average_box_ratio << std::endl;
+  std::cout << std::endl;
+
   // coverage
-  const double coverage = std::get<2>(metrics);
+  const double coverage = std::get<3>(metrics);
 
   std::cout << "Coverage factor: " << coverage << std::endl;
 }

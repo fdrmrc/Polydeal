@@ -829,8 +829,9 @@ namespace dealii::PolyUtils
 
 
   template <int dim>
-  std::tuple<std::vector<double>, std::vector<double>, double>
-  compute_quality_metrics(const AgglomerationHandler<dim> &ah)
+  std::
+    tuple<std::vector<double>, std::vector<double>, std::vector<double>, double>
+    compute_quality_metrics(const AgglomerationHandler<dim> &ah)
   {
     static_assert(dim == 2); // only 2D case is implemented.
 #ifdef DEAL_II_WITH_CGAL
@@ -897,8 +898,11 @@ namespace dealii::PolyUtils
     // ration between radius of radius_inscribed_circle and circumscribed circle
     std::vector<double> circle_ratios;
     std::vector<double> unformity_factors; // diameter of element over mesh size
+    std::vector<double>
+      box_ratio; // ratio between measure of bbox and measure of element.
 
-    // Loop over all polytopes and compute radius of inscribed circle.
+    const std::vector<BoundingBox<dim>> &bboxes = ah.get_local_bboxes();
+    // Loop over all polytopes and compute metrics.
     for (const auto &polytope : ah.polytope_iterators())
       {
         if (polytope->is_locally_owned())
@@ -938,24 +942,34 @@ namespace dealii::PolyUtils
             circle_ratios.push_back(radius_inscribed_circle /
                                     radius_circumscribed_circle);
             unformity_factors.push_back(diameter / mesh_size);
+
+            // box_ratio
+
+            const auto & agglo_values = ah.reinit(polytope);
+            const double measure_element =
+              std::accumulate(agglo_values.get_JxW_values().cbegin(),
+                              agglo_values.get_JxW_values().cend(),
+                              0.);
+            box_ratio.push_back(measure_element /
+                                bboxes[polytope->index()].volume());
           }
       }
 
 
 
     // Get all of the local bounding boxes
-    double                               covering_bboxes = 0.;
-    const std::vector<BoundingBox<dim>> &bboxes = ah.get_local_bboxes();
+    double covering_bboxes = 0.;
     for (unsigned int i = 0; i < bboxes.size(); ++i)
       covering_bboxes += bboxes[i].volume();
 
-    const double covering_factor =
+    const double overlap_factor =
       Utilities::MPI::sum(covering_bboxes,
                           ah.get_dof_handler().get_communicator()) /
       GridTools::volume(ah.get_triangulation()); // assuming a linear mapping
 
 
-    return {unformity_factors, circle_ratios, covering_factor};
+
+    return {unformity_factors, circle_ratios, box_ratio, overlap_factor};
 #else
 
     (void)ah;
