@@ -770,7 +770,7 @@ template&lt;int dim, int spacedim = dim&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="reference">Referenced by <a class="el" href="poly__utils_8h_source.html#l00519">dealii::PolyUtils::interpolate_to_fine_grid()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="poly__utils_8h_source.html#l00521">dealii::PolyUtils::interpolate_to_fine_grid()</a>.</p>
 
 </div>
 </div>
@@ -1053,6 +1053,8 @@ template&lt;int dim, int spacedim = dim&gt; </div>
 </div><div class="memdoc">
 <p>Return a constant reference to the <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classDoFHandler.html">DoFHandler</a> underlying the agglomeration. It knows which cell have been agglomerated, and which FE spaces are present on each cell of the triangulation. </p>
 
+<p class="reference">Referenced by <a class="el" href="poly__utils_8h_source.html#l00834">dealii::PolyUtils::compute_quality_metrics()</a>.</p>
+
 </div>
 </div>
 <a id="aa47a47ac05a08a00de4db6b20c3141f2" name="aa47a47ac05a08a00de4db6b20c3141f2"></a>
@@ -1080,7 +1082,7 @@ template&lt;int dim, int spacedim = dim&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="reference">Referenced by <a class="el" href="poly__utils_8h_source.html#l00519">dealii::PolyUtils::interpolate_to_fine_grid()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="poly__utils_8h_source.html#l00521">dealii::PolyUtils::interpolate_to_fine_grid()</a>.</p>
 
 </div>
 </div>
@@ -1136,7 +1138,7 @@ template&lt;int dim, int spacedim = dim&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="reference">Referenced by <a class="el" href="poly__utils_8h_source.html#l00519">dealii::PolyUtils::interpolate_to_fine_grid()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="poly__utils_8h_source.html#l00834">dealii::PolyUtils::compute_quality_metrics()</a>, and <a class="el" href="poly__utils_8h_source.html#l00521">dealii::PolyUtils::interpolate_to_fine_grid()</a>.</p>
 
 </div>
 </div>
@@ -1220,7 +1222,7 @@ template&lt;int dim, int spacedim = dim&gt; </div>
 </div><div class="memdoc">
 <p>Find (if any) the cells that have the given master index. Note that <code>idx</code> is as it can be equal to -1 (meaning that the cell is a master one). </p>
 
-<p class="reference">Referenced by <a class="el" href="poly__utils_8h_source.html#l00519">dealii::PolyUtils::interpolate_to_fine_grid()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="poly__utils_8h_source.html#l00521">dealii::PolyUtils::interpolate_to_fine_grid()</a>.</p>
 
 </div>
 </div>
@@ -1249,7 +1251,7 @@ template&lt;int dim, int spacedim = dim&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="reference">Referenced by <a class="el" href="poly__utils_8h_source.html#l00519">dealii::PolyUtils::interpolate_to_fine_grid()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="poly__utils_8h_source.html#l00834">dealii::PolyUtils::compute_quality_metrics()</a>, and <a class="el" href="poly__utils_8h_source.html#l00521">dealii::PolyUtils::interpolate_to_fine_grid()</a>.</p>
 
 </div>
 </div>
@@ -1375,7 +1377,7 @@ template&lt;typename CellIterator &gt; </div>
 </div><div class="memdoc">
 <p>Helper function to determine whether or not a cell is a master or a slave </p>
 
-<p class="reference">Referenced by <a class="el" href="poly__utils_8h_source.html#l00519">dealii::PolyUtils::interpolate_to_fine_grid()</a>, and <a class="el" href="agglomeration__handler_8cc_source.html#l00801">dealii::internal::AgglomerationHandlerImplementation&lt; dim, spacedim &gt;::reinit_master()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="poly__utils_8h_source.html#l00521">dealii::PolyUtils::interpolate_to_fine_grid()</a>, and <a class="el" href="agglomeration__handler_8cc_source.html#l00801">dealii::internal::AgglomerationHandlerImplementation&lt; dim, spacedim &gt;::reinit_master()</a>.</p>
 
 </div>
 </div>
@@ -1467,7 +1469,7 @@ template&lt;typename CellIterator &gt; </div>
 </div><div class="memdoc">
 <p>Helper function to determine if the given cell is a standard deal.II cell, that is: not master, nor slave. </p>
 
-<p class="reference">Referenced by <a class="el" href="poly__utils_8h_source.html#l00519">dealii::PolyUtils::interpolate_to_fine_grid()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="poly__utils_8h_source.html#l00521">dealii::PolyUtils::interpolate_to_fine_grid()</a>.</p>
 
 </div>
 </div>
@@ -1651,7 +1653,7 @@ template&lt;int dim, int spacedim = dim&gt; </div>
 </div><div class="memdoc">
 <p>Returns an <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classIteratorRange.html">IteratorRange</a> that makes up all the polygonal elements in the mesh. </p>
 
-<p class="reference">Referenced by <a class="el" href="poly__utils_8h_source.html#l00831">dealii::PolyUtils::compute_quality_metrics()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="poly__utils_8h_source.html#l00834">dealii::PolyUtils::compute_quality_metrics()</a>.</p>
 
 </div>
 </div>
@@ -1706,6 +1708,8 @@ template&lt;int dim, int spacedim = dim&gt; </div>
       </table>
 </div><div class="memdoc">
 <p>Construct a finite element space on the agglomeration. </p>
+
+<p class="reference">Referenced by <a class="el" href="poly__utils_8h_source.html#l00834">dealii::PolyUtils::compute_quality_metrics()</a>.</p>
 
 </div>
 </div>
@@ -1957,7 +1961,7 @@ template&lt;int dim, int spacedim = dim&gt; </div>
 
 <p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00505">505</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="poly__utils_8h_source.html#l00519">dealii::PolyUtils::interpolate_to_fine_grid()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="poly__utils_8h_source.html#l00521">dealii::PolyUtils::interpolate_to_fine_grid()</a>.</p>
 
 </div>
 </div>
@@ -3124,7 +3128,7 @@ template&lt;int dim, int spacedim = dim&gt; </div>
 
 <p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00510">510</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="poly__utils_8h_source.html#l00519">dealii::PolyUtils::interpolate_to_fine_grid()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="poly__utils_8h_source.html#l00521">dealii::PolyUtils::interpolate_to_fine_grid()</a>.</p>
 
 </div>
 </div>
@@ -3569,7 +3573,7 @@ template&lt;int dim, int spacedim = dim&gt; </div>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="class_agglomeration_handler.html">AgglomerationHandler</a></li>
-    <li class="footer">Generated on Tue Mar 26 2024 17:29:01 for PolyDEAL by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.10.0 </li>
+    <li class="footer">Generated on Sun Apr 7 2024 15:41:01 for PolyDEAL by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.10.0 </li>
   </ul>
 </div>
 </body>

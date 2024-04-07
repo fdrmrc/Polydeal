@@ -7,7 +7,7 @@ var namespacedealii_1_1_poly_utils =
     [ "Rtree_visitor", "structdealii_1_1_poly_utils_1_1_rtree__visitor.html", "structdealii_1_1_poly_utils_1_1_rtree__visitor" ],
     [ "collect_cells_for_agglomeration", "namespacedealii_1_1_poly_utils.html#a9b1f017e9d2cedf0e4362bf8a7d62419", null ],
     [ "compute_h_orthogonal", "namespacedealii_1_1_poly_utils.html#a692c4e431675a877af2ebcdfa416129b", null ],
-    [ "compute_quality_metrics", "namespacedealii_1_1_poly_utils.html#a8d1ece63def3bff3f7c8baf781066bdd", null ],
+    [ "compute_quality_metrics", "namespacedealii_1_1_poly_utils.html#ac329601a2032214e06afc75f5a983bab", null ],
     [ "constexpr_pow", "namespacedealii_1_1_poly_utils.html#a89da96594fcfe50937b5bd5da3a376e7", null ],
     [ "extract_children_of_level", "namespacedealii_1_1_poly_utils.html#a36f50c815c9532815b4fc1c11a14f5b1", null ],
     [ "interpolate_to_fine_grid", "namespacedealii_1_1_poly_utils.html#ad10be894e09c9fd78712c6e4ad8fad14", null ],
