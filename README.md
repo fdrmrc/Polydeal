@@ -20,7 +20,7 @@ We require:
 
 The library **polyDEAL** employs **deal.II** as main third-party library. As **deal.II** itself depends on other external libraries for many functionalities, we strongly suggest to download and install deal.II following the instructions available at https://www.dealii.org/download.html and https://www.dealii.org/developer/readme.html. The project as a whole depends on the following list of *mandatory* external libraries: **METIS**, **p4est**, **Trilinos**. They should be configured as dependencies of deal.II during the installation phase. 
 
-While *METIS* can be used to partition a triangulation among several processors, in the context of polytopal methods it is heavily employed as an agglomeration strategy to build polytopic elements out of fine grids composed by standard shapes, while *Trilinos* (in particular its multilevel solvers and distributed matrices) is employed as main parallel linear algebra library. We also support novel agglomeration strategies based on the R-tree spatial data structure.
+While *METIS* can be used to partition a triangulation among several processors, in the context of polytopal methods it is heavily used as an agglomeration strategy to build polytopic elements out of fine grids composed by standard shapes, while *Trilinos* (in particular its multilevel solvers and distributed matrices) is employed as main parallel linear algebra library. We also support novel agglomeration strategies based on the R-tree spatial data structure.
 
 
 To enable to computation of some quality metrics, mostly of theoretical interests and not really relevant in application codes, the external library **CGAL** is required. As this is a dependency of *deal.II* as well, it is sufficient to configure deal.II with it.
@@ -46,7 +46,7 @@ cd build/examples
 make
 mpirun -np<N> ./diffusion_reaction
 ```
-where ```N``` is the number of processors you want to employ.
+where ```N``` is the number of processors you want to use.
 
 
 
