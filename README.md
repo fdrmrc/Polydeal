@@ -5,7 +5,7 @@
 [![Doxygen](https://github.com/fdrmrc/Polydeal/actions/workflows/doxygen.yml/badge.svg)](https://github.com/fdrmrc/Polydeal/actions/workflows/doxygen.yml)
 
 
-***PolyDEAL*** is an open source library which aims to provide building blocks for the developement of Polygonal Discontinuous Galerkin methods, using the Finite Element library [**deal.II**](https://dealii.org). It is written in C++ using the C++17 standard. The parallel implementation builds on top builds on the Message Passing Interface (MPI) communication model.
+***PolyDEAL*** is an open source library which aims to provide building blocks for the developement of Polygonal Discontinuous Galerkin methods, using the Finite Element library [**deal.II**](https://dealii.org). It is written in C++ using the C++17 standard. The parallel implementation builds on top of the Message Passing Interface (MPI) communication model.
 
 
 ## Getting started and prerequisites
@@ -26,7 +26,7 @@ While *METIS* can be used to partition a triangulation among several processors,
 To enable to computation of some quality metrics, mostly of theoretical interests and not really relevant in application codes, the external library **CGAL** is required. As this is a dependency of *deal.II* as well, it is sufficient to configure deal.II with it.
 
 ## Building polyDEAL 
-Assuming deal.II (version 9.5 onwards) is installed on your machine and meets the requirements above, all is required to do is:
+Assuming deal.II is installed on your machine and meets the requirements above, all is required to do is:
 
 ```bash
 git clone git@github.com:fdrmrc/Polydeal.git
@@ -40,6 +40,13 @@ being ```N``` is the number of jobs you want to use to compile.
 
 
 ## Examples
+Some example applications are shown in the ```examples/``` directory. To build and run one of the examples, say ```diffusion_reaction.cc```, it is sufficient the following:
+```bash
+cd build/examples
+make
+mpirun -np<N> ./diffusion_reaction
+```
+where ```N``` is the number of processors you want to employ.
 
 
 
