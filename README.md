@@ -1,35 +1,29 @@
-# Polygonal Discontinuous Galerkin (in deal.II)
+# polyDEAL (Polygonal Discontinuous Galerkin in deal.II)
 
 [![GitHub CI](https://github.com/fdrmrc/Polydeal/actions/workflows/tests.yml/badge.svg)](https://github.com/fdrmrc/Polydeal/actions/workflows/tests.yml)
 [![Indent](https://github.com/fdrmrc/Polydeal/actions/workflows/indentation.yml/badge.svg)](https://github.com/fdrmrc/Polydeal/actions/workflows/indentation.yml)
 [![Doxygen](https://github.com/fdrmrc/Polydeal/actions/workflows/doxygen.yml/badge.svg)](https://github.com/fdrmrc/Polydeal/actions/workflows/doxygen.yml)
 
 
-***PolyDEAL*** is an open source library which aims to provide building blocks for the developement of Polygonal Discontinuous Galerkin methods, using the Finite Element library [**deal.II**](https://dealii.org). It is written in C++ using the C++17 standard. 
+***PolyDEAL*** is an open source library which aims to provide building blocks for the developement of Polygonal Discontinuous Galerkin methods, using the Finite Element library [**deal.II**](https://dealii.org). It is written in C++ using the C++17 standard. The parallel implementation builds on top builds on the Message Passing Interface (MPI) communication model.
 
 
 ## Getting started and prerequisites
 
-We require a **cmake** version greater than 2.8.
-Furthermore, we have successfully compiled and tested our library with the following compilers:
--  **gcc** versions  >= 9.
--  **clang** versions >= 15
--  **icc** (Intel compiler) 2021.2
+We require:
+- **cmake** version greater than 2.8.
+- One of the following compilers:
+    -  **gcc** version  >= 9.
+    -  **clang** version >= 15
+    -  **icc** (Intel compiler) 2021.2
+- **deal.II** version >=9.5.
+
+The library **polyDEAL** employs **deal.II** as main third-party library. As **deal.II** itself depends on other external libraries for many functionalities, we strongly suggest to download and install deal.II following the instructions available at https://www.dealii.org/download.html and https://www.dealii.org/developer/readme.html. The project as a whole depends on the following list of *mandatory* external libraries: **METIS**, **p4est**, **Trilinos**. They should be configured as dependencies of deal.II during the installation phase. 
+
+While *METIS* can be used to partition a triangulation among several processors, in the context of polytopal methods it is heavily employed as an agglomeration strategy to build polytopic elements out of fine grids composed by standard shapes, while *Trilinos* (in particular its multilevel solvers and distributed matrices) is employed as main parallel linear algebra library. We also support novel agglomeration strategies based on the R-tree spatial data structure.
 
 
-
-The library **polyDEAL** employs **deal.II** as main third-party library. As **deal.II** itself depends on other external libraries for many functionalities, we strongly suggest to download and install deal.II following the instructions available at https://www.dealii.org/download.html and https://www.dealii.org/developer/readme.html. The project as a whole depends on the following list of *mandatory* external libraries which can be configured as dependencies of deal.II during the installation phase:
-### METIS
-This graph-partitioner *METIS* can be used to partition a triangulation among several processors. In the context of polytopal methods, it has been heavily employed as an agglomeration strategy to build polytopic elements out of a fine grids composed by standard shapes.
-
-### p4est
-*p4est* is a library that manages meshes that are distributed across multiple processors using a space-filling curve approach. 
-
-### Trilinos
-*Trilinos* (in particular its multilevel solvers and distributed matrices) is employed as main parallel linear algebra library.
-
-
-To enable to computation of some quality metrics, mostly of theoretical interests and not really relevant in application codes, the external library **CGAL** is required. As this is a dependency of *deal.II* as well, it is sufficient to configure deal.II with it. (`DEAL_II_WITH_CGAL=ON`).
+To enable to computation of some quality metrics, mostly of theoretical interests and not really relevant in application codes, the external library **CGAL** is required. As this is a dependency of *deal.II* as well, it is sufficient to configure deal.II with it.
 
 ## Building polyDEAL 
 Assuming deal.II (version 9.5 onwards) is installed on your machine and meets the requirements above, all is required to do is:
@@ -42,7 +36,12 @@ cd build/
 cmake -DDEAL_II_DIR=/path/to/deal.II ..
 make -j<N>
 ```
-being N is the number of jobs you want to use to compile. 
+being ```N``` is the number of jobs you want to use to compile.
+
+
+## Examples
+
+
 
 ## Documentation
 A Doxygen generated documentation is built and deployed at each merge to the main branch. You can find the latest documentation here: [https://fdrmrc.github.io/Polydeal/](https://fdrmrc.github.io/Polydeal/).
