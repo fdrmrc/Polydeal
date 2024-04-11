@@ -593,17 +593,6 @@ namespace dealii::PolyUtils
                                     agglo_dof_indices.end());
                 }
             }
-          else if (agglomeration_handler.is_standard_cell(cell))
-            {
-              cell->get_dof_indices(agglo_dof_indices);
-              const auto standard_output =
-                cell->as_dof_handler_iterator(*output_dh);
-              standard_output->get_dof_indices(standard_dof_indices);
-              for (const auto row : standard_dof_indices)
-                dsp.add_entries(row,
-                                agglo_dof_indices.begin(),
-                                agglo_dof_indices.end());
-            }
         }
 
 
@@ -658,24 +647,6 @@ namespace dealii::PolyUtils
                                                  agglo_dof_indices,
                                                  interpolation_matrix);
                   }
-              }
-            else if (agglomeration_handler.is_standard_cell(cell))
-              {
-                cell->get_dof_indices(agglo_dof_indices);
-
-                const auto standard_output =
-                  cell->as_dof_handler_iterator(*output_dh);
-
-                standard_output->get_dof_indices(standard_dof_indices);
-                output_fe_values.reinit(standard_output);
-
-                local_matrix = 0.;
-                for (const auto i : output_fe_values.dof_indices())
-                  local_matrix(i, i) = 1.;
-                c.distribute_local_to_global(local_matrix,
-                                             standard_dof_indices,
-                                             agglo_dof_indices,
-                                             interpolation_matrix);
               }
           }
     };

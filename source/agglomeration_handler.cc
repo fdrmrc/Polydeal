@@ -44,9 +44,6 @@ typename AgglomerationHandler<dim, spacedim>::agglomeration_iterator
 AgglomerationHandler<dim, spacedim>::define_agglomerate(
   const AgglomerationContainer &cells)
 {
-  Assert(master_slave_relationships.size() > 0,
-         ExcMessage("Before calling this function, be sure that the "
-                    "constructor of this object has been called."));
   Assert(cells.size() > 0, ExcMessage("No cells to be agglomerated."));
 
   if (cells.size() == 1)
@@ -162,12 +159,12 @@ AgglomerationHandler<dim, spacedim>::initialize_agglomeration_data(
   euler_dh.distribute_dofs(*euler_fe);
   euler_vector.reinit(euler_dh.n_dofs());
 
-  master_slave_relationships.resize(tria->n_active_cells(), -2);
+  // master_slave_relationships.resize(tria->n_active_cells(), -2);
   master_slave_relationships_iterators.resize(tria->n_active_cells(), {});
-  if (n_agglomerations > 0)
-    std::fill(master_slave_relationships.begin(),
-              master_slave_relationships.end(),
-              -2); // identify all the tria with standard deal.II cells.
+  // if (n_agglomerations > 0)
+  //   std::fill(master_slave_relationships.begin(),
+  //             master_slave_relationships.end(),
+  //             -2); // identify all the tria with standard deal.II cells.
 
   polytope_cache.clear();
   bboxes.clear();
@@ -462,9 +459,6 @@ AgglomerationHandler<dim, spacedim>::initialize_hp_structure()
           cell->set_active_fe_index(CellAgglomerationType::master);
         else if (is_slave_cell(cell))
           cell->set_active_fe_index(CellAgglomerationType::slave); // slave cell
-        else
-          cell->set_active_fe_index(
-            CellAgglomerationType::standard); // standard
       }
 
   agglo_dh.distribute_dofs(fe_collection);
@@ -929,11 +923,9 @@ namespace dealii
           &                                        master_cell,
         const AgglomerationHandler<dim, spacedim> &handler)
       {
-        Assert(
-          handler
-              .master_slave_relationships[master_cell->active_cell_index()] ==
-            -1,
-          ExcMessage("The present cell is not a master one."));
+        Assert(handler.master_slave_relationships.at(
+                 master_cell->active_cell_index()) == -1,
+               ExcMessage("The present cell is not a master one."));
 
         const auto &agglomeration = handler.get_agglomerate(master_cell);
         const types::global_cell_index current_polytope_index =
