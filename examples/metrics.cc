@@ -285,7 +285,7 @@ Mesh<dim>::define_agglomerates()
     for (const auto &cell : tria.active_cell_iterators())
       {
         agglomerated[cell->active_cell_index()] =
-          ah->get_relationships()[cell->active_cell_index()];
+          ah->get_relationships().at(cell->active_cell_index());
         agglo_idx[cell->active_cell_index()] = cell->subdomain_id();
       }
     data_out.add_data_vector(agglomerated,

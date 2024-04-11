@@ -159,12 +159,7 @@ AgglomerationHandler<dim, spacedim>::initialize_agglomeration_data(
   euler_dh.distribute_dofs(*euler_fe);
   euler_vector.reinit(euler_dh.n_dofs());
 
-  // master_slave_relationships.resize(tria->n_active_cells(), -2);
   master_slave_relationships_iterators.resize(tria->n_active_cells(), {});
-  // if (n_agglomerations > 0)
-  //   std::fill(master_slave_relationships.begin(),
-  //             master_slave_relationships.end(),
-  //             -2); // identify all the tria with standard deal.II cells.
 
   polytope_cache.clear();
   bboxes.clear();
