@@ -31,6 +31,7 @@ var class_agglomeration_handler =
     [ "get_interface", "class_agglomeration_handler.html#abe6a9923b3556d00f71f911e147f86cb", null ],
     [ "get_local_bboxes", "class_agglomeration_handler.html#a895d98dbcebb5d11fd45d8d42a36d51c", null ],
     [ "get_master_idx_of_cell", "class_agglomeration_handler.html#a16c253f23f53a1c14a03a1cbba4e9bd6", null ],
+    [ "get_mesh_size", "class_agglomeration_handler.html#aebbc253ab1fcf61502c34e7941f70cc0", null ],
     [ "get_relationships", "class_agglomeration_handler.html#a2f87454e1998f253d9d2c843a811653c", null ],
     [ "get_slaves_of_idx", "class_agglomeration_handler.html#a12e67f57d0752e50c56a55d7de72e983", null ],
     [ "get_triangulation", "class_agglomeration_handler.html#a7709e59ad857c81d552b394ddc2b7c3f", null ],
