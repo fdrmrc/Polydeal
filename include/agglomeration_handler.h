@@ -492,7 +492,8 @@ public:
   DoFHandler<dim, spacedim> output_dh;
 
 
-  std::unique_ptr<MappingFEField<dim, spacedim> /*, Vector<double>*/>
+  std::unique_ptr<
+    MappingFEField<dim, spacedim, LinearAlgebra::distributed::Vector<double>>>
     euler_mapping;
 
 
@@ -788,7 +789,7 @@ private:
   /**
    * Eulerian vector describing the new cells obtained by the bounding boxes
    */
-  Vector<double> euler_vector;
+  LinearAlgebra::distributed::Vector<double> euler_vector;
 
 
   /**

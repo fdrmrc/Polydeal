@@ -157,7 +157,15 @@ AgglomerationHandler<dim, spacedim>::initialize_agglomeration_data(
   euler_fe = std::make_unique<FESystem<dim, spacedim>>(dummy_dg, spacedim);
   euler_dh.reinit(*tria);
   euler_dh.distribute_dofs(*euler_fe);
-  euler_vector.reinit(euler_dh.n_dofs());
+
+  if (dynamic_cast<const dealii::parallel::TriangulationBase<dim, spacedim> *>(
+        &*tria))
+    {
+      const IndexSet &local_eulerian_index_set = euler_dh.locally_owned_dofs();
+      euler_vector.reinit(local_eulerian_index_set, communicator);
+    }
+  else
+    euler_vector.reinit(euler_dh.n_dofs());
 
   polytope_cache.clear();
   bboxes.clear();
@@ -276,7 +284,9 @@ AgglomerationHandler<dim, spacedim>::setup_connectivity_of_agglomeration()
   Assert(
     agglo_dh.n_dofs() > 0,
     ExcMessage(
-      "The DoFHandler associated to the agglomeration has not been initialized. It's likely that you forgot to distribute the DoFs, i.e. you may want to check if a call to `initialize_hp_structure()` has been done."));
+      "The DoFHandler associated to the agglomeration has not been initialized."
+      "It's likely that you forgotto distribute the DoFs. You may want"
+      "to check if a call to `initialize_hp_structure()` has been done."));
 
   number_of_agglomerated_faces.resize(master2polygon.size(), 0);
   for (const auto &cell : master_cells_container)
@@ -455,8 +465,9 @@ AgglomerationHandler<dim, spacedim>::initialize_hp_structure()
       }
 
   agglo_dh.distribute_dofs(fe_collection);
-  euler_mapping =
-    std::make_unique<MappingFEField<dim, spacedim>>(euler_dh, euler_vector);
+  euler_mapping = std::make_unique<
+    MappingFEField<dim, spacedim, LinearAlgebra::distributed::Vector<double>>>(
+    euler_dh, euler_vector);
 }
 
 
