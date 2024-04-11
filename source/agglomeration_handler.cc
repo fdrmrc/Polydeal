@@ -159,8 +159,6 @@ AgglomerationHandler<dim, spacedim>::initialize_agglomeration_data(
   euler_dh.distribute_dofs(*euler_fe);
   euler_vector.reinit(euler_dh.n_dofs());
 
-  master_slave_relationships_iterators.resize(tria->n_active_cells(), {});
-
   polytope_cache.clear();
   bboxes.clear();
 
@@ -774,24 +772,6 @@ AgglomerationHandler<dim, spacedim>::setup_ghost_polytopes()
 
 
 
-template <int dim, int spacedim>
-double
-AgglomerationHandler<dim, spacedim>::get_mesh_size() const
-{
-  double local_hmax = 0.;
-  double h_new      = std::numeric_limits<double>::min();
-  for (const auto &polytope : polytope_iterators())
-    if (polytope->is_locally_owned())
-      {
-        h_new = polytope->diameter();
-        if (h_new > local_hmax)
-          local_hmax = h_new;
-      }
-  return Utilities::MPI::max(local_hmax, communicator);
-}
-
-
-
 namespace dealii
 {
   namespace internal
@@ -985,8 +965,8 @@ namespace dealii
 
                         // master cell for the neighboring polytope
                         const auto &master_of_neighbor =
-                          handler.master_slave_relationships_iterators
-                            [neighboring_cell_index];
+                          handler.master_slave_relationships_iterators.at(
+                            neighboring_cell_index);
 
                         const auto nof = cell->neighbor_of_neighbor(f);
 

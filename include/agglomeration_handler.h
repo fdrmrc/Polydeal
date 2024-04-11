@@ -649,7 +649,7 @@ private:
    *  Same as the one above, but storing cell iterators rather than indices.
    *
    */
-  std::vector<typename Triangulation<dim, spacedim>::active_cell_iterator>
+  std::map<types::global_cell_index, typename Triangulation<dim, spacedim>::active_cell_iterator>
     master_slave_relationships_iterators;
 
   using ScratchData = MeshWorker::ScratchData<dim, spacedim>;
@@ -1039,7 +1039,7 @@ inline typename Triangulation<dim, spacedim>::active_cell_iterator &
 AgglomerationHandler<dim, spacedim>::is_slave_cell_of(
   const typename Triangulation<dim, spacedim>::active_cell_iterator &cell)
 {
-  return master_slave_relationships_iterators[cell->active_cell_index()];
+  return master_slave_relationships_iterators.at(cell->active_cell_index());
 }
 
 
