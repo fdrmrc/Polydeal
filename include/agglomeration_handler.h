@@ -649,7 +649,8 @@ private:
    *  Same as the one above, but storing cell iterators rather than indices.
    *
    */
-  std::map<types::global_cell_index, typename Triangulation<dim, spacedim>::active_cell_iterator>
+  std::map<types::global_cell_index,
+           typename Triangulation<dim, spacedim>::active_cell_iterator>
     master_slave_relationships_iterators;
 
   using ScratchData = MeshWorker::ScratchData<dim, spacedim>;
