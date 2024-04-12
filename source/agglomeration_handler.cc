@@ -285,7 +285,7 @@ AgglomerationHandler<dim, spacedim>::setup_connectivity_of_agglomeration()
     agglo_dh.n_dofs() > 0,
     ExcMessage(
       "The DoFHandler associated to the agglomeration has not been initialized."
-      "It's likely that you forgotto distribute the DoFs. You may want"
+      "It's likely that you forgot to distribute the DoFs. You may want"
       "to check if a call to `initialize_hp_structure()` has been done."));
 
   number_of_agglomerated_faces.resize(master2polygon.size(), 0);

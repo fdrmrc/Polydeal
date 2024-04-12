@@ -526,10 +526,13 @@ DiffusionReactionProblem<dim>::assemble_system()
                            QGauss<dim - 1>(face_quadrature_degree),
                            update_JxW_values);
 
-  ah->distribute_agglomerated_dofs(fe_dg);
-
+  double                 start_setup, stop_setup;
   DynamicSparsityPattern sparsity_pattern;
+  start_setup = MPI_Wtime();
+  ah->distribute_agglomerated_dofs(fe_dg);
   ah->create_agglomeration_sparsity_pattern(sparsity_pattern);
+  stop_setup = MPI_Wtime();
+
 
   locally_owned_dofs    = ah->agglo_dh.locally_owned_dofs();
   locally_relevant_dofs = DoFTools::extract_locally_relevant_dofs(ah->agglo_dh);
