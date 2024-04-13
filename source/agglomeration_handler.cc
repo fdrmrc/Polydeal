@@ -51,9 +51,11 @@ AgglomerationHandler<dim, spacedim>::define_agglomerate(
 
   // First index drives the selection of the master cell. After that, store the
   // master cell.
+  const types::global_cell_index global_master_idx =
+    cells[0]->global_active_cell_index();
   const types::global_cell_index master_idx = cells[0]->active_cell_index();
   master_cells_container.push_back(cells[0]);
-  master_slave_relationships[master_idx] = -1;
+  master_slave_relationships[global_master_idx] = -1;
 
   // Store slave cells and save the relationship with the parent
   std::vector<typename Triangulation<dim, spacedim>::active_cell_iterator>
@@ -63,8 +65,8 @@ AgglomerationHandler<dim, spacedim>::define_agglomerate(
   for (auto it = ++cells.begin(); it != cells.end(); ++it)
     {
       slaves.push_back(*it);
-      master_slave_relationships[(*it)->active_cell_index()] =
-        master_idx; // mark each slave
+      master_slave_relationships[(*it)->global_active_cell_index()] =
+        global_master_idx; // mark each slave
       master_slave_relationships_iterators[(*it)->active_cell_index()] =
         cells[0];
 
@@ -158,14 +160,21 @@ AgglomerationHandler<dim, spacedim>::initialize_agglomeration_data(
   euler_dh.reinit(*tria);
   euler_dh.distribute_dofs(*euler_fe);
 
-  if (dynamic_cast<const dealii::parallel::TriangulationBase<dim, spacedim> *>(
-        &*tria))
+  if (const auto parallel_tria = dynamic_cast<
+        const dealii::parallel::TriangulationBase<dim, spacedim> *>(&*tria))
     {
+      const std::weak_ptr<const Utilities::MPI::Partitioner> cells_partitioner =
+        parallel_tria->global_active_cell_index_partitioner();
+      master_slave_relationships.reinit(cells_partitioner.lock(), communicator);
+
       const IndexSet &local_eulerian_index_set = euler_dh.locally_owned_dofs();
       euler_vector.reinit(local_eulerian_index_set, communicator);
     }
   else
-    euler_vector.reinit(euler_dh.n_dofs());
+    {
+      master_slave_relationships.reinit(tria->n_active_cells(), MPI_COMM_SELF);
+      euler_vector.reinit(euler_dh.n_dofs());
+    }
 
   polytope_cache.clear();
   bboxes.clear();
@@ -909,8 +918,8 @@ namespace dealii
           &                                        master_cell,
         const AgglomerationHandler<dim, spacedim> &handler)
       {
-        Assert(handler.master_slave_relationships.at(
-                 master_cell->active_cell_index()) == -1,
+        Assert(handler.master_slave_relationships
+                   [master_cell->global_active_cell_index()] == -1,
                ExcMessage("The present cell is not a master one."));
 
         const auto &agglomeration = handler.get_agglomerate(master_cell);
