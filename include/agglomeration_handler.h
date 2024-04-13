@@ -1054,7 +1054,7 @@ AgglomerationHandler<dim, spacedim>::get_master_idx_of_cell(
 {
   auto idx = master_slave_relationships[cell->global_active_cell_index()];
   if (idx == -1)
-    return cell->active_cell_index();
+    return cell->global_active_cell_index();
   else
     return idx;
 }
