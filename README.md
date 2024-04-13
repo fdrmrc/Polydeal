@@ -13,12 +13,12 @@
 We require:
 - **cmake** version greater than 2.8.
 - One of the following compilers:
-    -  **gcc** version  >= 9.
+    -  **gcc** version  >= 9.4.0
     -  **clang** version >= 15
     -  **icc** (Intel compiler) 2021.2
-- **deal.II** version >=9.5.
-
-The library **polyDEAL** employs **deal.II** as main third-party library. As **deal.II** itself depends on other external libraries for many functionalities, we strongly suggest to download and install deal.II following the instructions available at https://www.dealii.org/download.html and https://www.dealii.org/developer/readme.html. The project as a whole depends on the following list of *mandatory* external libraries: **METIS**, **p4est**, **Trilinos**. They should be configured as dependencies of deal.II during the installation phase. 
+- **openMPI** version  >= 4.03.
+- **deal.II** version >=9.5
+The library **polyDEAL** employs **deal.II** as main third-party library. As **deal.II** itself depends on other external libraries for many functionalities, we strongly suggest to download and install deal.II following the instructions available at https://www.dealii.org/download.html and https://www.dealii.org/developer/readme.html. The minimal set of other external libraries that we require are: **METIS**, **p4est**, **Trilinos**. All of them should be configured with MPI support during the installation phase of deal.II. 
 
 While *METIS* can be used to partition a triangulation among several processors, in the context of polytopal methods it is heavily used as an agglomeration strategy to build polytopic elements out of fine grids composed by standard shapes, while *Trilinos* (in particular its multilevel solvers and distributed matrices) is employed as main parallel linear algebra library. We also support novel agglomeration strategies based on the R-tree spatial data structure.
 
@@ -42,6 +42,7 @@ being ```N``` is the number of jobs you want to use to compile.
 ## Examples
 Some example applications are shown in the ```examples/``` directory. To build and run one of the examples, say ```diffusion_reaction.cc```, it is sufficient the following:
 ```bash
+// assume you have a build generated as above
 cd build/examples
 make
 mpirun -np<N> ./diffusion_reaction
