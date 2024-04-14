@@ -397,7 +397,7 @@ DiffusionReactionProblem<dim>::make_fine_grid()
   grid_in.attach_triangulation(tria);
   std::ifstream gmsh_file("../../meshes/piston_3.inp"); // piston mesh
   grid_in.read_abaqus(gmsh_file);
-  // tria.refine_global(1);
+  //tria.refine_global(1);
 
 
   // Partition serial triangulation:
@@ -526,10 +526,13 @@ DiffusionReactionProblem<dim>::assemble_system()
                            QGauss<dim - 1>(face_quadrature_degree),
                            update_JxW_values);
 
-  ah->distribute_agglomerated_dofs(fe_dg);
-
+  double                 start_setup, stop_setup;
   DynamicSparsityPattern sparsity_pattern;
+  start_setup = MPI_Wtime();
+  ah->distribute_agglomerated_dofs(fe_dg);
   ah->create_agglomeration_sparsity_pattern(sparsity_pattern);
+  stop_setup = MPI_Wtime();
+
 
   locally_owned_dofs    = ah->agglo_dh.locally_owned_dofs();
   locally_relevant_dofs = DoFTools::extract_locally_relevant_dofs(ah->agglo_dh);
@@ -937,8 +940,8 @@ main(int argc, char *argv[])
 
   const unsigned int reaction_coefficient = 0.;
   for (const AgglomerationData &agglomeration_strategy :
-       {metis_data, rtree_data})
-    for (unsigned int degree : {1, 2, 3, 4})
+       {metis_data})
+    for (unsigned int degree : {2})
       {
         DiffusionReactionProblem<dim> problem(agglomeration_strategy,
                                               degree,
