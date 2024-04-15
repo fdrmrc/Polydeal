@@ -44,9 +44,6 @@ typename AgglomerationHandler<dim, spacedim>::agglomeration_iterator
 AgglomerationHandler<dim, spacedim>::define_agglomerate(
   const AgglomerationContainer &cells)
 {
-  Assert(master_slave_relationships.size() > 0,
-         ExcMessage("Before calling this function, be sure that the "
-                    "constructor of this object has been called."));
   Assert(cells.size() > 0, ExcMessage("No cells to be agglomerated."));
 
   if (cells.size() == 1)
@@ -54,9 +51,11 @@ AgglomerationHandler<dim, spacedim>::define_agglomerate(
 
   // First index drives the selection of the master cell. After that, store the
   // master cell.
+  const types::global_cell_index global_master_idx =
+    cells[0]->global_active_cell_index();
   const types::global_cell_index master_idx = cells[0]->active_cell_index();
   master_cells_container.push_back(cells[0]);
-  master_slave_relationships[master_idx] = -1;
+  master_slave_relationships[global_master_idx] = -1;
 
   // Store slave cells and save the relationship with the parent
   std::vector<typename Triangulation<dim, spacedim>::active_cell_iterator>
@@ -66,8 +65,8 @@ AgglomerationHandler<dim, spacedim>::define_agglomerate(
   for (auto it = ++cells.begin(); it != cells.end(); ++it)
     {
       slaves.push_back(*it);
-      master_slave_relationships[(*it)->active_cell_index()] =
-        master_idx; // mark each slave
+      master_slave_relationships[(*it)->global_active_cell_index()] =
+        global_master_idx; // mark each slave
       master_slave_relationships_iterators[(*it)->active_cell_index()] =
         cells[0];
 
@@ -160,14 +159,22 @@ AgglomerationHandler<dim, spacedim>::initialize_agglomeration_data(
   euler_fe = std::make_unique<FESystem<dim, spacedim>>(dummy_dg, spacedim);
   euler_dh.reinit(*tria);
   euler_dh.distribute_dofs(*euler_fe);
-  euler_vector.reinit(euler_dh.n_dofs());
 
-  master_slave_relationships.resize(tria->n_active_cells(), -2);
-  master_slave_relationships_iterators.resize(tria->n_active_cells(), {});
-  if (n_agglomerations > 0)
-    std::fill(master_slave_relationships.begin(),
-              master_slave_relationships.end(),
-              -2); // identify all the tria with standard deal.II cells.
+  if (const auto parallel_tria = dynamic_cast<
+        const dealii::parallel::TriangulationBase<dim, spacedim> *>(&*tria))
+    {
+      const std::weak_ptr<const Utilities::MPI::Partitioner> cells_partitioner =
+        parallel_tria->global_active_cell_index_partitioner();
+      master_slave_relationships.reinit(cells_partitioner.lock(), communicator);
+
+      const IndexSet &local_eulerian_index_set = euler_dh.locally_owned_dofs();
+      euler_vector.reinit(local_eulerian_index_set, communicator);
+    }
+  else
+    {
+      master_slave_relationships.reinit(tria->n_active_cells(), MPI_COMM_SELF);
+      euler_vector.reinit(euler_dh.n_dofs());
+    }
 
   polytope_cache.clear();
   bboxes.clear();
@@ -286,7 +293,9 @@ AgglomerationHandler<dim, spacedim>::setup_connectivity_of_agglomeration()
   Assert(
     agglo_dh.n_dofs() > 0,
     ExcMessage(
-      "The DoFHandler associated to the agglomeration has not been initialized. It's likely that you forgot to distribute the DoFs, i.e. you may want to check if a call to `initialize_hp_structure()` has been done."));
+      "The DoFHandler associated to the agglomeration has not been initialized."
+      "It's likely that you forgot to distribute the DoFs. You may want"
+      "to check if a call to `initialize_hp_structure()` has been done."));
 
   number_of_agglomerated_faces.resize(master2polygon.size(), 0);
   for (const auto &cell : master_cells_container)
@@ -462,14 +471,12 @@ AgglomerationHandler<dim, spacedim>::initialize_hp_structure()
           cell->set_active_fe_index(CellAgglomerationType::master);
         else if (is_slave_cell(cell))
           cell->set_active_fe_index(CellAgglomerationType::slave); // slave cell
-        else
-          cell->set_active_fe_index(
-            CellAgglomerationType::standard); // standard
       }
 
   agglo_dh.distribute_dofs(fe_collection);
-  euler_mapping =
-    std::make_unique<MappingFEField<dim, spacedim>>(euler_dh, euler_vector);
+  euler_mapping = std::make_unique<
+    MappingFEField<dim, spacedim, LinearAlgebra::distributed::Vector<double>>>(
+    euler_dh, euler_vector);
 }
 
 
@@ -785,24 +792,6 @@ AgglomerationHandler<dim, spacedim>::setup_ghost_polytopes()
 
 
 
-template <int dim, int spacedim>
-double
-AgglomerationHandler<dim, spacedim>::get_mesh_size() const
-{
-  double local_hmax = 0.;
-  double h_new      = std::numeric_limits<double>::min();
-  for (const auto &polytope : polytope_iterators())
-    if (polytope->is_locally_owned())
-      {
-        h_new = polytope->diameter();
-        if (h_new > local_hmax)
-          local_hmax = h_new;
-      }
-  return Utilities::MPI::max(local_hmax, communicator);
-}
-
-
-
 namespace dealii
 {
   namespace internal
@@ -929,11 +918,9 @@ namespace dealii
           &                                        master_cell,
         const AgglomerationHandler<dim, spacedim> &handler)
       {
-        Assert(
-          handler
-              .master_slave_relationships[master_cell->active_cell_index()] ==
-            -1,
-          ExcMessage("The present cell is not a master one."));
+        Assert(handler.master_slave_relationships
+                   [master_cell->global_active_cell_index()] == -1,
+               ExcMessage("The present cell is not a master one."));
 
         const auto &agglomeration = handler.get_agglomerate(master_cell);
         const types::global_cell_index current_polytope_index =
@@ -998,8 +985,8 @@ namespace dealii
 
                         // master cell for the neighboring polytope
                         const auto &master_of_neighbor =
-                          handler.master_slave_relationships_iterators
-                            [neighboring_cell_index];
+                          handler.master_slave_relationships_iterators.at(
+                            neighboring_cell_index);
 
                         const auto nof = cell->neighbor_of_neighbor(f);
 

@@ -35,6 +35,7 @@
 #include <deal.II/hp/fe_collection.h>
 
 #include <deal.II/lac/dynamic_sparsity_pattern.h>
+#include <deal.II/lac/la_parallel_vector.h>
 #include <deal.II/lac/sparse_matrix.h>
 #include <deal.II/lac/sparsity_pattern.h>
 #include <deal.II/lac/trilinos_sparse_matrix.h>
@@ -66,6 +67,7 @@ namespace dealii
     class AgglomerationHandlerImplementation;
   } // namespace internal
 } // namespace dealii
+
 
 
 /**
@@ -172,9 +174,8 @@ public:
 
   enum CellAgglomerationType
   {
-    master   = 0,
-    slave    = 1,
-    standard = 2
+    master = 0,
+    slave  = 1
   };
 
 
@@ -262,7 +263,6 @@ public:
 
     fe_collection.push_back(*fe);                         // master
     fe_collection.push_back(FE_Nothing<dim, spacedim>()); // slave
-    fe_collection.push_back(*fe);                         // standard
 
     initialize_hp_structure();
 
@@ -310,7 +310,6 @@ public:
   /**
    * Store internally that the given cells are agglomerated. The convenction we
    * take is the following:
-   * -2: default value, standard deal.II cell
    * -1: cell is a master cell
    *
    * @note cells are assumed to be adjacent one to each other, and no check
@@ -351,15 +350,6 @@ public:
   is_master_cell(const CellIterator &cell) const;
 
   /**
-   * Helper function to determine if the given cell is a standard deal.II cell,
-   * that is: not master, nor slave.
-   *
-   */
-  template <typename CellIterator>
-  inline bool
-  is_standard_cell(const CellIterator &cell) const;
-
-  /**
    * Find (if any) the cells that have the given master index. Note that `idx`
    * is as it can be equal to -1 (meaning that the cell is a master one).
    */
@@ -368,7 +358,7 @@ public:
   get_slaves_of_idx(types::global_cell_index idx) const;
 
 
-  inline const std::vector<long int> &
+  inline const LinearAlgebra::distributed::Vector<float> &
   get_relationships() const;
 
   /**
@@ -395,7 +385,8 @@ public:
     for (const auto &cell : euler_dh.active_cell_iterators())
       out << "Cell with index: " << cell->active_cell_index()
           << " has associated value: "
-          << master_slave_relationships[cell->active_cell_index()] << std::endl;
+          << master_slave_relationships[cell->global_active_cell_index()]
+          << std::endl;
   }
 
   /**
@@ -414,23 +405,12 @@ public:
   n_agglomerates() const;
 
   /**
-   * Return the number of agglomerated faces for a generic deal.II cell. If it's
-   * a standard cell, the result is 0.
+   * Return the number of agglomerated faces for a generic deal.II cell.
    */
   unsigned int
   n_agglomerated_faces_per_cell(
     const typename Triangulation<dim, spacedim>::active_cell_iterator &cell)
     const;
-
-  /**
-   * Return, for a cell, the number of faces. In case the cell is a standard
-   * cell, then the number of faces is the classical one. If it's a master cell,
-   * then it returns the number of faces of the agglomeration identified by the
-   * master cell itself.
-   */
-  unsigned int
-  n_faces(
-    const typename DoFHandler<dim, spacedim>::active_cell_iterator &cell) const;
 
   /**
    * Construct a finite element space on the agglomeration.
@@ -513,7 +493,8 @@ public:
   DoFHandler<dim, spacedim> output_dh;
 
 
-  std::unique_ptr<MappingFEField<dim, spacedim> /*, Vector<double>*/>
+  std::unique_ptr<
+    MappingFEField<dim, spacedim, LinearAlgebra::distributed::Vector<double>>>
     euler_mapping;
 
 
@@ -661,17 +642,17 @@ private:
   /**
    * Vector of indices such that v[cell->active_cell_index()] returns
    * { -1 if `cell` is a master cell
-   * { -2 if `cell` is a standard deal.II cell
    * { `cell_master->active_cell_index()`, i.e. the index of the master cell if
    * `cell` is a slave cell.
    */
-  std::vector<long int> master_slave_relationships;
+  LinearAlgebra::distributed::Vector<float> master_slave_relationships;
 
   /**
    *  Same as the one above, but storing cell iterators rather than indices.
    *
    */
-  std::vector<typename Triangulation<dim, spacedim>::active_cell_iterator>
+  std::map<types::global_cell_index,
+           typename Triangulation<dim, spacedim>::active_cell_iterator>
     master_slave_relationships_iterators;
 
   using ScratchData = MeshWorker::ScratchData<dim, spacedim>;
@@ -809,11 +790,11 @@ private:
   /**
    * Eulerian vector describing the new cells obtained by the bounding boxes
    */
-  Vector<double> euler_vector;
+  LinearAlgebra::distributed::Vector<double> euler_vector;
 
 
   /**
-   * Use this in reinit(cell) for standard (non-agglomerated) standard cells,
+   * Use this in reinit(cell) for  (non-agglomerated, standard)  cells,
    * and return the result of scratch.reinit(cell) for cells
    */
   mutable std::unique_ptr<ScratchData> standard_scratch;
@@ -945,7 +926,7 @@ AgglomerationHandler<dim, spacedim>::get_interface() const
 
 
 template <int dim, int spacedim>
-inline const std::vector<long int> &
+inline const LinearAlgebra::distributed::Vector<float> &
 AgglomerationHandler<dim, spacedim>::get_relationships() const
 {
   return master_slave_relationships;
@@ -993,18 +974,7 @@ inline bool
 AgglomerationHandler<dim, spacedim>::is_master_cell(
   const CellIterator &cell) const
 {
-  return master_slave_relationships[cell->active_cell_index()] == -1;
-}
-
-
-
-template <int dim, int spacedim>
-template <typename CellIterator>
-inline bool
-AgglomerationHandler<dim, spacedim>::is_standard_cell(
-  const CellIterator &cell) const
-{
-  return master_slave_relationships[cell->active_cell_index()] == -2;
+  return master_slave_relationships[cell->global_active_cell_index()] == -1;
 }
 
 
@@ -1019,7 +989,7 @@ inline bool
 AgglomerationHandler<dim, spacedim>::is_slave_cell(
   const CellIterator &cell) const
 {
-  return master_slave_relationships[cell->active_cell_index()] >= 0;
+  return master_slave_relationships[cell->global_active_cell_index()] >= 0;
 }
 
 
@@ -1072,7 +1042,7 @@ inline typename Triangulation<dim, spacedim>::active_cell_iterator &
 AgglomerationHandler<dim, spacedim>::is_slave_cell_of(
   const typename Triangulation<dim, spacedim>::active_cell_iterator &cell)
 {
-  return master_slave_relationships_iterators[cell->active_cell_index()];
+  return master_slave_relationships_iterators.at(cell->active_cell_index());
 }
 
 
@@ -1082,9 +1052,9 @@ inline types::global_cell_index
 AgglomerationHandler<dim, spacedim>::get_master_idx_of_cell(
   const typename Triangulation<dim, spacedim>::active_cell_iterator &cell) const
 {
-  auto idx = master_slave_relationships[cell->active_cell_index()];
-  if ((idx == -1) || (idx == -2))
-    return cell->active_cell_index();
+  auto idx = master_slave_relationships[cell->global_active_cell_index()];
+  if (idx == -1)
+    return cell->global_active_cell_index();
   else
     return idx;
 }
