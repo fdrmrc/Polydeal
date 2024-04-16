@@ -64,6 +64,8 @@ private:
   define_agglomerates();
   void
   compute_metrics();
+  void
+  export_mesh() const;
 
 
   Triangulation<dim>                         tria;
@@ -350,6 +352,26 @@ Mesh<dim>::compute_metrics()
   std::cout << "Coverage factor: " << coverage << std::endl;
 }
 
+
+
+template <int dim>
+void
+Mesh<dim>::export_mesh() const
+{
+  std::string partitioner;
+  if (partitioner_type == PartitionerType::metis)
+    partitioner = "metis";
+  else if (partitioner_type == PartitionerType::rtree)
+    partitioner = "rtree";
+  else
+    partitioner = "no_partitioning";
+
+  std::string polygon_boundaries{"polygon" + partitioner + "_" +
+                                 std::to_string(n_subdomains)};
+  PolyUtils::export_polygon_to_csv_file(*ah, polygon_boundaries);
+}
+
+
 template <int dim>
 void
 Mesh<dim>::run_analysis()
@@ -357,6 +379,7 @@ Mesh<dim>::run_analysis()
   setup_agglomerated_grid();
   define_agglomerates();
   compute_metrics();
+  export_mesh();
 }
 
 
