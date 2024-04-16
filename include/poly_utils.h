@@ -945,6 +945,42 @@ namespace dealii::PolyUtils
   }
 
 
+  /**
+   * Export each polygon in a csv file as a collection of segments.
+   */
+  template <int dim>
+  void
+  export_polygon_to_csv_file(
+    const AgglomerationHandler<dim> &agglomeration_handler,
+    const std::string &              filename)
+  {
+    static_assert(dim == 2); // With 3D, Paraview is much better
+    std::ofstream myfile;
+    myfile.open(filename + ".csv");
+
+    for (const auto &polytope : agglomeration_handler.polytope_iterators())
+      if (polytope->is_locally_owned())
+        {
+          const std::vector<typename Triangulation<dim>::active_face_iterator>
+            &boundary = polytope->polytope_boundary();
+          for (unsigned int f = 0; f < boundary.size(); ++f)
+            {
+              myfile << std::to_string(boundary[f]->vertex(0)[0]);
+              myfile << ",";
+              myfile << std::to_string(boundary[f]->vertex(0)[1]);
+              myfile << ",";
+              myfile << std::to_string(boundary[f]->vertex(1)[0]);
+              myfile << ",";
+              myfile << std::to_string(boundary[f]->vertex(1)[1]);
+              myfile << "\n";
+            }
+        }
+
+
+    myfile.close();
+  }
+
+
   template <typename T>
   inline constexpr T
   constexpr_pow(T num, unsigned int pow)
