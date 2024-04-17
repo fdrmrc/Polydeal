@@ -965,13 +965,13 @@ namespace dealii::PolyUtils
             &boundary = polytope->polytope_boundary();
           for (unsigned int f = 0; f < boundary.size(); ++f)
             {
-              myfile << std::to_string(boundary[f]->vertex(0)[0]);
+              myfile << boundary[f]->vertex(0)[0];
               myfile << ",";
-              myfile << std::to_string(boundary[f]->vertex(0)[1]);
+              myfile << boundary[f]->vertex(0)[1];
               myfile << ",";
-              myfile << std::to_string(boundary[f]->vertex(1)[0]);
+              myfile << boundary[f]->vertex(1)[0];
               myfile << ",";
-              myfile << std::to_string(boundary[f]->vertex(1)[1]);
+              myfile << boundary[f]->vertex(1)[1];
               myfile << "\n";
             }
         }
