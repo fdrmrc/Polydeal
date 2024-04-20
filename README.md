@@ -42,7 +42,8 @@ being ```N``` is the number of jobs you want to use to compile.
 
 ## About grids
 Polygonal or polyhedral grids are generated through agglomeration. To give an easy example in 2D, here's a polygonal grid associated to the unit ball. 
-[<img src="/meshes/polygonmetis_80.pdf">]()
+
+[<img src="meshes/polygonmetis_80.png" width="400">]()
 
 
 ## Examples
