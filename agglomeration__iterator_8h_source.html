@@ -138,12 +138,12 @@ $(function(){initNavTree('agglomeration__iterator_8h_source.html',''); initResiz
 <div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span> </div>
 <div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>  <a class="code hl_function" href="class_agglomeration_iterator.html#a69cb5ece32a938510e3bb8bbaaca3d99">AgglomerationIterator</a>(</div>
 <div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>    <span class="keyword">const</span> <span class="keyword">typename</span> <a class="code hl_classRef" href="http://www.dealii.org/developer/doxygen/deal.II/classTriangulation.html">Triangulation&lt;dim, spacedim&gt;::active_cell_iterator</a> &amp;cell,</div>
-<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>    <span class="keyword">const</span> <a class="code hl_class" href="class_agglomeration_handler.html">AgglomerationHandler&lt;dim, spacedim&gt;</a> *                        handler);</div>
+<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>    <span class="keyword">const</span> <a class="code hl_class" href="class_agglomeration_handler.html">AgglomerationHandler&lt;dim, spacedim&gt;</a>                         *handler);</div>
 <div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span> </div>
 <div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>  <a class="code hl_function" href="class_agglomeration_iterator.html#a69cb5ece32a938510e3bb8bbaaca3d99">AgglomerationIterator</a>(</div>
 <div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>    <span class="keyword">const</span> <span class="keyword">typename</span> <a class="code hl_classRef" href="http://www.dealii.org/developer/doxygen/deal.II/classTriangulation.html">Triangulation&lt;dim, spacedim&gt;::active_cell_iterator</a></div>
-<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>      &amp;                                        <a class="code hl_function" href="class_agglomeration_iterator.html#a129ba4cc3629370f7a9eebfb95f4a34b">master_cell</a>,</div>
-<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>    <span class="keyword">const</span> <a class="code hl_classRef" href="http://www.dealii.org/developer/doxygen/deal.II/classCellId.html">CellId</a> &amp;                             cell_id,</div>
+<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>                                              &amp;<a class="code hl_function" href="class_agglomeration_iterator.html#a129ba4cc3629370f7a9eebfb95f4a34b">master_cell</a>,</div>
+<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>    <span class="keyword">const</span> <a class="code hl_classRef" href="http://www.dealii.org/developer/doxygen/deal.II/classCellId.html">CellId</a>                              &amp;cell_id,</div>
 <div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>    <span class="keyword">const</span> <a class="code hl_class" href="class_agglomeration_handler.html">AgglomerationHandler&lt;dim, spacedim&gt;</a> *handler);</div>
 <div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span> </div>
 <div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span>  <span class="keyword">const</span> <a class="code hl_class" href="class_agglomeration_accessor.html">AgglomerationAccessor&lt;dim, spacedim&gt;</a> &amp;</div>
@@ -210,7 +210,7 @@ $(function(){initNavTree('agglomeration__iterator_8h_source.html',''); initResiz
 <div class="foldopen" id="foldopen00169" data-start="{" data-end="}">
 <div class="line"><a id="l00169" name="l00169"></a><span class="lineno"><a class="line" href="class_agglomeration_iterator.html#aa13b69a35750698fcaee513c6a2cc6e9">  169</a></span><span class="keyword">inline</span> <a class="code hl_function" href="class_agglomeration_iterator.html#a69cb5ece32a938510e3bb8bbaaca3d99">AgglomerationIterator&lt;dim, spacedim&gt;::AgglomerationIterator</a>(</div>
 <div class="line"><a id="l00170" name="l00170"></a><span class="lineno">  170</span>  <span class="keyword">const</span> <span class="keyword">typename</span> <a class="code hl_classRef" href="http://www.dealii.org/developer/doxygen/deal.II/classTriangulation.html">Triangulation&lt;dim, spacedim&gt;::active_cell_iterator</a></div>
-<div class="line"><a id="l00171" name="l00171"></a><span class="lineno">  171</span>    &amp;                                        master_cell,</div>
+<div class="line"><a id="l00171" name="l00171"></a><span class="lineno">  171</span>                                            &amp;master_cell,</div>
 <div class="line"><a id="l00172" name="l00172"></a><span class="lineno">  172</span>  <span class="keyword">const</span> <a class="code hl_class" href="class_agglomeration_handler.html">AgglomerationHandler&lt;dim, spacedim&gt;</a> *handler)</div>
 <div class="line"><a id="l00173" name="l00173"></a><span class="lineno">  173</span>  : accessor(master_cell, handler)</div>
 <div class="line"><a id="l00174" name="l00174"></a><span class="lineno">  174</span>{}</div>
@@ -220,8 +220,8 @@ $(function(){initNavTree('agglomeration__iterator_8h_source.html',''); initResiz
 <div class="foldopen" id="foldopen00177" data-start="{" data-end="}">
 <div class="line"><a id="l00177" name="l00177"></a><span class="lineno"><a class="line" href="class_agglomeration_iterator.html#a5e91daeb9bea8a205764f21f19358ba4">  177</a></span><span class="keyword">inline</span> <a class="code hl_function" href="class_agglomeration_iterator.html#a69cb5ece32a938510e3bb8bbaaca3d99">AgglomerationIterator&lt;dim, spacedim&gt;::AgglomerationIterator</a>(</div>
 <div class="line"><a id="l00178" name="l00178"></a><span class="lineno">  178</span>  <span class="keyword">const</span> <span class="keyword">typename</span> <a class="code hl_classRef" href="http://www.dealii.org/developer/doxygen/deal.II/classTriangulation.html">Triangulation&lt;dim, spacedim&gt;::active_cell_iterator</a></div>
-<div class="line"><a id="l00179" name="l00179"></a><span class="lineno">  179</span>    &amp;                                        master_cell,</div>
-<div class="line"><a id="l00180" name="l00180"></a><span class="lineno">  180</span>  <span class="keyword">const</span> <a class="code hl_classRef" href="http://www.dealii.org/developer/doxygen/deal.II/classCellId.html">CellId</a> &amp;                             cell_id,</div>
+<div class="line"><a id="l00179" name="l00179"></a><span class="lineno">  179</span>                                            &amp;master_cell,</div>
+<div class="line"><a id="l00180" name="l00180"></a><span class="lineno">  180</span>  <span class="keyword">const</span> <a class="code hl_classRef" href="http://www.dealii.org/developer/doxygen/deal.II/classCellId.html">CellId</a>                              &amp;cell_id,</div>
 <div class="line"><a id="l00181" name="l00181"></a><span class="lineno">  181</span>  <span class="keyword">const</span> <a class="code hl_class" href="class_agglomeration_handler.html">AgglomerationHandler&lt;dim, spacedim&gt;</a> *handler)</div>
 <div class="line"><a id="l00182" name="l00182"></a><span class="lineno">  182</span>  : accessor(master_cell, cell_id, handler)</div>
 <div class="line"><a id="l00183" name="l00183"></a><span class="lineno">  183</span>{}</div>
@@ -315,7 +315,7 @@ $(function(){initNavTree('agglomeration__iterator_8h_source.html',''); initResiz
 <div class="line"><a id="l00255" name="l00255"></a><span class="lineno"><a class="line" href="class_agglomeration_iterator.html#a491d39249c0b1deeb33e9a42c4669c5f">  255</a></span><a class="code hl_function" href="class_agglomeration_iterator.html#a8b1f2cc8b5d9d4e8a5eac63edc4af746">AgglomerationIterator&lt;dim, spacedim&gt;::operator++</a>(<span class="keywordtype">int</span>)</div>
 <div class="line"><a id="l00256" name="l00256"></a><span class="lineno">  256</span>{</div>
 <div class="line"><a id="l00257" name="l00257"></a><span class="lineno">  257</span>  <a class="code hl_class" href="class_agglomeration_iterator.html">AgglomerationIterator</a> tmp(*<span class="keyword">this</span>);</div>
-<div class="line"><a id="l00258" name="l00258"></a><span class="lineno">  258</span>                        <a class="code hl_functionRef" href="http://www.dealii.org/developer/doxygen/deal.II/synchronous__iterator_8h.html#a574336a8166e3537d57c0d677df48ce9">operator++</a>();</div>
+<div class="line"><a id="l00258" name="l00258"></a><span class="lineno">  258</span>  <a class="code hl_functionRef" href="http://www.dealii.org/developer/doxygen/deal.II/synchronous__iterator_8h.html#a574336a8166e3537d57c0d677df48ce9">operator++</a>();</div>
 <div class="line"><a id="l00259" name="l00259"></a><span class="lineno">  259</span> </div>
 <div class="line"><a id="l00260" name="l00260"></a><span class="lineno">  260</span>  <span class="keywordflow">return</span> tmp;</div>
 <div class="line"><a id="l00261" name="l00261"></a><span class="lineno">  261</span>}</div>
@@ -341,7 +341,7 @@ $(function(){initNavTree('agglomeration__iterator_8h_source.html',''); initResiz
 <div class="line"><a id="l00277" name="l00277"></a><span class="lineno"><a class="line" href="class_agglomeration_iterator.html#a6c89d80d097908fa7d896c87ac7e6e10">  277</a></span><a class="code hl_function" href="class_agglomeration_iterator.html#aa476737d276ca22ff3340a7515059aa7">AgglomerationIterator&lt;dim, spacedim&gt;::operator--</a>(<span class="keywordtype">int</span>)</div>
 <div class="line"><a id="l00278" name="l00278"></a><span class="lineno">  278</span>{</div>
 <div class="line"><a id="l00279" name="l00279"></a><span class="lineno">  279</span>  <a class="code hl_class" href="class_agglomeration_iterator.html">AgglomerationIterator</a> tmp(*<span class="keyword">this</span>);</div>
-<div class="line"><a id="l00280" name="l00280"></a><span class="lineno">  280</span>                        operator--();</div>
+<div class="line"><a id="l00280" name="l00280"></a><span class="lineno">  280</span>  operator--();</div>
 <div class="line"><a id="l00281" name="l00281"></a><span class="lineno">  281</span> </div>
 <div class="line"><a id="l00282" name="l00282"></a><span class="lineno">  282</span>  <span class="keywordflow">return</span> tmp;</div>
 <div class="line"><a id="l00283" name="l00283"></a><span class="lineno">  283</span>}</div>
@@ -401,7 +401,7 @@ $(function(){initNavTree('agglomeration__iterator_8h_source.html',''); initResiz
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="dir_aa394cd1d9abb8ffe941d9aaafca8d03.html">github</a></li><li class="navelem"><a class="el" href="dir_c52569aa89a7adbb6029022c2fa60a11.html">workspace</a></li><li class="navelem"><a class="el" href="dir_7a95a9cc00fcc7af5a429eec361b64d1.html">include</a></li><li class="navelem"><a class="el" href="agglomeration__iterator_8h.html">agglomeration_iterator.h</a></li>
-    <li class="footer">Generated on Thu Apr 18 2024 15:14:09 for PolyDEAL by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.10.0 </li>
+    <li class="footer">Generated on Sat Apr 20 2024 19:20:57 for PolyDEAL by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.10.0 </li>
   </ul>
 </div>
 </body>

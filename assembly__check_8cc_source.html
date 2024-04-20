@@ -133,7 +133,7 @@ $(function(){initNavTree('assembly__check_8cc_source.html',''); initResizable();
 <div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span> </div>
 <div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span>  <span class="keyword">virtual</span> <span class="keywordtype">void</span></div>
 <div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span>  <a class="code hl_function" href="class_right_hand_side.html#a40b0328af2e35b605e3daa57fd779bb6">value_list</a>(<span class="keyword">const</span> std::vector&lt;<a class="code hl_classRef" href="http://www.dealii.org/developer/doxygen/deal.II/classPoint.html">Point&lt;dim&gt;</a>&gt; &amp;points,</div>
-<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span>             std::vector&lt;double&gt; &amp;          values,</div>
+<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span>             std::vector&lt;double&gt;           &amp;values,</div>
 <div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span>             <span class="keyword">const</span> <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> <span class="comment">/*component*/</span>) <span class="keyword">const override</span>;</div>
 <div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span>};</div>
 </div>
@@ -143,7 +143,7 @@ $(function(){initNavTree('assembly__check_8cc_source.html',''); initResizable();
 <div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span><span class="keywordtype">void</span></div>
 <div class="foldopen" id="foldopen00031" data-start="{" data-end="}">
 <div class="line"><a id="l00031" name="l00031"></a><span class="lineno"><a class="line" href="class_right_hand_side.html#a40b0328af2e35b605e3daa57fd779bb6">   31</a></span><a class="code hl_function" href="class_right_hand_side.html#a40b0328af2e35b605e3daa57fd779bb6">RightHandSide&lt;dim&gt;::value_list</a>(<span class="keyword">const</span> std::vector&lt;<a class="code hl_classRef" href="http://www.dealii.org/developer/doxygen/deal.II/classPoint.html">Point&lt;dim&gt;</a>&gt; &amp;points,</div>
-<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span>                               std::vector&lt;double&gt; &amp;          values,</div>
+<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span>                               std::vector&lt;double&gt;           &amp;values,</div>
 <div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span>                               <span class="keyword">const</span> <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> <span class="comment">/*component*/</span>)<span class="keyword"> const</span></div>
 <div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span><span class="keyword"></span>{</div>
 <div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span>  <span class="keywordflow">for</span> (<span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> i = 0; i &lt; values.size(); ++i)</div>
@@ -165,8 +165,8 @@ $(function(){initNavTree('assembly__check_8cc_source.html',''); initResizable();
 <div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>  <a class="code hl_function" href="class_poisson.html#ab3834a09a1d72f968627636c07896056">setup_agglomeration</a>();</div>
 <div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>  <span class="keywordtype">void</span></div>
 <div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>  <a class="code hl_function" href="class_poisson.html#a0049c772ac79ef147cfe9ab3f592c050">distribute_jumps_and_averages</a>(</div>
-<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>    <a class="code hl_classRef" href="http://www.dealii.org/developer/doxygen/deal.II/classFEFaceValues.html">FEFaceValues&lt;dim&gt;</a> &amp;                                   fe_face,</div>
-<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>    <a class="code hl_classRef" href="http://www.dealii.org/developer/doxygen/deal.II/classFEFaceValues.html">FEFaceValues&lt;dim&gt;</a> &amp;                                   fe_face1,</div>
+<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>    <a class="code hl_classRef" href="http://www.dealii.org/developer/doxygen/deal.II/classFEFaceValues.html">FEFaceValues&lt;dim&gt;</a>                                    &amp;fe_face,</div>
+<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>    <a class="code hl_classRef" href="http://www.dealii.org/developer/doxygen/deal.II/classFEFaceValues.html">FEFaceValues&lt;dim&gt;</a>                                    &amp;fe_face1,</div>
 <div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>    <span class="keyword">const</span> <span class="keyword">typename</span> <a class="code hl_classRef" href="http://www.dealii.org/developer/doxygen/deal.II/classDoFHandler.html">DoFHandler&lt;dim&gt;::active_cell_iterator</a> &amp;cell,</div>
 <div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>    <span class="keyword">const</span> <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span>                                    f);</div>
 <div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>  <span class="keywordtype">void</span></div>
@@ -297,8 +297,8 @@ $(function(){initNavTree('assembly__check_8cc_source.html',''); initResizable();
 <div class="line"><a id="l00174" name="l00174"></a><span class="lineno">  174</span><span class="keywordtype">void</span></div>
 <div class="foldopen" id="foldopen00175" data-start="{" data-end="}">
 <div class="line"><a id="l00175" name="l00175"></a><span class="lineno"><a class="line" href="class_poisson.html#a0049c772ac79ef147cfe9ab3f592c050">  175</a></span><a class="code hl_function" href="class_poisson.html#a0049c772ac79ef147cfe9ab3f592c050">Poisson&lt;dim&gt;::distribute_jumps_and_averages</a>(</div>
-<div class="line"><a id="l00176" name="l00176"></a><span class="lineno">  176</span>  <a class="code hl_classRef" href="http://www.dealii.org/developer/doxygen/deal.II/classFEFaceValues.html">FEFaceValues&lt;dim&gt;</a> &amp;                                   fe_face,</div>
-<div class="line"><a id="l00177" name="l00177"></a><span class="lineno">  177</span>  <a class="code hl_classRef" href="http://www.dealii.org/developer/doxygen/deal.II/classFEFaceValues.html">FEFaceValues&lt;dim&gt;</a> &amp;                                   fe_face1,</div>
+<div class="line"><a id="l00176" name="l00176"></a><span class="lineno">  176</span>  <a class="code hl_classRef" href="http://www.dealii.org/developer/doxygen/deal.II/classFEFaceValues.html">FEFaceValues&lt;dim&gt;</a>                                    &amp;fe_face,</div>
+<div class="line"><a id="l00177" name="l00177"></a><span class="lineno">  177</span>  <a class="code hl_classRef" href="http://www.dealii.org/developer/doxygen/deal.II/classFEFaceValues.html">FEFaceValues&lt;dim&gt;</a>                                    &amp;fe_face1,</div>
 <div class="line"><a id="l00178" name="l00178"></a><span class="lineno">  178</span>  <span class="keyword">const</span> <span class="keyword">typename</span> <a class="code hl_classRef" href="http://www.dealii.org/developer/doxygen/deal.II/classDoFHandler.html">DoFHandler&lt;dim&gt;::active_cell_iterator</a> &amp;cell,</div>
 <div class="line"><a id="l00179" name="l00179"></a><span class="lineno">  179</span>  <span class="keyword">const</span> <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span>                                    f)</div>
 <div class="line"><a id="l00180" name="l00180"></a><span class="lineno">  180</span>{</div>
@@ -682,7 +682,7 @@ $(function(){initNavTree('assembly__check_8cc_source.html',''); initResizable();
 <div class="line"><a id="l00556" name="l00556"></a><span class="lineno">  556</span>      <span class="comment">// const auto &amp;agglo_values = ah-&gt;reinit(cell);</span></div>
 <div class="line"><a id="l00557" name="l00557"></a><span class="lineno">  557</span>      fe_values.<a class="code hl_functionRef" href="http://www.dealii.org/developer/doxygen/deal.II/classFEValues.html#acc8fe9d042c6b5e5da89858400feb24f">reinit</a>(cell);</div>
 <div class="line"><a id="l00558" name="l00558"></a><span class="lineno">  558</span> </div>
-<div class="line"><a id="l00559" name="l00559"></a><span class="lineno">  559</span>      <span class="keyword">const</span> <span class="keyword">auto</span> &amp;        q_points  = fe_values.<a class="code hl_functionRef" href="http://www.dealii.org/developer/doxygen/deal.II/classFEValuesBase.html#a351e7a77fe4323c4bda53a55dba12233">get_quadrature_points</a>();</div>
+<div class="line"><a id="l00559" name="l00559"></a><span class="lineno">  559</span>      <span class="keyword">const</span> <span class="keyword">auto</span>         &amp;q_points  = fe_values.<a class="code hl_functionRef" href="http://www.dealii.org/developer/doxygen/deal.II/classFEValuesBase.html#a351e7a77fe4323c4bda53a55dba12233">get_quadrature_points</a>();</div>
 <div class="line"><a id="l00560" name="l00560"></a><span class="lineno">  560</span>      <span class="keyword">const</span> <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span>  n_qpoints = q_points.size();</div>
 <div class="line"><a id="l00561" name="l00561"></a><span class="lineno">  561</span>      std::vector&lt;double&gt; rhs(n_qpoints);</div>
 <div class="line"><a id="l00562" name="l00562"></a><span class="lineno">  562</span>      rhs_function-&gt;value_list(q_points, rhs);</div>
@@ -888,7 +888,7 @@ $(function(){initNavTree('assembly__check_8cc_source.html',''); initResizable();
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="dir_aa394cd1d9abb8ffe941d9aaafca8d03.html">github</a></li><li class="navelem"><a class="el" href="dir_c52569aa89a7adbb6029022c2fa60a11.html">workspace</a></li><li class="navelem"><a class="el" href="dir_37bdb9d2191b5493db509660c6a8c15a.html">source</a></li><li class="navelem"><a class="el" href="assembly__check_8cc.html">assembly_check.cc</a></li>
-    <li class="footer">Generated on Thu Apr 18 2024 15:14:09 for PolyDEAL by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.10.0 </li>
+    <li class="footer">Generated on Sat Apr 20 2024 19:20:57 for PolyDEAL by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.10.0 </li>
   </ul>
 </div>
 </body>
