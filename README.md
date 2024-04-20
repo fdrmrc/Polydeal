@@ -1,11 +1,11 @@
-# polyDEAL (Polygonal Discontinuous Galerkin in deal.II)
+# polyDEAL (Polytopal Discontinuous Galerkin in deal.II)
 
 [![GitHub CI](https://github.com/fdrmrc/Polydeal/actions/workflows/tests.yml/badge.svg)](https://github.com/fdrmrc/Polydeal/actions/workflows/tests.yml)
 [![Indent](https://github.com/fdrmrc/Polydeal/actions/workflows/indentation.yml/badge.svg)](https://github.com/fdrmrc/Polydeal/actions/workflows/indentation.yml)
 [![Doxygen](https://github.com/fdrmrc/Polydeal/actions/workflows/doxygen.yml/badge.svg)](https://github.com/fdrmrc/Polydeal/actions/workflows/doxygen.yml)
 
 
-***PolyDEAL*** is an open source library which aims to provide building blocks for the developement of Polygonal Discontinuous Galerkin methods, using the Finite Element library [**deal.II**](https://dealii.org). It is written in C++ using the C++17 standard. The parallel implementation builds on top of the Message Passing Interface (MPI) communication model.
+***PolyDEAL*** is an open source library which aims to provide building blocks for the developement of Polytopal Discontinuous Galerkin methods, using the Finite Element library [**deal.II**](https://dealii.org) in 2D and 3D. It is written in C++ using the C++17 standard. The parallel implementation builds on top of the Message Passing Interface (MPI) communication model.
 
 
 ## Getting started and prerequisites
@@ -38,6 +38,11 @@ cmake -DDEAL_II_DIR=/path/to/deal.II ..
 make -j<N>
 ```
 being ```N``` is the number of jobs you want to use to compile.
+
+
+## About grids
+Polygonal or polyhedral grids are generated through agglomeration. To give an easy example in 2D, here's a polygonal grid associated to the unit ball. 
+[<img src="/meshes/polygonmetis_80.pdf">]()
 
 
 ## Examples
