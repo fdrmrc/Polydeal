@@ -183,7 +183,7 @@ LaplaceOperator<dim>::assemble_system()
       cell_rhs                 = 0;
       const auto &agglo_values = ah->reinit(polytope);
 
-      const auto &        q_points  = agglo_values.get_quadrature_points();
+      const auto         &q_points  = agglo_values.get_quadrature_points();
       const unsigned int  n_qpoints = q_points.size();
       std::vector<double> rhs(n_qpoints);
 

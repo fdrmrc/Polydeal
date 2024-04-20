@@ -58,7 +58,7 @@ int
 main(int argc, char *argv[])
 {
   Utilities::MPI::MPI_InitFinalize mpi_initialization(argc, argv, 1);
-  const MPI_Comm &                 comm = MPI_COMM_WORLD;
+  const MPI_Comm                  &comm = MPI_COMM_WORLD;
   const unsigned n_ranks                = Utilities::MPI::n_mpi_processes(comm);
   AssertThrow(n_ranks == 3,
               ExcMessage("This test is meant to be run with 3 ranks only."));
@@ -169,7 +169,7 @@ main(int argc, char *argv[])
             std::accumulate(agglo_values.get_JxW_values().cbegin(),
                             agglo_values.get_JxW_values().cend(),
                             0.);
-          const auto &       q_points  = agglo_values.get_quadrature_points();
+          const auto        &q_points  = agglo_values.get_quadrature_points();
           const unsigned int n_qpoints = q_points.size();
 
           // Face terms

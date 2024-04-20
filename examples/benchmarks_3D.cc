@@ -52,7 +52,7 @@ private:
 
 public:
   AgglomerationBenchmark(
-    const GridType &       grid_type        = GridType::grid_generator,
+    const GridType        &grid_type        = GridType::grid_generator,
     const PartitionerType &partitioner_type = PartitionerType::rtree,
     const unsigned int     extraction_level = 0,
     const unsigned int     n_subdomains     = 0);
@@ -70,7 +70,7 @@ public:
 
 template <int dim>
 AgglomerationBenchmark<dim>::AgglomerationBenchmark(
-  const GridType &       grid_type,
+  const GridType        &grid_type,
   const PartitionerType &partitioner_type,
   const unsigned int     extraction_level,
   const unsigned int     n_subdomains)

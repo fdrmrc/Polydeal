@@ -80,7 +80,7 @@ public:
 
   virtual void
   value_list(const std::vector<Point<dim>> &points,
-             std::vector<double> &          values,
+             std::vector<double>           &values,
              const unsigned int /*component*/ = 0) const override;
 };
 
@@ -88,7 +88,7 @@ public:
 template <int dim>
 void
 RightHandSide<dim>::value_list(const std::vector<Point<dim>> &points,
-                               std::vector<double> &          values,
+                               std::vector<double>           &values,
                                const unsigned int /*component*/) const
 {
   for (unsigned int i = 0; i < values.size(); ++i)
@@ -102,7 +102,7 @@ int
 main(int argc, char *argv[])
 {
   Utilities::MPI::MPI_InitFinalize mpi_initialization(argc, argv, 1);
-  const MPI_Comm &                 comm = MPI_COMM_WORLD;
+  const MPI_Comm                  &comm = MPI_COMM_WORLD;
   const unsigned n_ranks                = Utilities::MPI::n_mpi_processes(comm);
   Assert(n_ranks == 3,
          ExcMessage("This test is meant to be run with 3 ranks only."));

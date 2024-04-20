@@ -98,10 +98,10 @@ AgglomerationHandler<dim, spacedim>::define_agglomerate(
 template <int dim, int spacedim>
 void
 AgglomerationHandler<dim, spacedim>::initialize_fe_values(
-  const Quadrature<dim> &    cell_quadrature,
-  const UpdateFlags &        flags,
+  const Quadrature<dim>     &cell_quadrature,
+  const UpdateFlags         &flags,
   const Quadrature<dim - 1> &face_quadrature,
-  const UpdateFlags &        face_flags)
+  const UpdateFlags         &face_flags)
 {
   agglomeration_quad       = cell_quadrature;
   agglomeration_flags      = flags;
@@ -192,7 +192,7 @@ AgglomerationHandler<dim, spacedim>::initialize_agglomeration_data(
 template <int dim, int spacedim>
 void
 AgglomerationHandler<dim, spacedim>::create_bounding_box(
-  const AgglomerationContainer & polytope,
+  const AgglomerationContainer  &polytope,
   const types::global_cell_index master_idx)
 {
   Assert(n_agglomerations > 0,
@@ -443,7 +443,7 @@ AgglomerationHandler<dim, spacedim>::agglomerated_quadrature(
   // Map back each point in real space by using the map associated to the
   // bounding box.
   std::vector<Point<dim>> unit_points(vec_pts.size());
-  const auto &            bbox =
+  const auto             &bbox =
     bboxes[master2polygon.at(master_cell->active_cell_index())];
   unit_points.reserve(vec_pts.size());
 
@@ -592,12 +592,12 @@ AgglomerationHandler<dim, spacedim>::reinit_interface(
               !neigh_polytope->is_locally_owned()),
              ExcInternalError());
 
-      const auto & cell = polytope_in->as_dof_handler_iterator(agglo_dh);
-      const auto & bbox = bboxes[master2polygon.at(cell->active_cell_index())];
+      const auto  &cell = polytope_in->as_dof_handler_iterator(agglo_dh);
+      const auto  &bbox = bboxes[master2polygon.at(cell->active_cell_index())];
       const double bbox_measure = bbox.volume();
 
       const unsigned int neigh_rank = neigh_polytope->subdomain_id();
-      const CellId &     neigh_id   = neigh_polytope->id();
+      const CellId      &neigh_id   = neigh_polytope->id();
 
       // Retrieve qpoints,JxWs, normals sent previously from the neighboring
       // rank.
@@ -661,7 +661,7 @@ template <int dim, int spacedim>
 template <typename Number>
 void
 AgglomerationHandler<dim, spacedim>::create_agglomeration_sparsity_pattern(
-  DynamicSparsityPattern &        dsp,
+  DynamicSparsityPattern         &dsp,
   const AffineConstraints<Number> constraints,
   const bool                      keep_constrained_dofs,
   const types::subdomain_id       subdomain_id)
@@ -805,7 +805,7 @@ namespace dealii
         const typename DoFHandler<dim, spacedim>::active_cell_iterator &cell,
         const unsigned int face_index,
         std::unique_ptr<NonMatching::FEImmersedSurfaceValues<spacedim>>
-          &                                        agglo_isv_ptr,
+                                                  &agglo_isv_ptr,
         const AgglomerationHandler<dim, spacedim> &handler)
       {
         Assert(handler.is_master_cell(cell),
@@ -915,7 +915,7 @@ namespace dealii
       static void
       setup_master_neighbor_connectivity(
         const typename Triangulation<dim, spacedim>::active_cell_iterator
-          &                                        master_cell,
+                                                  &master_cell,
         const AgglomerationHandler<dim, spacedim> &handler)
       {
         Assert(handler.master_slave_relationships
@@ -1031,8 +1031,8 @@ namespace dealii
                                            .visited_cell_and_faces))
                               {
                                 handler.polytope_cache
-                                  .interface[{current_polytope_id,
-                                              neighbor_polytope_id}]
+                                  .interface[{
+                                  current_polytope_id, neighbor_polytope_id}]
                                   .emplace_back(cell, f);
 
                                 handler.polytope_cache.visited_cell_and_faces
@@ -1046,8 +1046,8 @@ namespace dealii
                                            .visited_cell_and_faces))
                               {
                                 handler.polytope_cache
-                                  .interface[{neighbor_polytope_id,
-                                              current_polytope_id}]
+                                  .interface[{
+                                  neighbor_polytope_id, current_polytope_id}]
                                   .emplace_back(neighboring_cell, nof);
 
                                 handler.polytope_cache.visited_cell_and_faces
@@ -1098,8 +1098,8 @@ namespace dealii
                                            .visited_cell_and_faces))
                               {
                                 handler.polytope_cache
-                                  .interface[{current_polytope_id,
-                                              neighbor_polytope_id}]
+                                  .interface[{
+                                  current_polytope_id, neighbor_polytope_id}]
                                   .emplace_back(cell, f);
 
                                 handler.polytope_cache.visited_cell_and_faces
@@ -1112,8 +1112,8 @@ namespace dealii
                                            .visited_cell_and_faces))
                               {
                                 handler.polytope_cache
-                                  .interface[{neighbor_polytope_id,
-                                              current_polytope_id}]
+                                  .interface[{
+                                  neighbor_polytope_id, current_polytope_id}]
                                   .emplace_back(neighboring_cell, nof);
 
                                 handler.polytope_cache.visited_cell_and_faces
@@ -1191,8 +1191,8 @@ namespace dealii
                               handler.polytope_cache.visited_cell_and_faces_id))
                           {
                             handler.polytope_cache
-                              .interface[{current_polytope_id,
-                                          check_neigh_polytope_id}]
+                              .interface[{
+                              current_polytope_id, check_neigh_polytope_id}]
                               .emplace_back(cell, f);
 
                             // std::cout << "ADDED ("
@@ -1213,8 +1213,8 @@ namespace dealii
                               handler.polytope_cache.visited_cell_and_faces_id))
                           {
                             handler.polytope_cache
-                              .interface[{check_neigh_polytope_id,
-                                          current_polytope_id}]
+                              .interface[{
+                              check_neigh_polytope_id, current_polytope_id}]
                               .emplace_back(neighboring_cell, nof);
 
                             handler.polytope_cache.visited_cell_and_faces_id
@@ -1271,7 +1271,8 @@ namespace dealii
                         std::end(handler.polytope_cache.visited_cell_and_faces))
                       {
                         handler.polytope_cache
-                          .interface[{current_polytope_id, current_polytope_id}]
+                          .interface[{
+                          current_polytope_id, current_polytope_id}]
                           .emplace_back(cell, f);
 
                         handler.polytope_cache.visited_cell_and_faces.insert(
@@ -1321,7 +1322,7 @@ namespace dealii
 template class AgglomerationHandler<1>;
 template void
 AgglomerationHandler<1>::create_agglomeration_sparsity_pattern(
-  DynamicSparsityPattern &        sparsity_pattern,
+  DynamicSparsityPattern         &sparsity_pattern,
   const AffineConstraints<double> constraints,
   const bool                      keep_constrained_dofs,
   const types::subdomain_id       subdomain_id);
@@ -1329,7 +1330,7 @@ AgglomerationHandler<1>::create_agglomeration_sparsity_pattern(
 template class AgglomerationHandler<2>;
 template void
 AgglomerationHandler<2>::create_agglomeration_sparsity_pattern(
-  DynamicSparsityPattern &        sparsity_pattern,
+  DynamicSparsityPattern         &sparsity_pattern,
   const AffineConstraints<double> constraints,
   const bool                      keep_constrained_dofs,
   const types::subdomain_id       subdomain_id);
@@ -1337,7 +1338,7 @@ AgglomerationHandler<2>::create_agglomeration_sparsity_pattern(
 template class AgglomerationHandler<3>;
 template void
 AgglomerationHandler<3>::create_agglomeration_sparsity_pattern(
-  DynamicSparsityPattern &        sparsity_pattern,
+  DynamicSparsityPattern         &sparsity_pattern,
   const AffineConstraints<double> constraints,
   const bool                      keep_constrained_dofs,
   const types::subdomain_id       subdomain_id);

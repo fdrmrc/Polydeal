@@ -118,7 +118,7 @@ test_face_qpoints(AgglomerationHandler<2> &ah)
         {
           if (!polytope->at_boundary(f))
             {
-              const auto &       neigh_polytope = polytope->neighbor(f);
+              const auto        &neigh_polytope = polytope->neighbor(f);
               const unsigned int nofn =
                 polytope->neighbor_of_agglomerated_neighbor(f);
               const auto &fe_faces =

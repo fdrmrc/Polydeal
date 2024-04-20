@@ -41,15 +41,15 @@ public:
    */
   AgglomerationIterator(
     const typename Triangulation<dim, spacedim>::active_cell_iterator &cell,
-    const AgglomerationHandler<dim, spacedim> *                        handler);
+    const AgglomerationHandler<dim, spacedim>                         *handler);
 
   /**
    * Same as above, needed for ghosted elements.
    */
   AgglomerationIterator(
     const typename Triangulation<dim, spacedim>::active_cell_iterator
-      &                                        master_cell,
-    const CellId &                             cell_id,
+                                              &master_cell,
+    const CellId                              &cell_id,
     const AgglomerationHandler<dim, spacedim> *handler);
 
   /**
@@ -168,7 +168,7 @@ inline AgglomerationIterator<dim, spacedim>::AgglomerationIterator()
 template <int dim, int spacedim>
 inline AgglomerationIterator<dim, spacedim>::AgglomerationIterator(
   const typename Triangulation<dim, spacedim>::active_cell_iterator
-    &                                        master_cell,
+                                            &master_cell,
   const AgglomerationHandler<dim, spacedim> *handler)
   : accessor(master_cell, handler)
 {}
@@ -176,8 +176,8 @@ inline AgglomerationIterator<dim, spacedim>::AgglomerationIterator(
 template <int dim, int spacedim>
 inline AgglomerationIterator<dim, spacedim>::AgglomerationIterator(
   const typename Triangulation<dim, spacedim>::active_cell_iterator
-    &                                        master_cell,
-  const CellId &                             cell_id,
+                                            &master_cell,
+  const CellId                              &cell_id,
   const AgglomerationHandler<dim, spacedim> *handler)
   : accessor(master_cell, cell_id, handler)
 {}
@@ -255,7 +255,7 @@ inline AgglomerationIterator<dim, spacedim>
 AgglomerationIterator<dim, spacedim>::operator++(int)
 {
   AgglomerationIterator tmp(*this);
-                        operator++();
+  operator++();
 
   return tmp;
 }
@@ -277,7 +277,7 @@ inline AgglomerationIterator<dim, spacedim>
 AgglomerationIterator<dim, spacedim>::operator--(int)
 {
   AgglomerationIterator tmp(*this);
-                        operator--();
+  operator--();
 
   return tmp;
 }

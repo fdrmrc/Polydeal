@@ -47,7 +47,7 @@ public:
 
 
 template <int dim>
-Poisson<dim>::Poisson(const GridTypes &  grid_type,
+Poisson<dim>::Poisson(const GridTypes   &grid_type,
                       const unsigned int extraction_level)
   : mapping(1)
   , grid_type(grid_type)
