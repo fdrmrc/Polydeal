@@ -288,10 +288,10 @@ public:
    */
   void
   initialize_fe_values(
-    const Quadrature<dim> &    cell_quadrature = QGauss<dim>(1),
-    const UpdateFlags &        flags           = UpdateFlags::update_default,
+    const Quadrature<dim>     &cell_quadrature = QGauss<dim>(1),
+    const UpdateFlags         &flags           = UpdateFlags::update_default,
     const Quadrature<dim - 1> &face_quadrature = QGauss<dim - 1>(1),
-    const UpdateFlags &        face_flags      = UpdateFlags::update_default);
+    const UpdateFlags         &face_flags      = UpdateFlags::update_default);
 
   /**
    * Given a Triangulation with some agglomerated cells, create the sparsity
@@ -302,7 +302,7 @@ public:
   template <typename Number = double>
   void
   create_agglomeration_sparsity_pattern(
-    DynamicSparsityPattern &        sparsity_pattern,
+    DynamicSparsityPattern         &sparsity_pattern,
     const AffineConstraints<Number> constraints = AffineConstraints<Number>(),
     const bool                      keep_constrained_dofs = true,
     const types::subdomain_id subdomain_id = numbers::invalid_subdomain_id);
@@ -573,7 +573,7 @@ private:
    * cells. This fills also the euler vector
    */
   void
-  create_bounding_box(const AgglomerationContainer & polytope,
+  create_bounding_box(const AgglomerationContainer  &polytope,
                       const types::global_cell_index master_idx);
 
 
@@ -1056,7 +1056,7 @@ AgglomerationHandler<dim, spacedim>::get_master_idx_of_cell(
   if (idx == -1)
     return cell->global_active_cell_index();
   else
-    return idx;
+    return static_cast<types::global_cell_index>(idx);
 }
 
 
