@@ -126,7 +126,7 @@ test_face_qpoints(AgglomerationHandler<2> &ah)
         {
           if (!polytope->at_boundary(f))
             {
-              const auto &       neigh_polytope = polytope->neighbor(f);
+              const auto        &neigh_polytope = polytope->neighbor(f);
               const unsigned int nofn =
                 polytope->neighbor_of_agglomerated_neighbor(f);
               const auto &fe_faces =
@@ -312,7 +312,7 @@ test2(const Triangulation<2> &tria, AgglomerationHandler<2> &ah)
 
 
 void
-test3(const Triangulation<2> & tria,
+test3(const Triangulation<2>  &tria,
       AgglomerationHandler<2> &ah,
       const unsigned int       n_subdomains)
 {

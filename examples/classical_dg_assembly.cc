@@ -55,11 +55,11 @@ public:
 
   virtual void
   value_list(const std::vector<Point<dim>> &points,
-             std::vector<double> &          values,
+             std::vector<double>           &values,
              const unsigned int /*component*/) const override;
 
   virtual Tensor<1, dim>
-  gradient(const Point<dim> & p,
+  gradient(const Point<dim>  &p,
            const unsigned int component = 0) const override;
 };
 
@@ -92,7 +92,7 @@ Solution<dim>::gradient(const Point<dim> &p, const unsigned int) const
 template <int dim>
 void
 Solution<dim>::value_list(const std::vector<Point<dim>> &points,
-                          std::vector<double> &          values,
+                          std::vector<double>           &values,
                           const unsigned int /*component*/) const
 {
   for (unsigned int i = 0; i < values.size(); ++i)
@@ -111,7 +111,7 @@ public:
 
   virtual void
   value_list(const std::vector<Point<dim>> &points,
-             std::vector<double> &          values,
+             std::vector<double>           &values,
              const unsigned int /*component*/) const override;
 };
 
@@ -119,7 +119,7 @@ public:
 template <int dim>
 void
 RightHandSide<dim>::value_list(const std::vector<Point<dim>> &points,
-                               std::vector<double> &          values,
+                               std::vector<double>           &values,
                                const unsigned int /*component*/) const
 {
   for (unsigned int i = 0; i < values.size(); ++i)
@@ -260,7 +260,7 @@ Poisson<dim>::assemble_system()
 
           fe_values.reinit(cell);
 
-          const auto &        q_points  = fe_values.get_quadrature_points();
+          const auto         &q_points  = fe_values.get_quadrature_points();
           const unsigned int  n_qpoints = q_points.size();
           std::vector<double> rhs(n_qpoints);
           rhs_function->value_list(q_points, rhs);

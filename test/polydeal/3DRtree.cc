@@ -53,7 +53,7 @@ private:
   std::unique_ptr<const Function<dim>>   rhs_function;
 
 public:
-  Poisson(const GridType &       grid_type        = GridType::grid_generator,
+  Poisson(const GridType        &grid_type        = GridType::grid_generator,
           const PartitionerType &partitioner_type = PartitionerType::rtree,
           const unsigned int                      = 0,
           const unsigned int                      = 0,
@@ -71,7 +71,7 @@ public:
 
 
 template <int dim>
-Poisson<dim>::Poisson(const GridType &       grid_type,
+Poisson<dim>::Poisson(const GridType        &grid_type,
                       const PartitionerType &partitioner_type,
                       const unsigned int     extraction_level,
                       const unsigned int     n_subdomains,
@@ -151,7 +151,7 @@ Poisson<dim>::make_grid()
       std::vector<typename Triangulation<dim, dim>::active_cell_iterator>
                                             cells_to_agglomerate;
       std::vector<types::global_cell_index> idxs_to_agglomerate;
-      const auto &                          csr_and_agglomerates =
+      const auto                           &csr_and_agglomerates =
         PolyUtils::extract_children_of_level(tree, extraction_level);
 
 

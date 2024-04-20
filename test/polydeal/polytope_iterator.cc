@@ -24,7 +24,7 @@ public:
 
   virtual void
   value_list(const std::vector<Point<dim>> &points,
-             std::vector<double> &          values,
+             std::vector<double>           &values,
              const unsigned int /*component*/) const override;
 };
 
@@ -36,14 +36,14 @@ public:
   value(const Point<dim> &p, const unsigned int component = 0) const override;
 
   virtual Tensor<1, dim>
-  gradient(const Point<dim> & p,
+  gradient(const Point<dim>  &p,
            const unsigned int component = 0) const override;
 };
 
 template <int dim>
 void
 RightHandSide<dim>::value_list(const std::vector<Point<dim>> &points,
-                               std::vector<double> &          values,
+                               std::vector<double>           &values,
                                const unsigned int /*component*/) const
 {
   for (unsigned int i = 0; i < values.size(); ++i)
@@ -316,7 +316,7 @@ TestIterator<dim>::test3()
         {
           std::cout << "Polytope number: " << polytope->index()
                     << "\t volume: " << polytope->volume() << std::endl;
-          const auto & boundary   = polytope->polytope_boundary();
+          const auto  &boundary   = polytope->polytope_boundary();
           unsigned int face_index = 0;
           for (const auto &face : boundary)
             {

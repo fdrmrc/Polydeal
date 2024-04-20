@@ -63,7 +63,7 @@ int
 main(int argc, char *argv[])
 {
   Utilities::MPI::MPI_InitFinalize mpi_initialization(argc, argv, 1);
-  const MPI_Comm &                 comm = MPI_COMM_WORLD;
+  const MPI_Comm                  &comm = MPI_COMM_WORLD;
   static constexpr unsigned int    dim  = 2;
   const unsigned n_ranks                = Utilities::MPI::n_mpi_processes(comm);
   AssertThrow(n_ranks == 3,

@@ -113,7 +113,7 @@ test_q_points_agglomerated_face(Triangulation<dim> &tria)
         {
           if (!polytope->at_boundary(f))
             {
-              const auto & neigh_polytope = polytope->neighbor(f);
+              const auto  &neigh_polytope = polytope->neighbor(f);
               unsigned int nofn =
                 polytope->neighbor_of_agglomerated_neighbor(f);
               std::cout << "Neighbor is: "

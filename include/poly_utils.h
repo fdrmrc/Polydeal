@@ -88,8 +88,8 @@ namespace dealii::PolyUtils::internal
   void
   get_face_connectivity_of_cells(
     const parallel::fullydistributed::Triangulation<dim, spacedim>
-      &                                         triangulation,
-    DynamicSparsityPattern &                    cell_connectivity,
+                                               &triangulation,
+    DynamicSparsityPattern                     &cell_connectivity,
     const std::vector<types::global_cell_index> locally_owned_cells)
   {
     cell_connectivity.reinit(triangulation.n_locally_owned_active_cells(),
@@ -151,7 +151,7 @@ namespace dealii::PolyUtils
       unsigned int      target_level,
       std::vector<std::vector<typename Triangulation<
         boost::geometry::dimension<Box>::value>::active_cell_iterator>> &boxes,
-      std::vector<std::vector<unsigned int>> &                           csr);
+      std::vector<std::vector<unsigned int>>                            &csr);
 
 
     /**
@@ -231,11 +231,11 @@ namespace dealii::PolyUtils
             typename Box,
             typename Allocators>
   Rtree_visitor<Value, Options, Translator, Box, Allocators>::Rtree_visitor(
-    const Translator & translator,
+    const Translator  &translator,
     const unsigned int target_level,
     std::vector<std::vector<typename Triangulation<
       boost::geometry::dimension<Box>::value>::active_cell_iterator>>
-      &                                     bb_in_boxes,
+                                           &bb_in_boxes,
     std::vector<std::vector<unsigned int>> &csr)
     : translator(translator)
     , level(0)
@@ -393,7 +393,7 @@ namespace dealii::PolyUtils
   compute_h_orthogonal(
     const unsigned int face_index,
     const std::vector<typename Triangulation<dim>::active_face_iterator>
-      &                   polygon_boundary,
+                         &polygon_boundary,
     const Tensor<1, dim> &deal_normal)
   {
 #ifdef DEAL_II_WITH_CGAL
@@ -516,8 +516,8 @@ namespace dealii::PolyUtils
   void
   interpolate_to_fine_grid(
     const AgglomerationHandler<dim, spacedim> &agglomeration_handler,
-    VectorType &                               dst,
-    const VectorType &                         src)
+    VectorType                                &dst,
+    const VectorType                          &src)
   {
     Assert((dim == spacedim), ExcNotImplemented());
     Assert(
@@ -700,7 +700,7 @@ namespace dealii::PolyUtils
   template <int dim, int spacedim = dim>
   void
   collect_cells_for_agglomeration(
-    const Triangulation<dim, spacedim> &         tria,
+    const Triangulation<dim, spacedim>          &tria,
     const std::vector<types::global_cell_index> &cell_idxs,
     std::vector<typename Triangulation<dim, spacedim>::active_cell_iterator>
       &cells_to_be_agglomerated)
@@ -912,7 +912,7 @@ namespace dealii::PolyUtils
 
             // box_ratio
 
-            const auto & agglo_values = ah.reinit(polytope);
+            const auto  &agglo_values = ah.reinit(polytope);
             const double measure_element =
               std::accumulate(agglo_values.get_JxW_values().cbegin(),
                               agglo_values.get_JxW_values().cend(),
@@ -952,7 +952,7 @@ namespace dealii::PolyUtils
   void
   export_polygon_to_csv_file(
     const AgglomerationHandler<dim> &agglomeration_handler,
-    const std::string &              filename)
+    const std::string               &filename)
   {
     static_assert(dim == 2); // With 3D, Paraview is much better
     std::ofstream myfile;

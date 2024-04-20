@@ -53,7 +53,7 @@ public:
 
   virtual void
   value_list(const std::vector<Point<dim>> &points,
-             std::vector<double> &          values,
+             std::vector<double>           &values,
              const unsigned int /*component*/) const override;
 
   std::vector<int> coefficients;
@@ -74,7 +74,7 @@ LinearFunction<dim>::value(const Point<dim> &p, const unsigned int) const
 template <int dim>
 void
 LinearFunction<dim>::value_list(const std::vector<Point<dim>> &points,
-                                std::vector<double> &          values,
+                                std::vector<double>           &values,
                                 const unsigned int /*component*/) const
 {
   for (unsigned int i = 0; i < values.size(); ++i)
@@ -94,7 +94,7 @@ public:
 
   virtual void
   value_list(const std::vector<Point<dim>> &points,
-             std::vector<double> &          values,
+             std::vector<double>           &values,
              const unsigned int /*component*/) const override;
 
   SolutionType sol_type;
@@ -104,7 +104,7 @@ public:
 template <int dim>
 void
 RightHandSide<dim>::value_list(const std::vector<Point<dim>> &points,
-                               std::vector<double> &          values,
+                               std::vector<double>           &values,
                                const unsigned int /*component*/) const
 {
   (void)points;
@@ -133,11 +133,11 @@ public:
 
   virtual void
   value_list(const std::vector<Point<dim>> &points,
-             std::vector<double> &          values,
+             std::vector<double>           &values,
              const unsigned int /*component*/) const override;
 
   virtual Tensor<1, dim>
-  gradient(const Point<dim> & p,
+  gradient(const Point<dim>  &p,
            const unsigned int component = 0) const override;
 };
 
@@ -164,7 +164,7 @@ SolutionLinear<dim>::gradient(const Point<dim> &p, const unsigned int) const
 template <int dim>
 void
 SolutionLinear<dim>::value_list(const std::vector<Point<dim>> &points,
-                                std::vector<double> &          values,
+                                std::vector<double>           &values,
                                 const unsigned int /*component*/) const
 {
   for (unsigned int i = 0; i < values.size(); ++i)
@@ -186,11 +186,11 @@ public:
 
   virtual void
   value_list(const std::vector<Point<dim>> &points,
-             std::vector<double> &          values,
+             std::vector<double>           &values,
              const unsigned int /*component*/) const override;
 
   virtual Tensor<1, dim>
-  gradient(const Point<dim> & p,
+  gradient(const Point<dim>  &p,
            const unsigned int component = 0) const override;
 };
 
@@ -218,7 +218,7 @@ SolutionQuadratic<dim>::gradient(const Point<dim> &p, const unsigned int) const
 template <int dim>
 void
 SolutionQuadratic<dim>::value_list(const std::vector<Point<dim>> &points,
-                                   std::vector<double> &          values,
+                                   std::vector<double>           &values,
                                    const unsigned int /*component*/) const
 {
   for (unsigned int i = 0; i < values.size(); ++i)
@@ -245,7 +245,7 @@ private:
 
   Triangulation<dim>                         tria;
   MappingQ<dim>                              mapping;
-  FE_DGQ<dim> *                              dg_fe;
+  FE_DGQ<dim>                               *dg_fe;
   std::unique_ptr<AgglomerationHandler<dim>> ah;
   // no hanging node in DG discretization, we define an AffineConstraints
   // object
@@ -258,7 +258,7 @@ private:
   Vector<double>                         system_rhs;
   std::unique_ptr<GridTools::Cache<dim>> cached_tria;
   std::unique_ptr<const Function<dim>>   rhs_function;
-  Function<dim> *                        analytical_solution;
+  Function<dim>                         *analytical_solution;
 
 public:
   Poisson(const SolutionType &solution_type);
@@ -551,7 +551,7 @@ Poisson<dim>::assemble_system()
                   M21 = 0.;
                   M22 = 0.;
 
-                  const auto & normals = fe_faces0.get_normal_vectors();
+                  const auto  &normals = fe_faces0.get_normal_vectors();
                   const double penalty =
                     penalty_constant / std::fabs(polytope->diameter());
 

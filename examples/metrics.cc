@@ -76,7 +76,7 @@ private:
 
 
 public:
-  Mesh(const MeshType &       grid_type        = MeshType::square,
+  Mesh(const MeshType        &grid_type        = MeshType::square,
        const PartitionerType &partitioner_type = PartitionerType::rtree,
        const unsigned int                      = 0,
        const unsigned int                      = 0);
@@ -92,7 +92,7 @@ public:
 
 
 template <int dim>
-Mesh<dim>::Mesh(const MeshType &       grid_type,
+Mesh<dim>::Mesh(const MeshType        &grid_type,
                 const PartitionerType &partitioner_type,
                 const unsigned int     extraction_level,
                 const unsigned int     n_subdomains)
@@ -115,19 +115,22 @@ Mesh<dim>::setup_agglomerated_grid()
   GridIn<dim> grid_in;
   switch (grid_type)
     {
-        case MeshType::square: {
+      case MeshType::square:
+        {
           GridGenerator::hyper_cube(tria, 0., 1.);
           tria.refine_global(5); // 1024
           std::cout << "Number of background cells: " << tria.n_active_cells()
                     << std::endl;
           break;
         }
-        case MeshType::ball: {
+      case MeshType::ball:
+        {
           GridGenerator::hyper_ball(tria);
           tria.refine_global(6); // 20480
           break;
         }
-        case MeshType::unstructured: {
+      case MeshType::unstructured:
+        {
           grid_in.attach_triangulation(tria);
           std::ifstream gmsh_file(
             "../../meshes/t3.msh"); // unstructured square [0,1]^2
@@ -227,7 +230,8 @@ Mesh<dim>::setup_agglomerated_grid()
 #endif
     }
   else if (partitioner_type == PartitionerType::no_partition)
-    {}
+    {
+    }
   else
     {
       Assert(false, ExcMessage("Wrong partitioning."));

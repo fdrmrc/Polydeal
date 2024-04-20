@@ -186,7 +186,7 @@ private:
    */
   AgglomerationAccessor(
     const typename Triangulation<dim, spacedim>::active_cell_iterator
-      &                                        master_cell,
+                                              &master_cell,
     const AgglomerationHandler<dim, spacedim> *ah);
 
   /**
@@ -194,8 +194,8 @@ private:
    */
   AgglomerationAccessor(
     const typename Triangulation<dim, spacedim>::active_cell_iterator &cell,
-    const CellId &                                                     cell_id,
-    const AgglomerationHandler<dim, spacedim> *                        ah);
+    const CellId                                                      &cell_id,
+    const AgglomerationHandler<dim, spacedim>                         *ah);
 
   /**
    * Default destructor.
@@ -462,7 +462,7 @@ inline AgglomerationAccessor<dim, spacedim>::AgglomerationAccessor()
 template <int dim, int spacedim>
 inline AgglomerationAccessor<dim, spacedim>::AgglomerationAccessor(
   const typename Triangulation<dim, spacedim>::active_cell_iterator &cell,
-  const AgglomerationHandler<dim, spacedim> *                        ah)
+  const AgglomerationHandler<dim, spacedim>                         *ah)
 {
   handler = const_cast<AgglomerationHandler<dim, spacedim> *>(ah);
   if (&(*handler->master_cells_container.end()) == std::addressof(cell))
@@ -486,7 +486,7 @@ inline AgglomerationAccessor<dim, spacedim>::AgglomerationAccessor(
 template <int dim, int spacedim>
 inline AgglomerationAccessor<dim, spacedim>::AgglomerationAccessor(
   const typename Triangulation<dim, spacedim>::active_cell_iterator &neigh_cell,
-  const CellId &                             master_cell_id,
+  const CellId                              &master_cell_id,
   const AgglomerationHandler<dim, spacedim> *ah)
 {
   Assert(neigh_cell->is_ghost(), ExcInternalError());
@@ -695,7 +695,7 @@ template <int dim, int spacedim>
 unsigned int
 AgglomerationAccessor<dim, spacedim>::n_agglomerated_faces() const
 {
-  const auto & agglomeration = get_agglomerate();
+  const auto  &agglomeration = get_agglomerate();
   unsigned int n_neighbors   = 0;
   for (const auto &cell : agglomeration)
     n_neighbors += n_agglomerated_faces_per_cell(cell);

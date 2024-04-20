@@ -34,7 +34,7 @@ int
 main(int argc, char *argv[])
 {
   Utilities::MPI::MPI_InitFinalize mpi_initialization(argc, argv, 1);
-  const MPI_Comm &                 comm = MPI_COMM_WORLD;
+  const MPI_Comm                  &comm = MPI_COMM_WORLD;
   const unsigned n_ranks                = Utilities::MPI::n_mpi_processes(comm);
   if (Utilities::MPI::this_mpi_process(comm) == 0)
     std::cout << "Running with " << Utilities::MPI::n_mpi_processes(comm)

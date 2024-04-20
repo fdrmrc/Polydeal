@@ -41,7 +41,7 @@ public:
 
   virtual void
   value_list(const std::vector<Point<dim>> &points,
-             std::vector<double> &          values,
+             std::vector<double>           &values,
              const unsigned int /*component*/) const override;
 };
 
@@ -49,7 +49,7 @@ public:
 template <int dim>
 void
 RightHandSide<dim>::value_list(const std::vector<Point<dim>> &points,
-                               std::vector<double> &          values,
+                               std::vector<double>           &values,
                                const unsigned int /*component*/) const
 {
   for (unsigned int i = 0; i < values.size(); ++i)
@@ -278,7 +278,7 @@ Poisson<dim>::assemble_system()
       cell_rhs                 = 0;
       const auto &agglo_values = ah->reinit(polytope);
 
-      const auto &        q_points  = agglo_values.get_quadrature_points();
+      const auto         &q_points  = agglo_values.get_quadrature_points();
       const unsigned int  n_qpoints = q_points.size();
       std::vector<double> rhs(n_qpoints);
       rhs_function->value_list(q_points, rhs);
@@ -311,7 +311,7 @@ Poisson<dim>::assemble_system()
 
           if (polytope->at_boundary(f))
             {
-              const auto &       fe_face       = ah->reinit(polytope, f);
+              const auto        &fe_face       = ah->reinit(polytope, f);
               const unsigned int dofs_per_cell = fe_face.dofs_per_cell;
 
               // Get normal vectors seen from each agglomeration.
@@ -518,7 +518,7 @@ test()
 {
   Poisson<dim> standard_problem(false);
   standard_problem.run();
-  const auto & standard_matrix = standard_problem.get_matrix();
+  const auto  &standard_matrix = standard_problem.get_matrix();
   Poisson<dim> agglo_problem(true);
   agglo_problem.run();
   const auto &agglo_matrix = agglo_problem.get_matrix();
