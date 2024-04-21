@@ -3,10 +3,12 @@
 [![GitHub CI](https://github.com/fdrmrc/Polydeal/actions/workflows/tests.yml/badge.svg)](https://github.com/fdrmrc/Polydeal/actions/workflows/tests.yml)
 [![Indent](https://github.com/fdrmrc/Polydeal/actions/workflows/indentation.yml/badge.svg)](https://github.com/fdrmrc/Polydeal/actions/workflows/indentation.yml)
 [![Doxygen](https://github.com/fdrmrc/Polydeal/actions/workflows/doxygen.yml/badge.svg)](https://github.com/fdrmrc/Polydeal/actions/workflows/doxygen.yml)
+<img align="right" width="150" height="150" src="doc/logo.png">
+
+
 
 
 ***PolyDEAL*** is an open source library which aims to provide building blocks for the developement of Polytopal Discontinuous Galerkin methods, using the Finite Element library [**deal.II**](https://dealii.org) in 2D and 3D. It is written in C++ using the C++17 standard. The parallel implementation builds on top of the Message Passing Interface (MPI) communication model.
-
 
 
 
