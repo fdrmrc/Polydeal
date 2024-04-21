@@ -8,6 +8,8 @@
 ***PolyDEAL*** is an open source library which aims to provide building blocks for the developement of Polytopal Discontinuous Galerkin methods, using the Finite Element library [**deal.II**](https://dealii.org) in 2D and 3D. It is written in C++ using the C++17 standard. The parallel implementation builds on top of the Message Passing Interface (MPI) communication model.
 
 
+
+
 ## Getting started and prerequisites
 
 We require:
@@ -26,6 +28,13 @@ While *METIS* can be used to partition a triangulation among several processors,
 
 To enable to computation of some quality metrics, mostly of theoretical interests and not really relevant in application codes, the external library **CGAL** is required. As this is a dependency of *deal.II* as well, it is sufficient to configure deal.II with it.
 
+We currently support the following features:
+* Unified interface for 2D and 3D problems.
+* Distributed-memory implementation through MPI.
+* Discontinuous Galerkin spaces of order $p$.
+* Different agglomeration strategies.
+* Multigrid support (still experimental)
+
 ## Building polyDEAL 
 Assuming deal.II is installed on your machine and meets the requirements above, all is required to do is:
 
@@ -40,11 +49,12 @@ make -j<N>
 being ```N``` is the number of jobs you want to use to compile.
 
 
-## About grids
-Polygonal or polyhedral grids are generated through agglomeration. To give an easy example in 2D, here's a polygonal grid associated to the unit ball. 
+## About grids and post-processing
+Polygonal or polyhedral grids are generated through agglomeration. To give an easy example in 2D, here's a polygonal grid associated to the unit ball on which you can define a Discontinous Galerkin space. The 3D case is completely analougous.
 
 [<img src="meshes/polygonmetis_80.png" width="400">]()
 
+The (discontinuous) Finite Element space is defined on the bounding box of each agglomerate. In order to visualize the solution, carry out convergence tests, and other post-processing issues, the solution computed on the polytopal grid is interpolated onto the underlying fine mesh composed of classical quadrilaterals or hexahedra. 
 
 ## Examples
 Some example applications are shown in the ```examples/``` directory. To build and run one of the examples, say ```diffusion_reaction.cc```, it is sufficient the following:
@@ -71,4 +81,4 @@ under the supervision of
 - [ Prof. Luca Heltai](https://sites.google.com/view/luca-heltai) ([@luca-heltai](https://github.com/luca-heltai)), University of Pisa, IT
 
 
-Feel free to start a [discussion](https://github.com/fdrmrc/Polydeal/discussions) or open an [issue](https://github.com/fdrmrc/Polydeal/issues), especially if you want to contribute. For any other inquiries or special requests, you can directly contact Marco Feder (mfeder@sissa.it).
+Feel free to start a [discussion](https://github.com/fdrmrc/Polydeal/discussions) or open an [issue](https://github.com/fdrmrc/Polydeal/issues), especially if you want to contribute. For any other inquiries or special requests, you can directly contact mfeder@sissa.it.
