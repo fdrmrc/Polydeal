@@ -27,6 +27,8 @@
 #include <algorithm>
 #include <chrono>
 
+static constexpr double factor = 1;
+
 
 template <int dim>
 class SolutionProductSine : public Function<dim>
@@ -35,7 +37,7 @@ public:
   SolutionProductSine()
     : Function<dim>()
   {
-    static_assert(dim == 2);
+    static_assert(dim > 2);
   }
 
   virtual double
@@ -55,7 +57,10 @@ template <int dim>
 double
 SolutionProductSine<dim>::value(const Point<dim> &p, const unsigned int) const
 {
-  return std::sin(numbers::PI * p[0]) * std::sin(numbers::PI * p[1]);
+  // return std::sin(numbers::PI * p[0]) * std::sin(numbers::PI * p[1]);
+  return std::sin(factor * numbers::PI * p[0]) *
+         std::sin(factor * numbers::PI * p[1]) *
+         std::sin(factor * numbers::PI * p[2]);
 }
 
 template <int dim>
@@ -63,12 +68,17 @@ Tensor<1, dim>
 SolutionProductSine<dim>::gradient(const Point<dim> &p,
                                    const unsigned int) const
 {
-  Tensor<1, dim> return_value;
-  return_value[0] =
-    numbers::PI * std::cos(numbers::PI * p[0]) * std::sin(numbers::PI * p[1]);
-  return_value[1] =
-    numbers::PI * std::cos(numbers::PI * p[1]) * std::sin(numbers::PI * p[0]);
-  return return_value;
+  Tensor<1, dim> grad;
+  grad[0] = factor * numbers::PI * std::cos(factor * numbers::PI * p[0]) *
+            std::sin(factor * numbers::PI * p[1]) *
+            std::sin(factor * numbers::PI * p[2]);
+  grad[1] = factor * numbers::PI * std::sin(factor * numbers::PI * p[0]) *
+            std::cos(factor * numbers::PI * p[1]) *
+            std::sin(factor * numbers::PI * p[2]);
+  grad[2] = factor * numbers::PI * std::sin(factor * numbers::PI * p[0]) *
+            std::sin(factor * numbers::PI * p[1]) *
+            std::cos(factor * numbers::PI * p[2]);
+  return grad;
 }
 
 
@@ -91,7 +101,7 @@ public:
   RightHandSide()
     : Function<dim>()
   {
-    static_assert(dim == 2);
+    static_assert(dim > 2);
   }
 
   virtual void
@@ -108,12 +118,45 @@ RightHandSide<dim>::value_list(const std::vector<Point<dim>> &points,
                                std::vector<double> &          values,
                                const unsigned int /*component*/) const
 {
-  // 2pi^2*sin(pi*x)*sin(pi*y)
   for (unsigned int i = 0; i < values.size(); ++i)
-    values[i] = 2. * numbers::PI * numbers::PI *
-                std::sin(numbers::PI * points[i][0]) *
-                std::sin(numbers::PI * points[i][1]);
+    {
+      const double x = points[i][0];
+      const double y = points[i][1];
+      const double z = points[i][2];
+      values[i]      = (3. * factor * factor) * numbers::PI * numbers::PI *
+                  std::sin(factor * numbers::PI * x) *
+                  std::sin(factor * numbers::PI * y) *
+                  std::sin(factor * numbers::PI * z);
+    }
 }
+
+
+
+template <typename Number>
+class MGCoarseDirect : public MGCoarseGridBase<Vector<Number>>
+{
+public:
+  MGCoarseDirect(const SparseMatrix<Number> &matrix)
+  {
+    coarse_matrix = &matrix;
+    direct_solver.initialize(*coarse_matrix);
+  }
+
+  void
+  initialize(const SparseMatrix<Number> &matrix)
+  {}
+
+  virtual void
+  operator()(const unsigned int,
+             Vector<Number> &      dst,
+             const Vector<Number> &src) const
+  {
+    direct_solver.vmult(dst, src);
+  }
+
+  SparseDirectUMFPACK         direct_solver;
+  const SparseMatrix<Number> *coarse_matrix;
+};
 
 
 
@@ -126,8 +169,8 @@ struct GMGParameters
   {
     std::string  type            = "cg"; // "cg";
     unsigned int maxiter         = 10000;
-    double       abstol          = 1e-20;
-    double       reltol          = 1e-4;
+    double       abstol          = 1e-12;
+    double       reltol          = 1e-9;
     unsigned int smoother_sweeps = 1;
     unsigned int n_cycles        = 1;
     std::string  smoother_type   = "ILU";
@@ -145,8 +188,8 @@ struct GMGParameters
   CoarseSolverParameters coarse_solver;
 
   unsigned int maxiter = 10000;
-  double       abstol  = 1e-20;
-  double       reltol  = 1e-12;
+  double       abstol  = 1e-12;
+  double       reltol  = 1e-9;
 };
 
 template <typename VectorType,
@@ -171,10 +214,10 @@ mg_solve(SolverControl &                       solver_control,
 
   using Number                     = typename VectorType::value_type;
   using SmootherPreconditionerType = DiagonalMatrix<VectorType>;
-  using SmootherType               = PreconditionJacobi<LevelMatrixType>;
-  // using SmootherType               = PreconditionChebyshev<LevelMatrixType,
-  //                                            VectorType,
-  //                                            SmootherPreconditionerType>;
+  // using SmootherType               = PreconditionJacobi<LevelMatrixType>;
+  using SmootherType       = PreconditionChebyshev<LevelMatrixType,
+                                             VectorType,
+                                             SmootherPreconditionerType>;
   using PreconditionerType = PreconditionMG<dim, VectorType, MGTransferType>;
 
   // Initialize level operators.
@@ -201,11 +244,19 @@ mg_solve(SolverControl &                       solver_control,
   // mg_smoother; mg_smoother.initialize(mg_matrices, smoother_data);
 
 
-  typename SmootherType::AdditionalData data(0.5);
+  // typename SmootherType::AdditionalData data(0.5);
+
+  // MGSmootherPrecondition<LevelMatrixType, SmootherType, VectorType>
+  // mg_smoother; mg_smoother.initialize(mg_matrices, data);
+  // mg_smoother.set_steps(2);
+  typename SmootherType::AdditionalData data;
+  data.eig_cg_n_iterations = 20;
+  data.degree              = 3;
+  data.smoothing_range     = 20;
 
   MGSmootherPrecondition<LevelMatrixType, SmootherType, VectorType> mg_smoother;
   mg_smoother.initialize(mg_matrices, data);
-  mg_smoother.set_steps(2);
+  mg_smoother.set_steps(5);
 
   // Initialize coarse-grid solver.
   ReductionControl     coarse_grid_solver_control(mg_data.coarse_solver.maxiter,
@@ -225,12 +276,14 @@ mg_solve(SolverControl &                       solver_control,
     {
       // CG with identity matrix as preconditioner
 
+      // mg_coarse =
+      //   std::make_unique<MGCoarseGridIterativeSolver<VectorType,
+      //                                                SolverCG<VectorType>,
+      //                                                LevelMatrixType,
+      //                                                PreconditionIdentity>>(
+      //     coarse_grid_solver, mg_matrices[min_level], precondition_identity);
       mg_coarse =
-        std::make_unique<MGCoarseGridIterativeSolver<VectorType,
-                                                     SolverCG<VectorType>,
-                                                     LevelMatrixType,
-                                                     PreconditionIdentity>>(
-          coarse_grid_solver, mg_matrices[min_level], precondition_identity);
+        std::make_unique<MGCoarseDirect<double>>(mg_matrices[min_level]);
     }
   else
     {
@@ -273,7 +326,7 @@ LinearFunction<dim>::value(const Point<dim> &p, const unsigned int) const
 {
   double value = 0.;
   for (size_t i = 0; i < coefficients.size(); i++)
-    value += coefficients[i] * p[i];
+    value += coefficients[i] * p[i] * p[i] * p[i];
   return value;
 }
 
@@ -334,6 +387,13 @@ Test<dim>::make_grid()
   //   "../../meshes/t3.msh"); // unstructured square [0, 1] ^ 2
   // grid_in.read_msh(gmsh_file);
   // tria.refine_global(3);
+  // GridIn<dim> grid_in;
+  // grid_in.attach_triangulation(tria);
+  // std::ifstream gmsh_file("../../meshes/piston_3.inp"); // piston mesh
+  // grid_in.read_abaqus(gmsh_file);
+  // // std::ifstream gmsh_file(
+  // // "../../meshes/csf_brain_filled_centered_UCD.inp");
+  // // piston mesh grid_in.read_ucd(gmsh_file);
   cached_tria = std::make_unique<GridTools::Cache<dim>>(tria, mapping);
 }
 
@@ -459,14 +519,14 @@ Test<dim>::check_transfer()
   // Check construction of transfer operator
 
   std::cout << "Construct transfer operator" << std::endl;
-  RtreeInfo<2> rtree_info{csr_and_agglomerates.first,
+  RtreeInfo<3> rtree_info{csr_and_agglomerates.first,
                           csr_and_agglomerates.second};
   MGTwoLevelTransferAgglomeration<dim, Vector<double>> agglomeration_transfer(
     rtree_info);
   agglomeration_transfer.reinit(*ah_fine, *ah_coarse);
 
 
-#ifdef AGGLO_DEBUG
+
   const auto &do_test = [&](const Function<dim> &func) {
     // Test with linear function
     Vector<double>   interp_coarse(ah_coarse->agglo_dh.n_dofs());
@@ -480,7 +540,7 @@ Test<dim>::check_transfer()
     agglomeration_transfer.prolongate(dst, interp_coarse);
 
 
-#  ifdef FALSE
+#ifdef FALSE
     DataOut<2> data_out;
     data_out.attach_dof_handler(ah_coarse->agglo_dh);
     data_out.add_data_vector(interp_coarse, "solution");
@@ -493,7 +553,7 @@ Test<dim>::check_transfer()
     data_out.add_data_vector(dst, "prolonged_solution_linear");
     data_out.build_patches(*(ah_fine->euler_mapping));
     data_out.write_vtk(output_fine);
-#  endif
+#endif
 
     // Compute error:
     Vector<double> interp_fine(ah_fine->agglo_dh.n_dofs());
@@ -510,15 +570,15 @@ Test<dim>::check_transfer()
   std::cout << "f= 1" << std::endl;
   do_test(Functions::ConstantFunction<dim>(1.));
   std::cout << "f= x+y" << std::endl;
-  std::vector<int> coeffs_linear{1, 1};
+  std::vector<int> coeffs_linear{1, 1, 1};
   do_test(LinearFunction<dim>{coeffs_linear});
   std::cout << "f= x" << std::endl;
-  std::vector<int> coeffs_x{1, 0};
+  std::vector<int> coeffs_x{1, 0, 0};
   do_test(LinearFunction<dim>{coeffs_x});
   std::cout << "f= y" << std::endl;
-  std::vector<int> coeffs_y{0, 1};
+  std::vector<int> coeffs_y{0, 1, 0};
   do_test(LinearFunction<dim>{coeffs_y});
-#endif
+
 
 
   /**************** SOLVE WITH MG ****************/
@@ -529,7 +589,8 @@ Test<dim>::check_transfer()
 
 
   // Assemble matrices and rhs
-
+  const double penalty_constant =
+    10. * dg_fe.get_degree() * (dg_fe.get_degree() + 1);
   const auto &assemble_matrix = [&](AgglomerationHandler<dim> &ah,
                                     const SparsityPattern &    sparsity,
                                     SparseMatrix<double> &     system_matrix,
@@ -624,7 +685,8 @@ Test<dim>::check_transfer()
                 //                        f, polygon_boundary_vertices,
                 //                        normals[0]);
 
-                const double penalty = 20. / std::fabs(polytope->diameter());
+                const double penalty =
+                  penalty_constant / std::fabs(polytope->diameter());
 
                 for (unsigned int q_index : fe_face.quadrature_point_indices())
                   {
@@ -685,7 +747,7 @@ Test<dim>::check_transfer()
                     //                                   polygon_boundary_vertices,
                     //                                   normals[0]);
                     const double penalty =
-                      20. / std::fabs(polytope->diameter());
+                      penalty_constant / std::fabs(polytope->diameter());
 
                     // M11
                     for (unsigned int q_index :
@@ -784,15 +846,19 @@ Test<dim>::check_transfer()
 
 
   Vector<double> dummy_vec; // not needed on coarser levels
+  std::cout << "Assembling[...]" << std::endl;
   assemble_matrix(*ah_coarse,
                   sparsity_coarse,
                   mg_matrices[max_level - 1],
                   dummy_vec); // coarser level
+  std::cout << "Done" << std::endl;
 
+  std::cout << "Assembling[...]" << std::endl;
   assemble_matrix(*ah_fine,
                   sparsity_fine,
                   mg_matrices[max_level],
                   system_rhs); // fine level
+  std::cout << "Done" << std::endl;
 
 
   // assemble fine and coarse matrices
@@ -818,10 +884,15 @@ Test<dim>::check_transfer()
 
   Vector<double> dst;
   dst.reinit(ah_fine->agglo_dh.n_dofs());
+  // VectorTools::interpolate(*(ah_fine->euler_mapping),
+  //                          ah_fine->agglo_dh,
+  //                          SolutionProductSine<dim>(),
+  //                          dst);
 
   ReductionControl solver_control(
     mg_data.maxiter, mg_data.abstol, mg_data.reltol, false, false);
 
+  std::cout << "Started solver" << std::endl;
   mg_solve(solver_control,
            dst,
            system_rhs,
@@ -892,18 +963,30 @@ main()
 {
   {
     // Square
-    const unsigned int fe_degree = 2;
-    Test<2>            prolongation_test{2 /*extaction_level*/, fe_degree};
+    const unsigned int fe_degree = 1;
+    Test<3> prolongation_test{2 /*extaction_level*/, fe_degree}; // square
     prolongation_test.run();
+    // Test<3> prolongation_test{3 /*extaction_level*/, fe_degree}; // piston,//
+    // prolongation_test.run();
   }
 
-  // {
-  //   // Square unstructured
-  //   const unsigned int fe_degree = 2;
-  //   Test<2>            prolongation_test{4 /*extaction_level*/, fe_degree};
-  //   prolongation_test.run();
-  // }
+  {
+    // Square
+    const unsigned int fe_degree = 2;
+    Test<3> prolongation_test{2 /*extaction_level*/, fe_degree}; // square
+    prolongation_test.run();
+    // Test<3> prolongation_test{3 /*extaction_level*/, fe_degree}; // piston,//
+    // prolongation_test.run();
+  }
 
+  {
+    // Square
+    const unsigned int fe_degree = 3;
+    Test<3> prolongation_test{2 /*extaction_level*/, fe_degree}; // square
+    prolongation_test.run();
+    // Test<3> prolongation_test{3 /*extaction_level*/, fe_degree}; // piston,//
+    // prolongation_test.run();
+  }
   // {
   //   // Ball
   //   const unsigned int fe_degree = 2;
