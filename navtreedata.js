@@ -59,7 +59,7 @@ var NAVTREE =
 var NAVTREEINDEX =
 [
 "agglomeration__accessor_8h.html",
-"functions_func.html"
+"classdealii_1_1_m_g_two_level_transfer_agglomeration.html#a0b358cccb7e9da8058a048dcaa2df27b"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

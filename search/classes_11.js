@@ -76,5 +76,6 @@ var searchData=
   ['rotate3d_73',['Rotate3d',['http://www.dealii.org/developer/doxygen/deal.II/classGridTools_1_1internal_1_1Rotate3d.html',1,'GridTools::internal']]],
   ['rowinfo_74',['RowInfo',['http://www.dealii.org/developer/doxygen/deal.II/structSparseMatrixEZ_1_1RowInfo.html',1,'SparseMatrixEZ']]],
   ['rtree_5fvisitor_75',['Rtree_visitor',['../structdealii_1_1_poly_utils_1_1_rtree__visitor.html',1,'dealii::PolyUtils']]],
-  ['rungekutta_76',['RungeKutta',['http://www.dealii.org/developer/doxygen/deal.II/classTimeStepping_1_1RungeKutta.html',1,'TimeStepping']]]
+  ['rtreeinfo_76',['RtreeInfo',['../structdealii_1_1_rtree_info.html',1,'dealii']]],
+  ['rungekutta_77',['RungeKutta',['http://www.dealii.org/developer/doxygen/deal.II/classTimeStepping_1_1RungeKutta.html',1,'TimeStepping']]]
 ];
