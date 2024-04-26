@@ -4,7 +4,7 @@
 [![Indent](https://github.com/fdrmrc/Polydeal/actions/workflows/indentation.yml/badge.svg)](https://github.com/fdrmrc/Polydeal/actions/workflows/indentation.yml)
 [![Doxygen](https://github.com/fdrmrc/Polydeal/actions/workflows/doxygen.yml/badge.svg)](https://github.com/fdrmrc/Polydeal/actions/workflows/doxygen.yml)
 <img align="right" width="150" height="150" src="doc/logo.png">
-
+[![DOI](https://zenodo.org/badge/550271242.svg)](https://zenodo.org/doi/10.5281/zenodo.11065519)
 
 
 
