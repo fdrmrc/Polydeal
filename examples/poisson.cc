@@ -385,10 +385,11 @@ public:
           const SolutionType    &solution_type    = SolutionType::linear,
           const unsigned int                      = 0,
           const unsigned int                      = 0,
-          const unsigned int fe_degree            = 1);
+          const unsigned int fe_degree            = 1,
+          const bool         fast_integration     = false);
   void
-  run();
-
+                  run();
+  bool            fast_integration;
   GridType        grid_type;
   PartitionerType partitioner_type;
   SolutionType    solution_type;
@@ -405,8 +406,10 @@ Poisson<dim>::Poisson(const GridType        &grid_type,
                       const SolutionType    &solution_type,
                       const unsigned int     extraction_level,
                       const unsigned int     n_subdomains,
-                      const unsigned int     fe_degree)
-  : mapping(1)
+                      const unsigned int     fe_degree,
+                      const bool             fast_integration_)
+  : fast_integration(fast_integration_)
+  , mapping(1)
   , dg_fe(fe_degree)
   , grid_type(grid_type)
   , partitioner_type(partitioner_type)
@@ -461,7 +464,7 @@ Poisson<dim>::make_grid()
   else
     {
       GridGenerator::hyper_cube(tria, 0., 1.);
-      tria.refine_global(9);
+      tria.refine_global(5);
     }
   std::cout << "Size of tria: " << tria.n_active_cells() << std::endl;
   cached_tria = std::make_unique<GridTools::Cache<dim>>(tria, mapping);
@@ -680,13 +683,17 @@ Poisson<dim>::assemble_system()
   solution.reinit(ah->n_dofs());
   system_rhs.reinit(ah->n_dofs());
 
-  const unsigned int quadrature_degree      = 2 * dg_fe.get_degree() + 1;
+  const unsigned int quadrature_degree      = 4 * dg_fe.get_degree() + 1;
   const unsigned int face_quadrature_degree = 2 * dg_fe.get_degree() + 1;
   ah->initialize_fe_values(QGauss<dim>(quadrature_degree),
                            update_gradients | update_JxW_values |
                              update_quadrature_points | update_JxW_values |
                              update_values,
-                           QGauss<dim - 1>(face_quadrature_degree));
+                           QGauss<dim - 1>(face_quadrature_degree),
+                           update_quadrature_points | update_normal_vectors |
+                             update_values | update_gradients |
+                             update_JxW_values,
+                           fast_integration);
 
   const unsigned int dofs_per_cell = ah->n_dofs_per_cell();
 
@@ -1100,7 +1107,15 @@ Poisson<dim>::run()
 {
   make_grid();
   setup_agglomeration();
+
+  // Get starting timepoint
+  auto start = std::chrono::high_resolution_clock::now();
   assemble_system();
+  auto stop = std::chrono::high_resolution_clock::now();
+  auto duration =
+    std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+  std::cout << "Time taken by assembly: " << duration.count() << " microseconds"
+            << std::endl;
   solve();
   output_results();
 }
@@ -1129,16 +1144,34 @@ main()
   // Testing p-convergence
   std::cout << "Testing p-convergence" << std::endl;
   {
+    std::cout << "With subtessellation integration:" << std::endl;
     // for (unsigned int fe_degree : {1, 2, 3, 4, 5})
-    for (unsigned int fe_degree : {1})
+    // for (unsigned int fe_degree : {1, 2, 3, 4})
+    //   {
+    //     std::cout << "Fe degree: " << fe_degree << std::endl;
+    //     Poisson<2> poisson_problem{GridType::unstructured,
+    //                                PartitionerType::rtree,
+    //                                SolutionType::product_sine,
+    //                                3 /*extaction_level*/,
+    //                                0,
+    //                                fe_degree,
+    //                                false};
+    //     poisson_problem.run();
+    //   }
+  }
+  {
+    std::cout << "With bbox integration:" << std::endl;
+    // for (unsigned int fe_degree : {1, 2, 3, 4, 5})
+    for (unsigned int fe_degree : {1, 2, 3, 4})
       {
         std::cout << "Fe degree: " << fe_degree << std::endl;
-        Poisson<2> poisson_problem{GridType::grid_generator,
+        Poisson<2> poisson_problem{GridType::unstructured,
                                    PartitionerType::rtree,
                                    SolutionType::product_sine,
-                                   5 /*extaction_level*/,
+                                   3 /*extaction_level*/,
                                    0,
-                                   fe_degree};
+                                   fe_degree,
+                                   true};
         poisson_problem.run();
       }
   }

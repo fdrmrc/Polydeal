@@ -101,13 +101,14 @@ AgglomerationHandler<dim, spacedim>::initialize_fe_values(
   const Quadrature<dim>     &cell_quadrature,
   const UpdateFlags         &flags,
   const Quadrature<dim - 1> &face_quadrature,
-  const UpdateFlags         &face_flags)
+  const UpdateFlags         &face_flags,
+  const bool                 fast_integration_)
 {
   agglomeration_quad       = cell_quadrature;
   agglomeration_flags      = flags;
   agglomeration_face_quad  = face_quadrature;
   agglomeration_face_flags = face_flags | internal_agglomeration_face_flags;
-
+  fast_integration         = fast_integration_;
 
   no_values =
     std::make_unique<FEValues<dim>>(*mapping,
@@ -422,35 +423,57 @@ AgglomerationHandler<dim, spacedim>::agglomerated_quadrature(
   Assert(is_master_cell(master_cell),
          ExcMessage("This must be a master cell."));
 
-  std::vector<Point<dim>> vec_pts;
-  std::vector<double>     vec_JxWs;
-  for (const auto &dummy_cell : cells)
+  if (fast_integration == false)
     {
-      no_values->reinit(dummy_cell);
-      auto        q_points = no_values->get_quadrature_points(); // real qpoints
-      const auto &JxWs     = no_values->get_JxW_values();
+      std::vector<Point<dim>> vec_pts;
+      std::vector<double>     vec_JxWs;
+      for (const auto &dummy_cell : cells)
+        {
+          no_values->reinit(dummy_cell);
+          auto q_points    = no_values->get_quadrature_points(); // real qpoints
+          const auto &JxWs = no_values->get_JxW_values();
 
-      std::transform(q_points.begin(),
-                     q_points.end(),
-                     std::back_inserter(vec_pts),
-                     [&](const Point<spacedim> &p) { return p; });
-      std::transform(JxWs.begin(),
-                     JxWs.end(),
-                     std::back_inserter(vec_JxWs),
-                     [&](const double w) { return w; });
+          std::transform(q_points.begin(),
+                         q_points.end(),
+                         std::back_inserter(vec_pts),
+                         [&](const Point<spacedim> &p) { return p; });
+          std::transform(JxWs.begin(),
+                         JxWs.end(),
+                         std::back_inserter(vec_JxWs),
+                         [&](const double w) { return w; });
+        }
+
+      // Map back each point in real space by using the map associated to the
+      // bounding box.
+      std::vector<Point<dim>> unit_points(vec_pts.size());
+      const auto             &bbox =
+        bboxes[master2polygon.at(master_cell->active_cell_index())];
+      unit_points.reserve(vec_pts.size());
+
+      for (unsigned int i = 0; i < vec_pts.size(); i++)
+        unit_points[i] = bbox.real_to_unit(vec_pts[i]);
+
+      return Quadrature<dim>(unit_points, vec_JxWs);
     }
+  else if (fast_integration)
+    {
+      // Use non-conforming quadrature rule defined on the bounding-box. It is
+      // sufficient to generate 2p+1 quadrature points on reference domain.
 
-  // Map back each point in real space by using the map associated to the
-  // bounding box.
-  std::vector<Point<dim>> unit_points(vec_pts.size());
-  const auto             &bbox =
-    bboxes[master2polygon.at(master_cell->active_cell_index())];
-  unit_points.reserve(vec_pts.size());
+      const std::vector<double> &weights = agglomeration_quad.get_weights();
 
-  for (unsigned int i = 0; i < vec_pts.size(); i++)
-    unit_points[i] = bbox.real_to_unit(vec_pts[i]);
+      std::vector<Point<dim>> unit_points(agglomeration_quad.size());
+      std::vector<double>     JxWs(agglomeration_quad.size());
+      const double            bbox_measure =
+        bboxes[master2polygon.at(master_cell->active_cell_index())].volume();
 
-  return Quadrature<dim>(unit_points, vec_JxWs);
+      for (size_t i = 0; i < unit_points.size(); i++)
+        JxWs[i] = weights[i] * bbox_measure;
+
+      return Quadrature<dim>(agglomeration_quad.get_points(), JxWs);
+    }
+  else
+    DEAL_II_ASSERT_UNREACHABLE();
 }
 
 

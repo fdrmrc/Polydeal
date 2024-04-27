@@ -45,11 +45,11 @@ public:
 
   virtual void
   value_list(const std::vector<Point<dim>> &points,
-             std::vector<double> &          values,
+             std::vector<double>           &values,
              const unsigned int /*component*/) const override;
 
   virtual Tensor<1, dim>
-  gradient(const Point<dim> & p,
+  gradient(const Point<dim>  &p,
            const unsigned int component = 0) const override;
 };
 
@@ -85,7 +85,7 @@ SolutionProductSine<dim>::gradient(const Point<dim> &p,
 template <int dim>
 void
 SolutionProductSine<dim>::value_list(const std::vector<Point<dim>> &points,
-                                     std::vector<double> &          values,
+                                     std::vector<double>           &values,
                                      const unsigned int /*component*/) const
 {
   for (unsigned int i = 0; i < values.size(); ++i)
@@ -106,7 +106,7 @@ public:
 
   virtual void
   value_list(const std::vector<Point<dim>> &points,
-             std::vector<double> &          values,
+             std::vector<double>           &values,
              const unsigned int /*component*/) const override;
 };
 
@@ -115,7 +115,7 @@ public:
 template <int dim>
 void
 RightHandSide<dim>::value_list(const std::vector<Point<dim>> &points,
-                               std::vector<double> &          values,
+                               std::vector<double>           &values,
                                const unsigned int /*component*/) const
 {
   for (unsigned int i = 0; i < values.size(); ++i)
@@ -148,7 +148,7 @@ public:
 
   virtual void
   operator()(const unsigned int,
-             Vector<Number> &      dst,
+             Vector<Number>       &dst,
              const Vector<Number> &src) const
   {
     direct_solver.vmult(dst, src);
@@ -198,14 +198,14 @@ template <typename VectorType,
           typename LevelMatrixType,
           typename MGTransferType>
 static void
-mg_solve(SolverControl &                       solver_control,
-         VectorType &                          dst,
-         const VectorType &                    src,
-         const GMGParameters &                 mg_data,
-         const DoFHandler<dim> &               dof,
-         const SystemMatrixType &              fine_matrix,
+mg_solve(SolverControl                        &solver_control,
+         VectorType                           &dst,
+         const VectorType                     &src,
+         const GMGParameters                  &mg_data,
+         const DoFHandler<dim>                &dof,
+         const SystemMatrixType               &fine_matrix,
          const MGLevelObject<LevelMatrixType> &mg_matrices,
-         const MGTransferType &                mg_transfer)
+         const MGTransferType                 &mg_transfer)
 {
   AssertThrow(mg_data.smoother.type == "jacobi", ExcNotImplemented());
 
@@ -592,9 +592,9 @@ Test<dim>::check_transfer()
   const double penalty_constant =
     10. * dg_fe.get_degree() * (dg_fe.get_degree() + 1);
   const auto &assemble_matrix = [&](AgglomerationHandler<dim> &ah,
-                                    const SparsityPattern &    sparsity,
-                                    SparseMatrix<double> &     system_matrix,
-                                    Vector<double> &           system_rhs) {
+                                    const SparsityPattern     &sparsity,
+                                    SparseMatrix<double>      &system_matrix,
+                                    Vector<double>            &system_rhs) {
     AffineConstraints<double> constraints;
     constraints.close();
 
@@ -630,7 +630,7 @@ Test<dim>::check_transfer()
         const auto &agglo_values = ah.reinit(polytope);
         polytope->get_dof_indices(local_dof_indices);
 
-        const auto &        q_points  = agglo_values.get_quadrature_points();
+        const auto         &q_points  = agglo_values.get_quadrature_points();
         const unsigned int  n_qpoints = q_points.size();
         std::vector<double> rhs(n_qpoints);
         rhs_function.value_list(q_points, rhs, 1);

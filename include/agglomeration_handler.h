@@ -284,14 +284,17 @@ public:
   /**
    *
    * Set the degree of the quadrature formula to be used and the proper flags
-   * for the FEValues object on the agglomerated cell.
+   * for the FEValues object on the agglomerated cell. The last boolean argument
+   * avoid to use a sub-tessellation and exploits a gaussian quadrature formula
+   * on the bounding box.
    */
   void
   initialize_fe_values(
-    const Quadrature<dim>     &cell_quadrature = QGauss<dim>(1),
-    const UpdateFlags         &flags           = UpdateFlags::update_default,
-    const Quadrature<dim - 1> &face_quadrature = QGauss<dim - 1>(1),
-    const UpdateFlags         &face_flags      = UpdateFlags::update_default);
+    const Quadrature<dim>     &cell_quadrature   = QGauss<dim>(1),
+    const UpdateFlags         &flags             = UpdateFlags::update_default,
+    const Quadrature<dim - 1> &face_quadrature   = QGauss<dim - 1>(1),
+    const UpdateFlags         &face_flags        = UpdateFlags::update_default,
+    bool                       fast_integration_ = false);
 
   /**
    * Given a Triangulation with some agglomerated cells, create the sparsity
@@ -875,6 +878,8 @@ private:
    * cells as (trivial) polytopes.
    */
   bool hybrid_mesh;
+
+  bool fast_integration;
 };
 
 
