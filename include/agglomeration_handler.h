@@ -604,6 +604,7 @@ private:
   void
   initialize_hp_structure();
 
+
   /**
    * Helper function to call reinit on a master cell.
    */
@@ -613,8 +614,6 @@ private:
     const unsigned int                                              face_number,
     std::unique_ptr<NonMatching::FEImmersedSurfaceValues<spacedim>>
       &agglo_isv_ptr) const;
-
-
 
   /**
    * Helper function to determine whether or not a cell is a slave cell, without
@@ -633,7 +632,12 @@ private:
   void
   setup_connectivity_of_agglomeration();
 
-
+  /**
+   * Given the index of a polytopic element, return a DoFHandler iterator for
+   * which DoFs associated to that polytope can be queried.
+   */
+  inline const typename DoFHandler<dim, spacedim>::active_cell_iterator
+  polytope_to_dh_iterator(const types::global_cell_index polytope_index) const;
 
   /**
    * Record the number of agglomerations on the grid.
@@ -1084,6 +1088,17 @@ inline unsigned int
 AgglomerationHandler<dim, spacedim>::n_agglomerates() const
 {
   return Utilities::MPI::sum(n_agglomerations, communicator);
+}
+
+
+
+template <int dim, int spacedim>
+inline const typename DoFHandler<dim, spacedim>::active_cell_iterator
+AgglomerationHandler<dim, spacedim>::polytope_to_dh_iterator(
+  const types::global_cell_index polytope_index) const
+{
+  return master_cells_container[polytope_index]->as_dof_handler_iterator(
+    agglo_dh);
 }
 
 
