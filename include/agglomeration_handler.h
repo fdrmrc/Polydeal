@@ -47,6 +47,7 @@
 #include <deal.II/non_matching/immersed_surface_quadrature.h>
 
 #include <agglomeration_iterator.h>
+#include <agglomerator.h>
 
 #include <fstream>
 
@@ -538,6 +539,20 @@ public:
                             std::vector<std::vector<Tensor<1, spacedim>>>>>
     recv_gradients;
 
+  /**
+   * Given the index of a polytopic element, return a DoFHandler iterator
+   * for which DoFs associated to that polytope can be queried.
+   */
+  inline const typename DoFHandler<dim, spacedim>::active_cell_iterator
+  polytope_to_dh_iterator(const types::global_cell_index polytope_index) const;
+
+  /**
+   *
+   */
+  template <typename RtreeType>
+  void
+  connect_hierarchy(const CellsAgglomerator<dim, RtreeType> &agglomerator);
+
 private:
   /**
    * Initialize connectivity informations
@@ -613,6 +628,7 @@ private:
     std::unique_ptr<NonMatching::FEImmersedSurfaceValues<spacedim>>
       &agglo_isv_ptr) const;
 
+
   /**
    * Helper function to determine whether or not a cell is a slave cell, without
    * any information about his parents.
@@ -630,12 +646,6 @@ private:
   void
   setup_connectivity_of_agglomeration();
 
-  /**
-   * Given the index of a polytopic element, return a DoFHandler iterator for
-   * which DoFs associated to that polytope can be queried.
-   */
-  inline const typename DoFHandler<dim, spacedim>::active_cell_iterator
-  polytope_to_dh_iterator(const types::global_cell_index polytope_index) const;
 
   /**
    * Record the number of agglomerations on the grid.
@@ -879,6 +889,11 @@ private:
    * cells as (trivial) polytopes.
    */
   bool hybrid_mesh;
+
+  const std::map<std::pair<types::global_cell_index, types::global_cell_index>,
+                 std::vector<types::global_cell_index>> *parent_child_info;
+
+  unsigned int present_extraction_level;
 };
 
 
@@ -1166,6 +1181,15 @@ AgglomerationHandler<dim, spacedim>::polytope_iterators() const
     begin(), end());
 }
 
+template <int dim, int spacedim>
+template <typename RtreeType>
+void
+AgglomerationHandler<dim, spacedim>::connect_hierarchy(
+  const CellsAgglomerator<dim, RtreeType> &agglomerator)
+{
+  parent_child_info        = &agglomerator.parent_node_to_children_nodes;
+  present_extraction_level = agglomerator.extraction_level;
+}
 
 
 #endif
