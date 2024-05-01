@@ -47,10 +47,10 @@ namespace dealii
         const unsigned int target_level,
         std::vector<std::vector<typename Triangulation<
           boost::geometry::dimension<Box>::value>::active_cell_iterator>>
-                                 &agglomerates_,
-        std::vector<std::size_t> &n_nodes_per_level,
-        std::map<std::pair<std::size_t, std::size_t>, std::vector<std::size_t>>
-          &parent_to_children);
+                                                        &agglomerates_,
+        std::vector<types::global_cell_index>           &n_nodes_per_level,
+        std::map<std::pair<types::global_cell_index, types::global_cell_index>,
+                 std::vector<types::global_cell_index>> &parent_to_children);
 
       /**
        * An alias that identifies an InternalNode of the tree.
@@ -122,13 +122,14 @@ namespace dealii
       /**
        * Store the total number of nodes on each level.
        */
-      std::vector<std::size_t> &n_nodes_per_level;
+      std::vector<types::global_cell_index> &n_nodes_per_level;
 
       /**
        * Map that associates to a given node on level l its children, identified
        * by their integer index.
        */
-      std::map<std::pair<std::size_t, std::size_t>, std::vector<std::size_t>>
+      std::map<std::pair<types::global_cell_index, types::global_cell_index>,
+               std::vector<types::global_cell_index>>
         &parent_node_to_children_nodes;
     };
 
@@ -144,10 +145,10 @@ namespace dealii
       const unsigned int target_level,
       std::vector<std::vector<typename Triangulation<
         boost::geometry::dimension<Box>::value>::active_cell_iterator>>
-                               &agglomerates_,
-      std::vector<std::size_t> &n_nodes_per_level_,
-      std::map<std::pair<std::size_t, std::size_t>, std::vector<std::size_t>>
-        &parent_to_children)
+                                                      &agglomerates_,
+      std::vector<types::global_cell_index>           &n_nodes_per_level_,
+      std::map<std::pair<types::global_cell_index, types::global_cell_index>,
+               std::vector<types::global_cell_index>> &parent_to_children)
       : translator(translator)
       , level(0)
       , node_counter(0)
@@ -227,7 +228,7 @@ namespace dealii
           // done with node on level l > target_level (not just
           // "target_level+1).
           n_nodes_per_level[level_backup]++;
-          const std::size_t node_idx =
+          const types::global_cell_index node_idx =
             n_nodes_per_level[level_backup] - 1; // so to start from 0
 
           parent_node_to_children_nodes[{n_nodes_per_level[level_backup - 1],
@@ -294,15 +295,16 @@ namespace dealii
     /**
      * Return the number of nodes present in level @p level.
      */
-    inline std::size_t
+    inline types::global_cell_index
     get_n_nodes_per_level(const unsigned int level) const;
 
     /**
      * This function returns a map which associates to each node on level
      * @p extraction_level a list of children.
      */
-    inline const std::map<std::pair<std::size_t, std::size_t>,
-                          std::vector<std::size_t>> &
+    inline const std::map<
+      std::pair<types::global_cell_index, types::global_cell_index>,
+      std::vector<types::global_cell_index>> &
     get_hierarchy() const;
 
 
@@ -328,13 +330,14 @@ namespace dealii
      * Vector storing the number of nodes (and, ultimately, agglomerates) for
      * each level.
      */
-    std::vector<std::size_t> n_nodes_per_level;
+    std::vector<types::global_cell_index> n_nodes_per_level;
 
     /**
      * Map which maps a node parent @n on level @p l to a vector of integers
      * which stores the index of children.
      */
-    std::map<std::pair<std::size_t, std::size_t>, std::vector<std::size_t>>
+    std::map<std::pair<types::global_cell_index, types::global_cell_index>,
+             std::vector<types::global_cell_index>>
       parent_node_to_children_nodes;
   };
 
@@ -408,7 +411,7 @@ namespace dealii
 
 
   template <int dim, typename RtreeType>
-  inline std::size_t
+  inline types::global_cell_index
   CellsAgglomerator<dim, RtreeType>::get_n_nodes_per_level(
     const unsigned int level) const
   {
@@ -418,8 +421,9 @@ namespace dealii
 
 
   template <int dim, typename RtreeType>
-  inline const std::map<std::pair<std::size_t, std::size_t>,
-                        std::vector<std::size_t>> &
+  inline const std::map<
+    std::pair<types::global_cell_index, types::global_cell_index>,
+    std::vector<types::global_cell_index>> &
   CellsAgglomerator<dim, RtreeType>::get_hierarchy() const
   {
     Assert(parent_node_to_children_nodes.size(),
