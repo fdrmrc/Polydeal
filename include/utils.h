@@ -84,6 +84,7 @@ namespace Utils
 
     const FiniteElement<dim, spacedim> &fe   = coarse_ah.get_fe();
     const Triangulation<dim, spacedim> &tria = coarse_ah.get_triangulation();
+    const auto &fine_bboxes                  = fine_ah.get_local_bboxes();
     const auto &coarse_bboxes                = coarse_ah.get_local_bboxes();
 
     const IndexSet &locally_owned_dofs_fine =
@@ -142,16 +143,15 @@ namespace Utils
       for (const auto &polytope : coarse_ah.polytope_iterators())
         if (polytope->is_locally_owned())
           {
-            const typename DoFHandler<dim>::active_cell_iterator
-              &coarse_polytope_dh =
-                coarse_ah.polytope_to_dh_iterator(polytope->index());
-
             polytope->get_dof_indices(local_dof_indices_coarse);
+            const BoundingBox<dim> &coarse_bbox =
+              coarse_bboxes[polytope->index()];
 
             // Get local children of the present polytope
             const auto &children_polytopes = polytope->children();
             for (const types::global_cell_index child_idx : children_polytopes)
               {
+                const BoundingBox<dim> &fine_bbox = fine_bboxes[child_idx];
                 const typename DoFHandler<dim>::active_cell_iterator &child_dh =
                   fine_ah.polytope_to_dh_iterator(child_idx);
                 child_dh->get_dof_indices(local_dof_indices_child);
@@ -162,17 +162,13 @@ namespace Utils
                 std::vector<Point<dim>> real_qpoints;
                 real_qpoints.reserve(unit_support_points.size());
                 for (const Point<dim> &p : unit_support_points)
-                  real_qpoints.push_back(
-                    fine_ah.euler_mapping->transform_unit_to_real_cell(child_dh,
-                                                                       p));
-                // real_qpoints.push_back(box_fine.unit_to_real(p));
+                  real_qpoints.push_back(fine_bbox.unit_to_real(p));
+
 
                 for (unsigned int i = 0; i < local_dof_indices_coarse.size();
                      ++i)
                   {
-                    const auto &p =
-                      coarse_ah.euler_mapping->transform_real_to_unit_cell(
-                        coarse_polytope_dh, real_qpoints[i]);
+                    const auto &p = coarse_bbox.real_to_unit(real_qpoints[i]);
                     for (unsigned int j = 0; j < local_dof_indices_child.size();
                          ++j)
                       {
