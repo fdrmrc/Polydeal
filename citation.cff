@@ -1,0 +1,12 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+- family-names: "Feder"
+  given-names: "Marco"
+- family-names: "Heltai"
+  given-names: "Luca"
+- family-names: "Cangiani"
+  given-names: "Andrea"
+title: "polyDEAL"
+version: 0.0.1
+url: "https://github.com/fdrmrc/Polydeal"
