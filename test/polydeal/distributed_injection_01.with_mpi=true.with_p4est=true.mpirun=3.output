@@ -1,0 +1,36 @@
+*** Running with 3 MPI ranks ***
+Grid type: Structured square
+Total number of available levels: 5
+Total coarse agglomerates: 18
+Distributed coarse DoFs
+Total fine agglomerates: 66
+Distributed fine DoFs
+Multiplication: done
+Norm of error(L2): 9.97775e-16
+*** Running with 3 MPI ranks ***
+Grid type: Unstructured square
+Total number of available levels: 7
+Total coarse agglomerates: 24
+Distributed coarse DoFs
+Total fine agglomerates: 93
+Distributed fine DoFs
+Multiplication: done
+Norm of error(L2): 2.75792e-15
+*** Running with 3 MPI ranks ***
+Grid type: Structured square
+Total number of available levels: 5
+Total coarse agglomerates: 18
+Distributed coarse DoFs
+Total fine agglomerates: 66
+Distributed fine DoFs
+Multiplication: done
+Norm of error(L2): 1.27391e-15
+*** Running with 3 MPI ranks ***
+Grid type: Unstructured square
+Total number of available levels: 7
+Total coarse agglomerates: 24
+Distributed coarse DoFs
+Total fine agglomerates: 93
+Distributed fine DoFs
+Multiplication: done
+Norm of error(L2): 2.80779e-15
