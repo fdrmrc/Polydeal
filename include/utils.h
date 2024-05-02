@@ -61,22 +61,25 @@ namespace Utils
                         SparsityPattern                           &sp,
                         MatrixType                                &matrix)
   {
+    using NumberType = typename MatrixType::value_type;
     // First, check that we support the matrix types
     static constexpr bool is_trilinos_matrix =
       std::is_same_v<TrilinosWrappers::SparseMatrix, MatrixType>;
     static constexpr bool is_serial_matrix =
-      std::is_same_v<SparseMatrix<double>, MatrixType>;
+      std::is_same_v<SparseMatrix<NumberType>, MatrixType>;
     static constexpr bool is_supported_matrix =
       is_trilinos_matrix || is_serial_matrix;
     static_assert(is_supported_matrix);
-    Assert(matrix.empty() && sp.empty(),
-           ExcMessage(
-             "The destination matrix and its sparsity pattern must the empty "
-             "upon calling this function."));
+    if constexpr (is_trilinos_matrix)
+      Assert(matrix.m() == 0, ExcInternalError());
+    else if constexpr (is_serial_matrix)
+      Assert(sp.empty() && matrix.empty(),
+             ExcMessage(
+               "The destination matrix and its sparsity pattern must the empty "
+               "upon calling this function."));
+
     Assert(coarse_ah.n_dofs() < fine_ah.n_dofs(), ExcInternalError());
     AssertDimension(dim, spacedim);
-
-    using NumberType = typename MatrixType::value_type;
 
     // Get information from the handlers
     const DoFHandler<dim, spacedim> &coarse_agglo_dh = coarse_ah.agglo_dh;
@@ -164,7 +167,6 @@ namespace Utils
                 for (const Point<dim> &p : unit_support_points)
                   real_qpoints.push_back(fine_bbox.unit_to_real(p));
 
-
                 for (unsigned int i = 0; i < local_dof_indices_coarse.size();
                      ++i)
                   {
@@ -207,9 +209,10 @@ namespace Utils
       }
     else
       {
-        // PETSc, LA::d::v options not implemented.
+        // PETSc types not implemented.
         (void)coarse_ah;
         (void)fine_ah;
+        (void)sp;
         (void)matrix;
         AssertThrow(false,
                     ExcNotImplemented(
