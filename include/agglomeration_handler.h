@@ -399,7 +399,9 @@ public:
   get_dof_handler() const;
 
   /**
-   * Returns the number of agglomerate cells in the grid.
+   * Returns the number of agglomerate cells on the whole grid. In case of a
+   * distributed grid, this function returns the sum of the number of
+   * agglomerates over all processors.
    */
   unsigned int
   n_agglomerates() const;
@@ -1081,7 +1083,7 @@ template <int dim, int spacedim>
 inline unsigned int
 AgglomerationHandler<dim, spacedim>::n_agglomerates() const
 {
-  return n_agglomerations;
+  return Utilities::MPI::sum(n_agglomerations, communicator);
 }
 
 
