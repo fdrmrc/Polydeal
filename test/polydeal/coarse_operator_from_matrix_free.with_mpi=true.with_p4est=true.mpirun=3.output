@@ -1,0 +1,27 @@
+Running with 3 MPI ranks.
+Grid type: Structured square
+Total number of available levels: 5
+Total fine agglomerates: 66
+Distributed DoFs
+Injection matrix has size: (16384,264)
+Scalar product induced by fine operator: 0
+Scalar product induced by agglomerated operator: 3.62691e-30
+
+Running with 3 MPI ranks.
+Grid type: Structured square
+Total number of available levels: 5
+Total fine agglomerates: 66
+Distributed DoFs
+Injection matrix has size: (16384,264)
+Scalar product induced by fine operator: 1
+Scalar product induced by agglomerated operator: 1
+
+Running with 3 MPI ranks.
+Grid type: Structured square
+Total number of available levels: 5
+Total fine agglomerates: 66
+Distributed DoFs
+Injection matrix has size: (16384,264)
+Scalar product induced by fine operator: 2
+Scalar product induced by agglomerated operator: 2
+
