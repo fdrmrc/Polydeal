@@ -34,7 +34,7 @@ namespace dealii
    * Galerkin projection.
    */
   template <int dim, typename Number = double>
-  class MatrixFreeAMG
+  class MatrixFreeProjector
   {
   public:
     using VectorType = LinearAlgebra::distributed::Vector<Number>;
@@ -42,7 +42,7 @@ namespace dealii
      * Constructor. It takes the matrix-free operator evaluation on the finest
      * level, and a series of transfers from levels.
      */
-    MatrixFreeAMG(
+    MatrixFreeProjector(
       const MatrixFreeOperators::
         Base<dim, LinearAlgebra::distributed::Vector<Number>> &mf_operator,
       const std::vector<TrilinosWrappers::SparseMatrix *>      transfers);
