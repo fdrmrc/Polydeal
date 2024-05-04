@@ -530,10 +530,9 @@ TestMGMatrix<dim>::make_fine_grid(const unsigned int n_global_refinements)
       //   std::ifstream abaqus_file("../../meshes/piston_3.inp"); // piston
       //   mesh
       std::ifstream gmsh_file(
-        "../../meshes/t3.msh"); // unstructured square [0,1]^2
-                                //   grid_in.read_abaqus(abaqus_file);
+        SOURCE_DIR "/input_grids/square.msh"); // unstructured square [0,1]^2
       grid_in.read_msh(gmsh_file);
-      tria.refine_global(5); // 4
+      tria.refine_global(n_global_refinements - 2); // 4
     }
   else if (grid_type == GridType::grid_generator)
     {
@@ -709,7 +708,7 @@ template <int dim>
 void
 TestMGMatrix<dim>::run()
 {
-  make_fine_grid(6); // 6 global refinements of unit cube
+  make_fine_grid(6);
   agglomerate_and_compute_level_matrices();
   pcout << std::endl;
 }
@@ -731,7 +730,8 @@ main(int argc, char *argv[])
   std::array<Function<dim> *, 3>   functions{{&constant, &x, &xpy}};
 
   for (const Function<dim> *func : functions)
-    for (const GridType &grid_type : {GridType::grid_generator})
+    for (const GridType &grid_type :
+         {GridType::grid_generator, GridType::unstructured})
       {
         TestMGMatrix<dim> problem(grid_type,
                                   degree_finite_element,
