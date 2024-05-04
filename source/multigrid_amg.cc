@@ -17,7 +17,7 @@
 namespace dealii
 {
   template <int dim, typename Number>
-  MatrixFreeAMG<dim, Number>::MatrixFreeAMG(
+  MatrixFreeProjector<dim, Number>::MatrixFreeProjector(
     const MatrixFreeOperators::Base<dim,
                                     LinearAlgebra::distributed::Vector<Number>>
                                                        &mf_operator_,
@@ -106,7 +106,7 @@ namespace dealii
 
   template <int dim, typename Number>
   void
-  MatrixFreeAMG<dim, Number>::compute_level_matrices(
+  MatrixFreeProjector<dim, Number>::compute_level_matrices(
     MGLevelObject<LinearOperator<VectorType, VectorType>> &mg_matrices)
   {
     using VectorType            = LinearAlgebra::distributed::Vector<Number>;
@@ -125,9 +125,9 @@ namespace dealii
   }
 
   // explicit instantiations
-  template class MatrixFreeAMG<1, double>;
-  template class MatrixFreeAMG<2, double>;
-  template class MatrixFreeAMG<3, double>;
+  template class MatrixFreeProjector<1, double>;
+  template class MatrixFreeProjector<2, double>;
+  template class MatrixFreeProjector<3, double>;
 
 
 } // namespace dealii
