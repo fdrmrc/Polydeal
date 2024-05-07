@@ -24,6 +24,8 @@
 
 #include <deal.II/matrix_free/operators.h>
 
+#include <deal.II/multigrid/mg_base.h>
+
 namespace dealii
 {
   /**
@@ -60,6 +62,9 @@ namespace dealii
       MGLevelObject<LinearOperator<VectorType, VectorType>> &mg_matrices);
 
   private:
+    /**
+     * MPI communicator used by Trilinos objects.
+     */
     MPI_Comm communicator;
 
     /**
@@ -82,6 +87,90 @@ namespace dealii
      */
     LinearOperator<VectorType, VectorType> mf_linear_operator;
   };
+
+
+
+  /**
+   * This class implements the transfer across possibly agglomerated
+   * multigrid levels. To perform this, it needs a sequence of transfer matrices
+   * and DoFHandlers which identify the degrees of freedom on each level.
+   *
+   */
+  template <int dim, typename VectorType>
+  class MGTransferAgglomeration : public MGTransferBase<VectorType>
+  {
+  public:
+    /**
+     * Constructor. It takes a sequence of transfer matrices from possibly
+     * agglomerated meshes.
+     */
+    MGTransferAgglomeration(
+      const MGLevelObject<TrilinosWrappers::SparseMatrix *> &transfer_matrices,
+      const std::vector<DoFHandler<dim> *>                  &dof_handlers);
+
+
+    /**
+     * Perform prolongation from a coarse level vector @p src to a fine one
+     * @p dst. The previous content of dst is overwritten.
+     */
+    void
+    prolongate(const unsigned int to_level,
+               VectorType        &dst,
+               const VectorType  &src) const override;
+
+
+    /**
+     * Perform prolongation, summing into the previous content of dst.
+     */
+    void
+    prolongate_and_add(const unsigned int to_level,
+                       VectorType        &dst,
+                       const VectorType  &src) const override;
+
+
+    /**
+     * Perform restriction.
+     */
+    void
+    restrict_and_add(const unsigned int from_level,
+                     VectorType        &dst,
+                     const VectorType  &src) const override;
+
+
+    /**
+     * Transfer from a vector on the global grid to vectors defined on each of
+     * the levels separately for the active degrees of freedom. In particular,
+     * for a globally refined mesh only the finest level in dst is filled as a
+     * plain copy of src. All the other level objects are left untouched.
+     */
+    void
+    copy_to_mg(const DoFHandler<dim>     &dof_handler,
+               MGLevelObject<VectorType> &dst,
+               const VectorType          &src) const;
+
+
+    /**
+     * Transfer from multi-level vector to normal vector.
+     */
+    void
+    copy_from_mg(const DoFHandler<dim>           &dof_handler,
+                 VectorType                      &dst,
+                 const MGLevelObject<VectorType> &src) const;
+
+
+  private:
+    /**
+     * Sequence of transfer operators, stored as pointers to Trilinos matrices.
+     */
+    MGLevelObject<SmartPointer<TrilinosWrappers::SparseMatrix>>
+      transfer_matrices;
+
+    /**
+     * Pointers to DoFHandler employe on the levels.
+     */
+    std::vector<const DoFHandler<dim> *> dof_handlers;
+  };
+
 } // namespace dealii
 
 
