@@ -1189,8 +1189,12 @@ void
 AgglomerationHandler<dim, spacedim>::connect_hierarchy(
   const CellsAgglomerator<dim, RtreeType> &agglomerator)
 {
+<<<<<<< HEAD
   // Perform deep copy
   parent_child_info        = agglomerator.parent_node_to_children_nodes;
+=======
+  parent_child_info = &agglomerator.parent_node_to_children_nodes;
+>>>>>>> WIP: working. To test: coarse grid solver too expensive
   present_extraction_level = agglomerator.extraction_level;
 }
 
