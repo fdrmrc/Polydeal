@@ -31,10 +31,10 @@ namespace dealii
     using VectorType = LinearAlgebra::distributed::Vector<Number>;
 
     // Check parallel layout is identical on every level
-    for (unsigned int l = 0; l < transfers_.size(); ++l)
-      Assert((mf_operator_.get_matrix_free()->get_locally_owned_set() ==
-              transfers_[l]->locally_owned_range_indices()),
-             ExcInternalError());
+    // for (unsigned int l = 0; l < transfers_.size(); ++l)
+    Assert((mf_operator_.get_matrix_free()->get_locally_owned_set() ==
+            transfers_[transfers_.size() - 1]->locally_owned_range_indices()),
+           ExcInternalError());
 
     transfer_matrices.resize(transfers_.size());
     level_operators.resize(transfers_.size());
@@ -132,8 +132,11 @@ namespace dealii
     mg_matrices[max_level] = mf_linear_operator; // finest level
 
     // do the same, but using transfers to define level matrices
-    for (unsigned int l = max_level - 1; l == min_level; --l)
+    // std::cout << "min level = " << min_level << std::endl;
+    // std::cout << "max level = " << max_level << std::endl;
+    for (unsigned int l = max_level; l-- > min_level;)
       {
+        // std::cout << "l= " << l << std::endl;
         mg_matrices[l] = transpose_operator(level_operators[l]) *
                          mf_linear_operator * level_operators[l];
         mg_matrices[l].n_rows = level_operators[l].n();
@@ -153,17 +156,18 @@ namespace dealii
     dof_handlers.resize(dof_handlers_.size());
 
     for (unsigned int l = transfer_matrices_.min_level();
-         l < transfer_matrices_.max_level();
+         l <= transfer_matrices_.max_level();
          ++l)
       {
+        // std::cout << "l in build transfers: " << l << std::endl;
         transfer_matrices[l] = transfer_matrices_[l];
         dof_handlers[l]      = dof_handlers_[l];
       }
 
-    transfer_matrices[dof_handlers_.size() - 1] =
-      transfer_matrices_[dof_handlers_.size() - 1];
-    dof_handlers[dof_handlers_.size() - 1] =
-      dof_handlers_[dof_handlers_.size() - 1];
+    // transfer_matrices[dof_handlers_.size() - 1] =
+    //   transfer_matrices_[dof_handlers_.size() - 1];
+    // dof_handlers[dof_handlers_.size() - 1] =
+    //   dof_handlers_[dof_handlers_.size() - 1];
   }
 
 
@@ -188,9 +192,15 @@ namespace dealii
     VectorType        &dst,
     const VectorType  &src) const
   {
-    Assert(transfer_matrices[to_level] != nullptr,
+    Assert(transfer_matrices[to_level - 1] != nullptr,
            ExcMessage("Transfer matrix has not been initialized."));
-    transfer_matrices[to_level]->vmult_add(dst, src);
+    double start_pro, stop_pro;
+    start_pro = MPI_Wtime();
+    transfer_matrices[to_level - 1]->vmult_add(dst, src);
+    stop_pro = MPI_Wtime();
+    if (Utilities::MPI::this_mpi_process(dst.get_mpi_communicator()) == 0)
+      std::cout << "Prolongation elapsed time: " << stop_pro - start_pro
+                << "[s]" << std::endl;
   }
 
 
@@ -202,9 +212,14 @@ namespace dealii
     VectorType        &dst,
     const VectorType  &src) const
   {
-    Assert(transfer_matrices[from_level] != nullptr,
+    // std::cout << "from_level " << from_level << std::endl;
+    // std::cout << "Rows: " << transfer_matrices[from_level - 1]->m()
+    //           << std::endl;
+    // std::cout << "Cols: " << transfer_matrices[from_level - 1]->n()
+    //           << std::endl;
+    Assert(transfer_matrices[from_level - 1] != nullptr,
            ExcMessage("Matrix has not been initialized."));
-    transfer_matrices[from_level]->Tvmult_add(dst, src);
+    transfer_matrices[from_level - 1]->Tvmult_add(dst, src);
   }
 
 
@@ -217,9 +232,11 @@ namespace dealii
     const VectorType          &src) const
   {
     (void)dof_handler; // required by interface, but not needed.
+    // std::cout << "Before copy_to_mg() " << std::endl;
     for (unsigned int level = dst.min_level(); level <= dst.max_level();
          ++level)
       {
+        // std::cout << "level = " << level << std::endl;
         dst[level].reinit(dof_handlers[level]->locally_owned_dofs(),
                           dof_handlers[level]->get_communicator());
       }

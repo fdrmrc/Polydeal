@@ -172,6 +172,12 @@ public:
   types::subdomain_id
   subdomain_id() const;
 
+  /**
+   * Returns a vector of indices identifying the children polytopes.
+   */
+  inline const std::vector<types::global_cell_index> &
+  children() const;
+
 private:
   /**
    * Private default constructor. This is not supposed to be used and hence will
@@ -767,6 +773,15 @@ inline types::subdomain_id
 AgglomerationAccessor<dim, spacedim>::subdomain_id() const
 {
   return present_subdomain_id;
+}
+
+template <int dim, int spacedim>
+inline const std::vector<types::global_cell_index> &
+AgglomerationAccessor<dim, spacedim>::children() const
+{
+  Assert(!handler->parent_child_info->empty(), ExcInternalError());
+  return handler->parent_child_info->at(
+    {present_index, handler->present_extraction_level});
 }
 
 

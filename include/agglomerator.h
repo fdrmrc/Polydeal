@@ -23,6 +23,8 @@
 #include <boost/geometry/index/rtree.hpp>
 #include <boost/geometry/strategies/strategies.hpp>
 
+template <int dim, int spacedim>
+class AgglomerationHandler;
 
 namespace dealii
 {
@@ -271,6 +273,9 @@ namespace dealii
   class CellsAgglomerator
   {
   public:
+    template <int, int>
+    friend class ::AgglomerationHandler;
+
     /**
      * Constructor. It takes a given rtree and an integer representing the
      * index of the level to be extracted.
@@ -306,7 +311,6 @@ namespace dealii
       std::pair<types::global_cell_index, types::global_cell_index>,
       std::vector<types::global_cell_index>> &
     get_hierarchy() const;
-
 
   private:
     /**
