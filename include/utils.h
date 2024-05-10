@@ -225,6 +225,84 @@ namespace Utils
       matrix.compress(VectorOperation::add);
   }
 
+
+
+  /**
+   * This class implements the interface required by MGCoarseGridBase and
+   * allows a direct to be used as coarse grid solver in the Multigrid
+   * framework. The SolverType is provided as template parameter.
+   *
+   * @note Supported direct solver types are: SparseDirectUMFPACK and
+   * TrilinosWrappers::SolverDirect. Available vector types are the ones
+   * supported by the respective vmult() interfaces by such types. This means
+   * that SparseDirectUMFPACK supports only serial deal.II vectors, while
+   * TrilinosWrappers::SolverDirect supports as parallel vector types:
+   * LinearAlgebra::distributed::Vector and TrilinosWrappers::MPI::Vector.
+   */
+  template <typename VectorType, typename MatrixType, typename SolverType>
+  class MGCoarseDirect : public MGCoarseGridBase<VectorType>
+  {
+  public:
+    explicit MGCoarseDirect(const MatrixType &matrix)
+      : coarse_matrix(matrix)
+    {
+      // Check if matrix types are supported
+      static constexpr bool is_serial_matrix =
+        std::is_same_v<SolverType, SparseDirectUMFPACK>;
+      static constexpr bool is_trilinos_matrix =
+        std::is_same_v<SolverType, TrilinosWrappers::SolverDirect>;
+      static constexpr bool is_matrix_type_supported =
+        is_serial_matrix || is_trilinos_matrix;
+      Assert(is_matrix_type_supported, ExcNotImplemented());
+
+      // Check on the vector types: standard deal.II vectors, LA::d::V, or
+      // Trilinos vectors.
+      if constexpr (is_serial_matrix)
+        {
+          static constexpr bool is_serial_vector =
+            std::is_same_v<VectorType,
+                           dealii::Vector<typename MatrixType::value_type>>;
+          Assert(is_serial_vector, ExcNotImplemented());
+        }
+      else if constexpr (is_trilinos_matrix)
+        {
+          static constexpr bool is_supported_parallel_vector =
+            std::is_same_v<VectorType,
+                           LinearAlgebra::distributed::Vector<
+                             typename MatrixType::value_type>> ||
+            std::is_same_v<VectorType, TrilinosWrappers::MPI::Vector>;
+          Assert(is_supported_parallel_vector, ExcNotImplemented());
+        }
+      else
+        {
+          DEAL_II_NOT_IMPLEMENTED();
+        }
+
+
+      // regardless of UMFPACK or Trilinos, both direct solvers need a call
+      // to `initialize()`.
+      direct_solver.initialize(coarse_matrix);
+    }
+
+
+    void
+    operator()(const unsigned int,
+               VectorType       &dst,
+               const VectorType &src) const override
+    {
+      direct_solver.vmult(dst, src);
+    }
+
+
+    ~MGCoarseDirect() = default;
+
+  private:
+    SolverType        direct_solver;
+    const MatrixType &coarse_matrix;
+  };
+
+
+
 } // namespace Utils
 
 
