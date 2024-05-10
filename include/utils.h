@@ -290,6 +290,8 @@ namespace Utils
                VectorType       &dst,
                const VectorType &src) const override
     {
+      AssertDimension(coarse_matrix.n(), src.size());
+      AssertDimension(coarse_matrix.m(), dst.size());
       direct_solver.vmult(dst, src);
     }
 
