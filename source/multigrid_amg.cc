@@ -219,7 +219,13 @@ namespace dealii
     //           << std::endl;
     Assert(transfer_matrices[from_level - 1] != nullptr,
            ExcMessage("Matrix has not been initialized."));
+    double start_pro, stop_pro;
+    start_pro = MPI_Wtime();
     transfer_matrices[from_level - 1]->Tvmult_add(dst, src);
+    stop_pro = MPI_Wtime();
+    if (Utilities::MPI::this_mpi_process(dst.get_mpi_communicator()) == 0)
+      std::cout << "Restriction elapsed time: " << stop_pro - start_pro << "[s]"
+                << std::endl;
   }
 
 
