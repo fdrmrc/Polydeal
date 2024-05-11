@@ -28,6 +28,9 @@ template <int dim, typename RtreeType>
 class Agglomerator;
 template <int, int>
 class AgglomerationHandler;
+template <typename VectorType>
+class MGCoarseGridBase;
+class SparseDirectUMFPACK;
 
 namespace Utils
 {
