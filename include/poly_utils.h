@@ -498,7 +498,7 @@ namespace dealii::PolyUtils
 #else
 
     Assert(false, ExcNeedsCGAL());
-    (void)face;
+    (void)face_index;
     (void)polygon_boundary;
     return {};
 #endif
