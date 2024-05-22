@@ -518,8 +518,8 @@ DiffusionReactionProblem<dim>::assemble_system()
 {
   constraints.close();
 
-  const unsigned int quadrature_degree      = 2 * fe_dg.get_degree() + 1;
-  const unsigned int face_quadrature_degree = 2 * fe_dg.get_degree() + 1;
+  const unsigned int quadrature_degree      = fe_dg.get_degree() + 1;
+  const unsigned int face_quadrature_degree = fe_dg.get_degree() + 1;
   ah->initialize_fe_values(QGauss<dim>(quadrature_degree),
                            update_values | update_gradients |
                              update_JxW_values | update_quadrature_points,
@@ -576,6 +576,7 @@ DiffusionReactionProblem<dim>::assemble_system()
 
           const auto         &q_points  = agglo_values.get_quadrature_points();
           const unsigned int  n_qpoints = q_points.size();
+          FullMatrix<double>  partial_matrix(dofs_per_cell, n_qpoints * dim);
           std::vector<double> rhs(n_qpoints);
           rhs_function->value_list(q_points, rhs);
 
@@ -583,17 +584,13 @@ DiffusionReactionProblem<dim>::assemble_system()
 
           for (unsigned int q_index : agglo_values.quadrature_point_indices())
             {
+              const double sqrtjxw = std::sqrt(agglo_values.JxW(q_index));
               for (unsigned int i = 0; i < dofs_per_cell; ++i)
                 {
-                  for (unsigned int j = 0; j < dofs_per_cell; ++j)
+                  const auto &grad = agglo_values.shape_grad(i, q_index);
+                  for (unsigned int d = 0; d < dim; ++d)
                     {
-                      cell_matrix(i, j) +=
-                        (agglo_values.shape_grad(i, q_index) *
-                           agglo_values.shape_grad(j, q_index) +
-                         reaction_coefficient *
-                           agglo_values.shape_value(i, q_index) *
-                           agglo_values.shape_value(j, q_index)) *
-                        agglo_values.JxW(q_index);
+                      partial_matrix(i, q_index * dim + d) = sqrtjxw * grad[d];
                     }
                   cell_rhs(i) += agglo_values.shape_value(i, q_index) *
                                  rhs[q_index] * agglo_values.JxW(q_index);
@@ -603,6 +600,7 @@ DiffusionReactionProblem<dim>::assemble_system()
           // get volumetric DoFs
           polytope->get_dof_indices(local_dof_indices);
 
+          partial_matrix.mTmult(cell_matrix, partial_matrix);
 
           // Assemble face terms
           unsigned int n_faces = polytope->n_faces();
@@ -939,9 +937,8 @@ main(int argc, char *argv[])
                                        comm)); // number of local agglomerates
 
   const unsigned int reaction_coefficient = 0.;
-  for (const AgglomerationData &agglomeration_strategy :
-       {metis_data, rtree_data})
-    for (unsigned int degree : {1, 2, 3, 4})
+  for (const AgglomerationData &agglomeration_strategy : {metis_data})
+    for (unsigned int degree : {1, 2, 3, 4, 5, 6})
       {
         DiffusionReactionProblem<dim> problem(agglomeration_strategy,
                                               degree,

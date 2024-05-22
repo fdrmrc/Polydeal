@@ -35,33 +35,11 @@ namespace dealii
    * standard multilevel methods is that we construct such matrices using a
    * Galerkin projection.
    */
-  template <int dim, typename Number = double>
+  template <int dim, typename OperatorType, typename Number = double>
   class MatrixFreeProjector
   {
-  public:
-    using VectorType = LinearAlgebra::distributed::Vector<Number>;
-    /**
-     * Constructor. It takes the matrix-free operator evaluation on the finest
-     * level, and a series of transfers from levels.
-     */
-    MatrixFreeProjector(
-      const MatrixFreeOperators::
-        Base<dim, LinearAlgebra::distributed::Vector<Number>> &mf_operator,
-      const std::vector<TrilinosWrappers::SparseMatrix *>      transfers);
-
-    /**
-     * Initialize level matrices using the operator evaluation and the transfer
-     * matrices provided in the constructor.
-     *
-     * In particular, matrix[0]= A0, while for the other levels it holds that:
-     * matrix[l] = P_l^T A0 P_l, being P_l the injection from the fine level
-     * (indexed by 0) and level l.
-     */
-    void
-    compute_level_matrices(
-      MGLevelObject<LinearOperator<VectorType, VectorType>> &mg_matrices);
-
   private:
+    using VectorType = LinearAlgebra::distributed::Vector<Number>;
     /**
      * MPI communicator used by Trilinos objects.
      */
@@ -70,7 +48,7 @@ namespace dealii
     /**
      * Matrix-free operator evaluation.
      */
-    const MatrixFreeOperators::Base<dim, VectorType> *mf_operator;
+    const OperatorType *mf_operator;
 
     /**
      * Vector of (pointers of) Trilinos Matrices storing two-level projections.
@@ -86,6 +64,143 @@ namespace dealii
      * For matrix-free operator evaluation
      */
     LinearOperator<VectorType, VectorType> mf_linear_operator;
+
+  public:
+    /**
+     * Constructor. It takes the matrix-free operator evaluation on the finest
+     * level, and a series of transfers from levels.
+     */
+    MatrixFreeProjector(
+      const OperatorType                                 &mf_operator_,
+      const std::vector<TrilinosWrappers::SparseMatrix *> transfers_)
+    {
+      // Only DGQ discretizations are supported.
+      Assert(dynamic_cast<const FE_DGQ<dim> *>(
+               &mf_operator_.get_matrix_free()->get_dof_handler().get_fe()) !=
+               nullptr,
+             ExcNotImplemented());
+      using VectorType = LinearAlgebra::distributed::Vector<Number>;
+
+      // Check parallel layout is identical on every level
+      // for (unsigned int l = 0; l < transfers_.size(); ++l)
+      Assert((mf_operator_.get_matrix_free()->get_locally_owned_set() ==
+              transfers_[transfers_.size() - 1]->locally_owned_range_indices()),
+             ExcInternalError());
+
+      transfer_matrices.resize(transfers_.size());
+      level_operators.resize(transfers_.size());
+      // get communicator from first Trilinos matrix
+      communicator = transfers_[0]->get_mpi_communicator();
+
+      for (unsigned int l = 0; l < transfers_.size(); ++l)
+        {
+          // Set the pointer to the correct matrix
+          transfer_matrices[l] = transfers_[l];
+
+          level_operators[l].n_rows = transfers_[l]->m();
+          level_operators[l].n_cols = transfers_[l]->n();
+
+          // Define vmult-type lambdas for each linear operator.
+          level_operators[l].vmult = [this, l](VectorType       &dst,
+                                               const VectorType &src) {
+            transfer_matrices[l]->vmult(dst, src);
+          };
+          level_operators[l].vmult_add = [this, l](VectorType       &dst,
+                                                   const VectorType &src) {
+            transfer_matrices[l]->vmult_add(dst, src);
+          };
+          level_operators[l].Tvmult = [this, l](VectorType       &dst,
+                                                const VectorType &src) {
+            transfer_matrices[l]->Tvmult(dst, src);
+          };
+          level_operators[l].Tvmult_add = [this, l](VectorType       &dst,
+                                                    const VectorType &src) {
+            transfer_matrices[l]->Tvmult_add(dst, src);
+          };
+
+          // Inform each linear operator about the parallel layout. Use the
+          // given trilinos matrices.
+          level_operators[l].reinit_domain_vector =
+            [this, l](VectorType &v, bool) { (void)v; };
+
+          level_operators[l].reinit_range_vector = [this, l](VectorType &v,
+                                                             bool) {
+            v.reinit(transfer_matrices[l]->locally_owned_range_indices(),
+                     communicator);
+          };
+        }
+
+      // Do the same for the matrix-free object.
+      // First, set the pointer
+      mf_operator = &mf_operator_;
+
+      mf_linear_operator.n_rows = mf_operator_.m();
+      mf_linear_operator.n_cols = mf_operator_.n();
+
+      // Then, populate the corresponding lambdas (std::functions)
+      mf_linear_operator.vmult = [this](VectorType       &dst,
+                                        const VectorType &src) {
+        // std::cout << "vmult LO called" << std::endl;
+        mf_operator->vmult(dst, src);
+      };
+      mf_linear_operator.vmult_add = [this](VectorType       &dst,
+                                            const VectorType &src) {
+        // std::cout << "vmult_add LO called" << std::endl;
+        mf_operator->vmult_add(dst, src);
+      };
+      mf_linear_operator.Tvmult = [this](VectorType       &dst,
+                                         const VectorType &src) {
+        mf_operator->Tvmult(dst, src);
+      };
+      mf_linear_operator.Tvmult_add = [this](VectorType       &dst,
+                                             const VectorType &src) {
+        mf_operator->Tvmult_add(dst, src);
+      };
+
+      mf_linear_operator.reinit_domain_vector = [&](VectorType &v, bool) {
+        (void)v;
+      };
+      mf_linear_operator.reinit_range_vector = [&](VectorType &v, bool) {
+        v.reinit(mf_operator->get_matrix_free()
+                   ->get_dof_handler()
+                   .locally_owned_dofs(),
+                 communicator);
+      };
+    }
+
+    /**
+     * Initialize level matrices using the operator evaluation and the transfer
+     * matrices provided in the constructor.
+     *
+     * In particular, matrix[0]= A0, while for the other levels it holds that:
+     * matrix[l] = P_l^T A0 P_l, being P_l the injection from the fine level
+     * (indexed by 0) and level l.
+     */
+    void
+    compute_level_matrices(
+      MGLevelObject<LinearOperator<VectorType, VectorType>> &mg_matrices)
+    {
+      Assert(mg_matrices.n_levels() > 1,
+             ExcMessage("Vector of matrices set to invalid size."));
+      using VectorType = LinearAlgebra::distributed::Vector<Number>;
+      Assert(!mf_linear_operator.is_null_operator, ExcInternalError());
+      const unsigned int min_level = mg_matrices.min_level();
+      const unsigned int max_level = mg_matrices.max_level();
+
+      mg_matrices[max_level] = mf_linear_operator; // finest level
+
+      // do the same, but using transfers to define level matrices
+      // std::cout << "min level = " << min_level << std::endl;
+      // std::cout << "max level = " << max_level << std::endl;
+      for (unsigned int l = max_level; l-- > min_level;)
+        {
+          // std::cout << "l= " << l << std::endl;
+          mg_matrices[l] = transpose_operator(level_operators[l]) *
+                           mf_linear_operator * level_operators[l];
+          mg_matrices[l].n_rows = level_operators[l].n();
+          mg_matrices[l].n_cols = mg_matrices[l].n_rows;
+        }
+    }
   };
 
 

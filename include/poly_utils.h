@@ -498,7 +498,7 @@ namespace dealii::PolyUtils
 #else
 
     Assert(false, ExcNeedsCGAL());
-    (void)face;
+    (void)face_index;
     (void)polygon_boundary;
     return {};
 #endif
@@ -559,7 +559,9 @@ namespace dealii::PolyUtils
     const IndexSet &locally_owned_dofs_agglo = agglo_dh.locally_owned_dofs();
 
 
-    DynamicSparsityPattern dsp(output_dh->n_dofs(), agglo_dh.n_dofs());
+    DynamicSparsityPattern dsp(output_dh->n_dofs(),
+                               agglo_dh.n_dofs(),
+                               output_dh->locally_owned_dofs());
 
     std::vector<types::global_dof_index> agglo_dof_indices(fe.dofs_per_cell);
     std::vector<types::global_dof_index> standard_dof_indices(fe.dofs_per_cell);
