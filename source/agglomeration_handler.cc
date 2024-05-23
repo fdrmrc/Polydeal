@@ -719,13 +719,6 @@ AgglomerationHandler<dim, spacedim>::create_agglomeration_sparsity_pattern(
             }
         }
     }
-
-  if constexpr (std::is_same_v<SparsityPatternType, DynamicSparsityPattern>)
-    if (Utilities::MPI::job_supports_mpi())
-      SparsityTools::distribute_sparsity_pattern(dsp,
-                                                 locally_owned_dofs,
-                                                 communicator,
-                                                 locally_relevant_dofs);
 }
 
 
