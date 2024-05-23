@@ -200,15 +200,11 @@ main(int argc, char *argv[])
   ah.distribute_agglomerated_dofs(
     fe_dg); // setup_ghost_polytopes has been called here
 
-  DynamicSparsityPattern sparsity_pattern;
-  ah.create_agglomeration_sparsity_pattern(sparsity_pattern);
+  TrilinosWrappers::SparsityPattern dsp;
+  ah.create_agglomeration_sparsity_pattern(dsp);
+  dsp.compress();
 
-  const IndexSet &locally_owned_dofs = ah.agglo_dh.locally_owned_dofs();
-
-  system_matrix.reinit(locally_owned_dofs,
-                       locally_owned_dofs,
-                       sparsity_pattern,
-                       comm);
+  system_matrix.reinit(dsp);
 
   std::ofstream out("sparsity_agglomeration_from_rank_" +
                     std::to_string(Utilities::MPI::this_mpi_process(comm)) +

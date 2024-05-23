@@ -157,8 +157,9 @@ main(int argc, char *argv[])
                           QGauss<1>(face_quadrature_degree));
   ah.distribute_agglomerated_dofs(fe_dg);
 
-  DynamicSparsityPattern sparsity_pattern;
+  TrilinosWrappers::SparsityPattern sparsity_pattern;
   ah.create_agglomeration_sparsity_pattern(sparsity_pattern);
+  sparsity_pattern.compress();
 
   // Print (the locally owned part of) the sparsity pattern to the given stream,
   // using the format (line,col), only from rank 0
