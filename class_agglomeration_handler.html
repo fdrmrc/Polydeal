@@ -169,9 +169,9 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a4d0a88c14fbc0946c636dfaeb56c09bb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac46da6a55b39bb5d9f3e4fb481e905b6" id="r_ac46da6a55b39bb5d9f3e4fb481e905b6"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ac46da6a55b39bb5d9f3e4fb481e905b6">initialize_fe_values</a> (const <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classQuadrature.html">Quadrature</a>&lt; dim &gt; &amp;cell_quadrature=<a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classQGauss.html">QGauss</a>&lt; dim &gt;(1), const <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/group__feaccess.html#gaa94b67d2fdcc390690c523f28019e52f">UpdateFlags</a> &amp;flags=UpdateFlags::update_default, const <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classQuadrature.html">Quadrature</a>&lt; dim - 1 &gt; &amp;face_quadrature=<a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classQGauss.html">QGauss</a>&lt; dim - 1 &gt;(1), const <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/group__feaccess.html#gaa94b67d2fdcc390690c523f28019e52f">UpdateFlags</a> &amp;face_flags=UpdateFlags::update_default)</td></tr>
 <tr class="separator:ac46da6a55b39bb5d9f3e4fb481e905b6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab9c322ef9bde157e46c58c60114430a8" id="r_ab9c322ef9bde157e46c58c60114430a8"><td class="memTemplParams" colspan="2">template&lt;typename Number  = double&gt; </td></tr>
-<tr class="memitem:ab9c322ef9bde157e46c58c60114430a8"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#ab9c322ef9bde157e46c58c60114430a8">create_agglomeration_sparsity_pattern</a> (<a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classDynamicSparsityPattern.html">DynamicSparsityPattern</a> &amp;sparsity_pattern, const <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classAffineConstraints.html">AffineConstraints</a>&lt; Number &gt; constraints=<a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classAffineConstraints.html">AffineConstraints</a>&lt; Number &gt;(), const bool keep_constrained_dofs=true, const <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/namespacetypes.html#a3d8ea8a4c6a58127f8c2fcc9ec74af6e">types::subdomain_id</a> subdomain_id=<a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/namespacenumbers.html#a6fe5acece133d890bee8cc49ccd8ebfb">numbers::invalid_subdomain_id</a>)</td></tr>
-<tr class="separator:ab9c322ef9bde157e46c58c60114430a8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a78f486b9b47307a432bd7fb9748ce5d4" id="r_a78f486b9b47307a432bd7fb9748ce5d4"><td class="memTemplParams" colspan="2">template&lt;typename SparsityPatternType , typename Number  = double&gt; </td></tr>
+<tr class="memitem:a78f486b9b47307a432bd7fb9748ce5d4"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a78f486b9b47307a432bd7fb9748ce5d4">create_agglomeration_sparsity_pattern</a> (SparsityPatternType &amp;sparsity_pattern, const <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classAffineConstraints.html">AffineConstraints</a>&lt; Number &gt; &amp;constraints=<a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classAffineConstraints.html">AffineConstraints</a>&lt; Number &gt;(), const bool keep_constrained_dofs=true, const <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/namespacetypes.html#a3d8ea8a4c6a58127f8c2fcc9ec74af6e">types::subdomain_id</a> subdomain_id=<a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/namespacenumbers.html#a6fe5acece133d890bee8cc49ccd8ebfb">numbers::invalid_subdomain_id</a>)</td></tr>
+<tr class="separator:a78f486b9b47307a432bd7fb9748ce5d4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abf88b7b46f79f27ad7877400d068fc56" id="r_abf88b7b46f79f27ad7877400d068fc56"><td class="memItemLeft" align="right" valign="top"><a class="el" href="#a5429d87059182d6af3a7bdb0aaf1cb0b">agglomeration_iterator</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#abf88b7b46f79f27ad7877400d068fc56">define_agglomerate</a> (const <a class="el" href="#a624b12c4bf7dc699878f6febe1f4250a">AgglomerationContainer</a> &amp;cells)</td></tr>
 <tr class="separator:abf88b7b46f79f27ad7877400d068fc56"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7709e59ad857c81d552b394ddc2b7c3f" id="r_a7709e59ad857c81d552b394ddc2b7c3f"><td class="memItemLeft" align="right" valign="top">const <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classTriangulation.html">Triangulation</a>&lt; dim, spacedim &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a7709e59ad857c81d552b394ddc2b7c3f">get_triangulation</a> () const</td></tr>
@@ -824,25 +824,25 @@ template&lt;int dim, int spacedim = dim&gt; </div>
 
 </div>
 </div>
-<a id="ab9c322ef9bde157e46c58c60114430a8" name="ab9c322ef9bde157e46c58c60114430a8"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ab9c322ef9bde157e46c58c60114430a8">&#9670;&#160;</a></span>create_agglomeration_sparsity_pattern()</h2>
+<a id="a78f486b9b47307a432bd7fb9748ce5d4" name="a78f486b9b47307a432bd7fb9748ce5d4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a78f486b9b47307a432bd7fb9748ce5d4">&#9670;&#160;</a></span>create_agglomeration_sparsity_pattern()</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
 template&lt;int dim, int spacedim&gt; </div>
 <div class="memtemplate">
-template&lt;typename Number &gt; </div>
+template&lt;typename SparsityPatternType , typename Number &gt; </div>
       <table class="memname">
         <tr>
           <td class="memname">template void <a class="el" href="class_agglomeration_handler.html">AgglomerationHandler</a>&lt; dim, spacedim &gt;::create_agglomeration_sparsity_pattern </td>
           <td>(</td>
-          <td class="paramtype"><a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classDynamicSparsityPattern.html">DynamicSparsityPattern</a> &amp;</td>          <td class="paramname"><span class="paramname"><em>sparsity_pattern</em></span>, </td>
+          <td class="paramtype">SparsityPatternType &amp;</td>          <td class="paramname"><span class="paramname"><em>sparsity_pattern</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classAffineConstraints.html">AffineConstraints</a>&lt; Number &gt;</td>          <td class="paramname"><span class="paramname"><em>constraints</em></span><span class="paramdefsep"> = </span><span class="paramdefval"><a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classAffineConstraints.html">AffineConstraints</a>&lt;&#160;Number&#160;&gt;()</span>, </td>
+          <td class="paramtype">const <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classAffineConstraints.html">AffineConstraints</a>&lt; Number &gt; &amp;</td>          <td class="paramname"><span class="paramname"><em>constraints</em></span><span class="paramdefsep"> = </span><span class="paramdefval"><a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classAffineConstraints.html">AffineConstraints</a>&lt;&#160;Number&#160;&gt;()</span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -860,7 +860,7 @@ template&lt;typename Number &gt; </div>
 
 <p class="definition">Definition at line <a class="el" href="agglomeration__handler_8cc_source.html#l00663">663</a> of file <a class="el" href="agglomeration__handler_8cc_source.html">agglomeration_handler.cc</a>.</p>
 
-<p class="reference">References <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classAffineConstraints.html#a3bbb2cf24aae20fb28935f1233d6c217">AffineConstraints&lt; typename number &gt;::add_entries_local_to_global()</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/namespaceSparsityTools.html#a6b5444028171035f8ffb3fb5c3f8da08">SparsityTools::distribute_sparsity_pattern()</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classDynamicSparsityPattern.html#a0f777cdee3d8ed4b602d8102fe54911b">DynamicSparsityPattern::empty()</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/namespaceDoFTools.html#a2c4c8d504c52cd1569b6455533c6c587">DoFTools::extract_locally_relevant_dofs()</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/namespaceUtilities_1_1MPI.html#aa8e632a701db5e1ba05c4656a914e82b">Utilities::MPI::job_supports_mpi()</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/group__constraints.html#ga432d35b9ef18d1802d48b576300b04fd">DoFTools::make_sparsity_pattern()</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classDynamicSparsityPattern.html#aa32f9f3ebad084d001349cd3ddb4074e">DynamicSparsityPattern::reinit()</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classIndexSet.html#a3ff4b23d197760f6426f262d7d4b8b3c">IndexSet::size()</a>, <a class="el" href="agglomeration__iterator_8h_source.html#l00289">AgglomerationIterator&lt; dim, spacedim &gt;::state()</a>, and <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/namespaceIteratorState.html#a4e92f4a9d339ff987cc3eb5b0a1ac507a457da025bc5a3a2231a667bd5c6f3c92">IteratorState::valid</a>.</p>
+<p class="reference">References <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classAffineConstraints.html#a3bbb2cf24aae20fb28935f1233d6c217">AffineConstraints&lt; typename number &gt;::add_entries_local_to_global()</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/include_2deal_8II_2base_2exceptions_8h.html#a9fe16f5af1c4bd077b581a5f2db7f5b5">DEAL_II_ASSERT_UNREACHABLE</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/namespaceDoFTools.html#a2c4c8d504c52cd1569b6455533c6c587">DoFTools::extract_locally_relevant_dofs()</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/group__constraints.html#ga432d35b9ef18d1802d48b576300b04fd">DoFTools::make_sparsity_pattern()</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classIndexSet.html#a3ff4b23d197760f6426f262d7d4b8b3c">IndexSet::size()</a>, <a class="el" href="agglomeration__iterator_8h_source.html#l00289">AgglomerationIterator&lt; dim, spacedim &gt;::state()</a>, and <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/namespaceIteratorState.html#a4e92f4a9d339ff987cc3eb5b0a1ac507a457da025bc5a3a2231a667bd5c6f3c92">IteratorState::valid</a>.</p>
 
 </div>
 </div>
@@ -1093,7 +1093,7 @@ template&lt;int dim, int spacedim&gt; </div>
 
 <p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00955">955</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="poly__utils_8h_source.html#l00803">dealii::PolyUtils::compute_quality_metrics()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="poly__utils_8h_source.html#l00801">dealii::PolyUtils::compute_quality_metrics()</a>.</p>
 
 </div>
 </div>
@@ -1184,7 +1184,7 @@ template&lt;int dim, int spacedim&gt; </div>
 
 <p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00904">904</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="poly__utils_8h_source.html#l00803">dealii::PolyUtils::compute_quality_metrics()</a>, and <a class="el" href="poly__utils_8h_source.html#l00517">dealii::PolyUtils::interpolate_to_fine_grid()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="poly__utils_8h_source.html#l00801">dealii::PolyUtils::compute_quality_metrics()</a>, and <a class="el" href="poly__utils_8h_source.html#l00517">dealii::PolyUtils::interpolate_to_fine_grid()</a>.</p>
 
 </div>
 </div>
@@ -1325,7 +1325,7 @@ template&lt;int dim, int spacedim&gt; </div>
 
 <p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00896">896</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="poly__utils_8h_source.html#l00803">dealii::PolyUtils::compute_quality_metrics()</a>, and <a class="el" href="poly__utils_8h_source.html#l00517">dealii::PolyUtils::interpolate_to_fine_grid()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="poly__utils_8h_source.html#l00801">dealii::PolyUtils::compute_quality_metrics()</a>, and <a class="el" href="poly__utils_8h_source.html#l00517">dealii::PolyUtils::interpolate_to_fine_grid()</a>.</p>
 
 </div>
 </div>
@@ -1693,7 +1693,7 @@ template&lt;int dim, int spacedim&gt; </div>
 
 <p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l01034">1034</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="poly__utils_8h_source.html#l00955">dealii::PolyUtils::export_polygon_to_csv_file()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="poly__utils_8h_source.html#l00953">dealii::PolyUtils::export_polygon_to_csv_file()</a>.</p>
 
 </div>
 </div>
@@ -1717,7 +1717,7 @@ template&lt;int dim, int spacedim&gt; </div>
 
 <p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l01149">1149</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="poly__utils_8h_source.html#l00803">dealii::PolyUtils::compute_quality_metrics()</a>, and <a class="el" href="poly__utils_8h_source.html#l00955">dealii::PolyUtils::export_polygon_to_csv_file()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="poly__utils_8h_source.html#l00801">dealii::PolyUtils::compute_quality_metrics()</a>, and <a class="el" href="poly__utils_8h_source.html#l00953">dealii::PolyUtils::export_polygon_to_csv_file()</a>.</p>
 
 </div>
 </div>
@@ -1777,7 +1777,7 @@ template&lt;int dim, int spacedim&gt; </div>
 
 <p class="reference">References <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classQuadrature.html#ab5c0720db517deb1c014eb7fa2f64cc1">Quadrature&lt; int dim &gt;::get_weights()</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="poly__utils_8h_source.html#l00803">dealii::PolyUtils::compute_quality_metrics()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="poly__utils_8h_source.html#l00801">dealii::PolyUtils::compute_quality_metrics()</a>.</p>
 
 </div>
 </div>
@@ -3657,7 +3657,7 @@ template&lt;int dim, int spacedim = dim&gt; </div>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="class_agglomeration_handler.html">AgglomerationHandler</a></li>
-    <li class="footer">Generated on Fri May 24 2024 08:24:31 for PolyDEAL by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.11.0 </li>
+    <li class="footer">Generated on Fri May 24 2024 08:27:28 for PolyDEAL by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.11.0 </li>
   </ul>
 </div>
 </body>
