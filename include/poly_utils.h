@@ -552,16 +552,22 @@ namespace dealii::PolyUtils
     output_dh->reinit(tria);
     output_dh->distribute_dofs(fe);
 
-    const IndexSet &locally_owned_dofs = output_dh->locally_owned_dofs();
-    const IndexSet  locally_relevant_dofs =
-      DoFTools::extract_locally_relevant_dofs(*output_dh);
-
+    const IndexSet &locally_owned_dofs       = output_dh->locally_owned_dofs();
     const IndexSet &locally_owned_dofs_agglo = agglo_dh.locally_owned_dofs();
 
+    std::conditional_t<is_trilinos_vector,
+                       TrilinosWrappers::SparsityPattern,
+                       DynamicSparsityPattern>
+      dsp;
 
-    DynamicSparsityPattern dsp(output_dh->n_dofs(),
-                               agglo_dh.n_dofs(),
-                               output_dh->locally_owned_dofs());
+    if constexpr (is_trilinos_vector)
+      dsp.reinit(locally_owned_dofs,
+                 locally_owned_dofs_agglo,
+                 tria.get_communicator());
+    else
+      dsp.reinit(output_dh->n_dofs(),
+                 agglo_dh.n_dofs(),
+                 output_dh->locally_owned_dofs());
 
     std::vector<types::global_dof_index> agglo_dof_indices(fe.dofs_per_cell);
     std::vector<types::global_dof_index> standard_dof_indices(fe.dofs_per_cell);
@@ -656,16 +662,8 @@ namespace dealii::PolyUtils
 
     if constexpr (std::is_same_v<MatrixType, TrilinosWrappers::SparseMatrix>)
       {
-        const MPI_Comm &communicator = tria.get_communicator();
-        SparsityTools::distribute_sparsity_pattern(dsp,
-                                                   locally_owned_dofs,
-                                                   communicator,
-                                                   locally_relevant_dofs);
-
-        interpolation_matrix.reinit(locally_owned_dofs,
-                                    locally_owned_dofs_agglo,
-                                    dsp,
-                                    communicator);
+        dsp.compress();
+        interpolation_matrix.reinit(dsp);
         dst.reinit(locally_owned_dofs);
         assemble_interpolation_matrix();
       }
