@@ -165,7 +165,8 @@ AgglomerationHandler<dim, spacedim>::initialize_agglomeration_data(
     {
       const std::weak_ptr<const Utilities::MPI::Partitioner> cells_partitioner =
         parallel_tria->global_active_cell_index_partitioner();
-      master_slave_relationships.reinit(cells_partitioner.lock(), communicator);
+      master_slave_relationships.reinit(
+        cells_partitioner.lock()->locally_owned_range(), communicator);
 
       const IndexSet &local_eulerian_index_set = euler_dh.locally_owned_dofs();
       euler_vector.reinit(local_eulerian_index_set, communicator);
