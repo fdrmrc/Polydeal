@@ -12,8 +12,8 @@ var searchData=
   ['for_20triangulations_9',['Manifold description for triangulations',['http://www.dealii.org/developer/doxygen/deal.II/group__manifold.html',1,'']]],
   ['formulas_10',['Quadrature formulas',['http://www.dealii.org/developer/doxygen/deal.II/group__Quadrature.html',1,'']]],
   ['free_20infrastructure_11',['Matrix-free infrastructure',['http://www.dealii.org/developer/doxygen/deal.II/group__matrixfree.html',1,'']]],
-  ['freedom_12',['Constraints on degrees of freedom',['http://www.dealii.org/developer/doxygen/deal.II/group__constraints.html',1,'']]],
-  ['freedom_13',['Degrees of Freedom',['http://www.dealii.org/developer/doxygen/deal.II/group__dofs.html',1,'']]],
+  ['freedom_12',['Degrees of Freedom',['http://www.dealii.org/developer/doxygen/deal.II/group__dofs.html',1,'']]],
+  ['freedom_13',['Constraints on degrees of freedom',['http://www.dealii.org/developer/doxygen/deal.II/group__constraints.html',1,'']]],
   ['functions_14',['Functions',['http://www.dealii.org/developer/doxygen/deal.II/group__functions.html',1,'']]],
   ['functions_20and_20classes_15',['Utility functions and classes',['http://www.dealii.org/developer/doxygen/deal.II/group__utilities.html',1,'']]]
 ];

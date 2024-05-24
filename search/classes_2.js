@@ -1,7 +1,7 @@
 var searchData=
 [
   ['cache_0',['Cache',['http://www.dealii.org/developer/doxygen/deal.II/classGridTools_1_1Cache.html',1,'GridTools::Cache&lt; int dim, int spacedim &gt;'],['http://www.dealii.org/developer/doxygen/deal.II/structinternal_1_1FEValuesViews_1_1Cache.html',1,'internal::FEValuesViews::Cache&lt; int dim, int spacedim &gt;']]],
-  ['cache_3c_20dim_2c_20spacedim_20_3e_1',['Cache&lt; dim, spacedim &gt;',['http://www.dealii.org/developer/doxygen/deal.II/structinternal_1_1FEValuesViews_1_1Cache.html',1,'internal::FEValuesViews']]],
+  ['cache_3c_20dim_2c_20spacedim_20_3e_1',['Cache&lt; dim, spacedim &gt;',['http://www.dealii.org/developer/doxygen/deal.II/classGridTools_1_1Cache.html',1,'GridTools::Cache&lt; dim, spacedim &gt;'],['http://www.dealii.org/developer/doxygen/deal.II/structinternal_1_1FEValuesViews_1_1Cache.html',1,'internal::FEValuesViews::Cache&lt; dim, spacedim &gt;']]],
   ['cellaccessor_2',['CellAccessor',['http://www.dealii.org/developer/doxygen/deal.II/classCellAccessor.html',1,'']]],
   ['cellattacheddata_3',['CellAttachedData',['http://www.dealii.org/developer/doxygen/deal.II/structinternal_1_1CellAttachedData.html',1,'internal']]],
   ['cellattacheddata_3c_20dim_2c_20spacedim_20_3e_4',['CellAttachedData&lt; dim, spacedim &gt;',['http://www.dealii.org/developer/doxygen/deal.II/structinternal_1_1CellAttachedData.html',1,'internal']]],

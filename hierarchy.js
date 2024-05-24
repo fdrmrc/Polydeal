@@ -2,7 +2,7 @@ var hierarchy =
 [
     [ "AgglomerationAccessor< dim, spacedim >", "class_agglomeration_accessor.html", null ],
     [ "AgglomerationAccessor< dim, dim >", "class_agglomeration_accessor.html", null ],
-    [ "dealii::internal::AgglomerationHandlerImplementation< dim, spacedim >", "classdealii_1_1internal_1_1_agglomeration_handler_implementation.html", null ],
+    [ "dealii::internal::AgglomerationHandlerImplementation< int, int >", "classdealii_1_1internal_1_1_agglomeration_handler_implementation.html", null ],
     [ "AgglomerationIterator< dim, spacedim >", "class_agglomeration_iterator.html", null ],
     [ "FunctionTime< typename Number >", "http://www.dealii.org/developer/doxygen/deal.II/classFunctionTime.html", [
       [ "Function< dim >", "http://www.dealii.org/developer/doxygen/deal.II/classFunction.html", [
