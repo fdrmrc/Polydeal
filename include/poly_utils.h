@@ -44,6 +44,10 @@
 #include <boost/geometry/index/rtree.hpp>
 #include <boost/geometry/strategies/strategies.hpp>
 
+#ifdef DEAL_II_WITH_TRILINOS
+#  include <EpetraExt_RowMatrixOut.h>
+#endif
+
 #include <deal.II/cgal/point_conversion.h>
 
 #ifdef DEAL_II_WITH_CGAL
@@ -552,22 +556,16 @@ namespace dealii::PolyUtils
     output_dh->reinit(tria);
     output_dh->distribute_dofs(fe);
 
-    const IndexSet &locally_owned_dofs       = output_dh->locally_owned_dofs();
+    const IndexSet &locally_owned_dofs = output_dh->locally_owned_dofs();
+    const IndexSet  locally_relevant_dofs =
+      DoFTools::extract_locally_relevant_dofs(*output_dh);
+
     const IndexSet &locally_owned_dofs_agglo = agglo_dh.locally_owned_dofs();
 
-    std::conditional_t<is_trilinos_vector,
-                       TrilinosWrappers::SparsityPattern,
-                       DynamicSparsityPattern>
-      dsp;
 
-    if constexpr (is_trilinos_vector)
-      dsp.reinit(locally_owned_dofs,
-                 locally_owned_dofs_agglo,
-                 tria.get_communicator());
-    else
-      dsp.reinit(output_dh->n_dofs(),
-                 agglo_dh.n_dofs(),
-                 output_dh->locally_owned_dofs());
+    DynamicSparsityPattern dsp(output_dh->n_dofs(),
+                               agglo_dh.n_dofs(),
+                               output_dh->locally_owned_dofs());
 
     std::vector<types::global_dof_index> agglo_dof_indices(fe.dofs_per_cell);
     std::vector<types::global_dof_index> standard_dof_indices(fe.dofs_per_cell);
@@ -662,8 +660,16 @@ namespace dealii::PolyUtils
 
     if constexpr (std::is_same_v<MatrixType, TrilinosWrappers::SparseMatrix>)
       {
-        dsp.compress();
-        interpolation_matrix.reinit(dsp);
+        const MPI_Comm &communicator = tria.get_communicator();
+        SparsityTools::distribute_sparsity_pattern(dsp,
+                                                   locally_owned_dofs,
+                                                   communicator,
+                                                   locally_relevant_dofs);
+
+        interpolation_matrix.reinit(locally_owned_dofs,
+                                    locally_owned_dofs_agglo,
+                                    dsp,
+                                    communicator);
         dst.reinit(locally_owned_dofs);
         assemble_interpolation_matrix();
       }
@@ -990,6 +996,29 @@ namespace dealii::PolyUtils
                                                num * constexpr_pow(num, pow - 1);
   }
 
+
+
+  void
+  write_to_matrix_market_format(const std::string &filename,
+                                const std::string &matrix_name,
+                                const TrilinosWrappers::SparseMatrix &matrix)
+  {
+#ifdef DEAL_II_WITH_TRILINOS
+    const Epetra_CrsMatrix &trilinos_matrix = matrix.trilinos_matrix();
+
+    const int ierr =
+      EpetraExt::RowMatrixToMatrixMarketFile(filename.c_str(),
+                                             trilinos_matrix,
+                                             matrix_name.c_str(),
+                                             0 /*description field empty*/,
+                                             true /*write header*/);
+    AssertThrow(ierr == 0, ExcTrilinosError(ierr));
+#else
+    (void)filename;
+    (void)matrix_name;
+    (void)matrix;
+#endif
+  }
 } // namespace dealii::PolyUtils
 
 #endif
