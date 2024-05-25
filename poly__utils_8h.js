@@ -10,6 +10,5 @@ var poly__utils_8h =
     [ "get_face_connectivity_of_cells", "poly__utils_8h.html#a168e98040c43aa123c04ef5de5ffd359", null ],
     [ "get_index", "poly__utils_8h.html#af3f69f2eb83fd6281070f540543c1207", null ],
     [ "interpolate_to_fine_grid", "poly__utils_8h.html#ad10be894e09c9fd78712c6e4ad8fad14", null ],
-    [ "partition_locally_owned_regions", "poly__utils_8h.html#a03c416000585c023db89c43a3bca9b6c", null ],
-    [ "write_to_matrix_market_format", "poly__utils_8h.html#ad94a7dc5014ab8ac5b88867735515976", null ]
+    [ "partition_locally_owned_regions", "poly__utils_8h.html#a03c416000585c023db89c43a3bca9b6c", null ]
 ];
