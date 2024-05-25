@@ -47,6 +47,7 @@
 #include <deal.II/non_matching/immersed_surface_quadrature.h>
 
 #include <agglomeration_iterator.h>
+#include <agglomerator.h>
 
 #include <fstream>
 
@@ -540,6 +541,20 @@ public:
                             std::vector<std::vector<Tensor<1, spacedim>>>>>
     recv_gradients;
 
+  /**
+   * Given the index of a polytopic element, return a DoFHandler iterator
+   * for which DoFs associated to that polytope can be queried.
+   */
+  inline const typename DoFHandler<dim, spacedim>::active_cell_iterator
+  polytope_to_dh_iterator(const types::global_cell_index polytope_index) const;
+
+  /**
+   *
+   */
+  template <typename RtreeType>
+  void
+  connect_hierarchy(const CellsAgglomerator<dim, RtreeType> &agglomerator);
+
 private:
   /**
    * Initialize connectivity informations
@@ -604,6 +619,7 @@ private:
   void
   initialize_hp_structure();
 
+
   /**
    * Helper function to call reinit on a master cell.
    */
@@ -613,7 +629,6 @@ private:
     const unsigned int                                              face_number,
     std::unique_ptr<NonMatching::FEImmersedSurfaceValues<spacedim>>
       &agglo_isv_ptr) const;
-
 
 
   /**
@@ -632,7 +647,6 @@ private:
    */
   void
   setup_connectivity_of_agglomeration();
-
 
 
   /**
@@ -877,6 +891,11 @@ private:
    * cells as (trivial) polytopes.
    */
   bool hybrid_mesh;
+
+  const std::map<std::pair<types::global_cell_index, types::global_cell_index>,
+                 std::vector<types::global_cell_index>> *parent_child_info;
+
+  unsigned int present_extraction_level;
 };
 
 
@@ -1089,6 +1108,17 @@ AgglomerationHandler<dim, spacedim>::n_agglomerates() const
 
 
 template <int dim, int spacedim>
+inline const typename DoFHandler<dim, spacedim>::active_cell_iterator
+AgglomerationHandler<dim, spacedim>::polytope_to_dh_iterator(
+  const types::global_cell_index polytope_index) const
+{
+  return master_cells_container[polytope_index]->as_dof_handler_iterator(
+    agglo_dh);
+}
+
+
+
+template <int dim, int spacedim>
 AgglomerationIterator<dim, spacedim>
 AgglomerationHandler<dim, spacedim>::begin() const
 {
@@ -1153,6 +1183,15 @@ AgglomerationHandler<dim, spacedim>::polytope_iterators() const
     begin(), end());
 }
 
+template <int dim, int spacedim>
+template <typename RtreeType>
+void
+AgglomerationHandler<dim, spacedim>::connect_hierarchy(
+  const CellsAgglomerator<dim, RtreeType> &agglomerator)
+{
+  parent_child_info        = &agglomerator.parent_node_to_children_nodes;
+  present_extraction_level = agglomerator.extraction_level;
+}
 
 
 #endif
