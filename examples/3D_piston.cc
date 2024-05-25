@@ -89,47 +89,53 @@ assemble_local_jumps_and_averages(FullMatrix<double>      &M11,
   for (unsigned int q_index : fe_faces0.quadrature_point_indices())
     {
       const Tensor<1, dim> &normal = normals[q_index];
+      const double          JxWq0  = fe_faces0.JxW(q_index);
+      const double          JxWq1  = fe_faces1.JxW(q_index);
       for (unsigned int i = 0; i < dofs_per_cell; ++i)
         {
+          const double phi_i0_grad_normal =
+            fe_faces0.shape_grad(i, q_index) * normal;
+          const double phi_i0_value = fe_faces0.shape_value(i, q_index);
+          const double phi_i1_grad_normal =
+            fe_faces1.shape_grad(i, q_index) * normal;
+          const double phi_i1_value = fe_faces1.shape_value(i, q_index);
+
+
           for (unsigned int j = 0; j < dofs_per_cell; ++j)
             {
               M11(i, j) +=
-                (-0.5 * fe_faces0.shape_grad(i, q_index) * normal *
-                   fe_faces0.shape_value(j, q_index) -
+                (-0.5 * phi_i0_grad_normal * fe_faces0.shape_value(j, q_index) -
                  0.5 * fe_faces0.shape_grad(j, q_index) * normal *
-                   fe_faces0.shape_value(i, q_index) +
-                 (penalty_constant / h_f) * fe_faces0.shape_value(i, q_index) *
+                   phi_i0_value +
+                 (penalty_constant / h_f) * phi_i0_value *
                    fe_faces0.shape_value(j, q_index)) *
-                fe_faces0.JxW(q_index);
+                JxWq0;
 
               M12(i, j) +=
-                (0.5 * fe_faces0.shape_grad(i, q_index) * normal *
-                   fe_faces1.shape_value(j, q_index) -
+                (0.5 * phi_i0_grad_normal * fe_faces1.shape_value(j, q_index) -
                  0.5 * fe_faces1.shape_grad(j, q_index) * normal *
-                   fe_faces0.shape_value(i, q_index) -
-                 (penalty_constant / h_f) * fe_faces0.shape_value(i, q_index) *
+                   phi_i0_value -
+                 (penalty_constant / h_f) * phi_i0_value *
                    fe_faces1.shape_value(j, q_index)) *
-                fe_faces1.JxW(q_index);
+                JxWq1;
 
 
               M21(i, j) +=
-                (-0.5 * fe_faces1.shape_grad(i, q_index) * normal *
-                   fe_faces0.shape_value(j, q_index) +
+                (-0.5 * phi_i1_grad_normal * fe_faces0.shape_value(j, q_index) +
                  0.5 * fe_faces0.shape_grad(j, q_index) * normal *
-                   fe_faces1.shape_value(i, q_index) -
-                 (penalty_constant / h_f) * fe_faces1.shape_value(i, q_index) *
+                   phi_i1_value -
+                 (penalty_constant / h_f) * phi_i1_value *
                    fe_faces0.shape_value(j, q_index)) *
-                fe_faces1.JxW(q_index);
+                JxWq1;
 
 
               M22(i, j) +=
-                (0.5 * fe_faces1.shape_grad(i, q_index) * normal *
-                   fe_faces1.shape_value(j, q_index) +
+                (0.5 * phi_i1_grad_normal * fe_faces1.shape_value(j, q_index) +
                  0.5 * fe_faces1.shape_grad(j, q_index) * normal *
-                   fe_faces1.shape_value(i, q_index) +
-                 (penalty_constant / h_f) * fe_faces1.shape_value(i, q_index) *
+                   phi_i1_value +
+                 (penalty_constant / h_f) * phi_i1_value *
                    fe_faces1.shape_value(j, q_index)) *
-                fe_faces1.JxW(q_index);
+                JxWq1;
             }
         }
     }
@@ -518,27 +524,26 @@ DiffusionReactionProblem<dim>::assemble_system()
 {
   constraints.close();
 
-  const unsigned int quadrature_degree      = 2 * fe_dg.get_degree() + 1;
-  const unsigned int face_quadrature_degree = 2 * fe_dg.get_degree() + 1;
+  const unsigned int quadrature_degree      = fe_dg.get_degree() + 1;
+  const unsigned int face_quadrature_degree = fe_dg.get_degree() + 1;
   ah->initialize_fe_values(QGauss<dim>(quadrature_degree),
                            update_values | update_gradients |
                              update_JxW_values | update_quadrature_points,
                            QGauss<dim - 1>(face_quadrature_degree),
                            update_JxW_values);
 
-  TrilinosWrappers::SparsityPattern sparsity_pattern;
   // double                 start_setup, stop_setup;
   // start_setup = MPI_Wtime();
   ah->distribute_agglomerated_dofs(fe_dg);
-  ah->create_agglomeration_sparsity_pattern(sparsity_pattern);
-  sparsity_pattern.compress();
-  system_matrix.reinit(sparsity_pattern);
   // stop_setup = MPI_Wtime();
 
+  locally_owned_dofs = ah->agglo_dh.locally_owned_dofs();
 
-  locally_owned_dofs    = ah->agglo_dh.locally_owned_dofs();
-  locally_relevant_dofs = DoFTools::extract_locally_relevant_dofs(ah->agglo_dh);
+  TrilinosWrappers::SparsityPattern sparsity_pattern;
+  ah->create_agglomeration_sparsity_pattern(sparsity_pattern);
+  sparsity_pattern.compress();
 
+  system_matrix.reinit(sparsity_pattern);
   system_rhs.reinit(locally_owned_dofs, comm);
 
   std::unique_ptr<const RightHandSide<dim>> rhs_function;
@@ -578,20 +583,18 @@ DiffusionReactionProblem<dim>::assemble_system()
           rhs_function->value_list(q_points, rhs);
 
 
+          FullMatrix<double> partial_matrix(dofs_per_cell, dim * n_qpoints);
+
 
           for (unsigned int q_index : agglo_values.quadrature_point_indices())
             {
               for (unsigned int i = 0; i < dofs_per_cell; ++i)
                 {
-                  for (unsigned int j = 0; j < dofs_per_cell; ++j)
+                  for (unsigned int d = 0; d < dim; ++d)
                     {
-                      cell_matrix(i, j) +=
-                        (agglo_values.shape_grad(i, q_index) *
-                           agglo_values.shape_grad(j, q_index) +
-                         reaction_coefficient *
-                           agglo_values.shape_value(i, q_index) *
-                           agglo_values.shape_value(j, q_index)) *
-                        agglo_values.JxW(q_index);
+                      partial_matrix(i, q_index * dim + d) =
+                        std::sqrt(agglo_values.JxW(q_index)) *
+                        agglo_values.shape_grad(i, q_index)[d];
                     }
                   cell_rhs(i) += agglo_values.shape_value(i, q_index) *
                                  rhs[q_index] * agglo_values.JxW(q_index);
@@ -600,6 +603,9 @@ DiffusionReactionProblem<dim>::assemble_system()
 
           // get volumetric DoFs
           polytope->get_dof_indices(local_dof_indices);
+
+
+          partial_matrix.mTmult(cell_matrix, partial_matrix);
 
 
           // Assemble face terms
