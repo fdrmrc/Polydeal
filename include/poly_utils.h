@@ -44,6 +44,10 @@
 #include <boost/geometry/index/rtree.hpp>
 #include <boost/geometry/strategies/strategies.hpp>
 
+#ifdef DEAL_II_WITH_TRILINOS
+#  include <EpetraExt_RowMatrixOut.h>
+#endif
+
 #include <deal.II/cgal/point_conversion.h>
 
 #ifdef DEAL_II_WITH_CGAL
@@ -988,6 +992,30 @@ namespace dealii::PolyUtils
     return (pow >= sizeof(unsigned int) * 8) ? 0 :
            pow == 0                          ? 1 :
                                                num * constexpr_pow(num, pow - 1);
+  }
+
+
+
+  void
+  write_to_matrix_market_format(const std::string &filename,
+                                const std::string &matrix_name,
+                                const TrilinosWrappers::SparseMatrix &matrix)
+  {
+#ifdef DEAL_II_WITH_TRILINOS
+    const Epetra_CrsMatrix &trilinos_matrix = matrix.trilinos_matrix();
+
+    const int ierr =
+      EpetraExt::RowMatrixToMatrixMarketFile(filename.c_str(),
+                                             trilinos_matrix,
+                                             matrix_name.c_str(),
+                                             0 /*description field empty*/,
+                                             true /*write header*/);
+    AssertThrow(ierr == 0, ExcTrilinosError(ierr));
+#else
+    (void)filename;
+    (void)matrix_name;
+    (void)matrix;
+#endif
   }
 
 } // namespace dealii::PolyUtils
