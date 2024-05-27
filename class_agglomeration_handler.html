@@ -307,6 +307,8 @@ Private Member Functions</h2></td></tr>
 <tr class="separator:a262985d804df7684e88ed35f66a8b04f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a73228c3cb5a7af60aa788aa9a26794ec" id="r_a73228c3cb5a7af60aa788aa9a26794ec"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a73228c3cb5a7af60aa788aa9a26794ec">setup_connectivity_of_agglomeration</a> ()</td></tr>
 <tr class="separator:a73228c3cb5a7af60aa788aa9a26794ec"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a47182181dc3f66ef1fcb743b5c6cedab" id="r_a47182181dc3f66ef1fcb743b5c6cedab"><td class="memItemLeft" align="right" valign="top">const <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classDoFHandler.html">DoFHandler</a>&lt; dim, spacedim &gt;::active_cell_iterator&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a47182181dc3f66ef1fcb743b5c6cedab">polytope_to_dh_iterator</a> (const <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/namespacetypes.html#a88f8129eb3e40ecc8022e92a1e15d70e">types::global_cell_index</a> polytope_index) const</td></tr>
+<tr class="separator:a47182181dc3f66ef1fcb743b5c6cedab"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-attribs" name="pri-attribs"></a>
 Private Attributes</h2></td></tr>
@@ -501,7 +503,7 @@ template&lt;int dim, int spacedim = dim&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00660">660</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00664">664</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
 </div>
 </div>
@@ -556,7 +558,7 @@ template&lt;int dim, int spacedim&gt; </div>
 
 <p class="definition">Definition at line <a class="el" href="agglomeration__handler_8cc_source.html#l00019">19</a> of file <a class="el" href="agglomeration__handler_8cc_source.html">agglomeration_handler.cc</a>.</p>
 
-<p class="reference">References <a class="el" href="agglomeration__handler_8h_source.html#l00778">AgglomerationHandler&lt; dim, spacedim &gt;::cached_tria</a>, <a class="el" href="agglomeration__handler_8h_source.html#l00879">AgglomerationHandler&lt; dim, spacedim &gt;::hybrid_mesh</a>, <a class="el" href="agglomeration__handler_8cc_source.html#l00151">AgglomerationHandler&lt; dim, spacedim &gt;::initialize_agglomeration_data()</a>, and <a class="el" href="agglomeration__handler_8h_source.html#l00641">AgglomerationHandler&lt; dim, spacedim &gt;::n_agglomerations</a>.</p>
+<p class="reference">References <a class="el" href="agglomeration__handler_8h_source.html#l00782">AgglomerationHandler&lt; dim, spacedim &gt;::cached_tria</a>, <a class="el" href="agglomeration__handler_8h_source.html#l00883">AgglomerationHandler&lt; dim, spacedim &gt;::hybrid_mesh</a>, <a class="el" href="agglomeration__handler_8cc_source.html#l00151">AgglomerationHandler&lt; dim, spacedim &gt;::initialize_agglomeration_data()</a>, and <a class="el" href="agglomeration__handler_8h_source.html#l00645">AgglomerationHandler&lt; dim, spacedim &gt;::n_agglomerations</a>.</p>
 
 </div>
 </div>
@@ -614,7 +616,7 @@ template&lt;int dim, int spacedim = dim&gt; </div>
 
 <p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00188">188</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
-<p class="reference">References <a class="el" href="agglomeration__handler_8h_source.html#l00821">AgglomerationHandler&lt; dim, spacedim &gt;::tria_listener</a>.</p>
+<p class="reference">References <a class="el" href="agglomeration__handler_8h_source.html#l00825">AgglomerationHandler&lt; dim, spacedim &gt;::tria_listener</a>.</p>
 
 </div>
 </div>
@@ -675,7 +677,7 @@ template&lt;int dim, int spacedim&gt; </div>
 </div><div class="memdoc">
 <p>Returns true if the two given cells are agglomerated together. </p>
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l01068">1068</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l01072">1072</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
 <p class="reference">Referenced by <a class="el" href="agglomeration__handler_8cc_source.html#l00917">dealii::internal::AgglomerationHandlerImplementation&lt; int, int &gt;::setup_master_neighbor_connectivity()</a>.</p>
 
@@ -711,7 +713,7 @@ template&lt;int dim, int spacedim&gt; </div>
 </div><div class="memdoc">
 <p>This function generalizes the behaviour of cell-&gt;face(f)-&gt;<a class="el" href="#ab2e879c96a5a486cce62227be6f591e9">at_boundary()</a> in the case where f is an index out of the range [0,..., n_faces). In practice, if you call this function with a standard deal.II cell, you have precisely the same result as calling cell-&gt;face(f)-&gt;<a class="el" href="#ab2e879c96a5a486cce62227be6f591e9">at_boundary()</a>. Otherwise, if the cell is a master one, you have a boolean returning true is that face for the agglomeration is on the boundary or not. </p>
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l01001">1001</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l01005">1005</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
 <p class="reference">References <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/grid__out_8cc.html#a827a345f29da7caeb588b11013869a01">first</a>.</p>
 
@@ -735,7 +737,7 @@ template&lt;int dim, int spacedim&gt; </div>
 </div><div class="memdoc">
 <p>Iterator to the first polytope. </p>
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l01104">1104</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l01119">1119</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
 </div>
 </div>
@@ -757,7 +759,7 @@ template&lt;int dim, int spacedim&gt; </div>
 </div><div class="memdoc">
 <p>Iterator to the first polytope. </p>
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l01093">1093</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l01108">1108</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
 </div>
 </div>
@@ -786,7 +788,7 @@ template&lt;int dim, int spacedim&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00913">913</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00917">917</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
 <p class="reference">Referenced by <a class="el" href="poly__utils_8h_source.html#l00517">dealii::PolyUtils::interpolate_to_fine_grid()</a>.</p>
 
@@ -820,7 +822,7 @@ template&lt;int dim, int spacedim = dim&gt; </div>
 
 <p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00555">555</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
-<p class="reference">References <a class="el" href="agglomeration__handler_8h_source.html#l00778">AgglomerationHandler&lt; dim, spacedim &gt;::cached_tria</a>, <a class="el" href="agglomeration__handler_8cc_source.html#l00151">AgglomerationHandler&lt; dim, spacedim &gt;::initialize_agglomeration_data()</a>, <a class="el" href="agglomeration__handler_8h_source.html#l00772">AgglomerationHandler&lt; dim, spacedim &gt;::tria</a>, and <a class="el" href="agglomeration__handler_8h_source.html#l00821">AgglomerationHandler&lt; dim, spacedim &gt;::tria_listener</a>.</p>
+<p class="reference">References <a class="el" href="agglomeration__handler_8h_source.html#l00782">AgglomerationHandler&lt; dim, spacedim &gt;::cached_tria</a>, <a class="el" href="agglomeration__handler_8cc_source.html#l00151">AgglomerationHandler&lt; dim, spacedim &gt;::initialize_agglomeration_data()</a>, <a class="el" href="agglomeration__handler_8h_source.html#l00776">AgglomerationHandler&lt; dim, spacedim &gt;::tria</a>, and <a class="el" href="agglomeration__handler_8h_source.html#l00825">AgglomerationHandler&lt; dim, spacedim &gt;::tria_listener</a>.</p>
 
 </div>
 </div>
@@ -953,7 +955,7 @@ template&lt;class <a class="elRef" href="http://www.dealii.org/developer/doxygen
 
 <p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00243">243</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
-<p class="reference">References <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classFiniteElementData.html#a2cbf5ad6b464871261dbd054bced18a8">FiniteElement&lt; int dim, int spacedim &gt;::degree</a>, <a class="el" href="agglomeration__handler_8cc_source.html#l00326">AgglomerationHandler&lt; dim, spacedim &gt;::exchange_interface_values()</a>, <a class="el" href="agglomeration__handler_8h_source.html#l00783">AgglomerationHandler&lt; dim, spacedim &gt;::fe</a>, <a class="el" href="agglomeration__handler_8h_source.html#l00785">AgglomerationHandler&lt; dim, spacedim &gt;::fe_collection</a>, <a class="el" href="agglomeration__handler_8h_source.html#l00879">AgglomerationHandler&lt; dim, spacedim &gt;::hybrid_mesh</a>, <a class="el" href="agglomeration__handler_8cc_source.html#l00461">AgglomerationHandler&lt; dim, spacedim &gt;::initialize_hp_structure()</a>, <a class="el" href="agglomeration__handler_8h_source.html#l00825">AgglomerationHandler&lt; dim, spacedim &gt;::internal_agglomeration_flags</a>, <a class="el" href="agglomeration__handler_8h_source.html#l00774">AgglomerationHandler&lt; dim, spacedim &gt;::mapping</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classhp_1_1FECollection.html#a4b0e75a805ff012e76d33ad6d4c3eac8">hp::FECollection&lt; int dim, int spacedim &gt;::push_back()</a>, <a class="el" href="agglomeration__handler_8cc_source.html#l00290">AgglomerationHandler&lt; dim, spacedim &gt;::setup_connectivity_of_agglomeration()</a>, <a class="el" href="agglomeration__handler_8cc_source.html#l00729">AgglomerationHandler&lt; dim, spacedim &gt;::setup_ghost_polytopes()</a>, <a class="el" href="agglomeration__handler_8h_source.html#l00802">AgglomerationHandler&lt; dim, spacedim &gt;::standard_scratch</a>, and <a class="el" href="agglomeration__handler_8h_source.html#l00772">AgglomerationHandler&lt; dim, spacedim &gt;::tria</a>.</p>
+<p class="reference">References <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classFiniteElementData.html#a2cbf5ad6b464871261dbd054bced18a8">FiniteElement&lt; int dim, int spacedim &gt;::degree</a>, <a class="el" href="agglomeration__handler_8cc_source.html#l00326">AgglomerationHandler&lt; dim, spacedim &gt;::exchange_interface_values()</a>, <a class="el" href="agglomeration__handler_8h_source.html#l00787">AgglomerationHandler&lt; dim, spacedim &gt;::fe</a>, <a class="el" href="agglomeration__handler_8h_source.html#l00789">AgglomerationHandler&lt; dim, spacedim &gt;::fe_collection</a>, <a class="el" href="agglomeration__handler_8h_source.html#l00883">AgglomerationHandler&lt; dim, spacedim &gt;::hybrid_mesh</a>, <a class="el" href="agglomeration__handler_8cc_source.html#l00461">AgglomerationHandler&lt; dim, spacedim &gt;::initialize_hp_structure()</a>, <a class="el" href="agglomeration__handler_8h_source.html#l00829">AgglomerationHandler&lt; dim, spacedim &gt;::internal_agglomeration_flags</a>, <a class="el" href="agglomeration__handler_8h_source.html#l00778">AgglomerationHandler&lt; dim, spacedim &gt;::mapping</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classhp_1_1FECollection.html#a4b0e75a805ff012e76d33ad6d4c3eac8">hp::FECollection&lt; int dim, int spacedim &gt;::push_back()</a>, <a class="el" href="agglomeration__handler_8cc_source.html#l00290">AgglomerationHandler&lt; dim, spacedim &gt;::setup_connectivity_of_agglomeration()</a>, <a class="el" href="agglomeration__handler_8cc_source.html#l00729">AgglomerationHandler&lt; dim, spacedim &gt;::setup_ghost_polytopes()</a>, <a class="el" href="agglomeration__handler_8h_source.html#l00806">AgglomerationHandler&lt; dim, spacedim &gt;::standard_scratch</a>, and <a class="el" href="agglomeration__handler_8h_source.html#l00776">AgglomerationHandler&lt; dim, spacedim &gt;::tria</a>.</p>
 
 </div>
 </div>
@@ -975,7 +977,7 @@ template&lt;int dim, int spacedim&gt; </div>
 </div><div class="memdoc">
 <p>Iterator to one past the last polygonal element. </p>
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l01126">1126</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l01141">1141</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
 </div>
 </div>
@@ -997,7 +999,7 @@ template&lt;int dim, int spacedim&gt; </div>
 </div><div class="memdoc">
 <p>Iterator to one past the last polygonal element. </p>
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l01115">1115</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l01130">1130</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
 </div>
 </div>
@@ -1059,7 +1061,7 @@ template&lt;int dim, int spacedim&gt; </div>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>std::vector&lt; typename Triangulation&lt;dim, spacedim&gt;::active_cell_iterator&gt; </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00941">941</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00945">945</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
 <p class="reference">Referenced by <a class="el" href="agglomeration__handler_8cc_source.html#l00917">dealii::internal::AgglomerationHandlerImplementation&lt; int, int &gt;::setup_master_neighbor_connectivity()</a>.</p>
 
@@ -1091,7 +1093,7 @@ template&lt;int dim, int spacedim&gt; </div>
 </div><div class="memdoc">
 <p>Return a constant reference to the <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classDoFHandler.html">DoFHandler</a> underlying the agglomeration. It knows which cell have been agglomerated, and which FE spaces are present on each cell of the triangulation. </p>
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00955">955</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00959">959</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
 <p class="reference">Referenced by <a class="el" href="poly__utils_8h_source.html#l00801">dealii::PolyUtils::compute_quality_metrics()</a>.</p>
 
@@ -1122,7 +1124,7 @@ template&lt;int dim, int spacedim&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00887">887</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00891">891</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
 <p class="reference">Referenced by <a class="el" href="poly__utils_8h_source.html#l00517">dealii::PolyUtils::interpolate_to_fine_grid()</a>.</p>
 
@@ -1153,7 +1155,7 @@ template&lt;int dim, int spacedim&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00923">923</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00927">927</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
 </div>
 </div>
@@ -1182,7 +1184,7 @@ template&lt;int dim, int spacedim&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00904">904</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00908">908</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
 <p class="reference">Referenced by <a class="el" href="poly__utils_8h_source.html#l00801">dealii::PolyUtils::compute_quality_metrics()</a>, and <a class="el" href="poly__utils_8h_source.html#l00517">dealii::PolyUtils::interpolate_to_fine_grid()</a>.</p>
 
@@ -1213,7 +1215,7 @@ template&lt;int dim, int spacedim&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l01054">1054</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l01058">1058</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
 </div>
 </div>
@@ -1262,7 +1264,7 @@ template&lt;int dim, int spacedim&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00932">932</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00936">936</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
 </div>
 </div>
@@ -1292,7 +1294,7 @@ template&lt;int dim, int spacedim&gt; </div>
 </div><div class="memdoc">
 <p>Find (if any) the cells that have the given master index. Note that <code>idx</code> is as it can be equal to -1 (meaning that the cell is a master one). </p>
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00965">965</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00969">969</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
 <p class="reference">Referenced by <a class="el" href="poly__utils_8h_source.html#l00517">dealii::PolyUtils::interpolate_to_fine_grid()</a>.</p>
 
@@ -1323,7 +1325,7 @@ template&lt;int dim, int spacedim&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00896">896</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00900">900</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
 <p class="reference">Referenced by <a class="el" href="poly__utils_8h_source.html#l00801">dealii::PolyUtils::compute_quality_metrics()</a>, and <a class="el" href="poly__utils_8h_source.html#l00517">dealii::PolyUtils::interpolate_to_fine_grid()</a>.</p>
 
@@ -1461,7 +1463,7 @@ template&lt;typename CellIterator &gt; </div>
 </div><div class="memdoc">
 <p>Helper function to determine whether or not a cell is a master or a slave </p>
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00976">976</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00980">980</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
 <p class="reference">Referenced by <a class="el" href="poly__utils_8h_source.html#l00517">dealii::PolyUtils::interpolate_to_fine_grid()</a>, and <a class="el" href="agglomeration__handler_8cc_source.html#l00805">dealii::internal::AgglomerationHandlerImplementation&lt; int, int &gt;::reinit_master()</a>.</p>
 
@@ -1495,7 +1497,7 @@ template&lt;typename CellIterator &gt; </div>
 </div><div class="memdoc">
 <p>Helper function to determine whether or not a cell is a slave cell, without any information about his parents. </p>
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00991">991</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00995">995</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
 <p class="reference">Referenced by <a class="el" href="agglomeration__handler_8cc_source.html#l00917">dealii::internal::AgglomerationHandlerImplementation&lt; int, int &gt;::setup_master_neighbor_connectivity()</a>.</p>
 
@@ -1527,7 +1529,7 @@ template&lt;int dim, int spacedim&gt; </div>
 </div><div class="memdoc">
 <p>Helper function to determine whether or not a cell is a slave cell. Instead of returning a boolean, it gives the index of the master cell. If it's a master cell, then the it returns -1, by construction. </p>
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l01044">1044</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l01048">1048</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
 </div>
 </div>
@@ -1549,7 +1551,7 @@ template&lt;int dim, int spacedim&gt; </div>
 </div><div class="memdoc">
 <p>Iterator to the last polygonal element. </p>
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l01137">1137</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l01152">1152</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
 </div>
 </div>
@@ -1601,7 +1603,7 @@ template&lt;int dim, int spacedim&gt; </div>
 </div><div class="memdoc">
 <p>Returns the number of agglomerate cells on the whole grid. In case of a distributed grid, this function returns the sum of the number of agglomerates over all processors. </p>
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l01084">1084</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l01088">1088</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
 <p class="reference">References <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/namespaceUtilities_1_1MPI.html#a2d0b85e7f2c375999968a0f438174e0c">Utilities::MPI::sum()</a>.</p>
 
@@ -1632,7 +1634,7 @@ template&lt;int dim, int spacedim&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l01025">1025</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l01029">1029</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
 </div>
 </div>
@@ -1661,7 +1663,7 @@ template&lt;int dim, int spacedim&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l01016">1016</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l01020">1020</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
 </div>
 </div>
@@ -1691,7 +1693,7 @@ template&lt;int dim, int spacedim&gt; </div>
 </div><div class="memdoc">
 <p>Return the collection of vertices describing the boundary of the polytope associated to the master cell <code>cell</code>. The return type is meant to describe a sequence of edges (in 2D) or faces (in 3D). </p>
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l01034">1034</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l01038">1038</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
 <p class="reference">Referenced by <a class="el" href="poly__utils_8h_source.html#l00953">dealii::PolyUtils::export_polygon_to_csv_file()</a>.</p>
 
@@ -1715,9 +1717,39 @@ template&lt;int dim, int spacedim&gt; </div>
 </div><div class="memdoc">
 <p>Returns an <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classIteratorRange.html">IteratorRange</a> that makes up all the polygonal elements in the mesh. </p>
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l01149">1149</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l01164">1164</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
 <p class="reference">Referenced by <a class="el" href="poly__utils_8h_source.html#l00801">dealii::PolyUtils::compute_quality_metrics()</a>, and <a class="el" href="poly__utils_8h_source.html#l00953">dealii::PolyUtils::export_polygon_to_csv_file()</a>.</p>
+
+</div>
+</div>
+<a id="a47182181dc3f66ef1fcb743b5c6cedab" name="a47182181dc3f66ef1fcb743b5c6cedab"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a47182181dc3f66ef1fcb743b5c6cedab">&#9670;&#160;</a></span>polytope_to_dh_iterator()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;int dim, int spacedim&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classDoFHandler.html">DoFHandler</a>&lt; dim, spacedim &gt;::active_cell_iterator <a class="el" href="class_agglomeration_handler.html">AgglomerationHandler</a>&lt; dim, spacedim &gt;::polytope_to_dh_iterator </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/namespacetypes.html#a88f8129eb3e40ecc8022e92a1e15d70e">types::global_cell_index</a></td>          <td class="paramname"><span class="paramname"><em>polytope_index</em></span></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Given the index of a polytopic element, return a <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classDoFHandler.html">DoFHandler</a> iterator for which DoFs associated to that polytope can be queried. </p>
+
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l01097">1097</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
 </div>
 </div>
@@ -1751,7 +1783,7 @@ template&lt;class StreamType &gt; </div>
 
 <p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00383">383</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
-<p class="reference">References <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/group__CPP11.html#ga09c42b09706d9fd8726d9136ab590dbb">DoFHandler&lt; int dim, int spacedim &gt;::active_cell_iterators()</a>, <a class="el" href="agglomeration__handler_8h_source.html#l00790">AgglomerationHandler&lt; dim, spacedim &gt;::euler_dh</a>, and <a class="el" href="agglomeration__handler_8h_source.html#l00650">AgglomerationHandler&lt; dim, spacedim &gt;::master_slave_relationships</a>.</p>
+<p class="reference">References <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/group__CPP11.html#ga09c42b09706d9fd8726d9136ab590dbb">DoFHandler&lt; int dim, int spacedim &gt;::active_cell_iterators()</a>, <a class="el" href="agglomeration__handler_8h_source.html#l00794">AgglomerationHandler&lt; dim, spacedim &gt;::euler_dh</a>, and <a class="el" href="agglomeration__handler_8h_source.html#l00654">AgglomerationHandler&lt; dim, spacedim &gt;::master_slave_relationships</a>.</p>
 
 </div>
 </div>
@@ -2021,7 +2053,7 @@ template&lt;int dim, int spacedim = dim&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00869">869</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00873">873</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
 </div>
 </div>
@@ -2069,7 +2101,7 @@ template&lt;int dim, int spacedim = dim&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00813">813</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00817">817</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
 </div>
 </div>
@@ -2095,7 +2127,7 @@ template&lt;int dim, int spacedim = dim&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00819">819</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00823">823</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
 </div>
 </div>
@@ -2121,7 +2153,7 @@ template&lt;int dim, int spacedim = dim&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00816">816</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00820">820</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
 </div>
 </div>
@@ -2148,7 +2180,7 @@ template&lt;int dim, int spacedim = dim&gt; </div>
 </div><div class="memdoc">
 <p>Fill this up in reinit(cell), for agglomerated cells, using the custom quadrature, and return the result of scratch.reinit(cell); </p>
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00809">809</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00813">813</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
 </div>
 </div>
@@ -2174,7 +2206,7 @@ template&lt;int dim, int spacedim = dim&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00829">829</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00833">833</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
 <p class="reference">Referenced by <a class="el" href="agglomeration__handler_8cc_source.html#l00805">dealii::internal::AgglomerationHandlerImplementation&lt; int, int &gt;::reinit_master()</a>.</p>
 
@@ -2202,7 +2234,7 @@ template&lt;int dim, int spacedim = dim&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00837">837</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00841">841</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
 </div>
 </div>
@@ -2228,7 +2260,7 @@ template&lt;int dim, int spacedim = dim&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00823">823</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00827">827</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
 </div>
 </div>
@@ -2254,7 +2286,7 @@ template&lt;int dim, int spacedim = dim&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00835">835</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00839">839</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
 </div>
 </div>
@@ -2281,7 +2313,7 @@ template&lt;int dim, int spacedim = dim&gt; </div>
 </div><div class="memdoc">
 <p><a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classVector.html">Vector</a> of <code>BoundingBoxes</code> s.t. <code>bboxes[idx]</code> equals BBOx associated to the agglomeration with master cell indexed by ìdx`. Othwerwise default BBox is empty </p>
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00681">681</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00685">685</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
 <p class="reference">Referenced by <a class="el" href="agglomeration__handler_8cc_source.html#l00805">dealii::internal::AgglomerationHandlerImplementation&lt; int, int &gt;::reinit_master()</a>.</p>
 
@@ -2309,7 +2341,7 @@ template&lt;int dim, int spacedim = dim&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00778">778</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00782">782</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
 <p class="reference">Referenced by <a class="el" href="agglomeration__handler_8cc_source.html#l00019">AgglomerationHandler&lt; dim, spacedim &gt;::AgglomerationHandler()</a>, and <a class="el" href="agglomeration__handler_8h_source.html#l00555">AgglomerationHandler&lt; dim, spacedim &gt;::connect_to_tria_signals()</a>.</p>
 
@@ -2337,7 +2369,7 @@ template&lt;int dim, int spacedim = dim&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00780">780</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00784">784</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
 </div>
 </div>
@@ -2364,7 +2396,7 @@ template&lt;int dim, int spacedim = dim&gt; </div>
 </div><div class="memdoc">
 <p>Dummy <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classFE__Nothing.html">FE_Nothing</a> </p>
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00853">853</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00857">857</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
 </div>
 </div>
@@ -2391,7 +2423,7 @@ template&lt;int dim, int spacedim = dim&gt; </div>
 </div><div class="memdoc">
 <p><a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classDoFHandler.html">DoFHandler</a> for the physical space </p>
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00790">790</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00794">794</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
 <p class="reference">Referenced by <a class="el" href="agglomeration__handler_8h_source.html#l00383">AgglomerationHandler&lt; dim, spacedim &gt;::print_agglomeration()</a>.</p>
 
@@ -2419,7 +2451,7 @@ template&lt;int dim, int spacedim = dim&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00776">776</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00780">780</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
 </div>
 </div>
@@ -2466,7 +2498,7 @@ template&lt;int dim, int spacedim = dim&gt; </div>
 </div><div class="memdoc">
 <p>Eulerian vector describing the new cells obtained by the bounding boxes </p>
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00795">795</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00799">799</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
 </div>
 </div>
@@ -2492,7 +2524,7 @@ template&lt;int dim, int spacedim = dim&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00783">783</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00787">787</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
 <p class="reference">Referenced by <a class="el" href="agglomeration__handler_8h_source.html#l00243">AgglomerationHandler&lt; dim, spacedim &gt;::distribute_agglomerated_dofs()</a>, and <a class="el" href="agglomeration__handler_8cc_source.html#l00805">dealii::internal::AgglomerationHandlerImplementation&lt; int, int &gt;::reinit_master()</a>.</p>
 
@@ -2520,7 +2552,7 @@ template&lt;int dim, int spacedim = dim&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00785">785</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00789">789</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
 <p class="reference">Referenced by <a class="el" href="agglomeration__handler_8h_source.html#l00243">AgglomerationHandler&lt; dim, spacedim &gt;::distribute_agglomerated_dofs()</a>.</p>
 
@@ -2549,7 +2581,7 @@ template&lt;int dim, int spacedim = dim&gt; </div>
 </div><div class="memdoc">
 <p>Bool that keeps track whether the mesh is composed also by standard deal.II cells as (trivial) polytopes. </p>
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00879">879</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00883">883</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
 <p class="reference">Referenced by <a class="el" href="agglomeration__handler_8cc_source.html#l00019">AgglomerationHandler&lt; dim, spacedim &gt;::AgglomerationHandler()</a>, and <a class="el" href="agglomeration__handler_8h_source.html#l00243">AgglomerationHandler&lt; dim, spacedim &gt;::distribute_agglomerated_dofs()</a>.</p>
 
@@ -2586,7 +2618,7 @@ template&lt;int dim, int spacedim = dim&gt; </div>
 <div class="ttc" id="agroup__feaccess_html_ggaa94b67d2fdcc390690c523f28019e52facbcc430975fa6af05f75ca786dc6fe20"><div class="ttname"><a href="http://www.dealii.org/developer/doxygen/deal.II/group__feaccess.html#ggaa94b67d2fdcc390690c523f28019e52facbcc430975fa6af05f75ca786dc6fe20">update_gradients</a></div><div class="ttdeci">update_gradients</div></div>
 <div class="ttc" id="agroup__feaccess_html_ggaa94b67d2fdcc390690c523f28019e52fad5c9ff886b9615349a5d04a6c782df4a"><div class="ttname"><a href="http://www.dealii.org/developer/doxygen/deal.II/group__feaccess.html#ggaa94b67d2fdcc390690c523f28019e52fad5c9ff886b9615349a5d04a6c782df4a">update_quadrature_points</a></div><div class="ttdeci">update_quadrature_points</div></div>
 </div><!-- fragment -->
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00831">831</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00835">835</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
 </div>
 </div>
@@ -2615,7 +2647,7 @@ template&lt;int dim, int spacedim = dim&gt; </div>
 <div class="line">    <a class="code hl_variableRef" href="http://www.dealii.org/developer/doxygen/deal.II/group__feaccess.html#ggaa94b67d2fdcc390690c523f28019e52fa4057ca2f127aa619c65886a9d3ad4aea">update_values</a> | <a class="code hl_variableRef" href="http://www.dealii.org/developer/doxygen/deal.II/group__feaccess.html#ggaa94b67d2fdcc390690c523f28019e52facbcc430975fa6af05f75ca786dc6fe20">update_gradients</a> | <a class="code hl_variableRef" href="http://www.dealii.org/developer/doxygen/deal.II/group__feaccess.html#ggaa94b67d2fdcc390690c523f28019e52fa714204722e9eeb43aadbd0d5ddc48c85">update_JxW_values</a> |</div>
 <div class="line">    <a class="code hl_variableRef" href="http://www.dealii.org/developer/doxygen/deal.II/group__feaccess.html#ggaa94b67d2fdcc390690c523f28019e52fad5c9ff886b9615349a5d04a6c782df4a">update_quadrature_points</a></div>
 </div><!-- fragment -->
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00825">825</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00829">829</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
 <p class="reference">Referenced by <a class="el" href="agglomeration__handler_8h_source.html#l00243">AgglomerationHandler&lt; dim, spacedim &gt;::distribute_agglomerated_dofs()</a>.</p>
 
@@ -2643,7 +2675,7 @@ template&lt;int dim, int spacedim = dim&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00717">717</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00721">721</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
 <p class="reference">Referenced by <a class="el" href="agglomeration__handler_8cc_source.html#l00917">dealii::internal::AgglomerationHandlerImplementation&lt; int, int &gt;::setup_master_neighbor_connectivity()</a>.</p>
 
@@ -2671,7 +2703,7 @@ template&lt;int dim, int spacedim = dim&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00696">696</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00700">700</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
 </div>
 </div>
@@ -2697,7 +2729,7 @@ template&lt;int dim, int spacedim = dim&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00733">733</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00737">737</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
 </div>
 </div>
@@ -2723,7 +2755,7 @@ template&lt;int dim, int spacedim = dim&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00725">725</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00729">729</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
 </div>
 </div>
@@ -2749,7 +2781,7 @@ template&lt;int dim, int spacedim = dim&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00708">708</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00712">712</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
 <p class="reference">Referenced by <a class="el" href="agglomeration__handler_8cc_source.html#l00917">dealii::internal::AgglomerationHandlerImplementation&lt; int, int &gt;::setup_master_neighbor_connectivity()</a>.</p>
 
@@ -2777,7 +2809,7 @@ template&lt;int dim, int spacedim = dim&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00766">766</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00770">770</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
 </div>
 </div>
@@ -2803,7 +2835,7 @@ template&lt;int dim, int spacedim = dim&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00749">749</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00753">753</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
 </div>
 </div>
@@ -2829,7 +2861,7 @@ template&lt;int dim, int spacedim = dim&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00688">688</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00692">692</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
 <p class="reference">Referenced by <a class="el" href="agglomeration__handler_8cc_source.html#l00917">dealii::internal::AgglomerationHandlerImplementation&lt; int, int &gt;::setup_master_neighbor_connectivity()</a>.</p>
 
@@ -2857,7 +2889,7 @@ template&lt;int dim, int spacedim = dim&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00755">755</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00759">759</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
 </div>
 </div>
@@ -2883,7 +2915,7 @@ template&lt;int dim, int spacedim = dim&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00743">743</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00747">747</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
 </div>
 </div>
@@ -2909,7 +2941,7 @@ template&lt;int dim, int spacedim = dim&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00761">761</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00765">765</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
 </div>
 </div>
@@ -2935,7 +2967,7 @@ template&lt;int dim, int spacedim = dim&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00774">774</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00778">778</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
 <p class="reference">Referenced by <a class="el" href="agglomeration__handler_8h_source.html#l00243">AgglomerationHandler&lt; dim, spacedim &gt;::distribute_agglomerated_dofs()</a>.</p>
 
@@ -2963,7 +2995,7 @@ template&lt;int dim, int spacedim = dim&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00846">846</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00850">850</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
 <p class="reference">Referenced by <a class="el" href="agglomeration__handler_8cc_source.html#l00805">dealii::internal::AgglomerationHandlerImplementation&lt; int, int &gt;::reinit_master()</a>, and <a class="el" href="agglomeration__handler_8cc_source.html#l00917">dealii::internal::AgglomerationHandlerImplementation&lt; int, int &gt;::setup_master_neighbor_connectivity()</a>.</p>
 
@@ -2991,7 +3023,7 @@ template&lt;int dim, int spacedim = dim&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00843">843</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00847">847</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
 </div>
 </div>
@@ -3018,7 +3050,7 @@ template&lt;int dim, int spacedim = dim&gt; </div>
 </div><div class="memdoc">
 <p>A contiguous container for all of the master cells. </p>
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00869">869</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00873">873</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
 <p class="reference">Referenced by <a class="el" href="agglomeration__accessor_8h_source.html#l00463">AgglomerationAccessor&lt; dim, spacedim &gt;::AgglomerationAccessor()</a>.</p>
 
@@ -3047,7 +3079,7 @@ template&lt;int dim, int spacedim = dim&gt; </div>
 </div><div class="memdoc">
 <p><a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classVector.html">Vector</a> of indices such that v[cell-&gt;active_cell_index()] returns { -1 if <code>cell</code> is a master cell { <code>cell_master-&gt;active_cell_index()</code>, i.e. the index of the master cell if <code>cell</code> is a slave cell. </p>
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00650">650</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00654">654</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
 <p class="reference">Referenced by <a class="el" href="agglomeration__handler_8h_source.html#l00383">AgglomerationHandler&lt; dim, spacedim &gt;::print_agglomeration()</a>, and <a class="el" href="agglomeration__handler_8cc_source.html#l00917">dealii::internal::AgglomerationHandlerImplementation&lt; int, int &gt;::setup_master_neighbor_connectivity()</a>.</p>
 
@@ -3076,7 +3108,7 @@ template&lt;int dim, int spacedim = dim&gt; </div>
 </div><div class="memdoc">
 <p>Same as the one above, but storing cell iterators rather than indices. </p>
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00658">658</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00662">662</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
 <p class="reference">Referenced by <a class="el" href="agglomeration__handler_8cc_source.html#l00917">dealii::internal::AgglomerationHandlerImplementation&lt; int, int &gt;::setup_master_neighbor_connectivity()</a>.</p>
 
@@ -3105,7 +3137,7 @@ template&lt;int dim, int spacedim = dim&gt; </div>
 </div><div class="memdoc">
 <p>Record the number of agglomerations on the grid. </p>
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00641">641</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00645">645</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
 <p class="reference">Referenced by <a class="el" href="agglomeration__handler_8cc_source.html#l00019">AgglomerationHandler&lt; dim, spacedim &gt;::AgglomerationHandler()</a>.</p>
 
@@ -3134,7 +3166,7 @@ template&lt;int dim, int spacedim = dim&gt; </div>
 </div><div class="memdoc">
 <p>Dummy <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classFEFaceValues.html">FEFaceValues</a>, needed for face quadratures. </p>
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00863">863</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00867">867</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
 <p class="reference">Referenced by <a class="el" href="agglomeration__handler_8cc_source.html#l00805">dealii::internal::AgglomerationHandlerImplementation&lt; int, int &gt;::reinit_master()</a>.</p>
 
@@ -3163,7 +3195,7 @@ template&lt;int dim, int spacedim = dim&gt; </div>
 </div><div class="memdoc">
 <p>Dummy <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classFEValues.html">FEValues</a>, needed for cell quadratures. </p>
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00858">858</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00862">862</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
 </div>
 </div>
@@ -3189,7 +3221,7 @@ template&lt;int dim, int spacedim = dim&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00662">662</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00666">666</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
 <p class="reference">Referenced by <a class="el" href="agglomeration__handler_8cc_source.html#l00917">dealii::internal::AgglomerationHandlerImplementation&lt; int, int &gt;::setup_master_neighbor_connectivity()</a>.</p>
 
@@ -3239,7 +3271,7 @@ template&lt;int dim, int spacedim = dim&gt; </div>
 </div><div class="memdoc">
 <p>Associate a master cell (hence, a given polytope) to its boundary faces. The boundary is described through a vector of face iterators. </p>
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00672">672</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00676">676</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
 <p class="reference">Referenced by <a class="el" href="agglomeration__handler_8cc_source.html#l00917">dealii::internal::AgglomerationHandlerImplementation&lt; int, int &gt;::setup_master_neighbor_connectivity()</a>.</p>
 
@@ -3267,7 +3299,7 @@ template&lt;int dim, int spacedim = dim&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00873">873</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00877">877</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
 <p class="reference">Referenced by <a class="el" href="agglomeration__handler_8cc_source.html#l00805">dealii::internal::AgglomerationHandlerImplementation&lt; int, int &gt;::reinit_master()</a>, and <a class="el" href="agglomeration__handler_8cc_source.html#l00917">dealii::internal::AgglomerationHandlerImplementation&lt; int, int &gt;::setup_master_neighbor_connectivity()</a>.</p>
 
@@ -3295,7 +3327,7 @@ template&lt;int dim, int spacedim = dim&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00721">721</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00725">725</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
 </div>
 </div>
@@ -3321,7 +3353,7 @@ template&lt;int dim, int spacedim = dim&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00699">699</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00703">703</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
 <p class="reference">Referenced by <a class="el" href="agglomeration__handler_8cc_source.html#l00917">dealii::internal::AgglomerationHandlerImplementation&lt; int, int &gt;::setup_master_neighbor_connectivity()</a>.</p>
 
@@ -3349,7 +3381,7 @@ template&lt;int dim, int spacedim = dim&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00737">737</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00741">741</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
 </div>
 </div>
@@ -3375,7 +3407,7 @@ template&lt;int dim, int spacedim = dim&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00728">728</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00732">732</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
 </div>
 </div>
@@ -3401,7 +3433,7 @@ template&lt;int dim, int spacedim = dim&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00712">712</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00716">716</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
 </div>
 </div>
@@ -3479,7 +3511,7 @@ template&lt;int dim, int spacedim = dim&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00691">691</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00695">695</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
 </div>
 </div>
@@ -3584,7 +3616,7 @@ template&lt;int dim, int spacedim = dim&gt; </div>
 </div><div class="memdoc">
 <p>Use this in reinit(cell) for (non-agglomerated, standard) cells, and return the result of scratch.reinit(cell) for cells </p>
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00802">802</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00806">806</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
 <p class="reference">Referenced by <a class="el" href="agglomeration__handler_8h_source.html#l00243">AgglomerationHandler&lt; dim, spacedim &gt;::distribute_agglomerated_dofs()</a>.</p>
 
@@ -3612,7 +3644,7 @@ template&lt;int dim, int spacedim = dim&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00772">772</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00776">776</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
 <p class="reference">Referenced by <a class="el" href="agglomeration__handler_8h_source.html#l00555">AgglomerationHandler&lt; dim, spacedim &gt;::connect_to_tria_signals()</a>, <a class="el" href="agglomeration__handler_8h_source.html#l00243">AgglomerationHandler&lt; dim, spacedim &gt;::distribute_agglomerated_dofs()</a>, and <a class="el" href="agglomeration__handler_8cc_source.html#l00917">dealii::internal::AgglomerationHandlerImplementation&lt; int, int &gt;::setup_master_neighbor_connectivity()</a>.</p>
 
@@ -3640,7 +3672,7 @@ template&lt;int dim, int spacedim = dim&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00821">821</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00825">825</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
 <p class="reference">Referenced by <a class="el" href="agglomeration__handler_8h_source.html#l00555">AgglomerationHandler&lt; dim, spacedim &gt;::connect_to_tria_signals()</a>, and <a class="el" href="agglomeration__handler_8h_source.html#l00188">AgglomerationHandler&lt; dim, spacedim &gt;::~AgglomerationHandler()</a>.</p>
 
@@ -3657,7 +3689,7 @@ template&lt;int dim, int spacedim = dim&gt; </div>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="class_agglomeration_handler.html">AgglomerationHandler</a></li>
-    <li class="footer">Generated on Sat May 25 2024 22:23:45 for PolyDEAL by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.11.0 </li>
+    <li class="footer">Generated on Mon May 27 2024 09:14:43 for PolyDEAL by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.11.0 </li>
   </ul>
 </div>
 </body>

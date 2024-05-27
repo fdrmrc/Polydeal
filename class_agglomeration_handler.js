@@ -47,6 +47,7 @@ var class_agglomeration_handler =
     [ "n_dofs_per_cell", "class_agglomeration_handler.html#a01db6ee2e69c86fc59afd947af6fa26c", null ],
     [ "polytope_boundary", "class_agglomeration_handler.html#a7f71920dba4f6e55b791ffd4a25752a4", null ],
     [ "polytope_iterators", "class_agglomeration_handler.html#ab7410bc5d2b9d4cefb8624133b310fa3", null ],
+    [ "polytope_to_dh_iterator", "class_agglomeration_handler.html#a47182181dc3f66ef1fcb743b5c6cedab", null ],
     [ "print_agglomeration", "class_agglomeration_handler.html#abf860a5a56bbc69f26fddad5528f0db7", null ],
     [ "reinit", "class_agglomeration_handler.html#a19b0197722d35dd78b3eac9c2b7a5f0f", null ],
     [ "reinit", "class_agglomeration_handler.html#a9e618ec556059e5ea8dfaaf0f074f7b5", null ],

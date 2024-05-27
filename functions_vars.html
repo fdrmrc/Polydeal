@@ -118,7 +118,8 @@ $(function(){initNavTree('functions_vars.html',''); initResizable(true); });
 <li>agglomerated_isv_bdary&#160;:&#160;<a class="el" href="class_agglomeration_handler.html#a242979f904b0679c44168b68170b0a76">AgglomerationHandler&lt; dim, spacedim &gt;</a></li>
 <li>agglomerated_isv_neigh&#160;:&#160;<a class="el" href="class_agglomeration_handler.html#ac89ee87c735990e3d2be2fc6d8473d2d">AgglomerationHandler&lt; dim, spacedim &gt;</a></li>
 <li>agglomerated_scratch&#160;:&#160;<a class="el" href="class_agglomeration_handler.html#acf9a600cd85f9eb2fc93899b482928d7">AgglomerationHandler&lt; dim, spacedim &gt;</a></li>
-<li>agglomerates&#160;:&#160;<a class="el" href="structdealii_1_1_poly_utils_1_1_rtree__visitor.html#a48aa3f55e1a060272e63c9719c9ac116">dealii::PolyUtils::Rtree_visitor&lt; Value, Options, Translator, Box, Allocators &gt;</a></li>
+<li>agglomerates&#160;:&#160;<a class="el" href="structdealii_1_1internal_1_1_rtree__visitor.html#abd1e3dc7d576b8e80f8847b12820a7cd">dealii::internal::Rtree_visitor&lt; Value, Options, Translator, Box, Allocators &gt;</a>, <a class="el" href="structdealii_1_1_poly_utils_1_1_rtree__visitor.html#a48aa3f55e1a060272e63c9719c9ac116">dealii::PolyUtils::Rtree_visitor&lt; Value, Options, Translator, Box, Allocators &gt;</a></li>
+<li>agglomerates_on_level&#160;:&#160;<a class="el" href="classdealii_1_1_cells_agglomerator.html#a344bbd804a039d3e2405df9181526cf8">dealii::CellsAgglomerator&lt; dim, RtreeType &gt;</a></li>
 <li>agglomeration_face_flags&#160;:&#160;<a class="el" href="class_agglomeration_handler.html#ad034cf767b67da2dd00186c946a478e8">AgglomerationHandler&lt; dim, spacedim &gt;</a></li>
 <li>agglomeration_face_quad&#160;:&#160;<a class="el" href="class_agglomeration_handler.html#a36c9b33db7fc304f859bdd8860eb4c16">AgglomerationHandler&lt; dim, spacedim &gt;</a></li>
 <li>agglomeration_flags&#160;:&#160;<a class="el" href="class_agglomeration_handler.html#aec4981d6a2914042743290e31116b4fe">AgglomerationHandler&lt; dim, spacedim &gt;</a></li>
@@ -151,6 +152,7 @@ $(function(){initNavTree('functions_vars.html',''); initResizable(true); });
 <li>euler_fe&#160;:&#160;<a class="el" href="class_agglomeration_handler.html#a538cbaa12ccdcbae57cb05149488fbcb">AgglomerationHandler&lt; dim, spacedim &gt;</a></li>
 <li>euler_mapping&#160;:&#160;<a class="el" href="class_agglomeration_handler.html#ad891ea996b10219a8270f420c8cd01ae">AgglomerationHandler&lt; dim, spacedim &gt;</a></li>
 <li>euler_vector&#160;:&#160;<a class="el" href="class_agglomeration_handler.html#a273dbd6c007b7bee14a2e57235c399de">AgglomerationHandler&lt; dim, spacedim &gt;</a></li>
+<li>extraction_level&#160;:&#160;<a class="el" href="classdealii_1_1_cells_agglomerator.html#a3f5e83c21f0a4c09db4e8068066640e1">dealii::CellsAgglomerator&lt; dim, RtreeType &gt;</a></li>
 </ul>
 
 
@@ -179,7 +181,7 @@ $(function(){initNavTree('functions_vars.html',''); initResizable(true); });
 
 
 <h3><a id="index_l" name="index_l"></a>- l -</h3><ul>
-<li>level&#160;:&#160;<a class="el" href="structdealii_1_1_poly_utils_1_1_rtree__visitor.html#a225d081b9f281ca42df2a65b47016472">dealii::PolyUtils::Rtree_visitor&lt; Value, Options, Translator, Box, Allocators &gt;</a></li>
+<li>level&#160;:&#160;<a class="el" href="structdealii_1_1internal_1_1_rtree__visitor.html#a7f35652a457e7628b756ca99d1d6273d">dealii::internal::Rtree_visitor&lt; Value, Options, Translator, Box, Allocators &gt;</a>, <a class="el" href="structdealii_1_1_poly_utils_1_1_rtree__visitor.html#a225d081b9f281ca42df2a65b47016472">dealii::PolyUtils::Rtree_visitor&lt; Value, Options, Translator, Box, Allocators &gt;</a></li>
 <li>local_bdary_info&#160;:&#160;<a class="el" href="class_agglomeration_handler.html#a276592003dab8bb3b01d30d9b230c9fb">AgglomerationHandler&lt; dim, spacedim &gt;</a></li>
 <li>local_cell_ids_neigh_cell&#160;:&#160;<a class="el" href="class_agglomeration_handler.html#af741693176ce320b366377c5b0dc6f58">AgglomerationHandler&lt; dim, spacedim &gt;</a></li>
 <li>local_ghost_dofs&#160;:&#160;<a class="el" href="class_agglomeration_handler.html#aa96fc0b571aac732c68a62f910e80aee">AgglomerationHandler&lt; dim, spacedim &gt;</a></li>
@@ -207,10 +209,11 @@ $(function(){initNavTree('functions_vars.html',''); initResizable(true); });
 
 <h3><a id="index_n" name="index_n"></a>- n -</h3><ul>
 <li>n_agglomerations&#160;:&#160;<a class="el" href="class_agglomeration_handler.html#a531d769d4caedc9775a8ca91fbd34770">AgglomerationHandler&lt; dim, spacedim &gt;</a></li>
+<li>n_nodes_per_level&#160;:&#160;<a class="el" href="classdealii_1_1_cells_agglomerator.html#af823d7ed5e67e16e247a61a08a4ced6b">dealii::CellsAgglomerator&lt; dim, RtreeType &gt;</a>, <a class="el" href="structdealii_1_1internal_1_1_rtree__visitor.html#a7362a824679ee3e498fa69e8bb0e19e4">dealii::internal::Rtree_visitor&lt; Value, Options, Translator, Box, Allocators &gt;</a></li>
 <li>next_level_leafs_processed&#160;:&#160;<a class="el" href="structdealii_1_1_poly_utils_1_1_rtree__visitor.html#aed6899b701d913a4c2b50cc96559e381">dealii::PolyUtils::Rtree_visitor&lt; Value, Options, Translator, Box, Allocators &gt;</a></li>
 <li>no_face_values&#160;:&#160;<a class="el" href="class_agglomeration_handler.html#aa71f99197514caa319236e41549e2ec6">AgglomerationHandler&lt; dim, spacedim &gt;</a></li>
 <li>no_values&#160;:&#160;<a class="el" href="class_agglomeration_handler.html#a40c09e7d8415c939e77e0d631703dc3c">AgglomerationHandler&lt; dim, spacedim &gt;</a></li>
-<li>node_counter&#160;:&#160;<a class="el" href="structdealii_1_1_poly_utils_1_1_rtree__visitor.html#a693ac2689626a6ffea48a99d9ec5a55d">dealii::PolyUtils::Rtree_visitor&lt; Value, Options, Translator, Box, Allocators &gt;</a></li>
+<li>node_counter&#160;:&#160;<a class="el" href="structdealii_1_1internal_1_1_rtree__visitor.html#af2eedd0dd3bf88f068391889d9e9325c">dealii::internal::Rtree_visitor&lt; Value, Options, Translator, Box, Allocators &gt;</a>, <a class="el" href="structdealii_1_1_poly_utils_1_1_rtree__visitor.html#a693ac2689626a6ffea48a99d9ec5a55d">dealii::PolyUtils::Rtree_visitor&lt; Value, Options, Translator, Box, Allocators &gt;</a></li>
 <li>number_of_agglomerated_faces&#160;:&#160;<a class="el" href="class_agglomeration_handler.html#a983756998814300701623ca8eabf9edc">AgglomerationHandler&lt; dim, spacedim &gt;</a></li>
 </ul>
 
@@ -221,6 +224,7 @@ $(function(){initNavTree('functions_vars.html',''); initResizable(true); });
 
 
 <h3><a id="index_p" name="index_p"></a>- p -</h3><ul>
+<li>parent_node_to_children_nodes&#160;:&#160;<a class="el" href="classdealii_1_1_cells_agglomerator.html#a98982a2f825d4f68a70bdd093a6d3313">dealii::CellsAgglomerator&lt; dim, RtreeType &gt;</a>, <a class="el" href="structdealii_1_1internal_1_1_rtree__visitor.html#a22943ca83e94b4eb5baa07e7fcaa53bc">dealii::internal::Rtree_visitor&lt; Value, Options, Translator, Box, Allocators &gt;</a></li>
 <li>penalty&#160;:&#160;<a class="el" href="class_poisson.html#af1251e788d06d4af73485717ae978af2">Poisson&lt; dim &gt;</a></li>
 <li>polygon_boundary&#160;:&#160;<a class="el" href="class_agglomeration_handler.html#a55016eeb925c160cde640d105e9ab717">AgglomerationHandler&lt; dim, spacedim &gt;</a></li>
 <li>polytope_cache&#160;:&#160;<a class="el" href="class_agglomeration_handler.html#af91ee155e9c52b0b704688b5cdd332f2">AgglomerationHandler&lt; dim, spacedim &gt;</a></li>
@@ -244,6 +248,7 @@ $(function(){initNavTree('functions_vars.html',''); initResizable(true); });
 <li>recv_values&#160;:&#160;<a class="el" href="class_agglomeration_handler.html#ab0bcf50a8d2e928691c6ef901b9ba774">AgglomerationHandler&lt; dim, spacedim &gt;</a></li>
 <li>rhs_function&#160;:&#160;<a class="el" href="class_poisson.html#ae90e1b83cf8e7667b67d9b1113173821">Poisson&lt; dim &gt;</a></li>
 <li>row_ptr&#160;:&#160;<a class="el" href="structdealii_1_1_poly_utils_1_1_rtree__visitor.html#a907cb6eb346ec3bf0bc3e352f779a863">dealii::PolyUtils::Rtree_visitor&lt; Value, Options, Translator, Box, Allocators &gt;</a></li>
+<li>rtree&#160;:&#160;<a class="el" href="classdealii_1_1_cells_agglomerator.html#a7c1b89777e323121b18478f834dc4605">dealii::CellsAgglomerator&lt; dim, RtreeType &gt;</a></li>
 </ul>
 
 
@@ -257,8 +262,8 @@ $(function(){initNavTree('functions_vars.html',''); initResizable(true); });
 
 
 <h3><a id="index_t" name="index_t"></a>- t -</h3><ul>
-<li>target_level&#160;:&#160;<a class="el" href="structdealii_1_1_poly_utils_1_1_rtree__visitor.html#a8bc4ee9efd555dd38ed509a851d01c3b">dealii::PolyUtils::Rtree_visitor&lt; Value, Options, Translator, Box, Allocators &gt;</a></li>
-<li>translator&#160;:&#160;<a class="el" href="structdealii_1_1_poly_utils_1_1_rtree__visitor.html#a1a98c627d373cbaaf73c26a177c36bf5">dealii::PolyUtils::Rtree_visitor&lt; Value, Options, Translator, Box, Allocators &gt;</a></li>
+<li>target_level&#160;:&#160;<a class="el" href="structdealii_1_1internal_1_1_rtree__visitor.html#a27f4532dcaa7ce4fff75a2d2f4666190">dealii::internal::Rtree_visitor&lt; Value, Options, Translator, Box, Allocators &gt;</a>, <a class="el" href="structdealii_1_1_poly_utils_1_1_rtree__visitor.html#a8bc4ee9efd555dd38ed509a851d01c3b">dealii::PolyUtils::Rtree_visitor&lt; Value, Options, Translator, Box, Allocators &gt;</a></li>
+<li>translator&#160;:&#160;<a class="el" href="structdealii_1_1internal_1_1_rtree__visitor.html#a4652dd6bf2a30645c568d4cbbac20fdd">dealii::internal::Rtree_visitor&lt; Value, Options, Translator, Box, Allocators &gt;</a>, <a class="el" href="structdealii_1_1_poly_utils_1_1_rtree__visitor.html#a1a98c627d373cbaaf73c26a177c36bf5">dealii::PolyUtils::Rtree_visitor&lt; Value, Options, Translator, Box, Allocators &gt;</a></li>
 <li>tria&#160;:&#160;<a class="el" href="class_agglomeration_handler.html#a4af2c4c5d927780b9f34a3879b680ffe">AgglomerationHandler&lt; dim, spacedim &gt;</a>, <a class="el" href="class_poisson.html#ab5ae031c50c18892e2e79368868698ce">Poisson&lt; dim &gt;</a></li>
 <li>tria_listener&#160;:&#160;<a class="el" href="class_agglomeration_handler.html#a0f1ac8f3058caccfc9163d53c97c0c3a">AgglomerationHandler&lt; dim, spacedim &gt;</a></li>
 </ul>
@@ -273,7 +278,7 @@ $(function(){initNavTree('functions_vars.html',''); initResizable(true); });
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Sat May 25 2024 22:23:45 for PolyDEAL by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.11.0 </li>
+    <li class="footer">Generated on Mon May 27 2024 09:14:44 for PolyDEAL by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.11.0 </li>
   </ul>
 </div>
 </body>
