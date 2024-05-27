@@ -1104,6 +1104,17 @@ AgglomerationHandler<dim, spacedim>::polytope_to_dh_iterator(
 
 
 template <int dim, int spacedim>
+inline const typename DoFHandler<dim, spacedim>::active_cell_iterator
+AgglomerationHandler<dim, spacedim>::polytope_to_dh_iterator(
+  const types::global_cell_index polytope_index) const
+{
+  return master_cells_container[polytope_index]->as_dof_handler_iterator(
+    agglo_dh);
+}
+
+
+
+template <int dim, int spacedim>
 AgglomerationIterator<dim, spacedim>
 AgglomerationHandler<dim, spacedim>::begin() const
 {
