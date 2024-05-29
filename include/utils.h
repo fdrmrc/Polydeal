@@ -26,6 +26,9 @@
 #include <deal.II/lac/trilinos_solver.h>
 #include <deal.II/lac/trilinos_sparse_matrix.h>
 
+#include <multigrid_amg.h>
+
+
 template <int dim, typename RtreeType>
 class Agglomerator;
 template <int, int>
