@@ -258,8 +258,35 @@ namespace dealii
       const elements_type &elements =
         boost::geometry::index::detail::rtree::elements(leaf);
 
-      for (const auto &it : elements)
-        agglomerates[node_counter].push_back(it.second);
+      if (level == target_level)
+        {
+          // If I want to extract from leaf node, i.e. the target_level is the
+          // last one where leafs are grouped together.
+          const auto offset = agglomerates.size();
+          agglomerates.resize(offset + 1);
+
+          for (const auto &it : elements)
+            agglomerates[node_counter].push_back(it.second);
+
+          ++node_counter;
+          n_nodes_per_level[target_level]++;
+        }
+      else
+        {
+          for (const auto &it : elements)
+            agglomerates[node_counter].push_back(it.second);
+
+
+          if (level == target_level + 1)
+            {
+              const unsigned int node_idx = n_nodes_per_level[level];
+
+              parent_node_to_children_nodes[{n_nodes_per_level[level - 1],
+                                             level - 1}]
+                .push_back(node_idx);
+              n_nodes_per_level[level]++;
+            }
+        }
     }
   } // namespace internal
 
@@ -364,12 +391,18 @@ namespace dealii
     std::vector<typename Triangulation<dim>::active_cell_iterator>> &
   CellsAgglomerator<dim, RtreeType>::extract_agglomerates()
   {
+    AssertThrow(extraction_level <= n_levels(*rtree),
+                ExcInternalError("You are trying to extract level " +
+                                 std::to_string(extraction_level) +
+                                 " of the tree, but it only has a total of " +
+                                 std::to_string(n_levels(*rtree)) +
+                                 " levels."));
     using RtreeView =
       boost::geometry::index::detail::rtree::utilities::view<RtreeType>;
     RtreeView rtv(*rtree);
 
-    n_nodes_per_level.resize(
-      rtv.depth()); // store how many nodes we have for each level.
+    n_nodes_per_level.resize(rtv.depth() +
+                             1); // store how many nodes we have for each level.
 
     if (rtv.depth() == 0)
       {
