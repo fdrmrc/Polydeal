@@ -779,8 +779,8 @@ template <int dim, int spacedim>
 inline const std::vector<types::global_cell_index> &
 AgglomerationAccessor<dim, spacedim>::children() const
 {
-  Assert(!handler->parent_child_info->empty(), ExcInternalError());
-  return handler->parent_child_info->at(
+  Assert(!handler->parent_child_info.empty(), ExcInternalError());
+  return handler->parent_child_info.at(
     {present_index, handler->present_extraction_level});
 }
 
