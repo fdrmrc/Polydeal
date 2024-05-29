@@ -103,7 +103,7 @@ var class_agglomeration_handler =
     [ "no_values", "class_agglomeration_handler.html#a40c09e7d8415c939e77e0d631703dc3c", null ],
     [ "number_of_agglomerated_faces", "class_agglomeration_handler.html#a983756998814300701623ca8eabf9edc", null ],
     [ "output_dh", "class_agglomeration_handler.html#a613cd35ff32a3a9942e4d2d82060c980", null ],
-    [ "parent_child_info", "class_agglomeration_handler.html#a90af0560108ee16bf2374b388f0edbca", null ],
+    [ "parent_child_info", "class_agglomeration_handler.html#a63f246f4797c63baa191cc2d9f8425e1", null ],
     [ "polygon_boundary", "class_agglomeration_handler.html#a55016eeb925c160cde640d105e9ab717", null ],
     [ "polytope_cache", "class_agglomeration_handler.html#af91ee155e9c52b0b704688b5cdd332f2", null ],
     [ "present_extraction_level", "class_agglomeration_handler.html#a4bb9e255b36c3aafafab318711d462eb", null ],
