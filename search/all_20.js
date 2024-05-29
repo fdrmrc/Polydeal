@@ -214,5 +214,7 @@ var searchData=
   ['utilities_3a_3asystem_211',['System',['http://www.dealii.org/developer/doxygen/deal.II/namespaceUtilities_1_1System.html',1,'Utilities']]],
   ['utilities_3a_3atrilinos_212',['Trilinos',['http://www.dealii.org/developer/doxygen/deal.II/namespaceUtilities_1_1Trilinos.html',1,'Utilities']]],
   ['utilities_3a_3atrilinos_3a_3ainternal_213',['internal',['http://www.dealii.org/developer/doxygen/deal.II/namespaceUtilities_1_1Trilinos_1_1internal.html',1,'Utilities::Trilinos']]],
-  ['utility_20functions_20and_20classes_214',['Utility functions and classes',['http://www.dealii.org/developer/doxygen/deal.II/group__utilities.html',1,'']]]
+  ['utility_20functions_20and_20classes_214',['Utility functions and classes',['http://www.dealii.org/developer/doxygen/deal.II/group__utilities.html',1,'']]],
+  ['utils_215',['Utils',['../namespace_utils.html',1,'']]],
+  ['utils_2eh_216',['utils.h',['../utils_8h.html',1,'']]]
 ];

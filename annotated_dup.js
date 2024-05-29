@@ -14,6 +14,7 @@ var annotated_dup =
     [ "AgglomerationAccessor", "class_agglomeration_accessor.html", "class_agglomeration_accessor" ],
     [ "AgglomerationHandler", "class_agglomeration_handler.html", "class_agglomeration_handler" ],
     [ "AgglomerationIterator", "class_agglomeration_iterator.html", "class_agglomeration_iterator" ],
+    [ "Agglomerator", "class_agglomerator.html", null ],
     [ "Poisson", "class_poisson.html", "class_poisson" ],
     [ "RightHandSide", "class_right_hand_side.html", "class_right_hand_side" ]
 ];
