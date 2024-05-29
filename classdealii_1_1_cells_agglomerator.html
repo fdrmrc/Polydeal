@@ -156,7 +156,7 @@ Friends</h2></td></tr>
 <div class="textblock"><div class="compoundTemplParams">template&lt;int dim, typename RtreeType&gt;<br />
 class dealii::CellsAgglomerator&lt; dim, RtreeType &gt;</div><p>Helper class which handles agglomeration based on the R-tree data structure. Notice that the R-tree type is assumed to be an R-star-tree. </p>
 
-<p class="definition">Definition at line <a class="el" href="agglomerator_8h_source.html#l00273">273</a> of file <a class="el" href="agglomerator_8h_source.html">agglomerator.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomerator_8h_source.html#l00300">300</a> of file <a class="el" href="agglomerator_8h_source.html">agglomerator.h</a>.</p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="aecaafcf589317e936e4743d50f364d5f" name="aecaafcf589317e936e4743d50f364d5f"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#aecaafcf589317e936e4743d50f364d5f">&#9670;&#160;</a></span>CellsAgglomerator()</h2>
@@ -180,9 +180,9 @@ template&lt;int dim, typename RtreeType &gt; </div>
 </div><div class="memdoc">
 <p>Constructor. It takes a given rtree and an integer representing the index of the level to be extracted. </p>
 
-<p class="definition">Definition at line <a class="el" href="agglomerator_8h_source.html#l00351">351</a> of file <a class="el" href="agglomerator_8h_source.html">agglomerator.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomerator_8h_source.html#l00378">378</a> of file <a class="el" href="agglomerator_8h_source.html">agglomerator.h</a>.</p>
 
-<p class="reference">References <a class="el" href="agglomerator_8h_source.html#l00319">dealii::CellsAgglomerator&lt; dim, RtreeType &gt;::rtree</a>.</p>
+<p class="reference">References <a class="el" href="agglomerator_8h_source.html#l00346">dealii::CellsAgglomerator&lt; dim, RtreeType &gt;::rtree</a>.</p>
 
 </div>
 </div>
@@ -205,9 +205,9 @@ template&lt;int dim, typename RtreeType &gt; </div>
 </div><div class="memdoc">
 <p>Extract agglomerates based on the current tree and the extraction level. This function returns a reference to </p>
 
-<p class="definition">Definition at line <a class="el" href="agglomerator_8h_source.html#l00365">365</a> of file <a class="el" href="agglomerator_8h_source.html">agglomerator.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomerator_8h_source.html#l00392">392</a> of file <a class="el" href="agglomerator_8h_source.html">agglomerator.h</a>.</p>
 
-<p class="reference">References <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/namespacestd.html#a75a30aa280fd30aea596f82517daee0c">std::min()</a>.</p>
+<p class="reference">References <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/group__Exceptions.html#gafc0ca7ad85b3ebd64e8e51689ac85caf">AssertThrow</a>, and <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/namespacestd.html#a75a30aa280fd30aea596f82517daee0c">std::min()</a>.</p>
 
 </div>
 </div>
@@ -237,7 +237,7 @@ template&lt;int dim, typename RtreeType &gt; </div>
 </div><div class="memdoc">
 <p>This function returns a map which associates to each node on level <code>extraction_level</code> a list of children. </p>
 
-<p class="definition">Definition at line <a class="el" href="agglomerator_8h_source.html#l00431">431</a> of file <a class="el" href="agglomerator_8h_source.html">agglomerator.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomerator_8h_source.html#l00464">464</a> of file <a class="el" href="agglomerator_8h_source.html">agglomerator.h</a>.</p>
 
 </div>
 </div>
@@ -267,7 +267,7 @@ template&lt;int dim, typename RtreeType &gt; </div>
 </div><div class="memdoc">
 <p>Get total number of levels. </p>
 
-<p class="definition">Definition at line <a class="el" href="agglomerator_8h_source.html#l00410">410</a> of file <a class="el" href="agglomerator_8h_source.html">agglomerator.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomerator_8h_source.html#l00443">443</a> of file <a class="el" href="agglomerator_8h_source.html">agglomerator.h</a>.</p>
 
 </div>
 </div>
@@ -297,7 +297,7 @@ template&lt;int dim, typename RtreeType &gt; </div>
 </div><div class="memdoc">
 <p>Return the number of nodes present in level <code>level</code>. </p>
 
-<p class="definition">Definition at line <a class="el" href="agglomerator_8h_source.html#l00419">419</a> of file <a class="el" href="agglomerator_8h_source.html">agglomerator.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomerator_8h_source.html#l00452">452</a> of file <a class="el" href="agglomerator_8h_source.html">agglomerator.h</a>.</p>
 
 <p class="reference">References <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/grid__out_8cc.html#a9082f945c1d289684d0bcd51ee08e11e">level</a>.</p>
 
@@ -328,7 +328,7 @@ template&lt;int , int &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="agglomerator_8h_source.html#l00277">277</a> of file <a class="el" href="agglomerator_8h_source.html">agglomerator.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomerator_8h_source.html#l00304">304</a> of file <a class="el" href="agglomerator_8h_source.html">agglomerator.h</a>.</p>
 
 </div>
 </div>
@@ -356,7 +356,7 @@ template&lt;int dim, typename RtreeType &gt; </div>
 </div><div class="memdoc">
 <p>Store agglomerates obtained after recursive extraction on nodes of level <code>extraction_level</code>. </p>
 
-<p class="definition">Definition at line <a class="el" href="agglomerator_8h_source.html#l00331">331</a> of file <a class="el" href="agglomerator_8h_source.html">agglomerator.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomerator_8h_source.html#l00358">358</a> of file <a class="el" href="agglomerator_8h_source.html">agglomerator.h</a>.</p>
 
 </div>
 </div>
@@ -383,7 +383,7 @@ template&lt;int dim, typename RtreeType &gt; </div>
 </div><div class="memdoc">
 <p>Extraction level. </p>
 
-<p class="definition">Definition at line <a class="el" href="agglomerator_8h_source.html#l00324">324</a> of file <a class="el" href="agglomerator_8h_source.html">agglomerator.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomerator_8h_source.html#l00351">351</a> of file <a class="el" href="agglomerator_8h_source.html">agglomerator.h</a>.</p>
 
 <p class="reference">Referenced by <a class="el" href="agglomeration__handler_8h_source.html#l01189">AgglomerationHandler&lt; dim, spacedim &gt;::connect_hierarchy()</a>.</p>
 
@@ -412,7 +412,7 @@ template&lt;int dim, typename RtreeType &gt; </div>
 </div><div class="memdoc">
 <p><a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classVector.html">Vector</a> storing the number of nodes (and, ultimately, agglomerates) for each level. </p>
 
-<p class="definition">Definition at line <a class="el" href="agglomerator_8h_source.html#l00337">337</a> of file <a class="el" href="agglomerator_8h_source.html">agglomerator.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomerator_8h_source.html#l00364">364</a> of file <a class="el" href="agglomerator_8h_source.html">agglomerator.h</a>.</p>
 
 </div>
 </div>
@@ -440,7 +440,7 @@ template&lt;int dim, typename RtreeType &gt; </div>
 <p>Map which maps a node parent <br  />
  on level <code>l</code> to a vector of integers which stores the index of children. </p>
 
-<p class="definition">Definition at line <a class="el" href="agglomerator_8h_source.html#l00345">345</a> of file <a class="el" href="agglomerator_8h_source.html">agglomerator.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomerator_8h_source.html#l00372">372</a> of file <a class="el" href="agglomerator_8h_source.html">agglomerator.h</a>.</p>
 
 <p class="reference">Referenced by <a class="el" href="agglomeration__handler_8h_source.html#l01189">AgglomerationHandler&lt; dim, spacedim &gt;::connect_hierarchy()</a>.</p>
 
@@ -469,9 +469,9 @@ template&lt;int dim, typename RtreeType &gt; </div>
 </div><div class="memdoc">
 <p>Raw pointer to the actual R-tree. </p>
 
-<p class="definition">Definition at line <a class="el" href="agglomerator_8h_source.html#l00319">319</a> of file <a class="el" href="agglomerator_8h_source.html">agglomerator.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomerator_8h_source.html#l00346">346</a> of file <a class="el" href="agglomerator_8h_source.html">agglomerator.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="agglomerator_8h_source.html#l00351">dealii::CellsAgglomerator&lt; dim, RtreeType &gt;::CellsAgglomerator()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="agglomerator_8h_source.html#l00378">dealii::CellsAgglomerator&lt; dim, RtreeType &gt;::CellsAgglomerator()</a>.</p>
 
 </div>
 </div>
@@ -484,7 +484,7 @@ template&lt;int dim, typename RtreeType &gt; </div>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="namespacedealii.html">dealii</a></li><li class="navelem"><a class="el" href="classdealii_1_1_cells_agglomerator.html">CellsAgglomerator</a></li>
-    <li class="footer">Generated on Wed May 29 2024 10:42:05 for PolyDEAL by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.11.0 </li>
+    <li class="footer">Generated on Wed May 29 2024 11:10:13 for PolyDEAL by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.11.0 </li>
   </ul>
 </div>
 </body>

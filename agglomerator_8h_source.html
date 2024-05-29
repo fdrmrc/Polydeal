@@ -338,174 +338,208 @@ $(function(){initNavTree('agglomerator_8h_source.html',''); initResizable(true);
 <div class="line"><a id="l00258" name="l00258"></a><span class="lineno">  258</span>      <span class="keyword">const</span> elements_type &amp;elements =</div>
 <div class="line"><a id="l00259" name="l00259"></a><span class="lineno">  259</span>        boost::geometry::index::detail::rtree::elements(leaf);</div>
 <div class="line"><a id="l00260" name="l00260"></a><span class="lineno">  260</span> </div>
-<div class="line"><a id="l00261" name="l00261"></a><span class="lineno">  261</span>      <span class="keywordflow">for</span> (<span class="keyword">const</span> <span class="keyword">auto</span> &amp;it : elements)</div>
-<div class="line"><a id="l00262" name="l00262"></a><span class="lineno">  262</span>        agglomerates[node_counter].push_back(it.second);</div>
-<div class="line"><a id="l00263" name="l00263"></a><span class="lineno">  263</span>    }</div>
-</div>
-<div class="line"><a id="l00264" name="l00264"></a><span class="lineno">  264</span>  } <span class="comment">// namespace internal</span></div>
-<div class="line"><a id="l00265" name="l00265"></a><span class="lineno">  265</span> </div>
-<div class="line"><a id="l00266" name="l00266"></a><span class="lineno">  266</span> </div>
+<div class="line"><a id="l00261" name="l00261"></a><span class="lineno">  261</span>      <span class="keywordflow">if</span> (<a class="code hl_variableRef" href="http://www.dealii.org/developer/doxygen/deal.II/grid__out_8cc.html#a9082f945c1d289684d0bcd51ee08e11e">level</a> == target_level)</div>
+<div class="line"><a id="l00262" name="l00262"></a><span class="lineno">  262</span>        {</div>
+<div class="line"><a id="l00263" name="l00263"></a><span class="lineno">  263</span>          <span class="comment">// If I want to extract from leaf node, i.e. the target_level is the</span></div>
+<div class="line"><a id="l00264" name="l00264"></a><span class="lineno">  264</span>          <span class="comment">// last one where leafs are grouped together.</span></div>
+<div class="line"><a id="l00265" name="l00265"></a><span class="lineno">  265</span>          <span class="keyword">const</span> <span class="keyword">auto</span> offset = agglomerates.size();</div>
+<div class="line"><a id="l00266" name="l00266"></a><span class="lineno">  266</span>          agglomerates.resize(offset + 1);</div>
 <div class="line"><a id="l00267" name="l00267"></a><span class="lineno">  267</span> </div>
-<div class="line"><a id="l00272" name="l00272"></a><span class="lineno">  272</span>  <span class="keyword">template</span> &lt;<span class="keywordtype">int</span> dim, <span class="keyword">typename</span> RtreeType&gt;</div>
-<div class="foldopen" id="foldopen00273" data-start="{" data-end="};">
-<div class="line"><a id="l00273" name="l00273"></a><span class="lineno"><a class="line" href="classdealii_1_1_cells_agglomerator.html">  273</a></span>  <span class="keyword">class </span><a class="code hl_class" href="classdealii_1_1_cells_agglomerator.html">CellsAgglomerator</a></div>
-<div class="line"><a id="l00274" name="l00274"></a><span class="lineno">  274</span>  {</div>
-<div class="line"><a id="l00275" name="l00275"></a><span class="lineno">  275</span>  <span class="keyword">public</span>:</div>
-<div class="line"><a id="l00276" name="l00276"></a><span class="lineno">  276</span>    <span class="keyword">template</span> &lt;<span class="keywordtype">int</span>, <span class="keywordtype">int</span>&gt;</div>
-<div class="line"><a id="l00277" name="l00277"></a><span class="lineno"><a class="line" href="classdealii_1_1_cells_agglomerator.html#afbbef308182c1a9b89b1676ed6118786">  277</a></span>    <span class="keyword">friend</span> class ::AgglomerationHandler;</div>
+<div class="line"><a id="l00268" name="l00268"></a><span class="lineno">  268</span>          <span class="keywordflow">for</span> (<span class="keyword">const</span> <span class="keyword">auto</span> &amp;it : elements)</div>
+<div class="line"><a id="l00269" name="l00269"></a><span class="lineno">  269</span>            agglomerates[node_counter].push_back(it.second);</div>
+<div class="line"><a id="l00270" name="l00270"></a><span class="lineno">  270</span> </div>
+<div class="line"><a id="l00271" name="l00271"></a><span class="lineno">  271</span>          ++node_counter;</div>
+<div class="line"><a id="l00272" name="l00272"></a><span class="lineno">  272</span>          n_nodes_per_level[target_level]++;</div>
+<div class="line"><a id="l00273" name="l00273"></a><span class="lineno">  273</span>        }</div>
+<div class="line"><a id="l00274" name="l00274"></a><span class="lineno">  274</span>      <span class="keywordflow">else</span></div>
+<div class="line"><a id="l00275" name="l00275"></a><span class="lineno">  275</span>        {</div>
+<div class="line"><a id="l00276" name="l00276"></a><span class="lineno">  276</span>          <span class="keywordflow">for</span> (<span class="keyword">const</span> <span class="keyword">auto</span> &amp;it : elements)</div>
+<div class="line"><a id="l00277" name="l00277"></a><span class="lineno">  277</span>            agglomerates[node_counter].push_back(it.second);</div>
 <div class="line"><a id="l00278" name="l00278"></a><span class="lineno">  278</span> </div>
-<div class="line"><a id="l00283" name="l00283"></a><span class="lineno">  283</span>    <a class="code hl_function" href="classdealii_1_1_cells_agglomerator.html#aecaafcf589317e936e4743d50f364d5f">CellsAgglomerator</a>(<span class="keyword">const</span> RtreeType   &amp;<a class="code hl_variable" href="classdealii_1_1_cells_agglomerator.html#a7c1b89777e323121b18478f834dc4605">rtree</a>,</div>
-<div class="line"><a id="l00284" name="l00284"></a><span class="lineno">  284</span>                      <span class="keyword">const</span> <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> <a class="code hl_variable" href="classdealii_1_1_cells_agglomerator.html#a3f5e83c21f0a4c09db4e8068066640e1">extraction_level</a>);</div>
-<div class="line"><a id="l00285" name="l00285"></a><span class="lineno">  285</span> </div>
-<div class="line"><a id="l00290" name="l00290"></a><span class="lineno">  290</span>    <span class="keyword">const</span> std::vector&lt;</div>
-<div class="line"><a id="l00291" name="l00291"></a><span class="lineno">  291</span>      std::vector&lt;typename Triangulation&lt;dim&gt;::active_cell_iterator&gt;&gt; &amp;</div>
-<div class="line"><a id="l00292" name="l00292"></a><span class="lineno">  292</span>    <a class="code hl_function" href="classdealii_1_1_cells_agglomerator.html#af2712f742a7c8ae87e385eceb0b62ea9">extract_agglomerates</a>();</div>
+<div class="line"><a id="l00279" name="l00279"></a><span class="lineno">  279</span> </div>
+<div class="line"><a id="l00280" name="l00280"></a><span class="lineno">  280</span>          <span class="keywordflow">if</span> (<a class="code hl_variableRef" href="http://www.dealii.org/developer/doxygen/deal.II/grid__out_8cc.html#a9082f945c1d289684d0bcd51ee08e11e">level</a> == target_level + 1)</div>
+<div class="line"><a id="l00281" name="l00281"></a><span class="lineno">  281</span>            {</div>
+<div class="line"><a id="l00282" name="l00282"></a><span class="lineno">  282</span>              <span class="keyword">const</span> <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> node_idx = n_nodes_per_level[<a class="code hl_variableRef" href="http://www.dealii.org/developer/doxygen/deal.II/grid__out_8cc.html#a9082f945c1d289684d0bcd51ee08e11e">level</a>];</div>
+<div class="line"><a id="l00283" name="l00283"></a><span class="lineno">  283</span> </div>
+<div class="line"><a id="l00284" name="l00284"></a><span class="lineno">  284</span>              parent_node_to_children_nodes[{n_nodes_per_level[<a class="code hl_variableRef" href="http://www.dealii.org/developer/doxygen/deal.II/grid__out_8cc.html#a9082f945c1d289684d0bcd51ee08e11e">level</a> - 1],</div>
+<div class="line"><a id="l00285" name="l00285"></a><span class="lineno">  285</span>                                             <a class="code hl_variableRef" href="http://www.dealii.org/developer/doxygen/deal.II/grid__out_8cc.html#a9082f945c1d289684d0bcd51ee08e11e">level</a> - 1}]</div>
+<div class="line"><a id="l00286" name="l00286"></a><span class="lineno">  286</span>                .push_back(node_idx);</div>
+<div class="line"><a id="l00287" name="l00287"></a><span class="lineno">  287</span>              n_nodes_per_level[<a class="code hl_variableRef" href="http://www.dealii.org/developer/doxygen/deal.II/grid__out_8cc.html#a9082f945c1d289684d0bcd51ee08e11e">level</a>]++;</div>
+<div class="line"><a id="l00288" name="l00288"></a><span class="lineno">  288</span>            }</div>
+<div class="line"><a id="l00289" name="l00289"></a><span class="lineno">  289</span>        }</div>
+<div class="line"><a id="l00290" name="l00290"></a><span class="lineno">  290</span>    }</div>
+</div>
+<div class="line"><a id="l00291" name="l00291"></a><span class="lineno">  291</span>  } <span class="comment">// namespace internal</span></div>
+<div class="line"><a id="l00292" name="l00292"></a><span class="lineno">  292</span> </div>
 <div class="line"><a id="l00293" name="l00293"></a><span class="lineno">  293</span> </div>
-<div class="line"><a id="l00297" name="l00297"></a><span class="lineno">  297</span>    <span class="keyword">inline</span> <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span></div>
-<div class="line"><a id="l00298" name="l00298"></a><span class="lineno">  298</span>    <a class="code hl_function" href="classdealii_1_1_cells_agglomerator.html#acac4534ded1f0ac33c6451799235970c">get_n_levels</a>() <span class="keyword">const</span>;</div>
-<div class="line"><a id="l00299" name="l00299"></a><span class="lineno">  299</span> </div>
-<div class="line"><a id="l00303" name="l00303"></a><span class="lineno">  303</span>    <span class="keyword">inline</span> <a class="code hl_typedefRef" href="http://www.dealii.org/developer/doxygen/deal.II/namespacetypes.html#a88f8129eb3e40ecc8022e92a1e15d70e">types::global_cell_index</a></div>
-<div class="line"><a id="l00304" name="l00304"></a><span class="lineno">  304</span>    <a class="code hl_function" href="classdealii_1_1_cells_agglomerator.html#ac54878a218d5eb9032f4252111300eb0">get_n_nodes_per_level</a>(<span class="keyword">const</span> <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> level) <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00294" name="l00294"></a><span class="lineno">  294</span> </div>
+<div class="line"><a id="l00299" name="l00299"></a><span class="lineno">  299</span>  <span class="keyword">template</span> &lt;<span class="keywordtype">int</span> dim, <span class="keyword">typename</span> RtreeType&gt;</div>
+<div class="foldopen" id="foldopen00300" data-start="{" data-end="};">
+<div class="line"><a id="l00300" name="l00300"></a><span class="lineno"><a class="line" href="classdealii_1_1_cells_agglomerator.html">  300</a></span>  <span class="keyword">class </span><a class="code hl_class" href="classdealii_1_1_cells_agglomerator.html">CellsAgglomerator</a></div>
+<div class="line"><a id="l00301" name="l00301"></a><span class="lineno">  301</span>  {</div>
+<div class="line"><a id="l00302" name="l00302"></a><span class="lineno">  302</span>  <span class="keyword">public</span>:</div>
+<div class="line"><a id="l00303" name="l00303"></a><span class="lineno">  303</span>    <span class="keyword">template</span> &lt;<span class="keywordtype">int</span>, <span class="keywordtype">int</span>&gt;</div>
+<div class="line"><a id="l00304" name="l00304"></a><span class="lineno"><a class="line" href="classdealii_1_1_cells_agglomerator.html#afbbef308182c1a9b89b1676ed6118786">  304</a></span>    <span class="keyword">friend</span> class ::AgglomerationHandler;</div>
 <div class="line"><a id="l00305" name="l00305"></a><span class="lineno">  305</span> </div>
-<div class="line"><a id="l00310" name="l00310"></a><span class="lineno">  310</span>    <span class="keyword">inline</span> <span class="keyword">const</span> std::map&lt;</div>
-<div class="line"><a id="l00311" name="l00311"></a><span class="lineno">  311</span>      std::pair&lt;types::global_cell_index, types::global_cell_index&gt;,</div>
-<div class="line"><a id="l00312" name="l00312"></a><span class="lineno">  312</span>      std::vector&lt;types::global_cell_index&gt;&gt; &amp;</div>
-<div class="line"><a id="l00313" name="l00313"></a><span class="lineno">  313</span>    <a class="code hl_function" href="classdealii_1_1_cells_agglomerator.html#a7dca177d24e496b5fd332c15580d524f">get_hierarchy</a>() <span class="keyword">const</span>;</div>
-<div class="line"><a id="l00314" name="l00314"></a><span class="lineno">  314</span> </div>
-<div class="line"><a id="l00315" name="l00315"></a><span class="lineno">  315</span>  <span class="keyword">private</span>:</div>
-<div class="line"><a id="l00319" name="l00319"></a><span class="lineno"><a class="line" href="classdealii_1_1_cells_agglomerator.html#a7c1b89777e323121b18478f834dc4605">  319</a></span>    RtreeType *<a class="code hl_variable" href="classdealii_1_1_cells_agglomerator.html#a7c1b89777e323121b18478f834dc4605">rtree</a>;</div>
+<div class="line"><a id="l00310" name="l00310"></a><span class="lineno">  310</span>    <a class="code hl_function" href="classdealii_1_1_cells_agglomerator.html#aecaafcf589317e936e4743d50f364d5f">CellsAgglomerator</a>(<span class="keyword">const</span> RtreeType   &amp;<a class="code hl_variable" href="classdealii_1_1_cells_agglomerator.html#a7c1b89777e323121b18478f834dc4605">rtree</a>,</div>
+<div class="line"><a id="l00311" name="l00311"></a><span class="lineno">  311</span>                      <span class="keyword">const</span> <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> <a class="code hl_variable" href="classdealii_1_1_cells_agglomerator.html#a3f5e83c21f0a4c09db4e8068066640e1">extraction_level</a>);</div>
+<div class="line"><a id="l00312" name="l00312"></a><span class="lineno">  312</span> </div>
+<div class="line"><a id="l00317" name="l00317"></a><span class="lineno">  317</span>    <span class="keyword">const</span> std::vector&lt;</div>
+<div class="line"><a id="l00318" name="l00318"></a><span class="lineno">  318</span>      std::vector&lt;typename Triangulation&lt;dim&gt;::active_cell_iterator&gt;&gt; &amp;</div>
+<div class="line"><a id="l00319" name="l00319"></a><span class="lineno">  319</span>    <a class="code hl_function" href="classdealii_1_1_cells_agglomerator.html#af2712f742a7c8ae87e385eceb0b62ea9">extract_agglomerates</a>();</div>
 <div class="line"><a id="l00320" name="l00320"></a><span class="lineno">  320</span> </div>
-<div class="line"><a id="l00324" name="l00324"></a><span class="lineno"><a class="line" href="classdealii_1_1_cells_agglomerator.html#a3f5e83c21f0a4c09db4e8068066640e1">  324</a></span>    <span class="keyword">const</span> <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> <a class="code hl_variable" href="classdealii_1_1_cells_agglomerator.html#a3f5e83c21f0a4c09db4e8068066640e1">extraction_level</a>;</div>
-<div class="line"><a id="l00325" name="l00325"></a><span class="lineno">  325</span> </div>
-<div class="line"><a id="l00330" name="l00330"></a><span class="lineno">  330</span>    std::vector&lt;std::vector&lt;typename Triangulation&lt;dim&gt;::active_cell_iterator&gt;&gt;</div>
-<div class="line"><a id="l00331" name="l00331"></a><span class="lineno"><a class="line" href="classdealii_1_1_cells_agglomerator.html#a344bbd804a039d3e2405df9181526cf8">  331</a></span>      <a class="code hl_variable" href="classdealii_1_1_cells_agglomerator.html#a344bbd804a039d3e2405df9181526cf8">agglomerates_on_level</a>;</div>
+<div class="line"><a id="l00324" name="l00324"></a><span class="lineno">  324</span>    <span class="keyword">inline</span> <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span></div>
+<div class="line"><a id="l00325" name="l00325"></a><span class="lineno">  325</span>    <a class="code hl_function" href="classdealii_1_1_cells_agglomerator.html#acac4534ded1f0ac33c6451799235970c">get_n_levels</a>() <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00326" name="l00326"></a><span class="lineno">  326</span> </div>
+<div class="line"><a id="l00330" name="l00330"></a><span class="lineno">  330</span>    <span class="keyword">inline</span> <a class="code hl_typedefRef" href="http://www.dealii.org/developer/doxygen/deal.II/namespacetypes.html#a88f8129eb3e40ecc8022e92a1e15d70e">types::global_cell_index</a></div>
+<div class="line"><a id="l00331" name="l00331"></a><span class="lineno">  331</span>    <a class="code hl_function" href="classdealii_1_1_cells_agglomerator.html#ac54878a218d5eb9032f4252111300eb0">get_n_nodes_per_level</a>(<span class="keyword">const</span> <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> level) <span class="keyword">const</span>;</div>
 <div class="line"><a id="l00332" name="l00332"></a><span class="lineno">  332</span> </div>
-<div class="line"><a id="l00337" name="l00337"></a><span class="lineno"><a class="line" href="classdealii_1_1_cells_agglomerator.html#af823d7ed5e67e16e247a61a08a4ced6b">  337</a></span>    std::vector&lt;types::global_cell_index&gt; <a class="code hl_variable" href="classdealii_1_1_cells_agglomerator.html#af823d7ed5e67e16e247a61a08a4ced6b">n_nodes_per_level</a>;</div>
-<div class="line"><a id="l00338" name="l00338"></a><span class="lineno">  338</span> </div>
-<div class="line"><a id="l00343" name="l00343"></a><span class="lineno">  343</span>    std::map&lt;std::pair&lt;types::global_cell_index, types::global_cell_index&gt;,</div>
-<div class="line"><a id="l00344" name="l00344"></a><span class="lineno">  344</span>             std::vector&lt;types::global_cell_index&gt;&gt;</div>
-<div class="line"><a id="l00345" name="l00345"></a><span class="lineno"><a class="line" href="classdealii_1_1_cells_agglomerator.html#a98982a2f825d4f68a70bdd093a6d3313">  345</a></span>      <a class="code hl_variable" href="classdealii_1_1_cells_agglomerator.html#a98982a2f825d4f68a70bdd093a6d3313">parent_node_to_children_nodes</a>;</div>
-<div class="line"><a id="l00346" name="l00346"></a><span class="lineno">  346</span>  };</div>
-</div>
+<div class="line"><a id="l00337" name="l00337"></a><span class="lineno">  337</span>    <span class="keyword">inline</span> <span class="keyword">const</span> std::map&lt;</div>
+<div class="line"><a id="l00338" name="l00338"></a><span class="lineno">  338</span>      std::pair&lt;types::global_cell_index, types::global_cell_index&gt;,</div>
+<div class="line"><a id="l00339" name="l00339"></a><span class="lineno">  339</span>      std::vector&lt;types::global_cell_index&gt;&gt; &amp;</div>
+<div class="line"><a id="l00340" name="l00340"></a><span class="lineno">  340</span>    <a class="code hl_function" href="classdealii_1_1_cells_agglomerator.html#a7dca177d24e496b5fd332c15580d524f">get_hierarchy</a>() <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00341" name="l00341"></a><span class="lineno">  341</span> </div>
+<div class="line"><a id="l00342" name="l00342"></a><span class="lineno">  342</span>  <span class="keyword">private</span>:</div>
+<div class="line"><a id="l00346" name="l00346"></a><span class="lineno"><a class="line" href="classdealii_1_1_cells_agglomerator.html#a7c1b89777e323121b18478f834dc4605">  346</a></span>    RtreeType *<a class="code hl_variable" href="classdealii_1_1_cells_agglomerator.html#a7c1b89777e323121b18478f834dc4605">rtree</a>;</div>
 <div class="line"><a id="l00347" name="l00347"></a><span class="lineno">  347</span> </div>
-<div class="line"><a id="l00348" name="l00348"></a><span class="lineno">  348</span> </div>
-<div class="line"><a id="l00349" name="l00349"></a><span class="lineno">  349</span> </div>
-<div class="line"><a id="l00350" name="l00350"></a><span class="lineno">  350</span>  <span class="keyword">template</span> &lt;<span class="keywordtype">int</span> dim, <span class="keyword">typename</span> RtreeType&gt;</div>
-<div class="foldopen" id="foldopen00351" data-start="{" data-end="}">
-<div class="line"><a id="l00351" name="l00351"></a><span class="lineno"><a class="line" href="classdealii_1_1_cells_agglomerator.html#aecaafcf589317e936e4743d50f364d5f">  351</a></span>  <a class="code hl_function" href="classdealii_1_1_cells_agglomerator.html#aecaafcf589317e936e4743d50f364d5f">CellsAgglomerator&lt;dim, RtreeType&gt;::CellsAgglomerator</a>(</div>
-<div class="line"><a id="l00352" name="l00352"></a><span class="lineno">  352</span>    <span class="keyword">const</span> RtreeType   &amp;tree,</div>
-<div class="line"><a id="l00353" name="l00353"></a><span class="lineno">  353</span>    <span class="keyword">const</span> <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> extraction_level_)</div>
-<div class="line"><a id="l00354" name="l00354"></a><span class="lineno">  354</span>    : extraction_level(extraction_level_)</div>
-<div class="line"><a id="l00355" name="l00355"></a><span class="lineno">  355</span>  {</div>
-<div class="line"><a id="l00356" name="l00356"></a><span class="lineno">  356</span>    <a class="code hl_variable" href="classdealii_1_1_cells_agglomerator.html#a7c1b89777e323121b18478f834dc4605">rtree</a> = <span class="keyword">const_cast&lt;</span>RtreeType *<span class="keyword">&gt;</span>(&amp;tree);</div>
-<div class="line"><a id="l00357" name="l00357"></a><span class="lineno">  357</span>    Assert(n_levels(*<a class="code hl_variable" href="classdealii_1_1_cells_agglomerator.html#a7c1b89777e323121b18478f834dc4605">rtree</a>), ExcMessage(<span class="stringliteral">&quot;At least two levels are needed.&quot;</span>));</div>
-<div class="line"><a id="l00358" name="l00358"></a><span class="lineno">  358</span>  }</div>
-</div>
+<div class="line"><a id="l00351" name="l00351"></a><span class="lineno"><a class="line" href="classdealii_1_1_cells_agglomerator.html#a3f5e83c21f0a4c09db4e8068066640e1">  351</a></span>    <span class="keyword">const</span> <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> <a class="code hl_variable" href="classdealii_1_1_cells_agglomerator.html#a3f5e83c21f0a4c09db4e8068066640e1">extraction_level</a>;</div>
+<div class="line"><a id="l00352" name="l00352"></a><span class="lineno">  352</span> </div>
+<div class="line"><a id="l00357" name="l00357"></a><span class="lineno">  357</span>    std::vector&lt;std::vector&lt;typename Triangulation&lt;dim&gt;::active_cell_iterator&gt;&gt;</div>
+<div class="line"><a id="l00358" name="l00358"></a><span class="lineno"><a class="line" href="classdealii_1_1_cells_agglomerator.html#a344bbd804a039d3e2405df9181526cf8">  358</a></span>      <a class="code hl_variable" href="classdealii_1_1_cells_agglomerator.html#a344bbd804a039d3e2405df9181526cf8">agglomerates_on_level</a>;</div>
 <div class="line"><a id="l00359" name="l00359"></a><span class="lineno">  359</span> </div>
-<div class="line"><a id="l00360" name="l00360"></a><span class="lineno">  360</span> </div>
-<div class="line"><a id="l00361" name="l00361"></a><span class="lineno">  361</span> </div>
-<div class="line"><a id="l00362" name="l00362"></a><span class="lineno">  362</span>  <span class="keyword">template</span> &lt;<span class="keywordtype">int</span> dim, <span class="keyword">typename</span> RtreeType&gt;</div>
-<div class="line"><a id="l00363" name="l00363"></a><span class="lineno">  363</span>  <span class="keyword">const</span> std::vector&lt;</div>
-<div class="line"><a id="l00364" name="l00364"></a><span class="lineno">  364</span>    std::vector&lt;typename Triangulation&lt;dim&gt;::active_cell_iterator&gt;&gt; &amp;</div>
-<div class="foldopen" id="foldopen00365" data-start="{" data-end="}">
-<div class="line"><a id="l00365" name="l00365"></a><span class="lineno"><a class="line" href="classdealii_1_1_cells_agglomerator.html#af2712f742a7c8ae87e385eceb0b62ea9">  365</a></span>  <a class="code hl_function" href="classdealii_1_1_cells_agglomerator.html#af2712f742a7c8ae87e385eceb0b62ea9">CellsAgglomerator&lt;dim, RtreeType&gt;::extract_agglomerates</a>()</div>
-<div class="line"><a id="l00366" name="l00366"></a><span class="lineno">  366</span>  {</div>
-<div class="line"><a id="l00367" name="l00367"></a><span class="lineno">  367</span>    <span class="keyword">using </span>RtreeView =</div>
-<div class="line"><a id="l00368" name="l00368"></a><span class="lineno">  368</span>      boost::geometry::index::detail::rtree::utilities::view&lt;RtreeType&gt;;</div>
-<div class="line"><a id="l00369" name="l00369"></a><span class="lineno">  369</span>    RtreeView rtv(*rtree);</div>
-<div class="line"><a id="l00370" name="l00370"></a><span class="lineno">  370</span> </div>
-<div class="line"><a id="l00371" name="l00371"></a><span class="lineno">  371</span>    n_nodes_per_level.resize(</div>
-<div class="line"><a id="l00372" name="l00372"></a><span class="lineno">  372</span>      rtv.depth()); <span class="comment">// store how many nodes we have for each level.</span></div>
-<div class="line"><a id="l00373" name="l00373"></a><span class="lineno">  373</span> </div>
-<div class="line"><a id="l00374" name="l00374"></a><span class="lineno">  374</span>    <span class="keywordflow">if</span> (rtv.depth() == 0)</div>
-<div class="line"><a id="l00375" name="l00375"></a><span class="lineno">  375</span>      {</div>
-<div class="line"><a id="l00376" name="l00376"></a><span class="lineno">  376</span>        <span class="comment">// The below algorithm does not work for `rtv.depth()==0`, which might</span></div>
-<div class="line"><a id="l00377" name="l00377"></a><span class="lineno">  377</span>        <span class="comment">// happen if the number entries in the tree is too small.</span></div>
-<div class="line"><a id="l00378" name="l00378"></a><span class="lineno">  378</span>        agglomerates_on_level.resize(1);</div>
-<div class="line"><a id="l00379" name="l00379"></a><span class="lineno">  379</span>        agglomerates_on_level[0].resize(1);</div>
-<div class="line"><a id="l00380" name="l00380"></a><span class="lineno">  380</span>      }</div>
-<div class="line"><a id="l00381" name="l00381"></a><span class="lineno">  381</span>    <span class="keywordflow">else</span></div>
-<div class="line"><a id="l00382" name="l00382"></a><span class="lineno">  382</span>      {</div>
-<div class="line"><a id="l00383" name="l00383"></a><span class="lineno">  383</span>        <span class="keyword">const</span> <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> target_level =</div>
-<div class="line"><a id="l00384" name="l00384"></a><span class="lineno">  384</span>          <a class="code hl_functionRef" href="http://www.dealii.org/developer/doxygen/deal.II/namespacestd.html#a75a30aa280fd30aea596f82517daee0c">std::min&lt;unsigned int&gt;</a>(extraction_level, rtv.depth());</div>
-<div class="line"><a id="l00385" name="l00385"></a><span class="lineno">  385</span> </div>
-<div class="line"><a id="l00386" name="l00386"></a><span class="lineno">  386</span>        <a class="code hl_struct" href="structdealii_1_1internal_1_1_rtree__visitor.html">internal::Rtree_visitor</a>&lt;<span class="keyword">typename</span> RtreeView::value_type,</div>
-<div class="line"><a id="l00387" name="l00387"></a><span class="lineno">  387</span>                                <span class="keyword">typename</span> RtreeView::options_type,</div>
-<div class="line"><a id="l00388" name="l00388"></a><span class="lineno">  388</span>                                <span class="keyword">typename</span> RtreeView::translator_type,</div>
-<div class="line"><a id="l00389" name="l00389"></a><span class="lineno">  389</span>                                <span class="keyword">typename</span> RtreeView::box_type,</div>
-<div class="line"><a id="l00390" name="l00390"></a><span class="lineno">  390</span>                                <span class="keyword">typename</span> RtreeView::allocators_type&gt;</div>
-<div class="line"><a id="l00391" name="l00391"></a><span class="lineno">  391</span>          extractor_visitor(rtv.translator(),</div>
-<div class="line"><a id="l00392" name="l00392"></a><span class="lineno">  392</span>                            target_level,</div>
-<div class="line"><a id="l00393" name="l00393"></a><span class="lineno">  393</span>                            agglomerates_on_level,</div>
-<div class="line"><a id="l00394" name="l00394"></a><span class="lineno">  394</span>                            n_nodes_per_level,</div>
-<div class="line"><a id="l00395" name="l00395"></a><span class="lineno">  395</span>                            parent_node_to_children_nodes);</div>
-<div class="line"><a id="l00396" name="l00396"></a><span class="lineno">  396</span> </div>
-<div class="line"><a id="l00397" name="l00397"></a><span class="lineno">  397</span> </div>
-<div class="line"><a id="l00398" name="l00398"></a><span class="lineno">  398</span>        rtv.apply_visitor(extractor_visitor);</div>
-<div class="line"><a id="l00399" name="l00399"></a><span class="lineno">  399</span>      }</div>
-<div class="line"><a id="l00400" name="l00400"></a><span class="lineno">  400</span>    <span class="keywordflow">return</span> agglomerates_on_level;</div>
-<div class="line"><a id="l00401" name="l00401"></a><span class="lineno">  401</span>  }</div>
+<div class="line"><a id="l00364" name="l00364"></a><span class="lineno"><a class="line" href="classdealii_1_1_cells_agglomerator.html#af823d7ed5e67e16e247a61a08a4ced6b">  364</a></span>    std::vector&lt;types::global_cell_index&gt; <a class="code hl_variable" href="classdealii_1_1_cells_agglomerator.html#af823d7ed5e67e16e247a61a08a4ced6b">n_nodes_per_level</a>;</div>
+<div class="line"><a id="l00365" name="l00365"></a><span class="lineno">  365</span> </div>
+<div class="line"><a id="l00370" name="l00370"></a><span class="lineno">  370</span>    std::map&lt;std::pair&lt;types::global_cell_index, types::global_cell_index&gt;,</div>
+<div class="line"><a id="l00371" name="l00371"></a><span class="lineno">  371</span>             std::vector&lt;types::global_cell_index&gt;&gt;</div>
+<div class="line"><a id="l00372" name="l00372"></a><span class="lineno"><a class="line" href="classdealii_1_1_cells_agglomerator.html#a98982a2f825d4f68a70bdd093a6d3313">  372</a></span>      <a class="code hl_variable" href="classdealii_1_1_cells_agglomerator.html#a98982a2f825d4f68a70bdd093a6d3313">parent_node_to_children_nodes</a>;</div>
+<div class="line"><a id="l00373" name="l00373"></a><span class="lineno">  373</span>  };</div>
 </div>
-<div class="line"><a id="l00402" name="l00402"></a><span class="lineno">  402</span> </div>
+<div class="line"><a id="l00374" name="l00374"></a><span class="lineno">  374</span> </div>
+<div class="line"><a id="l00375" name="l00375"></a><span class="lineno">  375</span> </div>
+<div class="line"><a id="l00376" name="l00376"></a><span class="lineno">  376</span> </div>
+<div class="line"><a id="l00377" name="l00377"></a><span class="lineno">  377</span>  <span class="keyword">template</span> &lt;<span class="keywordtype">int</span> dim, <span class="keyword">typename</span> RtreeType&gt;</div>
+<div class="foldopen" id="foldopen00378" data-start="{" data-end="}">
+<div class="line"><a id="l00378" name="l00378"></a><span class="lineno"><a class="line" href="classdealii_1_1_cells_agglomerator.html#aecaafcf589317e936e4743d50f364d5f">  378</a></span>  <a class="code hl_function" href="classdealii_1_1_cells_agglomerator.html#aecaafcf589317e936e4743d50f364d5f">CellsAgglomerator&lt;dim, RtreeType&gt;::CellsAgglomerator</a>(</div>
+<div class="line"><a id="l00379" name="l00379"></a><span class="lineno">  379</span>    <span class="keyword">const</span> RtreeType   &amp;tree,</div>
+<div class="line"><a id="l00380" name="l00380"></a><span class="lineno">  380</span>    <span class="keyword">const</span> <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> extraction_level_)</div>
+<div class="line"><a id="l00381" name="l00381"></a><span class="lineno">  381</span>    : extraction_level(extraction_level_)</div>
+<div class="line"><a id="l00382" name="l00382"></a><span class="lineno">  382</span>  {</div>
+<div class="line"><a id="l00383" name="l00383"></a><span class="lineno">  383</span>    <a class="code hl_variable" href="classdealii_1_1_cells_agglomerator.html#a7c1b89777e323121b18478f834dc4605">rtree</a> = <span class="keyword">const_cast&lt;</span>RtreeType *<span class="keyword">&gt;</span>(&amp;tree);</div>
+<div class="line"><a id="l00384" name="l00384"></a><span class="lineno">  384</span>    Assert(n_levels(*<a class="code hl_variable" href="classdealii_1_1_cells_agglomerator.html#a7c1b89777e323121b18478f834dc4605">rtree</a>), ExcMessage(<span class="stringliteral">&quot;At least two levels are needed.&quot;</span>));</div>
+<div class="line"><a id="l00385" name="l00385"></a><span class="lineno">  385</span>  }</div>
+</div>
+<div class="line"><a id="l00386" name="l00386"></a><span class="lineno">  386</span> </div>
+<div class="line"><a id="l00387" name="l00387"></a><span class="lineno">  387</span> </div>
+<div class="line"><a id="l00388" name="l00388"></a><span class="lineno">  388</span> </div>
+<div class="line"><a id="l00389" name="l00389"></a><span class="lineno">  389</span>  <span class="keyword">template</span> &lt;<span class="keywordtype">int</span> dim, <span class="keyword">typename</span> RtreeType&gt;</div>
+<div class="line"><a id="l00390" name="l00390"></a><span class="lineno">  390</span>  <span class="keyword">const</span> std::vector&lt;</div>
+<div class="line"><a id="l00391" name="l00391"></a><span class="lineno">  391</span>    std::vector&lt;typename Triangulation&lt;dim&gt;::active_cell_iterator&gt;&gt; &amp;</div>
+<div class="foldopen" id="foldopen00392" data-start="{" data-end="}">
+<div class="line"><a id="l00392" name="l00392"></a><span class="lineno"><a class="line" href="classdealii_1_1_cells_agglomerator.html#af2712f742a7c8ae87e385eceb0b62ea9">  392</a></span>  <a class="code hl_function" href="classdealii_1_1_cells_agglomerator.html#af2712f742a7c8ae87e385eceb0b62ea9">CellsAgglomerator&lt;dim, RtreeType&gt;::extract_agglomerates</a>()</div>
+<div class="line"><a id="l00393" name="l00393"></a><span class="lineno">  393</span>  {</div>
+<div class="line"><a id="l00394" name="l00394"></a><span class="lineno">  394</span>    <a class="code hl_defineRef" href="http://www.dealii.org/developer/doxygen/deal.II/group__Exceptions.html#gafc0ca7ad85b3ebd64e8e51689ac85caf">AssertThrow</a>(extraction_level &lt;= n_levels(*rtree),</div>
+<div class="line"><a id="l00395" name="l00395"></a><span class="lineno">  395</span>                ExcInternalError(<span class="stringliteral">&quot;You are trying to extract level &quot;</span> +</div>
+<div class="line"><a id="l00396" name="l00396"></a><span class="lineno">  396</span>                                 std::to_string(extraction_level) +</div>
+<div class="line"><a id="l00397" name="l00397"></a><span class="lineno">  397</span>                                 <span class="stringliteral">&quot; of the tree, but it only has a total of &quot;</span> +</div>
+<div class="line"><a id="l00398" name="l00398"></a><span class="lineno">  398</span>                                 std::to_string(n_levels(*rtree)) +</div>
+<div class="line"><a id="l00399" name="l00399"></a><span class="lineno">  399</span>                                 <span class="stringliteral">&quot; levels.&quot;</span>));</div>
+<div class="line"><a id="l00400" name="l00400"></a><span class="lineno">  400</span>    <span class="keyword">using </span>RtreeView =</div>
+<div class="line"><a id="l00401" name="l00401"></a><span class="lineno">  401</span>      boost::geometry::index::detail::rtree::utilities::view&lt;RtreeType&gt;;</div>
+<div class="line"><a id="l00402" name="l00402"></a><span class="lineno">  402</span>    RtreeView rtv(*rtree);</div>
 <div class="line"><a id="l00403" name="l00403"></a><span class="lineno">  403</span> </div>
-<div class="line"><a id="l00404" name="l00404"></a><span class="lineno">  404</span> </div>
-<div class="line"><a id="l00405" name="l00405"></a><span class="lineno">  405</span>  <span class="comment">// ------------------------------ inline functions -------------------------</span></div>
+<div class="line"><a id="l00404" name="l00404"></a><span class="lineno">  404</span>    n_nodes_per_level.resize(rtv.depth() +</div>
+<div class="line"><a id="l00405" name="l00405"></a><span class="lineno">  405</span>                             1); <span class="comment">// store how many nodes we have for each level.</span></div>
 <div class="line"><a id="l00406" name="l00406"></a><span class="lineno">  406</span> </div>
-<div class="line"><a id="l00407" name="l00407"></a><span class="lineno">  407</span> </div>
-<div class="line"><a id="l00408" name="l00408"></a><span class="lineno">  408</span>  <span class="keyword">template</span> &lt;<span class="keywordtype">int</span> dim, <span class="keyword">typename</span> RtreeType&gt;</div>
-<div class="line"><a id="l00409" name="l00409"></a><span class="lineno">  409</span>  <span class="keyword">inline</span> <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span></div>
-<div class="foldopen" id="foldopen00410" data-start="{" data-end="}">
-<div class="line"><a id="l00410" name="l00410"></a><span class="lineno"><a class="line" href="classdealii_1_1_cells_agglomerator.html#acac4534ded1f0ac33c6451799235970c">  410</a></span>  <a class="code hl_function" href="classdealii_1_1_cells_agglomerator.html#acac4534ded1f0ac33c6451799235970c">CellsAgglomerator&lt;dim, RtreeType&gt;::get_n_levels</a>()<span class="keyword"> const</span></div>
-<div class="line"><a id="l00411" name="l00411"></a><span class="lineno">  411</span><span class="keyword">  </span>{</div>
-<div class="line"><a id="l00412" name="l00412"></a><span class="lineno">  412</span>    <span class="keywordflow">return</span> n_levels(*rtree);</div>
-<div class="line"><a id="l00413" name="l00413"></a><span class="lineno">  413</span>  }</div>
+<div class="line"><a id="l00407" name="l00407"></a><span class="lineno">  407</span>    <span class="keywordflow">if</span> (rtv.depth() == 0)</div>
+<div class="line"><a id="l00408" name="l00408"></a><span class="lineno">  408</span>      {</div>
+<div class="line"><a id="l00409" name="l00409"></a><span class="lineno">  409</span>        <span class="comment">// The below algorithm does not work for `rtv.depth()==0`, which might</span></div>
+<div class="line"><a id="l00410" name="l00410"></a><span class="lineno">  410</span>        <span class="comment">// happen if the number entries in the tree is too small.</span></div>
+<div class="line"><a id="l00411" name="l00411"></a><span class="lineno">  411</span>        agglomerates_on_level.resize(1);</div>
+<div class="line"><a id="l00412" name="l00412"></a><span class="lineno">  412</span>        agglomerates_on_level[0].resize(1);</div>
+<div class="line"><a id="l00413" name="l00413"></a><span class="lineno">  413</span>      }</div>
+<div class="line"><a id="l00414" name="l00414"></a><span class="lineno">  414</span>    <span class="keywordflow">else</span></div>
+<div class="line"><a id="l00415" name="l00415"></a><span class="lineno">  415</span>      {</div>
+<div class="line"><a id="l00416" name="l00416"></a><span class="lineno">  416</span>        <span class="keyword">const</span> <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> target_level =</div>
+<div class="line"><a id="l00417" name="l00417"></a><span class="lineno">  417</span>          <a class="code hl_functionRef" href="http://www.dealii.org/developer/doxygen/deal.II/namespacestd.html#a75a30aa280fd30aea596f82517daee0c">std::min&lt;unsigned int&gt;</a>(extraction_level, rtv.depth());</div>
+<div class="line"><a id="l00418" name="l00418"></a><span class="lineno">  418</span> </div>
+<div class="line"><a id="l00419" name="l00419"></a><span class="lineno">  419</span>        <a class="code hl_struct" href="structdealii_1_1internal_1_1_rtree__visitor.html">internal::Rtree_visitor</a>&lt;<span class="keyword">typename</span> RtreeView::value_type,</div>
+<div class="line"><a id="l00420" name="l00420"></a><span class="lineno">  420</span>                                <span class="keyword">typename</span> RtreeView::options_type,</div>
+<div class="line"><a id="l00421" name="l00421"></a><span class="lineno">  421</span>                                <span class="keyword">typename</span> RtreeView::translator_type,</div>
+<div class="line"><a id="l00422" name="l00422"></a><span class="lineno">  422</span>                                <span class="keyword">typename</span> RtreeView::box_type,</div>
+<div class="line"><a id="l00423" name="l00423"></a><span class="lineno">  423</span>                                <span class="keyword">typename</span> RtreeView::allocators_type&gt;</div>
+<div class="line"><a id="l00424" name="l00424"></a><span class="lineno">  424</span>          extractor_visitor(rtv.translator(),</div>
+<div class="line"><a id="l00425" name="l00425"></a><span class="lineno">  425</span>                            target_level,</div>
+<div class="line"><a id="l00426" name="l00426"></a><span class="lineno">  426</span>                            agglomerates_on_level,</div>
+<div class="line"><a id="l00427" name="l00427"></a><span class="lineno">  427</span>                            n_nodes_per_level,</div>
+<div class="line"><a id="l00428" name="l00428"></a><span class="lineno">  428</span>                            parent_node_to_children_nodes);</div>
+<div class="line"><a id="l00429" name="l00429"></a><span class="lineno">  429</span> </div>
+<div class="line"><a id="l00430" name="l00430"></a><span class="lineno">  430</span> </div>
+<div class="line"><a id="l00431" name="l00431"></a><span class="lineno">  431</span>        rtv.apply_visitor(extractor_visitor);</div>
+<div class="line"><a id="l00432" name="l00432"></a><span class="lineno">  432</span>      }</div>
+<div class="line"><a id="l00433" name="l00433"></a><span class="lineno">  433</span>    <span class="keywordflow">return</span> agglomerates_on_level;</div>
+<div class="line"><a id="l00434" name="l00434"></a><span class="lineno">  434</span>  }</div>
 </div>
-<div class="line"><a id="l00414" name="l00414"></a><span class="lineno">  414</span> </div>
-<div class="line"><a id="l00415" name="l00415"></a><span class="lineno">  415</span> </div>
-<div class="line"><a id="l00416" name="l00416"></a><span class="lineno">  416</span> </div>
-<div class="line"><a id="l00417" name="l00417"></a><span class="lineno">  417</span>  <span class="keyword">template</span> &lt;<span class="keywordtype">int</span> dim, <span class="keyword">typename</span> RtreeType&gt;</div>
-<div class="line"><a id="l00418" name="l00418"></a><span class="lineno">  418</span>  <span class="keyword">inline</span> <a class="code hl_typedefRef" href="http://www.dealii.org/developer/doxygen/deal.II/namespacetypes.html#a88f8129eb3e40ecc8022e92a1e15d70e">types::global_cell_index</a></div>
-<div class="foldopen" id="foldopen00419" data-start="{" data-end="}">
-<div class="line"><a id="l00419" name="l00419"></a><span class="lineno"><a class="line" href="classdealii_1_1_cells_agglomerator.html#ac54878a218d5eb9032f4252111300eb0">  419</a></span>  <a class="code hl_function" href="classdealii_1_1_cells_agglomerator.html#ac54878a218d5eb9032f4252111300eb0">CellsAgglomerator&lt;dim, RtreeType&gt;::get_n_nodes_per_level</a>(</div>
-<div class="line"><a id="l00420" name="l00420"></a><span class="lineno">  420</span>    <span class="keyword">const</span> <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> level)<span class="keyword"> const</span></div>
-<div class="line"><a id="l00421" name="l00421"></a><span class="lineno">  421</span><span class="keyword">  </span>{</div>
-<div class="line"><a id="l00422" name="l00422"></a><span class="lineno">  422</span>    <span class="keywordflow">return</span> n_nodes_per_level[<a class="code hl_variableRef" href="http://www.dealii.org/developer/doxygen/deal.II/grid__out_8cc.html#a9082f945c1d289684d0bcd51ee08e11e">level</a>];</div>
-<div class="line"><a id="l00423" name="l00423"></a><span class="lineno">  423</span>  }</div>
+<div class="line"><a id="l00435" name="l00435"></a><span class="lineno">  435</span> </div>
+<div class="line"><a id="l00436" name="l00436"></a><span class="lineno">  436</span> </div>
+<div class="line"><a id="l00437" name="l00437"></a><span class="lineno">  437</span> </div>
+<div class="line"><a id="l00438" name="l00438"></a><span class="lineno">  438</span>  <span class="comment">// ------------------------------ inline functions -------------------------</span></div>
+<div class="line"><a id="l00439" name="l00439"></a><span class="lineno">  439</span> </div>
+<div class="line"><a id="l00440" name="l00440"></a><span class="lineno">  440</span> </div>
+<div class="line"><a id="l00441" name="l00441"></a><span class="lineno">  441</span>  <span class="keyword">template</span> &lt;<span class="keywordtype">int</span> dim, <span class="keyword">typename</span> RtreeType&gt;</div>
+<div class="line"><a id="l00442" name="l00442"></a><span class="lineno">  442</span>  <span class="keyword">inline</span> <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span></div>
+<div class="foldopen" id="foldopen00443" data-start="{" data-end="}">
+<div class="line"><a id="l00443" name="l00443"></a><span class="lineno"><a class="line" href="classdealii_1_1_cells_agglomerator.html#acac4534ded1f0ac33c6451799235970c">  443</a></span>  <a class="code hl_function" href="classdealii_1_1_cells_agglomerator.html#acac4534ded1f0ac33c6451799235970c">CellsAgglomerator&lt;dim, RtreeType&gt;::get_n_levels</a>()<span class="keyword"> const</span></div>
+<div class="line"><a id="l00444" name="l00444"></a><span class="lineno">  444</span><span class="keyword">  </span>{</div>
+<div class="line"><a id="l00445" name="l00445"></a><span class="lineno">  445</span>    <span class="keywordflow">return</span> n_levels(*rtree);</div>
+<div class="line"><a id="l00446" name="l00446"></a><span class="lineno">  446</span>  }</div>
 </div>
-<div class="line"><a id="l00424" name="l00424"></a><span class="lineno">  424</span> </div>
-<div class="line"><a id="l00425" name="l00425"></a><span class="lineno">  425</span> </div>
-<div class="line"><a id="l00426" name="l00426"></a><span class="lineno">  426</span> </div>
-<div class="line"><a id="l00427" name="l00427"></a><span class="lineno">  427</span>  <span class="keyword">template</span> &lt;<span class="keywordtype">int</span> dim, <span class="keyword">typename</span> RtreeType&gt;</div>
-<div class="line"><a id="l00428" name="l00428"></a><span class="lineno">  428</span>  <span class="keyword">inline</span> <span class="keyword">const</span> std::map&lt;</div>
-<div class="line"><a id="l00429" name="l00429"></a><span class="lineno">  429</span>    std::pair&lt;types::global_cell_index, types::global_cell_index&gt;,</div>
-<div class="line"><a id="l00430" name="l00430"></a><span class="lineno">  430</span>    std::vector&lt;types::global_cell_index&gt;&gt; &amp;</div>
-<div class="foldopen" id="foldopen00431" data-start="{" data-end="}">
-<div class="line"><a id="l00431" name="l00431"></a><span class="lineno"><a class="line" href="classdealii_1_1_cells_agglomerator.html#a7dca177d24e496b5fd332c15580d524f">  431</a></span>  <a class="code hl_function" href="classdealii_1_1_cells_agglomerator.html#a7dca177d24e496b5fd332c15580d524f">CellsAgglomerator&lt;dim, RtreeType&gt;::get_hierarchy</a>()<span class="keyword"> const</span></div>
-<div class="line"><a id="l00432" name="l00432"></a><span class="lineno">  432</span><span class="keyword">  </span>{</div>
-<div class="line"><a id="l00433" name="l00433"></a><span class="lineno">  433</span>    Assert(parent_node_to_children_nodes.size(),</div>
-<div class="line"><a id="l00434" name="l00434"></a><span class="lineno">  434</span>           ExcMessage(</div>
-<div class="line"><a id="l00435" name="l00435"></a><span class="lineno">  435</span>             <span class="stringliteral">&quot;The hierarchy has not been computed. Did you forget to call&quot;</span></div>
-<div class="line"><a id="l00436" name="l00436"></a><span class="lineno">  436</span>             <span class="stringliteral">&quot; extract_agglomerates() first?&quot;</span>));</div>
-<div class="line"><a id="l00437" name="l00437"></a><span class="lineno">  437</span>    <span class="keywordflow">return</span> parent_node_to_children_nodes;</div>
-<div class="line"><a id="l00438" name="l00438"></a><span class="lineno">  438</span>  }</div>
+<div class="line"><a id="l00447" name="l00447"></a><span class="lineno">  447</span> </div>
+<div class="line"><a id="l00448" name="l00448"></a><span class="lineno">  448</span> </div>
+<div class="line"><a id="l00449" name="l00449"></a><span class="lineno">  449</span> </div>
+<div class="line"><a id="l00450" name="l00450"></a><span class="lineno">  450</span>  <span class="keyword">template</span> &lt;<span class="keywordtype">int</span> dim, <span class="keyword">typename</span> RtreeType&gt;</div>
+<div class="line"><a id="l00451" name="l00451"></a><span class="lineno">  451</span>  <span class="keyword">inline</span> <a class="code hl_typedefRef" href="http://www.dealii.org/developer/doxygen/deal.II/namespacetypes.html#a88f8129eb3e40ecc8022e92a1e15d70e">types::global_cell_index</a></div>
+<div class="foldopen" id="foldopen00452" data-start="{" data-end="}">
+<div class="line"><a id="l00452" name="l00452"></a><span class="lineno"><a class="line" href="classdealii_1_1_cells_agglomerator.html#ac54878a218d5eb9032f4252111300eb0">  452</a></span>  <a class="code hl_function" href="classdealii_1_1_cells_agglomerator.html#ac54878a218d5eb9032f4252111300eb0">CellsAgglomerator&lt;dim, RtreeType&gt;::get_n_nodes_per_level</a>(</div>
+<div class="line"><a id="l00453" name="l00453"></a><span class="lineno">  453</span>    <span class="keyword">const</span> <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> level)<span class="keyword"> const</span></div>
+<div class="line"><a id="l00454" name="l00454"></a><span class="lineno">  454</span><span class="keyword">  </span>{</div>
+<div class="line"><a id="l00455" name="l00455"></a><span class="lineno">  455</span>    <span class="keywordflow">return</span> n_nodes_per_level[<a class="code hl_variableRef" href="http://www.dealii.org/developer/doxygen/deal.II/grid__out_8cc.html#a9082f945c1d289684d0bcd51ee08e11e">level</a>];</div>
+<div class="line"><a id="l00456" name="l00456"></a><span class="lineno">  456</span>  }</div>
 </div>
-<div class="line"><a id="l00439" name="l00439"></a><span class="lineno">  439</span>} <span class="comment">// namespace dealii</span></div>
-<div class="line"><a id="l00440" name="l00440"></a><span class="lineno">  440</span><span class="preprocessor">#endif</span></div>
+<div class="line"><a id="l00457" name="l00457"></a><span class="lineno">  457</span> </div>
+<div class="line"><a id="l00458" name="l00458"></a><span class="lineno">  458</span> </div>
+<div class="line"><a id="l00459" name="l00459"></a><span class="lineno">  459</span> </div>
+<div class="line"><a id="l00460" name="l00460"></a><span class="lineno">  460</span>  <span class="keyword">template</span> &lt;<span class="keywordtype">int</span> dim, <span class="keyword">typename</span> RtreeType&gt;</div>
+<div class="line"><a id="l00461" name="l00461"></a><span class="lineno">  461</span>  <span class="keyword">inline</span> <span class="keyword">const</span> std::map&lt;</div>
+<div class="line"><a id="l00462" name="l00462"></a><span class="lineno">  462</span>    std::pair&lt;types::global_cell_index, types::global_cell_index&gt;,</div>
+<div class="line"><a id="l00463" name="l00463"></a><span class="lineno">  463</span>    std::vector&lt;types::global_cell_index&gt;&gt; &amp;</div>
+<div class="foldopen" id="foldopen00464" data-start="{" data-end="}">
+<div class="line"><a id="l00464" name="l00464"></a><span class="lineno"><a class="line" href="classdealii_1_1_cells_agglomerator.html#a7dca177d24e496b5fd332c15580d524f">  464</a></span>  <a class="code hl_function" href="classdealii_1_1_cells_agglomerator.html#a7dca177d24e496b5fd332c15580d524f">CellsAgglomerator&lt;dim, RtreeType&gt;::get_hierarchy</a>()<span class="keyword"> const</span></div>
+<div class="line"><a id="l00465" name="l00465"></a><span class="lineno">  465</span><span class="keyword">  </span>{</div>
+<div class="line"><a id="l00466" name="l00466"></a><span class="lineno">  466</span>    Assert(parent_node_to_children_nodes.size(),</div>
+<div class="line"><a id="l00467" name="l00467"></a><span class="lineno">  467</span>           ExcMessage(</div>
+<div class="line"><a id="l00468" name="l00468"></a><span class="lineno">  468</span>             <span class="stringliteral">&quot;The hierarchy has not been computed. Did you forget to call&quot;</span></div>
+<div class="line"><a id="l00469" name="l00469"></a><span class="lineno">  469</span>             <span class="stringliteral">&quot; extract_agglomerates() first?&quot;</span>));</div>
+<div class="line"><a id="l00470" name="l00470"></a><span class="lineno">  470</span>    <span class="keywordflow">return</span> parent_node_to_children_nodes;</div>
+<div class="line"><a id="l00471" name="l00471"></a><span class="lineno">  471</span>  }</div>
+</div>
+<div class="line"><a id="l00472" name="l00472"></a><span class="lineno">  472</span>} <span class="comment">// namespace dealii</span></div>
+<div class="line"><a id="l00473" name="l00473"></a><span class="lineno">  473</span><span class="preprocessor">#endif</span></div>
 <div class="ttc" id="abase_2bounding__box_8h_html"><div class="ttname"><a href="http://www.dealii.org/developer/doxygen/deal.II/base_2bounding__box_8h.html">bounding_box.h</a></div></div>
 <div class="ttc" id="aclass_agglomeration_handler_html"><div class="ttname"><a href="class_agglomeration_handler.html">AgglomerationHandler</a></div><div class="ttdef"><b>Definition</b> <a href="agglomeration__handler_8h_source.html#l00167">agglomeration_handler.h:168</a></div></div>
-<div class="ttc" id="aclassdealii_1_1_cells_agglomerator_html"><div class="ttname"><a href="classdealii_1_1_cells_agglomerator.html">dealii::CellsAgglomerator</a></div><div class="ttdef"><b>Definition</b> <a href="#l00273">agglomerator.h:274</a></div></div>
-<div class="ttc" id="aclassdealii_1_1_cells_agglomerator_html_a344bbd804a039d3e2405df9181526cf8"><div class="ttname"><a href="classdealii_1_1_cells_agglomerator.html#a344bbd804a039d3e2405df9181526cf8">dealii::CellsAgglomerator::agglomerates_on_level</a></div><div class="ttdeci">std::vector&lt; std::vector&lt; typename Triangulation&lt; dim &gt;::active_cell_iterator &gt; &gt; agglomerates_on_level</div><div class="ttdef"><b>Definition</b> <a href="#l00331">agglomerator.h:331</a></div></div>
-<div class="ttc" id="aclassdealii_1_1_cells_agglomerator_html_a3f5e83c21f0a4c09db4e8068066640e1"><div class="ttname"><a href="classdealii_1_1_cells_agglomerator.html#a3f5e83c21f0a4c09db4e8068066640e1">dealii::CellsAgglomerator::extraction_level</a></div><div class="ttdeci">const unsigned int extraction_level</div><div class="ttdef"><b>Definition</b> <a href="#l00324">agglomerator.h:324</a></div></div>
-<div class="ttc" id="aclassdealii_1_1_cells_agglomerator_html_a7c1b89777e323121b18478f834dc4605"><div class="ttname"><a href="classdealii_1_1_cells_agglomerator.html#a7c1b89777e323121b18478f834dc4605">dealii::CellsAgglomerator::rtree</a></div><div class="ttdeci">RtreeType * rtree</div><div class="ttdef"><b>Definition</b> <a href="#l00319">agglomerator.h:319</a></div></div>
-<div class="ttc" id="aclassdealii_1_1_cells_agglomerator_html_a7dca177d24e496b5fd332c15580d524f"><div class="ttname"><a href="classdealii_1_1_cells_agglomerator.html#a7dca177d24e496b5fd332c15580d524f">dealii::CellsAgglomerator::get_hierarchy</a></div><div class="ttdeci">const std::map&lt; std::pair&lt; types::global_cell_index, types::global_cell_index &gt;, std::vector&lt; types::global_cell_index &gt; &gt; &amp; get_hierarchy() const</div><div class="ttdef"><b>Definition</b> <a href="#l00431">agglomerator.h:431</a></div></div>
-<div class="ttc" id="aclassdealii_1_1_cells_agglomerator_html_a98982a2f825d4f68a70bdd093a6d3313"><div class="ttname"><a href="classdealii_1_1_cells_agglomerator.html#a98982a2f825d4f68a70bdd093a6d3313">dealii::CellsAgglomerator::parent_node_to_children_nodes</a></div><div class="ttdeci">std::map&lt; std::pair&lt; types::global_cell_index, types::global_cell_index &gt;, std::vector&lt; types::global_cell_index &gt; &gt; parent_node_to_children_nodes</div><div class="ttdef"><b>Definition</b> <a href="#l00345">agglomerator.h:345</a></div></div>
-<div class="ttc" id="aclassdealii_1_1_cells_agglomerator_html_ac54878a218d5eb9032f4252111300eb0"><div class="ttname"><a href="classdealii_1_1_cells_agglomerator.html#ac54878a218d5eb9032f4252111300eb0">dealii::CellsAgglomerator::get_n_nodes_per_level</a></div><div class="ttdeci">types::global_cell_index get_n_nodes_per_level(const unsigned int level) const</div><div class="ttdef"><b>Definition</b> <a href="#l00419">agglomerator.h:419</a></div></div>
-<div class="ttc" id="aclassdealii_1_1_cells_agglomerator_html_acac4534ded1f0ac33c6451799235970c"><div class="ttname"><a href="classdealii_1_1_cells_agglomerator.html#acac4534ded1f0ac33c6451799235970c">dealii::CellsAgglomerator::get_n_levels</a></div><div class="ttdeci">unsigned int get_n_levels() const</div><div class="ttdef"><b>Definition</b> <a href="#l00410">agglomerator.h:410</a></div></div>
-<div class="ttc" id="aclassdealii_1_1_cells_agglomerator_html_aecaafcf589317e936e4743d50f364d5f"><div class="ttname"><a href="classdealii_1_1_cells_agglomerator.html#aecaafcf589317e936e4743d50f364d5f">dealii::CellsAgglomerator::CellsAgglomerator</a></div><div class="ttdeci">CellsAgglomerator(const RtreeType &amp;rtree, const unsigned int extraction_level)</div><div class="ttdef"><b>Definition</b> <a href="#l00351">agglomerator.h:351</a></div></div>
-<div class="ttc" id="aclassdealii_1_1_cells_agglomerator_html_af2712f742a7c8ae87e385eceb0b62ea9"><div class="ttname"><a href="classdealii_1_1_cells_agglomerator.html#af2712f742a7c8ae87e385eceb0b62ea9">dealii::CellsAgglomerator::extract_agglomerates</a></div><div class="ttdeci">const std::vector&lt; std::vector&lt; typename Triangulation&lt; dim &gt;::active_cell_iterator &gt; &gt; &amp; extract_agglomerates()</div><div class="ttdef"><b>Definition</b> <a href="#l00365">agglomerator.h:365</a></div></div>
-<div class="ttc" id="aclassdealii_1_1_cells_agglomerator_html_af823d7ed5e67e16e247a61a08a4ced6b"><div class="ttname"><a href="classdealii_1_1_cells_agglomerator.html#af823d7ed5e67e16e247a61a08a4ced6b">dealii::CellsAgglomerator::n_nodes_per_level</a></div><div class="ttdeci">std::vector&lt; types::global_cell_index &gt; n_nodes_per_level</div><div class="ttdef"><b>Definition</b> <a href="#l00337">agglomerator.h:337</a></div></div>
+<div class="ttc" id="aclassdealii_1_1_cells_agglomerator_html"><div class="ttname"><a href="classdealii_1_1_cells_agglomerator.html">dealii::CellsAgglomerator</a></div><div class="ttdef"><b>Definition</b> <a href="#l00300">agglomerator.h:301</a></div></div>
+<div class="ttc" id="aclassdealii_1_1_cells_agglomerator_html_a344bbd804a039d3e2405df9181526cf8"><div class="ttname"><a href="classdealii_1_1_cells_agglomerator.html#a344bbd804a039d3e2405df9181526cf8">dealii::CellsAgglomerator::agglomerates_on_level</a></div><div class="ttdeci">std::vector&lt; std::vector&lt; typename Triangulation&lt; dim &gt;::active_cell_iterator &gt; &gt; agglomerates_on_level</div><div class="ttdef"><b>Definition</b> <a href="#l00358">agglomerator.h:358</a></div></div>
+<div class="ttc" id="aclassdealii_1_1_cells_agglomerator_html_a3f5e83c21f0a4c09db4e8068066640e1"><div class="ttname"><a href="classdealii_1_1_cells_agglomerator.html#a3f5e83c21f0a4c09db4e8068066640e1">dealii::CellsAgglomerator::extraction_level</a></div><div class="ttdeci">const unsigned int extraction_level</div><div class="ttdef"><b>Definition</b> <a href="#l00351">agglomerator.h:351</a></div></div>
+<div class="ttc" id="aclassdealii_1_1_cells_agglomerator_html_a7c1b89777e323121b18478f834dc4605"><div class="ttname"><a href="classdealii_1_1_cells_agglomerator.html#a7c1b89777e323121b18478f834dc4605">dealii::CellsAgglomerator::rtree</a></div><div class="ttdeci">RtreeType * rtree</div><div class="ttdef"><b>Definition</b> <a href="#l00346">agglomerator.h:346</a></div></div>
+<div class="ttc" id="aclassdealii_1_1_cells_agglomerator_html_a7dca177d24e496b5fd332c15580d524f"><div class="ttname"><a href="classdealii_1_1_cells_agglomerator.html#a7dca177d24e496b5fd332c15580d524f">dealii::CellsAgglomerator::get_hierarchy</a></div><div class="ttdeci">const std::map&lt; std::pair&lt; types::global_cell_index, types::global_cell_index &gt;, std::vector&lt; types::global_cell_index &gt; &gt; &amp; get_hierarchy() const</div><div class="ttdef"><b>Definition</b> <a href="#l00464">agglomerator.h:464</a></div></div>
+<div class="ttc" id="aclassdealii_1_1_cells_agglomerator_html_a98982a2f825d4f68a70bdd093a6d3313"><div class="ttname"><a href="classdealii_1_1_cells_agglomerator.html#a98982a2f825d4f68a70bdd093a6d3313">dealii::CellsAgglomerator::parent_node_to_children_nodes</a></div><div class="ttdeci">std::map&lt; std::pair&lt; types::global_cell_index, types::global_cell_index &gt;, std::vector&lt; types::global_cell_index &gt; &gt; parent_node_to_children_nodes</div><div class="ttdef"><b>Definition</b> <a href="#l00372">agglomerator.h:372</a></div></div>
+<div class="ttc" id="aclassdealii_1_1_cells_agglomerator_html_ac54878a218d5eb9032f4252111300eb0"><div class="ttname"><a href="classdealii_1_1_cells_agglomerator.html#ac54878a218d5eb9032f4252111300eb0">dealii::CellsAgglomerator::get_n_nodes_per_level</a></div><div class="ttdeci">types::global_cell_index get_n_nodes_per_level(const unsigned int level) const</div><div class="ttdef"><b>Definition</b> <a href="#l00452">agglomerator.h:452</a></div></div>
+<div class="ttc" id="aclassdealii_1_1_cells_agglomerator_html_acac4534ded1f0ac33c6451799235970c"><div class="ttname"><a href="classdealii_1_1_cells_agglomerator.html#acac4534ded1f0ac33c6451799235970c">dealii::CellsAgglomerator::get_n_levels</a></div><div class="ttdeci">unsigned int get_n_levels() const</div><div class="ttdef"><b>Definition</b> <a href="#l00443">agglomerator.h:443</a></div></div>
+<div class="ttc" id="aclassdealii_1_1_cells_agglomerator_html_aecaafcf589317e936e4743d50f364d5f"><div class="ttname"><a href="classdealii_1_1_cells_agglomerator.html#aecaafcf589317e936e4743d50f364d5f">dealii::CellsAgglomerator::CellsAgglomerator</a></div><div class="ttdeci">CellsAgglomerator(const RtreeType &amp;rtree, const unsigned int extraction_level)</div><div class="ttdef"><b>Definition</b> <a href="#l00378">agglomerator.h:378</a></div></div>
+<div class="ttc" id="aclassdealii_1_1_cells_agglomerator_html_af2712f742a7c8ae87e385eceb0b62ea9"><div class="ttname"><a href="classdealii_1_1_cells_agglomerator.html#af2712f742a7c8ae87e385eceb0b62ea9">dealii::CellsAgglomerator::extract_agglomerates</a></div><div class="ttdeci">const std::vector&lt; std::vector&lt; typename Triangulation&lt; dim &gt;::active_cell_iterator &gt; &gt; &amp; extract_agglomerates()</div><div class="ttdef"><b>Definition</b> <a href="#l00392">agglomerator.h:392</a></div></div>
+<div class="ttc" id="aclassdealii_1_1_cells_agglomerator_html_af823d7ed5e67e16e247a61a08a4ced6b"><div class="ttname"><a href="classdealii_1_1_cells_agglomerator.html#af823d7ed5e67e16e247a61a08a4ced6b">dealii::CellsAgglomerator::n_nodes_per_level</a></div><div class="ttdeci">std::vector&lt; types::global_cell_index &gt; n_nodes_per_level</div><div class="ttdef"><b>Definition</b> <a href="#l00364">agglomerator.h:364</a></div></div>
 <div class="ttc" id="aconfig_8h_html"><div class="ttname"><a href="http://www.dealii.org/developer/doxygen/deal.II/config_8h.html">config.h</a></div></div>
 <div class="ttc" id="agrid__out_8cc_html_a9082f945c1d289684d0bcd51ee08e11e"><div class="ttname"><a href="http://www.dealii.org/developer/doxygen/deal.II/grid__out_8cc.html#a9082f945c1d289684d0bcd51ee08e11e">level</a></div><div class="ttdeci">unsigned int level</div></div>
+<div class="ttc" id="agroup__Exceptions_html_gafc0ca7ad85b3ebd64e8e51689ac85caf"><div class="ttname"><a href="http://www.dealii.org/developer/doxygen/deal.II/group__Exceptions.html#gafc0ca7ad85b3ebd64e8e51689ac85caf">AssertThrow</a></div><div class="ttdeci">#define AssertThrow(cond, exc)</div></div>
 <div class="ttc" id="anamespacedealii_html"><div class="ttname"><a href="namespacedealii.html">dealii</a></div></div>
 <div class="ttc" id="anamespaceinternal_html"><div class="ttname"><a href="http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal.html">internal</a></div></div>
 <div class="ttc" id="anamespacestd_html_a75a30aa280fd30aea596f82517daee0c"><div class="ttname"><a href="http://www.dealii.org/developer/doxygen/deal.II/namespacestd.html#a75a30aa280fd30aea596f82517daee0c">std::min</a></div><div class="ttdeci">::VectorizedArray&lt; Number, width &gt; min(const ::VectorizedArray&lt; Number, width &gt; &amp;, const ::VectorizedArray&lt; Number, width &gt; &amp;)</div></div>
@@ -529,7 +563,7 @@ $(function(){initNavTree('agglomerator_8h_source.html',''); initResizable(true);
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="dir_aa394cd1d9abb8ffe941d9aaafca8d03.html">github</a></li><li class="navelem"><a class="el" href="dir_c52569aa89a7adbb6029022c2fa60a11.html">workspace</a></li><li class="navelem"><a class="el" href="dir_7a95a9cc00fcc7af5a429eec361b64d1.html">include</a></li><li class="navelem"><a class="el" href="agglomerator_8h.html">agglomerator.h</a></li>
-    <li class="footer">Generated on Wed May 29 2024 10:42:05 for PolyDEAL by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.11.0 </li>
+    <li class="footer">Generated on Wed May 29 2024 11:10:13 for PolyDEAL by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.11.0 </li>
   </ul>
 </div>
 </body>
