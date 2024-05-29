@@ -239,102 +239,105 @@ public:
   const TrilinosWrappers::SparseMatrix &
   get_system_matrix() const
   {
-    // Boilerplate for SIP-DG form. TODO: unify interface.
-    //////////////////////////////////////////////////
-    const auto cell_operation = [&](auto &phi) {
-      phi.evaluate(EvaluationFlags::gradients);
-      for (unsigned int q = 0; q < phi.n_q_points; ++q)
-        phi.submit_gradient(phi.get_gradient(q), q);
-      phi.integrate(EvaluationFlags::gradients);
-    };
+    // Uncomment when PR 17029 is merged upstream
 
-    const auto face_operation = [&](auto &phi_m, auto &phi_p) {
-      phi_m.evaluate(EvaluationFlags::values | EvaluationFlags::gradients);
-      phi_p.evaluate(EvaluationFlags::values | EvaluationFlags::gradients);
+    // // Boilerplate for SIP-DG form. TODO: unify interface.
+    // //////////////////////////////////////////////////
+    // const auto cell_operation = [&](auto &phi) {
+    //   phi.evaluate(EvaluationFlags::gradients);
+    //   for (unsigned int q = 0; q < phi.n_q_points; ++q)
+    //     phi.submit_gradient(phi.get_gradient(q), q);
+    //   phi.integrate(EvaluationFlags::gradients);
+    // };
 
-      VectorizedArrayType sigmaF =
-        (std::abs(
-           (phi_m.normal_vector(0) * phi_m.inverse_jacobian(0))[dim - 1]) +
-         std::abs(
-           (phi_m.normal_vector(0) * phi_p.inverse_jacobian(0))[dim - 1])) *
-        (number)(std::max(fe_degree, 1) * (fe_degree + 1.0));
+    // const auto face_operation = [&](auto &phi_m, auto &phi_p) {
+    //   phi_m.evaluate(EvaluationFlags::values | EvaluationFlags::gradients);
+    //   phi_p.evaluate(EvaluationFlags::values | EvaluationFlags::gradients);
 
-      for (unsigned int q = 0; q < phi_m.n_q_points; ++q)
-        {
-          VectorizedArrayType average_value =
-            (phi_m.get_value(q) - phi_p.get_value(q)) * 0.5;
-          VectorizedArrayType average_valgrad =
-            phi_m.get_normal_derivative(q) + phi_p.get_normal_derivative(q);
-          average_valgrad = average_value * 2. * sigmaF - average_valgrad * 0.5;
-          phi_m.submit_normal_derivative(-average_value, q);
-          phi_p.submit_normal_derivative(-average_value, q);
-          phi_m.submit_value(average_valgrad, q);
-          phi_p.submit_value(-average_valgrad, q);
-        }
-      phi_m.integrate(EvaluationFlags::values | EvaluationFlags::gradients);
-      phi_p.integrate(EvaluationFlags::values | EvaluationFlags::gradients);
-    };
+    //   VectorizedArrayType sigmaF =
+    //     (std::abs(
+    //        (phi_m.normal_vector(0) * phi_m.inverse_jacobian(0))[dim - 1]) +
+    //      std::abs(
+    //        (phi_m.normal_vector(0) * phi_p.inverse_jacobian(0))[dim - 1])) *
+    //     (number)(std::max(fe_degree, 1) * (fe_degree + 1.0));
 
-    const auto boundary_operation = [&](auto &phi_m) {
-      phi_m.evaluate(EvaluationFlags::values | EvaluationFlags::gradients);
-      VectorizedArrayType sigmaF =
-        std::abs(
-          (phi_m.normal_vector(0) * phi_m.inverse_jacobian(0))[dim - 1]) *
-        number(std::max(fe_degree, 1) * (fe_degree + 1.0)) * 2.0;
+    //   for (unsigned int q = 0; q < phi_m.n_q_points; ++q)
+    //     {
+    //       VectorizedArrayType average_value =
+    //         (phi_m.get_value(q) - phi_p.get_value(q)) * 0.5;
+    //       VectorizedArrayType average_valgrad =
+    //         phi_m.get_normal_derivative(q) + phi_p.get_normal_derivative(q);
+    //       average_valgrad = average_value * 2. * sigmaF - average_valgrad *
+    //       0.5; phi_m.submit_normal_derivative(-average_value, q);
+    //       phi_p.submit_normal_derivative(-average_value, q);
+    //       phi_m.submit_value(average_valgrad, q);
+    //       phi_p.submit_value(-average_valgrad, q);
+    //     }
+    //   phi_m.integrate(EvaluationFlags::values | EvaluationFlags::gradients);
+    //   phi_p.integrate(EvaluationFlags::values | EvaluationFlags::gradients);
+    // };
 
-      for (unsigned int q = 0; q < phi_m.n_q_points; ++q)
-        {
-          VectorizedArrayType average_value   = phi_m.get_value(q);
-          VectorizedArrayType average_valgrad = -phi_m.get_normal_derivative(q);
-          average_valgrad += average_value * sigmaF * 2.0;
-          phi_m.submit_normal_derivative(-average_value, q);
-          phi_m.submit_value(average_valgrad, q);
-        }
+    // const auto boundary_operation = [&](auto &phi_m) {
+    //   phi_m.evaluate(EvaluationFlags::values | EvaluationFlags::gradients);
+    //   VectorizedArrayType sigmaF =
+    //     std::abs(
+    //       (phi_m.normal_vector(0) * phi_m.inverse_jacobian(0))[dim - 1]) *
+    //     number(std::max(fe_degree, 1) * (fe_degree + 1.0)) * 2.0;
 
-      phi_m.integrate(EvaluationFlags::values | EvaluationFlags::gradients);
-    };
+    //   for (unsigned int q = 0; q < phi_m.n_q_points; ++q)
+    //     {
+    //       VectorizedArrayType average_value   = phi_m.get_value(q);
+    //       VectorizedArrayType average_valgrad =
+    //       -phi_m.get_normal_derivative(q); average_valgrad += average_value *
+    //       sigmaF * 2.0; phi_m.submit_normal_derivative(-average_value, q);
+    //       phi_m.submit_value(average_valgrad, q);
+    //     }
 
-    //////////////////////////////////////////////////
+    //   phi_m.integrate(EvaluationFlags::values | EvaluationFlags::gradients);
+    // };
+
+    // //////////////////////////////////////////////////
 
 
-    // Check if matrix has already been set up.
-    if (system_matrix.m() == 0 && system_matrix.n() == 0)
-      {
-        // Set up sparsity pattern of system matrix.
-        const auto &dof_handler = data.get_dof_handler();
+    // // Check if matrix has already been set up.
+    // if (system_matrix.m() == 0 && system_matrix.n() == 0)
+    //   {
+    //     // Set up sparsity pattern of system matrix.
+    //     const auto &dof_handler = data.get_dof_handler();
 
-        TrilinosWrappers::SparsityPattern dsp(
-          data.get_mg_level() != numbers::invalid_unsigned_int ?
-            dof_handler.locally_owned_mg_dofs(data.get_mg_level()) :
-            dof_handler.locally_owned_dofs(),
-          data.get_task_info().communicator);
+    //     TrilinosWrappers::SparsityPattern dsp(
+    //       data.get_mg_level() != numbers::invalid_unsigned_int ?
+    //         dof_handler.locally_owned_mg_dofs(data.get_mg_level()) :
+    //         dof_handler.locally_owned_dofs(),
+    //       data.get_task_info().communicator);
 
-        if (data.get_mg_level() != numbers::invalid_unsigned_int)
-          MGTools::make_flux_sparsity_pattern(dof_handler,
-                                              dsp,
-                                              data.get_mg_level(),
-                                              constraints);
-        else
-          DoFTools::make_flux_sparsity_pattern(dof_handler, dsp, constraints);
+    //     if (data.get_mg_level() != numbers::invalid_unsigned_int)
+    //       MGTools::make_flux_sparsity_pattern(dof_handler,
+    //                                           dsp,
+    //                                           data.get_mg_level(),
+    //                                           constraints);
+    //     else
+    //       DoFTools::make_flux_sparsity_pattern(dof_handler, dsp,
+    //       constraints);
 
-        dsp.compress();
-        system_matrix.reinit(dsp);
+    //     dsp.compress();
+    //     system_matrix.reinit(dsp);
 
-        // Assemble system matrix. Notice that degree 1 has been hardcoded.
+    //     // Assemble system matrix. Notice that degree 1 has been hardcoded.
 
-        MatrixFreeTools::compute_matrix<dim,
-                                        degree,
-                                        n_qpoints,
-                                        n_components,
-                                        number,
-                                        VectorizedArrayType>(
-          data,
-          constraints,
-          system_matrix,
-          cell_operation,
-          face_operation,
-          boundary_operation);
-      }
+    //     MatrixFreeTools::compute_matrix<dim,
+    //                                     degree,
+    //                                     n_qpoints,
+    //                                     n_components,
+    //                                     number,
+    //                                     VectorizedArrayType>(
+    //       data,
+    //       constraints,
+    //       system_matrix,
+    //       cell_operation,
+    //       face_operation,
+    //       boundary_operation);
+    //   }
 
     return system_matrix;
   }
@@ -849,6 +852,386 @@ fill_interpolation_matrix(
 
 
 
+/**
+ * Utility to compute jump terms when the interface is locally owned, i.e. both
+ * elements are locally owned.
+ */
+template <int dim>
+void
+assemble_local_jumps_and_averages(FullMatrix<double>      &M11,
+                                  FullMatrix<double>      &M12,
+                                  FullMatrix<double>      &M21,
+                                  FullMatrix<double>      &M22,
+                                  const FEValuesBase<dim> &fe_faces0,
+                                  const FEValuesBase<dim> &fe_faces1,
+                                  const double             penalty_constant,
+                                  const double             h_f)
+{
+  const std::vector<Tensor<1, dim>> &normals = fe_faces0.get_normal_vectors();
+  const unsigned int                 dofs_per_cell =
+    M11.m(); // size of local matrices equals the #DoFs
+
+  for (unsigned int q_index : fe_faces0.quadrature_point_indices())
+    {
+      const Tensor<1, dim> &normal = normals[q_index];
+      for (unsigned int i = 0; i < dofs_per_cell; ++i)
+        {
+          for (unsigned int j = 0; j < dofs_per_cell; ++j)
+            {
+              M11(i, j) +=
+                (-0.5 * fe_faces0.shape_grad(i, q_index) * normal *
+                   fe_faces0.shape_value(j, q_index) -
+                 0.5 * fe_faces0.shape_grad(j, q_index) * normal *
+                   fe_faces0.shape_value(i, q_index) +
+                 (penalty_constant / h_f) * fe_faces0.shape_value(i, q_index) *
+                   fe_faces0.shape_value(j, q_index)) *
+                fe_faces0.JxW(q_index);
+
+              M12(i, j) +=
+                (0.5 * fe_faces0.shape_grad(i, q_index) * normal *
+                   fe_faces1.shape_value(j, q_index) -
+                 0.5 * fe_faces1.shape_grad(j, q_index) * normal *
+                   fe_faces0.shape_value(i, q_index) -
+                 (penalty_constant / h_f) * fe_faces0.shape_value(i, q_index) *
+                   fe_faces1.shape_value(j, q_index)) *
+                fe_faces1.JxW(q_index);
+
+
+              M21(i, j) +=
+                (-0.5 * fe_faces1.shape_grad(i, q_index) * normal *
+                   fe_faces0.shape_value(j, q_index) +
+                 0.5 * fe_faces0.shape_grad(j, q_index) * normal *
+                   fe_faces1.shape_value(i, q_index) -
+                 (penalty_constant / h_f) * fe_faces1.shape_value(i, q_index) *
+                   fe_faces0.shape_value(j, q_index)) *
+                fe_faces1.JxW(q_index);
+
+
+              M22(i, j) +=
+                (0.5 * fe_faces1.shape_grad(i, q_index) * normal *
+                   fe_faces1.shape_value(j, q_index) +
+                 0.5 * fe_faces1.shape_grad(j, q_index) * normal *
+                   fe_faces1.shape_value(i, q_index) +
+                 (penalty_constant / h_f) * fe_faces1.shape_value(i, q_index) *
+                   fe_faces1.shape_value(j, q_index)) *
+                fe_faces1.JxW(q_index);
+            }
+        }
+    }
+}
+
+
+
+/**
+ * Same as above, but for a ghosted neighbor.
+ */
+template <int dim>
+void
+assemble_local_jumps_and_averages_ghost(
+  FullMatrix<double>                             &M11,
+  FullMatrix<double>                             &M12,
+  FullMatrix<double>                             &M21,
+  FullMatrix<double>                             &M22,
+  const FEValuesBase<dim>                        &fe_faces0,
+  const std::vector<std::vector<double>>         &recv_values,
+  const std::vector<std::vector<Tensor<1, dim>>> &recv_gradients,
+  const std::vector<double>                      &recv_jxws,
+  const double                                    penalty_constant,
+  const double                                    h_f)
+{
+  Assert(
+    (recv_values.size() > 0 && recv_gradients.size() && recv_jxws.size()),
+    ExcMessage(
+      "Not possible to assemble jumps and averages at a ghosted interface."));
+  const unsigned int dofs_per_cell = M11.m();
+
+  const std::vector<Tensor<1, dim>> &normals = fe_faces0.get_normal_vectors();
+  for (unsigned int q_index : fe_faces0.quadrature_point_indices())
+    {
+      const Tensor<1, dim> &normal = normals[q_index];
+      for (unsigned int i = 0; i < dofs_per_cell; ++i)
+        {
+          for (unsigned int j = 0; j < dofs_per_cell; ++j)
+            {
+              M11(i, j) +=
+                (-0.5 * fe_faces0.shape_grad(i, q_index) * normal *
+                   fe_faces0.shape_value(j, q_index) -
+                 0.5 * fe_faces0.shape_grad(j, q_index) * normal *
+                   fe_faces0.shape_value(i, q_index) +
+                 (penalty_constant / h_f) * fe_faces0.shape_value(i, q_index) *
+                   fe_faces0.shape_value(j, q_index)) *
+                fe_faces0.JxW(q_index);
+
+              M12(i, j) +=
+                (0.5 * fe_faces0.shape_grad(i, q_index) * normal *
+                   recv_values[j][q_index] -
+                 0.5 * recv_gradients[j][q_index] * normal *
+                   fe_faces0.shape_value(i, q_index) -
+                 (penalty_constant / h_f) * fe_faces0.shape_value(i, q_index) *
+                   recv_values[j][q_index]) *
+                recv_jxws[q_index];
+
+
+              M21(i, j) += (-0.5 * recv_gradients[i][q_index] * normal *
+                              fe_faces0.shape_value(j, q_index) +
+                            0.5 * fe_faces0.shape_grad(j, q_index) * normal *
+                              recv_values[i][q_index] -
+                            (penalty_constant / h_f) * recv_values[i][q_index] *
+                              fe_faces0.shape_value(j, q_index)) *
+                           recv_jxws[q_index];
+
+
+              M22(i, j) += (0.5 * recv_gradients[i][q_index] * normal *
+                              recv_values[j][q_index] +
+                            0.5 * recv_gradients[j][q_index] * normal *
+                              recv_values[i][q_index] +
+                            (penalty_constant / h_f) * recv_values[i][q_index] *
+                              recv_values[j][q_index]) *
+                           recv_jxws[q_index];
+            }
+        }
+    }
+}
+
+
+
+template <int dim, typename MatrixType>
+void
+assemble_matrix(AgglomerationHandler<dim> *ah,
+                MatrixType                &system_matrix,
+                const MPI_Comm            &comm)
+{
+  AffineConstraints<double> constraints;
+  constraints.close();
+  DynamicSparsityPattern sparsity_pattern;
+  ah->create_agglomeration_sparsity_pattern(sparsity_pattern);
+
+  const double reaction_coefficient = 0.;
+  const double penalty_constant =
+    20. * degree_finite_element * degree_finite_element;
+
+  IndexSet locally_owned_dofs;
+  IndexSet locally_relevant_dofs;
+
+  locally_owned_dofs    = ah->agglo_dh.locally_owned_dofs();
+  locally_relevant_dofs = DoFTools::extract_locally_relevant_dofs(ah->agglo_dh);
+
+  system_matrix.reinit(locally_owned_dofs,
+                       locally_owned_dofs,
+                       sparsity_pattern,
+                       comm);
+
+  const unsigned int dofs_per_cell = ah->get_fe().n_dofs_per_cell();
+
+  FullMatrix<double> cell_matrix(dofs_per_cell, dofs_per_cell);
+
+  FullMatrix<double> M11(dofs_per_cell, dofs_per_cell);
+  FullMatrix<double> M12(dofs_per_cell, dofs_per_cell);
+  FullMatrix<double> M21(dofs_per_cell, dofs_per_cell);
+  FullMatrix<double> M22(dofs_per_cell, dofs_per_cell);
+
+  std::vector<types::global_dof_index> local_dof_indices(dofs_per_cell);
+  std::vector<types::global_dof_index> local_dof_indices_neighbor(
+    dofs_per_cell);
+
+  auto polytope = ah->begin();
+  for (; polytope != ah->end(); ++polytope)
+    {
+      if (polytope->is_locally_owned())
+        {
+          cell_matrix = 0.;
+
+          const auto &agglo_values = ah->reinit(polytope);
+
+
+          for (unsigned int q_index : agglo_values.quadrature_point_indices())
+            {
+              for (unsigned int i = 0; i < dofs_per_cell; ++i)
+                {
+                  for (unsigned int j = 0; j < dofs_per_cell; ++j)
+                    {
+                      cell_matrix(i, j) +=
+                        (agglo_values.shape_grad(i, q_index) *
+                           agglo_values.shape_grad(j, q_index) +
+                         reaction_coefficient *
+                           agglo_values.shape_value(i, q_index) *
+                           agglo_values.shape_value(j, q_index)) *
+                        agglo_values.JxW(q_index);
+                    }
+                }
+            }
+
+          // get volumetric DoFs
+          polytope->get_dof_indices(local_dof_indices);
+
+
+          // Assemble face terms
+          unsigned int n_faces = polytope->n_faces();
+
+          const double h_f = polytope->diameter();
+          for (unsigned int f = 0; f < n_faces; ++f)
+            {
+              if (polytope->at_boundary(f))
+                {
+                  // Get normal vectors seen from each agglomeration.
+                  const auto &fe_face = ah->reinit(polytope, f);
+                  const auto &normals = fe_face.get_normal_vectors();
+
+                  for (unsigned int q_index :
+                       fe_face.quadrature_point_indices())
+                    {
+                      const Tensor<1, dim> &normal = normals[q_index];
+                      for (unsigned int i = 0; i < dofs_per_cell; ++i)
+                        {
+                          for (unsigned int j = 0; j < dofs_per_cell; ++j)
+                            {
+                              cell_matrix(i, j) +=
+                                (-fe_face.shape_value(i, q_index) *
+                                   fe_face.shape_grad(j, q_index) * normal -
+                                 fe_face.shape_grad(i, q_index) * normal *
+                                   fe_face.shape_value(j, q_index) +
+                                 (penalty_constant / h_f) *
+                                   fe_face.shape_value(i, q_index) *
+                                   fe_face.shape_value(j, q_index)) *
+                                fe_face.JxW(q_index);
+                            }
+                        }
+                    }
+                }
+              else
+                {
+                  const auto &neigh_polytope = polytope->neighbor(f);
+                  if (polytope->id() < neigh_polytope->id())
+                    {
+                      unsigned int nofn =
+                        polytope->neighbor_of_agglomerated_neighbor(f);
+
+                      Assert(neigh_polytope->neighbor(nofn)->id() ==
+                               polytope->id(),
+                             ExcMessage("Mismatch."));
+
+                      const auto &fe_faces =
+                        ah->reinit_interface(polytope, neigh_polytope, f, nofn);
+                      const auto &fe_faces0 = fe_faces.first;
+
+                      if (neigh_polytope->is_locally_owned())
+                        {
+                          // use both fevalues
+                          const auto &fe_faces1 = fe_faces.second;
+
+                          M11 = 0.;
+                          M12 = 0.;
+                          M21 = 0.;
+                          M22 = 0.;
+
+                          assemble_local_jumps_and_averages(M11,
+                                                            M12,
+                                                            M21,
+                                                            M22,
+                                                            fe_faces0,
+                                                            fe_faces1,
+                                                            penalty_constant,
+                                                            h_f);
+
+                          // distribute DoFs accordingly
+                          // fluxes
+                          neigh_polytope->get_dof_indices(
+                            local_dof_indices_neighbor);
+
+                          constraints.distribute_local_to_global(
+                            M11, local_dof_indices, system_matrix);
+                          constraints.distribute_local_to_global(
+                            M12,
+                            local_dof_indices,
+                            local_dof_indices_neighbor,
+                            system_matrix);
+                          constraints.distribute_local_to_global(
+                            M21,
+                            local_dof_indices_neighbor,
+                            local_dof_indices,
+                            system_matrix);
+                          constraints.distribute_local_to_global(
+                            M22, local_dof_indices_neighbor, system_matrix);
+                        }
+                      else
+                        {
+                          // neigh polytope is ghosted, so retrieve necessary
+                          // metadata.
+
+                          types::subdomain_id neigh_rank =
+                            neigh_polytope->subdomain_id();
+
+                          const auto &recv_jxws =
+                            ah->recv_jxws.at(neigh_rank)
+                              .at({neigh_polytope->id(), nofn});
+
+                          const auto &recv_values =
+                            ah->recv_values.at(neigh_rank)
+                              .at({neigh_polytope->id(), nofn});
+
+                          const auto &recv_gradients =
+                            ah->recv_gradients.at(neigh_rank)
+                              .at({neigh_polytope->id(), nofn});
+
+                          M11 = 0.;
+                          M12 = 0.;
+                          M21 = 0.;
+                          M22 = 0.;
+
+                          // there's no FEFaceValues on the other side (it's
+                          // ghosted), so we just pass the actual data we have
+                          // recevied from the neighboring ghosted polytope
+                          assemble_local_jumps_and_averages_ghost(
+                            M11,
+                            M12,
+                            M21,
+                            M22,
+                            fe_faces0,
+                            recv_values,
+                            recv_gradients,
+                            recv_jxws,
+                            penalty_constant,
+                            h_f);
+
+
+                          // distribute DoFs accordingly
+                          // fluxes
+                          neigh_polytope->get_dof_indices(
+                            local_dof_indices_neighbor);
+
+                          constraints.distribute_local_to_global(
+                            M11, local_dof_indices, system_matrix);
+                          constraints.distribute_local_to_global(
+                            M12,
+                            local_dof_indices,
+                            local_dof_indices_neighbor,
+                            system_matrix);
+                          constraints.distribute_local_to_global(
+                            M21,
+                            local_dof_indices_neighbor,
+                            local_dof_indices,
+                            system_matrix);
+                          constraints.distribute_local_to_global(
+                            M22, local_dof_indices_neighbor, system_matrix);
+                        } // ghosted polytope case
+
+
+                    } // only once
+                }     // internal face
+            }         // face loop
+
+          constraints.distribute_local_to_global(cell_matrix,
+                                                 local_dof_indices,
+                                                 system_matrix);
+
+        } // locally owned polytopes
+    }
+
+  system_matrix.compress(VectorOperation::add);
+}
+
+
+
 template <int dim>
 class ExportMGMatrices
 {
@@ -1100,15 +1483,32 @@ ExportMGMatrices<dim>::agglomerate_and_compute_level_matrices()
 
 
   {
-    dof_handler.distribute_dofs(fe_dg);
-    constexpr unsigned int n_qpoints = degree_finite_element + 1;
-    LaplaceOperatorDGSystemMatrix<dim, degree_finite_element, n_qpoints, double>
-      system_matrix_dg_check;
-    system_matrix_dg_check.reinit(mapping, dof_handler);
+    // Uncomment when PR 17029 is merged
+    // dof_handler.distribute_dofs(fe_dg);
+    // constexpr unsigned int n_qpoints = degree_finite_element + 1;
+    // LaplaceOperatorDGSystemMatrix<dim, degree_finite_element, n_qpoints,
+    // double>
+    //   system_matrix_dg_check;
+    // system_matrix_dg_check.reinit(mapping, dof_handler);
     pcout << "Get Trilinos system matrix" << std::endl;
-    TrilinosWrappers::PreconditionAMG prec_amg;
-    const auto                       &system_matrix_sparse =
-      system_matrix_dg_check.get_system_matrix();
+    // const auto &system_matrix_sparse =
+    //   system_matrix_dg_check.get_system_matrix();
+
+    TrilinosWrappers::SparseMatrix system_matrix_sparse;
+    AgglomerationHandler<dim>      dummy_ah(cached_tria);
+    for (const auto &cell : tria_pft.active_cell_iterators())
+      if (cell->is_locally_owned())
+        dummy_ah.define_agglomerate({cell});
+
+    dummy_ah.initialize_fe_values(QGauss<dim>(degree_finite_element + 1),
+                                  update_values | update_gradients |
+                                    update_JxW_values |
+                                    update_quadrature_points,
+                                  QGauss<dim - 1>(degree_finite_element + 1),
+                                  update_JxW_values);
+
+    dummy_ah.distribute_agglomerated_dofs(fe_dg);
+    assemble_matrix(&dummy_ah, system_matrix_sparse, comm);
 
     // Dump matrix to file
     std::string filename{"unstructured_square_ord_" +
