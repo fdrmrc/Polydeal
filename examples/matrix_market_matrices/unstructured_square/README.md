@@ -9,7 +9,7 @@ Conventions:
 
 - All matrices have been exported in the Matrix Market file format
 
-Concerning the files in this folder `/ord2` (similarly for other folders):
+Example with folder `/ord1` (similarly for other folders):
 
 `P_0_1`: prolongation from level 0 to 1
 
@@ -19,4 +19,4 @@ Concerning the files in this folder `/ord2` (similarly for other folders):
 
 `P_3_4`: prolongation from level 3 to 4
 
-`unstructured_square_ord_2_matrix`: matrix associated with the differential problem.
+`unstructured_square_ord_2.mm`: matrix associated with the differential problem.
