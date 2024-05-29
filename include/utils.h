@@ -102,8 +102,20 @@ namespace Utils
     const IndexSet &locally_owned_dofs_coarse =
       coarse_agglo_dh.locally_owned_dofs();
 
-    DynamicSparsityPattern               dsp(fine_agglo_dh.n_dofs(),
-                               coarse_agglo_dh.n_dofs());
+    std::conditional_t<is_trilinos_matrix,
+                       TrilinosWrappers::SparsityPattern,
+                       DynamicSparsityPattern>
+      dsp;
+
+    if constexpr (is_trilinos_matrix)
+      dsp.reinit(locally_owned_dofs_fine,
+                 locally_owned_dofs_coarse,
+                 tria.get_communicator());
+    else
+      dsp.reinit(fine_agglo_dh.n_dofs(),
+                 coarse_agglo_dh.n_dofs(),
+                 locally_relevant_dofs_fine);
+
     const unsigned int                   dofs_per_cell = fe.dofs_per_cell;
     std::vector<types::global_dof_index> agglo_dof_indices(dofs_per_cell);
     std::vector<types::global_dof_index> standard_dof_indices(dofs_per_cell);
@@ -193,16 +205,8 @@ namespace Utils
 
     if constexpr (is_trilinos_matrix)
       {
-        const MPI_Comm &communicator = tria.get_communicator();
-        SparsityTools::distribute_sparsity_pattern(dsp,
-                                                   locally_owned_dofs_fine,
-                                                   communicator,
-                                                   locally_relevant_dofs_fine);
-
-        matrix.reinit(locally_owned_dofs_fine,
-                      locally_owned_dofs_coarse,
-                      dsp,
-                      communicator);
+        dsp.compress();
+        matrix.reinit(dsp);
         assemble_injection_matrix();
       }
     else if constexpr (is_serial_matrix)

@@ -890,8 +890,9 @@ private:
    */
   bool hybrid_mesh;
 
-  const std::map<std::pair<types::global_cell_index, types::global_cell_index>,
-                 std::vector<types::global_cell_index>> *parent_child_info;
+  std::map<std::pair<types::global_cell_index, types::global_cell_index>,
+           std::vector<types::global_cell_index>>
+    parent_child_info;
 
   unsigned int present_extraction_level;
 };
@@ -1187,7 +1188,7 @@ void
 AgglomerationHandler<dim, spacedim>::connect_hierarchy(
   const CellsAgglomerator<dim, RtreeType> &agglomerator)
 {
-  parent_child_info        = &agglomerator.parent_node_to_children_nodes;
+  parent_child_info        = agglomerator.parent_node_to_children_nodes;
   present_extraction_level = agglomerator.extraction_level;
 }
 
