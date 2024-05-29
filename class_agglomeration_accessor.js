@@ -7,6 +7,7 @@ var class_agglomeration_accessor =
     [ "~AgglomerationAccessor", "class_agglomeration_accessor.html#a2c72120cb409144f812c9d5015fe3cf6", null ],
     [ "as_dof_handler_iterator", "class_agglomeration_accessor.html#ad51676a7007bd3da58daac21703eb9c2", null ],
     [ "at_boundary", "class_agglomeration_accessor.html#a86e68918f8542e60e21bfa69cef0f609", null ],
+    [ "children", "class_agglomeration_accessor.html#ab3cf08fbd3e70599efd23b7e8eac7a34", null ],
     [ "diameter", "class_agglomeration_accessor.html#a2c928252e291003da95fd106425c9833", null ],
     [ "get_agglomerate", "class_agglomeration_accessor.html#a17f6bccb97b5800ac2ba09f442239034", null ],
     [ "get_bounding_box", "class_agglomeration_accessor.html#a87b1556f9f042519d9bf932e1da2faca", null ],
