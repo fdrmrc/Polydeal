@@ -254,11 +254,21 @@ public:
         // classes needed for standard cells in order to treat that finite
         // element space as defined on a standard shape and not on the
         // BoundingBox.
-        standard_scratch =
-          std::make_unique<ScratchData>(*mapping,
-                                        *fe,
-                                        QGauss<dim>(2 * fe_space.degree + 2),
-                                        internal_agglomeration_flags);
+        if (tria->all_reference_cells_are_hyper_cube())
+          standard_scratch =
+            std::make_unique<ScratchData>(*mapping,
+                                          *fe,
+                                          QGauss<dim>(2 * fe_space.degree + 2),
+                                          internal_agglomeration_flags);
+        else if (tria->all_reference_cells_are_simplex())
+          standard_scratch =
+            std::make_unique<ScratchData>(*mapping,
+                                          *fe,
+                                          QGaussSimplex<dim>(
+                                            2 * fe_space.degree + 2),
+                                          internal_agglomeration_flags);
+        else
+          DEAL_II_NOT_IMPLEMENTED();
       }
 
 
