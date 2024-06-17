@@ -206,6 +206,106 @@ namespace dealii
 
 
   /**
+   * Same as above, but matrix-based.
+   */
+  template <int dim, typename MatrixType, typename Number = double>
+  class AmgProjector
+  {
+  private:
+    using VectorType = LinearAlgebra::distributed::Vector<Number>;
+    /**
+     * MPI communicator used by Trilinos objects.
+     */
+    MPI_Comm communicator;
+
+    /**
+     * Fine operator evaluation.
+     */
+    const MatrixType &fine_operator;
+
+    /**
+     * Vector of (pointers of) Trilinos Matrices storing two-level projections.
+     */
+    std::vector<const MatrixType *> transfer_matrices;
+
+
+
+  public:
+    /**
+     * Constructor. It takes the matrix-free operator evaluation on the finest
+     * level, and a series of transfers from levels.
+     */
+    AmgProjector(const MatrixType &fine_operator_,
+                 const std::vector<TrilinosWrappers::SparseMatrix> &transfers_)
+      : fine_operator{fine_operator_}
+    {
+      // Only DGQ discretizations are supported.
+
+      using VectorType = LinearAlgebra::distributed::Vector<Number>;
+
+      // Check parallel layout is identical on every level
+      // for (unsigned int l = 0; l < transfers_.size(); ++l)
+      Assert((fine_operator.locally_owned_range_indices() ==
+              transfers_[transfers_.size() - 1].locally_owned_range_indices()),
+             ExcInternalError());
+
+      // get communicator from first Trilinos matrix
+      communicator = transfers_[0].get_mpi_communicator();
+      transfer_matrices.resize(transfers_.size());
+
+      // Store pointers to fine operator and transfers
+      for (unsigned int l = 0; l < transfers_.size(); ++l)
+        {
+          // std::cout << "transferring matrix l= " << l << std::endl;
+          transfer_matrices[l] = &transfers_[l];
+        }
+    }
+
+
+
+    /**
+     * Initialize level matrices using the operator evaluation and the transfer
+     * matrices provided in the constructor.
+     *
+     * In particular, matrix[0]= A0, while for the other levels it holds that:
+     * matrix[l] = P_l^T A_l-1 P_l, being P_l the two-level injection.
+     */
+    void
+    compute_level_matrices(MGLevelObject<MatrixType> &mg_matrices)
+    {
+      Assert(mg_matrices.n_levels() > 1,
+             ExcMessage("Vector of matrices set to invalid size."));
+      using VectorType = LinearAlgebra::distributed::Vector<Number>;
+
+      const unsigned int min_level = mg_matrices.min_level();
+      const unsigned int max_level = mg_matrices.max_level();
+
+      mg_matrices[max_level].copy_from(fine_operator); // finest level
+
+      // do the same, but using transfers to define level matrices
+      // std::cout << "min level = " << min_level << std::endl;
+      // std::cout << "max level = " << max_level << std::endl;
+      for (unsigned int l = max_level; l-- > min_level;)
+        {
+          // Set parallel layout of intermediate operators AP
+          MatrixType level_operator(
+            transfer_matrices[l]->locally_owned_range_indices(),
+            transfer_matrices[l]->locally_owned_domain_indices(),
+            communicator);
+
+          // First, compute AP
+          mg_matrices[l + 1].mmult(
+            level_operator,
+            *transfer_matrices[l]); // result stored in level_operators[l]
+                                    // Multiply by the transpose
+          transfer_matrices[l]->Tmmult(mg_matrices[l], level_operator);
+        }
+    }
+  };
+
+
+
+  /**
    * This class implements the transfer across possibly agglomerated
    * multigrid levels. To perform this, it needs a sequence of transfer matrices
    * and DoFHandlers which identify the degrees of freedom on each level.
