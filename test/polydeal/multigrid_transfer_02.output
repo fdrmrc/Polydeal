@@ -1,0 +1,11 @@
+N elements (coarse) = 91
+N elements (fine) = 364
+Construct transfer operator
+f= 1
+L2 error: OK.
+f= x+y
+L2 error: OK.
+f= x
+L2 error: OK.
+f= y
+L2 error: OK.

@@ -1,0 +1,20 @@
+Cycle 0:
+   Number of active cells:       256
+   Number of degrees of freedom: 289 (by level: 4, 9, 25, 81, 289)
+Converged in 7 iterations. with value 4.582e-09
+Cycle 1:
+   Number of active cells:       418
+   Number of degrees of freedom: 495 (by level: 4, 9, 25, 81, 289, 305)
+Converged in 10 iterations. with value 7.40543e-10
+Cycle 2:
+   Number of active cells:       865
+   Number of degrees of freedom: 952 (by level: 4, 9, 25, 81, 289, 769, 153)
+Converged in 11 iterations. with value 1.39894e-09
+Cycle 3:
+   Number of active cells:       1219
+   Number of degrees of freedom: 1354 (by level: 4, 9, 25, 81, 289, 953, 277, 261)
+Converged in 13 iterations. with value 6.16552e-10
+Cycle 4:
+   Number of active cells:       1297
+   Number of degrees of freedom: 1446 (by level: 4, 9, 25, 81, 289, 961, 313, 349)
+Converged in 13 iterations. with value 7.0085e-10

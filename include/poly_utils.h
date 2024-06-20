@@ -981,8 +981,9 @@ namespace dealii::PolyUtils
   }
 
 
+
   template <typename T>
-  inline constexpr T
+  constexpr T
   constexpr_pow(T num, unsigned int pow)
   {
     return (pow >= sizeof(unsigned int) * 8) ? 0 :
