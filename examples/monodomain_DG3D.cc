@@ -43,6 +43,8 @@
 
 #include <deal.II/numerics/vector_tools_interpolate.h>
 
+#include <boost/geometry/index/rtree.hpp>
+
 #include <agglomeration_handler.h>
 #include <agglomerator.h>
 #include <multigrid_amg.h>
@@ -53,7 +55,8 @@
 
 using namespace dealii;
 
-static constexpr double TOL = 2.5e-3;
+static constexpr double       TOL            = 2.5e-3;
+static constexpr unsigned int starting_level = 2;
 
 namespace Utils
 {
@@ -400,7 +403,6 @@ private:
   AffineConstraints<double>                      constraints;
   TrilinosWrappers::PreconditionAMG              amg_preconditioner;
   TrilinosWrappers::SparseMatrix                 mass_matrix;
-  TrilinosWrappers::SparseMatrix                 system_matrix;
   TrilinosWrappers::SparseMatrix                 laplace_matrix;
   LinearAlgebra::distributed::Vector<double>     system_rhs;
   std::unique_ptr<Function<dim>>                 rhs_function;
@@ -439,20 +441,30 @@ private:
   const ModelParameters                               &param;
 
   // Agglomeration related
+  dealii::RTree<
+    std::pair<dealii::BoundingBox<dim, double>,
+              dealii::TriaActiveIterator<dealii::CellAccessor<dim, dim>>>,
+    boost::geometry::index::rstar<8, 2, 2, 32>,
+    boost::geometry::index::indexable<
+      std::pair<dealii::BoundingBox<dim, double>,
+                dealii::TriaActiveIterator<dealii::CellAccessor<dim, dim>>>>>
+    tree;
+
+  unsigned int total_tree_levels;
   std::vector<std::unique_ptr<AgglomerationHandler<dim>>>
     agglomeration_handlers;
 
   std::vector<TrilinosWrappers::SparseMatrix> injection_matrices_two_level;
   std::unique_ptr<AgglomerationHandler<dim>>  agglomeration_handler_coarse;
 
+
   // Multigrid related
 
   using LevelMatrixType = TrilinosWrappers::SparseMatrix;
   using SmootherType    = PreconditionChebyshev<LevelMatrixType, VectorType>;
 
-  MGLevelObject<std::unique_ptr<TrilinosWrappers::SparseMatrix>>
-                                         multigrid_matrices;
-  std::unique_ptr<Multigrid<VectorType>> mg;
+  MGLevelObject<TrilinosWrappers::SparseMatrix> multigrid_matrices;
+  std::unique_ptr<Multigrid<VectorType>>        mg;
   std::unique_ptr<
     PreconditionMG<dim, VectorType, MGTransferAgglomeration<dim, VectorType>>>
     preconditioner;
@@ -505,9 +517,11 @@ IonicModel<dim>::IonicModel(const ModelParameters &parameters)
   , solver(const_cast<SolverControl &>(parameters.control))
   , param(parameters)
 {
+  static_assert(dim == 3);
   time = 0.;
   penalty_constant =
     param.penalty_constant * parameters.fe_degree * (parameters.fe_degree + 1);
+  total_tree_levels = 0;
 }
 
 
@@ -618,12 +632,6 @@ IonicModel<dim>::setup_problem()
                         dsp,
                         communicator);
 
-  system_matrix.reinit(locally_owned_dofs,
-                       locally_owned_dofs,
-                       dsp,
-                       communicator);
-
-
   locally_relevant_solution_pre.reinit(locally_owned_dofs, communicator);
   locally_relevant_solution_current.reinit(locally_owned_dofs, communicator);
   system_rhs.reinit(locally_owned_dofs, communicator);
@@ -641,14 +649,6 @@ IonicModel<dim>::setup_problem()
   activation_map.reinit(locally_owned_dofs, communicator);
 
   Iext = std::make_unique<AppliedCurrent<dim>>(end_time_current);
-}
-
-
-template <int dim>
-void
-IonicModel<dim>::setup_multigrid()
-{
-  TimerOutput::Scope t(computing_timer, "Setup polytopal multigrid");
 
   // // Start building R-tree
   namespace bgi = boost::geometry::index;
@@ -662,20 +662,34 @@ IonicModel<dim>::setup_multigrid()
     if (cell->is_locally_owned())
       boxes[i++] = std::make_pair(mapping.get_bounding_box(cell), cell);
 
-  auto tree = pack_rtree<bgi::rstar<max_elem_per_node>>(boxes);
+  tree = pack_rtree<bgi::rstar<max_elem_per_node>>(boxes);
+
   Assert(n_levels(tree) >= 2, ExcMessage("At least two levels are needed."));
   pcout << "Total number of available levels: " << n_levels(tree) << std::endl;
+
+  pcout << "Starting level: " << starting_level << std::endl;
+  total_tree_levels = n_levels(tree) - starting_level + 1;
+
+  multigrid_matrices.resize(0, total_tree_levels);
+
+  multigrid_matrices[multigrid_matrices.max_level()].reinit(locally_owned_dofs,
+                                                            locally_owned_dofs,
+                                                            dsp,
+                                                            communicator);
+}
+
+
+template <int dim>
+void
+IonicModel<dim>::setup_multigrid()
+{
+  TimerOutput::Scope t(computing_timer, "Setup polytopal multigrid");
 
   GridTools::Cache<dim> cached_tria(tria);
 
   agglomeration_handler_coarse =
     std::make_unique<AgglomerationHandler<dim>>(cached_tria);
 
-  const unsigned int starting_level = 2;
-  pcout << "Starting level: " << starting_level << std::endl;
-  const unsigned int total_tree_levels = n_levels(tree) - starting_level + 1;
-
-  multigrid_matrices.resize(0, total_tree_levels);
   agglomeration_handlers.resize(total_tree_levels);
 
 
@@ -770,14 +784,16 @@ IonicModel<dim>::setup_multigrid()
     injection_matrices_two_level);
   // pcout << "Initialized projector" << std::endl;
 
-  multigrid_matrices[multigrid_matrices.max_level()].release();
-  multigrid_matrices[multigrid_matrices.max_level()].reset(&system_matrix);
+  // multigrid_matrices[multigrid_matrices.max_level()].release();
+  // multigrid_matrices[multigrid_matrices.max_level()].reset(&system_matrix);
 
 
   amg_projector.compute_level_matrices(multigrid_matrices);
 
   pcout << "Projected using transfer_matrices:" << std::endl;
 
+  TrilinosWrappers::SparseMatrix &system_matrix =
+    multigrid_matrices[multigrid_matrices.max_level()];
 
   // Setup multigrid
 
@@ -812,10 +828,10 @@ IonicModel<dim>::setup_multigrid()
         agglomeration_handlers[l]->agglo_dh.locally_owned_dofs(), communicator);
 
       // Set exact diagonal for each operator
-      for (unsigned int i = multigrid_matrices[l]->local_range().first;
-           i < multigrid_matrices[l]->local_range().second;
+      for (unsigned int i = multigrid_matrices[l].local_range().first;
+           i < multigrid_matrices[l].local_range().second;
            ++i)
-        diag_inverses[l][i] = 1. / multigrid_matrices[l]->diag_element(i);
+        diag_inverses[l][i] = 1. / multigrid_matrices[l].diag_element(i);
 
       smoother_data[l].preconditioner =
         std::make_shared<DiagonalMatrix<VectorType>>(diag_inverses[l]);
@@ -836,7 +852,7 @@ IonicModel<dim>::setup_multigrid()
           smoother_data[0].smoothing_range = 1e-3;
           smoother_data[0].degree = 5; // numbers::invalid_unsigned_int;
           smoother_data[0].eig_cg_n_iterations = classical_dh.n_dofs();
-          smoother_data[0].eig_cg_n_iterations = multigrid_matrices[0]->m();
+          smoother_data[0].eig_cg_n_iterations = multigrid_matrices[0].m();
         }
     }
 
@@ -853,7 +869,7 @@ IonicModel<dim>::setup_multigrid()
     std::make_unique<Utils::MGCoarseDirect<VectorType,
                                            TrilinosWrappers::SparseMatrix,
                                            TrilinosWrappers::SolverDirect>>(
-      *multigrid_matrices[min_level]);
+      multigrid_matrices[min_level]);
 
   pcout << "Coarse solver initialized" << std::endl;
 
@@ -1206,6 +1222,9 @@ IonicModel<dim>::solve()
 {
   TimerOutput::Scope t(computing_timer, "Solve");
 
+  TrilinosWrappers::SparseMatrix &system_matrix =
+    multigrid_matrices[multigrid_matrices.max_level()];
+
   if (param.use_amg)
     solver.solve(system_matrix,
                  locally_relevant_solution_current,
@@ -1305,13 +1324,11 @@ IonicModel<dim>::run()
 
   // Create mesh
   Triangulation<dim> tria_dummy;
-  GridGenerator::hyper_cube(tria_dummy);
-  tria_dummy.refine_global(4);
-  // GridIn<dim>        grid_in;
-  // grid_in.attach_triangulation(tria_dummy);
-  // std::ifstream mesh_file(
-  //   "../../meshes/idealized_lv.msh"); // idealized mesh of left ventricle
-  // grid_in.read_msh(mesh_file);
+  GridIn<dim>        grid_in;
+  grid_in.attach_triangulation(tria_dummy);
+  std::ifstream mesh_file(
+    "../../meshes/idealized_lv.msh"); // idealized mesh of left ventricle
+  grid_in.read_msh(mesh_file);
 
   // scale triangulation by a suitable factor in order to work with mm
   const double scale_factor = 1e-3;
@@ -1369,8 +1386,13 @@ IonicModel<dim>::run()
 
   pcout << "Max mesh size: " << mesh_size << std::endl;
 
+
+  TrilinosWrappers::SparseMatrix &system_matrix =
+    multigrid_matrices[multigrid_matrices.max_level()];
+
   system_matrix.copy_from(mass_matrix);   // M/dt
   system_matrix.add(+1., laplace_matrix); // M/dt + A
+
 
   // Depending on the preconditioner type, use AMG or polytopal multigrid.
   if (param.use_amg)
@@ -1400,10 +1422,8 @@ IonicModel<dim>::run()
       ++iter_count;
 
       // output results every 5 time steps
-      // if ((iter_count % 10 == 0) || time < param.final_time_current)
-      if ((time > 0.39) && (iter_count % 10 == 0))
+      if ((iter_count % 10 == 0) || time < param.final_time_current)
         output_results();
-
 
       // update solutions
       locally_relevant_solution_pre = locally_relevant_solution_current;
@@ -1415,7 +1435,6 @@ IonicModel<dim>::run()
       system_rhs = 0.;
     }
   pcout << std::endl;
-  computing_timer.print_summary();
 }
 
 
@@ -1432,7 +1451,7 @@ main(int argc, char *argv[])
   parameters.use_amg            = false;
   parameters.fe_degree          = 1;
   parameters.dt                 = 1e-4;
-  parameters.final_time         = 0.001;
+  parameters.final_time         = 0.3;
   parameters.final_time_current = 3e-3;
 
   IonicModel<3> problem(parameters);
