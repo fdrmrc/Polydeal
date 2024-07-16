@@ -79,7 +79,7 @@ namespace Utils
     static_assert(is_supported_matrix);
     if constexpr (is_trilinos_matrix)
       Assert(matrix.m() == 0, ExcInternalError());
-    else if constexpr (is_serial_matrix)
+    if constexpr (is_serial_matrix)
       Assert(sp.empty() && matrix.empty(),
              ExcMessage(
                "The destination matrix and its sparsity pattern must the empty "
@@ -306,11 +306,13 @@ namespace Utils
       double start, stop;
       start = MPI_Wtime();
       direct_solver.vmult(dst, src);
-      stop          = MPI_Wtime();
+      stop = MPI_Wtime();
+#ifdef AGGLO_DEBUG
       MPI_Comm comm = dst.get_mpi_communicator();
       if (Utilities::MPI::this_mpi_process(comm) == 0)
         std::cout << "Direct solver elapsed time: " << stop - start << "[s]"
                   << std::endl;
+#endif
     }
 
 
