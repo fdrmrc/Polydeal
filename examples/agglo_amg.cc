@@ -55,7 +55,7 @@
 
 using namespace dealii;
 
-static constexpr unsigned int degree_finite_element = 5;
+static constexpr unsigned int degree_finite_element = 3;
 static constexpr unsigned int n_components          = 1;
 static constexpr bool         CHECK_AMG             = true;
 
@@ -309,6 +309,127 @@ public:
       }
 
     return system_matrix;
+  }
+
+
+
+  void
+  get_system_matrix(TrilinosWrappers::SparseMatrix &mg_matrix) const
+  {
+    // Boilerplate for SIP-DG form. TODO: unify interface.
+    //////////////////////////////////////////////////
+    const auto cell_operation = [&](auto &phi) {
+      phi.evaluate(EvaluationFlags::gradients);
+      for (unsigned int q = 0; q < phi.n_q_points; ++q)
+        phi.submit_gradient(phi.get_gradient(q), q);
+      phi.integrate(EvaluationFlags::gradients);
+    };
+
+    const auto face_operation = [&](auto &phi_m, auto &phi_p) {
+      phi_m.evaluate(EvaluationFlags::values | EvaluationFlags::gradients);
+      phi_p.evaluate(EvaluationFlags::values | EvaluationFlags::gradients);
+
+      VectorizedArrayType sigmaF =
+        (std::abs(
+           (phi_m.normal_vector(0) * phi_m.inverse_jacobian(0))[dim - 1]) +
+         std::abs(
+           (phi_m.normal_vector(0) * phi_p.inverse_jacobian(0))[dim - 1])) *
+        (number)(std::max(fe_degree, 1) * (fe_degree + 1.0));
+
+      for (unsigned int q = 0; q < phi_m.n_q_points; ++q)
+        {
+          VectorizedArrayType average_value =
+            (phi_m.get_value(q) - phi_p.get_value(q)) * 0.5;
+          VectorizedArrayType average_valgrad =
+            phi_m.get_normal_derivative(q) + phi_p.get_normal_derivative(q);
+          average_valgrad = average_value * 2. * sigmaF - average_valgrad * 0.5;
+          phi_m.submit_normal_derivative(-average_value, q);
+          phi_p.submit_normal_derivative(-average_value, q);
+          phi_m.submit_value(average_valgrad, q);
+          phi_p.submit_value(-average_valgrad, q);
+        }
+      phi_m.integrate(EvaluationFlags::values | EvaluationFlags::gradients);
+      phi_p.integrate(EvaluationFlags::values | EvaluationFlags::gradients);
+    };
+
+    const auto boundary_operation = [&](auto &phi_m) {
+      phi_m.evaluate(EvaluationFlags::values | EvaluationFlags::gradients);
+      VectorizedArrayType sigmaF =
+        std::abs(
+          (phi_m.normal_vector(0) * phi_m.inverse_jacobian(0))[dim - 1]) *
+        number(std::max(fe_degree, 1) * (fe_degree + 1.0)) * 2.0;
+
+      for (unsigned int q = 0; q < phi_m.n_q_points; ++q)
+        {
+          VectorizedArrayType average_value   = phi_m.get_value(q);
+          VectorizedArrayType average_valgrad = -phi_m.get_normal_derivative(q);
+          average_valgrad += average_value * sigmaF * 2.0;
+          phi_m.submit_normal_derivative(-average_value, q);
+          phi_m.submit_value(average_valgrad, q);
+        }
+
+      phi_m.integrate(EvaluationFlags::values | EvaluationFlags::gradients);
+    };
+
+
+    //////////////////////////////////////////////////
+
+
+    // Check if matrix has already been set up.
+    AssertThrow((mg_matrix.m() == 0 && mg_matrix.n() == 0), ExcInternalError());
+
+    // Set up sparsity pattern of system matrix.
+    const DoFHandler<dim> &dof_handler = data.get_dof_handler();
+
+    const IndexSet &system_partitioning = dof_handler.locally_owned_dofs();
+    const IndexSet  system_relevant_set =
+      DoFTools::extract_locally_relevant_dofs(dof_handler);
+
+
+    // create an empty sparsity pattern
+    // TrilinosWrappers::SparsityPattern dsp;
+    // dsp.reinit(system_partitioning,
+    //            system_partitioning,
+    //            system_relevant_set,
+    //            data.get_task_info().communicator);
+    // DoFTools::make_flux_sparsity_pattern(dof_handler, dsp);
+
+
+    // dsp.compress();
+    // mg_matrix.reinit(dsp);
+
+
+    DynamicSparsityPattern dsp(dof_handler.n_dofs(),
+                               dof_handler.n_dofs(),
+                               system_relevant_set);
+    DoFTools::make_flux_sparsity_pattern(dof_handler, dsp);
+
+    std::cout << "Before distributing" << std::endl;
+    SparsityTools::distribute_sparsity_pattern(
+      dsp,
+      system_partitioning,
+      data.get_task_info().communicator,
+      system_relevant_set);
+    std::cout << "After distributing" << std::endl;
+    mg_matrix.reinit(system_partitioning,
+                     dsp,
+                     data.get_task_info().communicator);
+    std::cout << "Reinited the matrix" << std::endl;
+    // DoFTools::make_flux_sparsity_pattern(dof_han);
+
+    // Assemble system matrix.
+
+    MatrixFreeTools::compute_matrix<dim,
+                                    degree,
+                                    n_qpoints,
+                                    n_components,
+                                    number,
+                                    VectorizedArrayType>(data,
+                                                         constraints,
+                                                         mg_matrix,
+                                                         cell_operation,
+                                                         face_operation,
+                                                         boundary_operation);
   }
 
 
@@ -694,7 +815,7 @@ fill_interpolation_matrix(
 
   DynamicSparsityPattern dsp(output_dh->n_dofs(),
                              agglo_dh.n_dofs(),
-                             output_dh->locally_owned_dofs());
+                             locally_relevant_dofs);
 
   std::vector<types::global_dof_index> agglo_dof_indices(fe.dofs_per_cell);
   std::vector<types::global_dof_index> standard_dof_indices(fe.dofs_per_cell);
@@ -807,7 +928,7 @@ fill_interpolation_matrix(
     }
   else
     {
-      // PETSc, LA::`::v options not implemented.
+      // PETSc, LA::d::v options not implemented.
       (void)agglomeration_handler;
       AssertThrow(false, ExcNotImplemented());
     }
@@ -941,9 +1062,15 @@ TestMGMatrix<dim>::make_fine_grid(const unsigned int n_global_refinements)
         }
       else
         {
-          std::ifstream abaqus_file("../../meshes/piston_3.inp"); // piston mesh
-          grid_in.read_abaqus(abaqus_file);
-          tria.refine_global(n_global_refinements - 3);
+          // std::ifstream abaqus_file("../../meshes/piston_3.inp"); // piston
+          // mesh
+          std::ifstream abaqus_file(
+            "../../meshes/idealized_lv.msh"); // idealized mesh
+          // std::ifstream abaqus_file(
+          // "../../meshes/realistic_lv.msh"); // idealized mesh
+          grid_in.read_msh(abaqus_file);
+          // grid_in.read_abaqus(abaqus_file);
+          // tria.refine_global(n_global_refinements - 3);
         }
     }
   else if (grid_type == GridType::grid_generator)
@@ -990,9 +1117,9 @@ TestMGMatrix<dim>::agglomerate_and_compute_level_matrices()
   LaplaceOperatorDGSystemMatrix<dim, degree_finite_element, n_qpoints, double>
     system_matrix_dg;
   system_matrix_dg.reinit(mapping, dof_handler);
-  pcout << "Build fine operator" << std::endl;
   const TrilinosWrappers::SparseMatrix &fine_matrix =
     system_matrix_dg.get_system_matrix();
+  pcout << "Built finest operator" << std::endl;
 
 
   // Start building R-tree
@@ -1110,14 +1237,42 @@ TestMGMatrix<dim>::agglomerate_and_compute_level_matrices()
   pcout << injection_matrices_two_level.back().m() << " and "
         << injection_matrices_two_level.back().n() << std::endl;
 
-  pcout << "Start projection" << std::endl;
   AmgProjector<dim, TrilinosWrappers::SparseMatrix, double> amg_projector(
-    fine_matrix, injection_matrices_two_level);
+    injection_matrices_two_level);
+  pcout << "Initialized projector" << std::endl;
 
 
 
-  MGLevelObject<TrilinosWrappers::SparseMatrix> multigrid_matrices(
-    0, total_tree_levels);
+  MGLevelObject<std::unique_ptr<TrilinosWrappers::SparseMatrix>>
+    multigrid_matrices(0, total_tree_levels);
+
+  multigrid_matrices[multigrid_matrices.max_level()] =
+    std::make_unique<TrilinosWrappers::SparseMatrix>();
+
+  Utilities::System::MemoryStats stats;
+  Utilities::System::get_memory_stats(stats);
+  const auto print = [this](const double value) {
+    const auto min_max_avg =
+      dealii::Utilities::MPI::min_max_avg(value / 1e6, MPI_COMM_WORLD);
+
+    pcout << min_max_avg.min << " " << min_max_avg.max << " " << min_max_avg.avg
+          << " " << min_max_avg.sum << " ";
+  };
+
+  print(stats.VmPeak);
+  print(stats.VmSize);
+  print(stats.VmHWM);
+  print(stats.VmRSS);
+  pcout << "Building finest operator" << std::endl;
+  system_matrix_dg.get_system_matrix(
+    *multigrid_matrices[multigrid_matrices.max_level()]);
+  pcout << "Built finest operator" << std::endl;
+  Utilities::System::get_memory_stats(stats);
+  print(stats.VmPeak);
+  print(stats.VmSize);
+  print(stats.VmHWM);
+  print(stats.VmRSS);
+
   amg_projector.compute_level_matrices(multigrid_matrices);
 
   pcout << "Projected using transfer_matrices:" << std::endl;
@@ -1125,7 +1280,7 @@ TestMGMatrix<dim>::agglomerate_and_compute_level_matrices()
   pcout << "Check dimensions of level operators" << std::endl;
   for (unsigned int l = 0; l < total_tree_levels + 1; ++l)
     pcout << "Number of rows and cols operator " << l << ":("
-          << multigrid_matrices[l].m() << "," << multigrid_matrices[l].n()
+          << multigrid_matrices[l]->m() << "," << multigrid_matrices[l]->n()
           << ")" << std::endl;
 
 
@@ -1162,10 +1317,10 @@ TestMGMatrix<dim>::agglomerate_and_compute_level_matrices()
         agglomeration_handlers[l]->agglo_dh.locally_owned_dofs(), comm);
 
       // Set exact diagonal for each operator
-      for (unsigned int i = multigrid_matrices[l].local_range().first;
-           i < multigrid_matrices[l].local_range().second;
+      for (unsigned int i = multigrid_matrices[l]->local_range().first;
+           i < multigrid_matrices[l]->local_range().second;
            ++i)
-        diag_inverses[l][i] = 1. / multigrid_matrices[l].diag_element(i);
+        diag_inverses[l][i] = 1. / multigrid_matrices[l]->diag_element(i);
 
       smoother_data[l].preconditioner =
         std::make_shared<DiagonalMatrix<VectorType>>(diag_inverses[l]);
@@ -1186,7 +1341,7 @@ TestMGMatrix<dim>::agglomerate_and_compute_level_matrices()
           smoother_data[0].smoothing_range = 1e-3;
           smoother_data[0].degree = 5; // numbers::invalid_unsigned_int;
           smoother_data[0].eig_cg_n_iterations = dof_handler.n_dofs();
-          smoother_data[0].eig_cg_n_iterations = multigrid_matrices[0].m();
+          smoother_data[0].eig_cg_n_iterations = multigrid_matrices[0]->m();
         }
     }
 
@@ -1199,7 +1354,7 @@ TestMGMatrix<dim>::agglomerate_and_compute_level_matrices()
   Utils::MGCoarseDirect<VectorType,
                         TrilinosWrappers::SparseMatrix,
                         TrilinosWrappers::SolverDirect>
-    mg_coarse(multigrid_matrices[min_level]);
+    mg_coarse(*multigrid_matrices[min_level]);
 
   // Transfers
   MGLevelObject<TrilinosWrappers::SparseMatrix *> mg_level_transfers(
@@ -1223,8 +1378,14 @@ TestMGMatrix<dim>::agglomerate_and_compute_level_matrices()
   pcout << "MG transfers initialized" << std::endl;
 
   // Define multigrid object and convert to preconditioner.
-  Multigrid<VectorType> mg(
-    mg_matrix, mg_coarse, mg_transfer, mg_smoother, mg_smoother);
+  Multigrid<VectorType> mg(mg_matrix,
+                           mg_coarse,
+                           mg_transfer,
+                           mg_smoother,
+                           mg_smoother,
+                           min_level,
+                           numbers::invalid_unsigned_int,
+                           Multigrid<VectorType>::v_cycle);
 
   PreconditionMG<dim, VectorType, MGTransferAgglomeration<dim, VectorType>>
     preconditioner(dof_handler, mg, mg_transfer);
@@ -1338,6 +1499,8 @@ TestMGMatrix<dim>::agglomerate_and_compute_level_matrices()
           amg_data.smoother_type         = "Chebyshev";
           amg_data.smoother_sweeps       = 5;
           amg_data.output_details        = true;
+          if (degree_finite_element > 1)
+            amg_data.higher_order_elements = true;
           pcout << "Initialized AMG prec matrix" << std::endl;
           prec_amg.initialize(fine_matrix, amg_data);
 
@@ -1403,7 +1566,7 @@ main(int argc, char *argv[])
 {
   Utilities::MPI::MPI_InitFinalize mpi_initialization(argc, argv, 1);
   const MPI_Comm                   comm = MPI_COMM_WORLD;
-  static constexpr unsigned int    dim  = 2;
+  static constexpr unsigned int    dim  = 3;
 
   if (Utilities::MPI::this_mpi_process(comm) == 0)
     std::cout << "Degree: " << degree_finite_element << std::endl;

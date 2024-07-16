@@ -221,7 +221,7 @@ namespace dealii
     /**
      * Fine operator evaluation.
      */
-    const MatrixType &fine_operator;
+    // const MatrixType &fine_operator;
 
     /**
      * Vector of (pointers of) Trilinos Matrices storing two-level projections.
@@ -235,9 +235,7 @@ namespace dealii
      * Constructor. It takes the matrix-free operator evaluation on the finest
      * level, and a series of transfers from levels.
      */
-    AmgProjector(const MatrixType &fine_operator_,
-                 const std::vector<TrilinosWrappers::SparseMatrix> &transfers_)
-      : fine_operator{fine_operator_}
+    AmgProjector(const std::vector<TrilinosWrappers::SparseMatrix> &transfers_)
     {
       // Only DGQ discretizations are supported.
 
@@ -245,9 +243,10 @@ namespace dealii
 
       // Check parallel layout is identical on every level
       // for (unsigned int l = 0; l < transfers_.size(); ++l)
-      Assert((fine_operator.locally_owned_range_indices() ==
-              transfers_[transfers_.size() - 1].locally_owned_range_indices()),
-             ExcInternalError());
+      // Assert((fine_operator.locally_owned_range_indices() ==
+      //         transfers_[transfers_.size() -
+      //         1].locally_owned_range_indices()),
+      //        ExcInternalError());
 
       // get communicator from first Trilinos matrix
       communicator = transfers_[0].get_mpi_communicator();
@@ -271,7 +270,8 @@ namespace dealii
      * matrix[l] = P_l^T A_l-1 P_l, being P_l the two-level injection.
      */
     void
-    compute_level_matrices(MGLevelObject<MatrixType> &mg_matrices)
+    compute_level_matrices(
+      MGLevelObject<std::unique_ptr<MatrixType>> &mg_matrices)
     {
       Assert(mg_matrices.n_levels() > 1,
              ExcMessage("Vector of matrices set to invalid size."));
@@ -280,11 +280,12 @@ namespace dealii
       const unsigned int min_level = mg_matrices.min_level();
       const unsigned int max_level = mg_matrices.max_level();
 
-      mg_matrices[max_level].copy_from(fine_operator); // finest level
+      // mg_matrices[max_level].copy_from(fine_operator); // finest level
+      // MPI_Barrier(communicator);
+      // std::cout << "copied finest operator " << max_level << std::endl;
 
       // do the same, but using transfers to define level matrices
       // std::cout << "min level = " << min_level << std::endl;
-      // std::cout << "max level = " << max_level << std::endl;
       for (unsigned int l = max_level; l-- > min_level;)
         {
           // Set parallel layout of intermediate operators AP
@@ -293,12 +294,51 @@ namespace dealii
             transfer_matrices[l]->locally_owned_domain_indices(),
             communicator);
 
+          mg_matrices[l] = std::make_unique<MatrixType>();
+
           // First, compute AP
-          mg_matrices[l + 1].mmult(
+          mg_matrices[l + 1]->mmult(
             level_operator,
             *transfer_matrices[l]); // result stored in level_operators[l]
                                     // Multiply by the transpose
-          transfer_matrices[l]->Tmmult(mg_matrices[l], level_operator);
+          transfer_matrices[l]->Tmmult(*mg_matrices[l], level_operator);
+        }
+    }
+
+
+
+    void
+    compute_level_matrices(MGLevelObject<MatrixType &> mg_matrices)
+    {
+      Assert(mg_matrices.n_levels() > 1,
+             ExcMessage("Vector of matrices set to invalid size."));
+      using VectorType = LinearAlgebra::distributed::Vector<Number>;
+
+      const unsigned int min_level = mg_matrices.min_level();
+      const unsigned int max_level = mg_matrices.max_level();
+
+      // mg_matrices[max_level].copy_from(fine_operator); // finest level
+      // MPI_Barrier(communicator);
+      // std::cout << "copied finest operator " << max_level << std::endl;
+
+      // do the same, but using transfers to define level matrices
+      // std::cout << "min level = " << min_level << std::endl;
+      for (unsigned int l = max_level; l-- > min_level;)
+        {
+          // Set parallel layout of intermediate operators AP
+          MatrixType level_operator(
+            transfer_matrices[l]->locally_owned_range_indices(),
+            transfer_matrices[l]->locally_owned_domain_indices(),
+            communicator);
+
+          // mg_matrices[l] = std::make_unique<MatrixType>();
+
+          // First, compute AP
+          mg_matrices[l + 1]->mmult(
+            level_operator,
+            *transfer_matrices[l]); // result stored in level_operators[l]
+                                    // Multiply by the transpose
+          transfer_matrices[l]->Tmmult(*mg_matrices[l], level_operator);
         }
     }
   };
