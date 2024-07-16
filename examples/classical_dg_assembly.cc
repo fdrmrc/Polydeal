@@ -24,6 +24,8 @@
 #include <deal.II/numerics/vector_tools_integrate_difference.h>
 
 // Trilinos linear algebra is employed for parallel computations
+#include <deal.II/lac/solver_cg.h>
+#include <deal.II/lac/trilinos_precondition.h>
 #include <deal.II/lac/trilinos_solver.h>
 #include <deal.II/lac/trilinos_sparse_matrix.h>
 #include <deal.II/lac/trilinos_vector.h>
@@ -165,7 +167,7 @@ public:
   void
   run();
 
-  double penalty = 100.;
+  double penalty;
 };
 
 
@@ -179,7 +181,9 @@ Poisson<dim>::Poisson(const unsigned int fe_degree)
   , pcout(std::cout, Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
   , solver_control(1)
   , solver(solver_control)
-{}
+{
+  penalty = .5 * fe_degree * (fe_degree + 1);
+}
 
 template <int dim>
 void
@@ -282,12 +286,14 @@ Poisson<dim>::assemble_system()
 
           // distribute volumetric DoFs
           cell->get_dof_indices(local_dof_indices);
-
+          double hf = 0.;
           for (const auto f : cell->face_indices())
             {
-              const double hf = cell->face(f)->measure();
+              const double extent1 = cell->measure() / cell->face(f)->measure();
+
               if (cell->face(f)->at_boundary())
                 {
+                  hf = (1. / extent1 + 1. / extent1);
                   fe_faces0.reinit(cell, f);
 
                   const auto &face_q_points = fe_faces0.get_quadrature_points();
@@ -313,13 +319,13 @@ Poisson<dim>::assemble_system()
                                  fe_faces0.shape_grad(i, q_index) *
                                    normals[q_index] *
                                    fe_faces0.shape_value(j, q_index) +
-                                 (penalty / hf) *
+                                 (penalty * hf) *
                                    fe_faces0.shape_value(i, q_index) *
                                    fe_faces0.shape_value(j, q_index)) *
                                 fe_faces0.JxW(q_index);
                             }
                           cell_rhs(i) +=
-                            ((penalty / hf) *
+                            ((penalty * hf) *
                                analytical_solution_values[q_index] *
                                fe_faces0.shape_value(i, q_index) -
                              fe_faces0.shape_grad(i, q_index) *
@@ -332,10 +338,14 @@ Poisson<dim>::assemble_system()
               else
                 {
                   const auto &neigh_cell = cell->neighbor(f);
-
                   if (cell->global_active_cell_index() <
                       neigh_cell->global_active_cell_index())
                     {
+                      const double extent2 =
+                        neigh_cell->measure() /
+                        neigh_cell->face(cell->neighbor_of_neighbor(f))
+                          ->measure();
+                      hf = (1. / extent1 + 1. / extent2);
                       fe_faces0.reinit(cell, f);
                       fe_faces1.reinit(neigh_cell,
                                        cell->neighbor_of_neighbor(f));
@@ -367,8 +377,8 @@ Poisson<dim>::assemble_system()
                                      0.5 * fe_faces0.shape_grad(j, q_index) *
                                        normals[q_index] *
                                        fe_faces0.shape_value(i, q_index) +
-                                     (penalty)*fe_faces0.shape_value(i,
-                                                                     q_index) *
+                                     (penalty * hf) *
+                                       fe_faces0.shape_value(i, q_index) *
                                        fe_faces0.shape_value(j, q_index)) *
                                     fe_faces0.JxW(q_index);
 
@@ -379,8 +389,8 @@ Poisson<dim>::assemble_system()
                                      0.5 * fe_faces1.shape_grad(j, q_index) *
                                        normals[q_index] *
                                        fe_faces0.shape_value(i, q_index) -
-                                     (penalty)*fe_faces0.shape_value(i,
-                                                                     q_index) *
+                                     (penalty * hf) *
+                                       fe_faces0.shape_value(i, q_index) *
                                        fe_faces1.shape_value(j, q_index)) *
                                     fe_faces1.JxW(q_index);
 
@@ -392,8 +402,8 @@ Poisson<dim>::assemble_system()
                                      0.5 * fe_faces0.shape_grad(j, q_index) *
                                        normals[q_index] *
                                        fe_faces1.shape_value(i, q_index) -
-                                     (penalty)*fe_faces1.shape_value(i,
-                                                                     q_index) *
+                                     (penalty * hf) *
+                                       fe_faces1.shape_value(i, q_index) *
                                        fe_faces0.shape_value(j, q_index)) *
                                     fe_faces1.JxW(q_index);
 
@@ -405,8 +415,8 @@ Poisson<dim>::assemble_system()
                                      0.5 * fe_faces1.shape_grad(j, q_index) *
                                        normals[q_index] *
                                        fe_faces1.shape_value(i, q_index) +
-                                     (penalty)*fe_faces1.shape_value(i,
-                                                                     q_index) *
+                                     (penalty * hf) *
+                                       fe_faces1.shape_value(i, q_index) *
                                        fe_faces1.shape_value(j, q_index)) *
                                     fe_faces1.JxW(q_index);
                                 }
@@ -456,7 +466,14 @@ void
 Poisson<dim>::solve()
 {
   TrilinosWrappers::MPI::Vector completely_distributed_solution(system_rhs);
-  solver.solve(system_matrix, completely_distributed_solution, system_rhs);
+  SolverControl                 control(system_rhs.size(), 1e-12, false, false);
+  SolverCG<TrilinosWrappers::MPI::Vector> solver(control);
+  TrilinosWrappers::PreconditionIdentity  precondition_id;
+  solver.solve(system_matrix,
+               completely_distributed_solution,
+               system_rhs,
+               precondition_id);
+  pcout << "Number of outer iterations: " << control.last_step() << std::endl;
   constraints.distribute(completely_distributed_solution);
   locally_relevant_solution = completely_distributed_solution;
 }
