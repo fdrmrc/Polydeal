@@ -26,6 +26,8 @@
 #include <deal.II/numerics/vector_tools_integrate_difference.h>
 
 // Trilinos linear algebra is employed for parallel computations
+#include <deal.II/base/timer.h>
+
 #include <deal.II/lac/precondition.h>
 #include <deal.II/lac/solver_cg.h>
 #include <deal.II/lac/trilinos_precondition.h>
@@ -376,7 +378,7 @@ private:
   void
   assemble_time_terms();
   void
-  update_w();
+  update_w_and_ion();
   void
   solve_w();
   void
@@ -393,6 +395,7 @@ private:
   FE_DGQ<dim>                                    dg_fe;
   DoFHandler<dim>                                classical_dh;
   ConditionalOStream                             pcout;
+  TimerOutput                                    computing_timer;
   SparsityPattern                                sparsity;
   AffineConstraints<double>                      constraints;
   TrilinosWrappers::PreconditionAMG              amg_preconditioner;
@@ -419,6 +422,8 @@ private:
   LinearAlgebra::distributed::Vector<double> locally_relevant_w1_current;
   LinearAlgebra::distributed::Vector<double> locally_relevant_w2_pre;
   LinearAlgebra::distributed::Vector<double> locally_relevant_w2_current;
+
+  LinearAlgebra::distributed::Vector<double> ion_at_dofs;
 
   // Activation map
   using VectorType = LinearAlgebra::distributed::Vector<double>;
@@ -490,6 +495,10 @@ IonicModel<dim>::IonicModel(const ModelParameters &parameters)
   , dg_fe(parameters.fe_degree)
   , classical_dh(tria)
   , pcout(std::cout, Utilities::MPI::this_mpi_process(communicator) == 0)
+  , computing_timer(communicator,
+                    pcout,
+                    TimerOutput::summary,
+                    TimerOutput::wall_times)
   , dt(parameters.dt)
   , end_time(parameters.final_time)
   , end_time_current(parameters.final_time_current)
@@ -561,6 +570,8 @@ template <int dim>
 void
 IonicModel<dim>::setup_problem()
 {
+  TimerOutput::Scope t(computing_timer, "Setup DoFs");
+
   const unsigned int quadrature_degree = 2 * dg_fe.degree + 1;
   fe_values =
     std::make_unique<FEValues<dim>>(mapping,
@@ -625,10 +636,11 @@ IonicModel<dim>::setup_problem()
   locally_relevant_w2_pre.reinit(locally_owned_dofs, communicator);
   locally_relevant_w2_current.reinit(locally_owned_dofs, communicator);
 
+  ion_at_dofs.reinit(locally_owned_dofs, communicator);
+
   activation_map.reinit(locally_owned_dofs, communicator);
 
   Iext = std::make_unique<AppliedCurrent<dim>>(end_time_current);
-  // analytical_solution = std::make_unique<Solution<dim>>();
 }
 
 
@@ -636,6 +648,8 @@ template <int dim>
 void
 IonicModel<dim>::setup_multigrid()
 {
+  TimerOutput::Scope t(computing_timer, "Setup polytopal multigrid");
+
   // // Start building R-tree
   namespace bgi = boost::geometry::index;
   static constexpr unsigned int max_elem_per_node =
@@ -723,8 +737,6 @@ IonicModel<dim>::setup_multigrid()
   // pcout << "Fill injection matrices between agglomerated levels" <<
   // std::endl;
   injection_matrices_two_level.resize(total_tree_levels);
-  // pcout << "Number of injection matrices: "
-  //     << injection_matrices_two_level.size() << std::endl;
   for (unsigned int l = 1; l < total_tree_levels; ++l)
     {
       // pcout << "from level " << l - 1 << " to level " << l << std::endl;
@@ -766,12 +778,6 @@ IonicModel<dim>::setup_multigrid()
 
   pcout << "Projected using transfer_matrices:" << std::endl;
 
-  // pcout << "Check dimensions of level operators" << std::endl;
-  // for (unsigned int l = 0; l < total_tree_levels + 1; ++l)
-  // pcout << "Number of rows and cols operator " << l << ":("
-  //     << multigrid_matrices[l]->m() << "," << multigrid_matrices[l]->n()
-  //     << ")" << std::endl;
-
 
   // Setup multigrid
 
@@ -784,10 +790,6 @@ IonicModel<dim>::setup_multigrid()
   using SmootherType = PreconditionChebyshev<LevelMatrixType, VectorType>;
 
   smoother_data.resize(0, total_tree_levels + 1);
-
-  // system_matrix.compute_diagonal();
-  // const VectorType &fine_diag_inverse_vector =
-  // system_matrix_dg.get_matrix_diagonal_inverse();
 
   // Fine level
   diag_inverses.resize(total_tree_levels + 1);
@@ -920,11 +922,15 @@ IonicModel<dim>::Iion(const double u_old, const std::vector<double> &w) const
 
 template <int dim>
 void
-IonicModel<dim>::update_w()
+IonicModel<dim>::update_w_and_ion()
 {
+  TimerOutput::Scope t(computing_timer, "Update w and ion at DoFs");
+
   // update w from t_n to t_{n+1} on the locally owned DoFs for all w's
+  // On top of that, evaluate Iion at DoFs
   for (const types::global_dof_index i : locally_owned_dofs)
     {
+      // First, update w's
       std::array<double, 3> a      = alpha(locally_relevant_solution_pre[i]);
       std::array<double, 3> b      = beta(locally_relevant_solution_pre[i]);
       std::array<double, 3> w_infs = w_inf(locally_relevant_solution_pre[i]);
@@ -940,19 +946,26 @@ IonicModel<dim>::update_w()
       locally_relevant_w2_current[i] =
         locally_relevant_w2_pre[i] +
         dt * ((b[2] - a[2]) * locally_relevant_w2_pre[i] + a[2] * w_infs[2]);
+
+      // Evaluate ion at u_n, w_{n+1}
+      ion_at_dofs[i] = Iion(locally_relevant_solution_pre[i],
+                            {locally_relevant_w0_current[i],
+                             locally_relevant_w1_current[i],
+                             locally_relevant_w2_current[i]});
     }
 }
 
 
 
 /*
- * Assemble the time independent block chi*c*M/dt + A, which will be added to
- * the non-linear reaction matrix at each time step
+ * Assemble the time independent block chi*c*M/dt + A
  */
 template <int dim>
 void
 IonicModel<dim>::assemble_time_independent_matrix()
 {
+  TimerOutput::Scope t(computing_timer, "Assemble time independent terms");
+
   const unsigned int dofs_per_cell = dg_fe.n_dofs_per_cell();
 
   FullMatrix<double> cell_matrix(dofs_per_cell, dofs_per_cell);
@@ -1134,6 +1147,8 @@ template <int dim>
 void
 IonicModel<dim>::assemble_time_terms()
 {
+  TimerOutput::Scope t(computing_timer, "Assemble time dependent terms");
+
   const unsigned int dofs_per_cell = dg_fe.n_dofs_per_cell();
   Vector<double>     cell_rhs(dofs_per_cell);
   Vector<double>     cell_ion(dofs_per_cell);
@@ -1156,22 +1171,8 @@ IonicModel<dim>::assemble_time_terms()
           std::vector<double> applied_currents(n_qpoints);
           Iext->value_list(q_points, applied_currents);
 
-          std::vector<double> w0_current_at_qpoints(n_qpoints);
-          fe_values->get_function_values(locally_relevant_w0_current,
-                                         w0_current_at_qpoints);
-
-          std::vector<double> w1_current_at_qpoints(n_qpoints);
-          fe_values->get_function_values(locally_relevant_w1_current,
-                                         w1_current_at_qpoints);
-
-          std::vector<double> w2_current_at_qpoints(n_qpoints);
-          fe_values->get_function_values(locally_relevant_w2_current,
-                                         w2_current_at_qpoints);
-
-          std::vector<double> sol_pre_at_qpoints(n_qpoints);
-          fe_values->get_function_values(locally_relevant_solution_pre,
-                                         sol_pre_at_qpoints);
-
+          std::vector<double> ion_at_qpoints(n_qpoints);
+          fe_values->get_function_values(ion_at_dofs, ion_at_qpoints);
 
           // Get local values of current solution, to be used inside the non
           // linear reaction matrix
@@ -1180,17 +1181,12 @@ IonicModel<dim>::assemble_time_terms()
 
           for (unsigned int q_index : fe_values->quadrature_point_indices())
             {
-              std::vector<double> ws_at_qpoint{w0_current_at_qpoints[q_index],
-                                               w1_current_at_qpoints[q_index],
-                                               w2_current_at_qpoints[q_index]};
-              const double        ion_at_qpoint =
-                Iion(sol_pre_at_qpoints[q_index], ws_at_qpoint);
-
               for (unsigned int i = 0; i < dofs_per_cell; ++i)
                 {
-                  cell_rhs(i) += (applied_currents[q_index] - ion_at_qpoint) *
-                                 fe_values->shape_value(i, q_index) *
-                                 fe_values->JxW(q_index);
+                  cell_rhs(i) +=
+                    (applied_currents[q_index] - ion_at_qpoints[q_index]) *
+                    fe_values->shape_value(i, q_index) *
+                    fe_values->JxW(q_index);
                 }
             }
 
@@ -1208,14 +1204,13 @@ template <int dim>
 void
 IonicModel<dim>::solve()
 {
+  TimerOutput::Scope t(computing_timer, "Solve");
+
   if (param.use_amg)
-    {
-      amg_preconditioner.initialize(system_matrix);
-      solver.solve(system_matrix,
-                   locally_relevant_solution_current,
-                   system_rhs,
-                   amg_preconditioner);
-    }
+    solver.solve(system_matrix,
+                 locally_relevant_solution_current,
+                 system_rhs,
+                 amg_preconditioner);
   else
     solver.solve(system_matrix,
                  locally_relevant_solution_current,
@@ -1235,6 +1230,8 @@ template <int dim>
 void
 IonicModel<dim>::output_results()
 {
+  TimerOutput::Scope t(computing_timer, "Output results");
+
   DataOut<dim> data_out;
   data_out.attach_dof_handler(classical_dh);
   data_out.add_data_vector(locally_relevant_solution_current,
@@ -1308,11 +1305,13 @@ IonicModel<dim>::run()
 
   // Create mesh
   Triangulation<dim> tria_dummy;
-  GridIn<dim>        grid_in;
-  grid_in.attach_triangulation(tria_dummy);
-  std::ifstream mesh_file(
-    "../../meshes/idealized_lv.msh"); // idealized mesh of left ventricle
-  grid_in.read_msh(mesh_file);
+  GridGenerator::hyper_cube(tria_dummy);
+  tria_dummy.refine_global(4);
+  // GridIn<dim>        grid_in;
+  // grid_in.attach_triangulation(tria_dummy);
+  // std::ifstream mesh_file(
+  //   "../../meshes/idealized_lv.msh"); // idealized mesh of left ventricle
+  // grid_in.read_msh(mesh_file);
 
   // scale triangulation by a suitable factor in order to work with mm
   const double scale_factor = 1e-3;
@@ -1332,12 +1331,10 @@ IonicModel<dim>::run()
         << std::endl;
 
   setup_problem();
-
   pcout << "   Number of degrees of freedom: " << classical_dh.n_dofs()
         << std::endl;
 
   // Set initial conditions
-
   locally_relevant_solution_pre = -84e-3;
   // locally_relevant_solution_pre     = 0.;
   locally_relevant_solution_current = locally_relevant_solution_pre;
@@ -1374,9 +1371,13 @@ IonicModel<dim>::run()
 
   system_matrix.copy_from(mass_matrix);   // M/dt
   system_matrix.add(+1., laplace_matrix); // M/dt + A
-  setup_multigrid();
-  pcout << "Setup multigrid: done " << std::endl;
 
+  // Depending on the preconditioner type, use AMG or polytopal multigrid.
+  if (param.use_amg)
+    amg_preconditioner.initialize(system_matrix);
+  else
+    setup_multigrid();
+  pcout << "Setup multigrid: done " << std::endl;
 
   while (time <= end_time)
     {
@@ -1384,7 +1385,7 @@ IonicModel<dim>::run()
       Iext->set_time(time);
 
       // Solve the ODEs for w
-      update_w();
+      update_w_and_ion();
       //   Assemble time dependent terms
       assemble_time_terms();
 
@@ -1414,6 +1415,7 @@ IonicModel<dim>::run()
       system_rhs = 0.;
     }
   pcout << std::endl;
+  computing_timer.print_summary();
 }
 
 
@@ -1427,10 +1429,10 @@ main(int argc, char *argv[])
   parameters.control.set_tolerance(1e-13); // used in CG solver
   parameters.control.set_max_steps(2000);
 
-  parameters.use_amg            = true;
-  parameters.fe_degree          = 2;
+  parameters.use_amg            = false;
+  parameters.fe_degree          = 1;
   parameters.dt                 = 1e-4;
-  parameters.final_time         = 0.8;
+  parameters.final_time         = 0.001;
   parameters.final_time_current = 3e-3;
 
   IonicModel<3> problem(parameters);
