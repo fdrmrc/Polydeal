@@ -55,7 +55,8 @@
 
 using namespace dealii;
 
-static constexpr double       TOL            = 2.5e-3;
+// static constexpr double       TOL            = 2.5e-3;
+static constexpr double       TOL            = 3e-3;
 static constexpr unsigned int starting_level = 2;
 
 namespace Utils
@@ -115,6 +116,7 @@ struct ModelParameters
   double       k3                 = 2.0994;
   double       kso                = 2.0;
   bool         use_amg            = false;
+  std::string  mesh_dir           = "../../meshes/idealized_lv.msh";
 
   // eventually compute activation map at each time step
   bool compute_activation_map = false;
@@ -128,9 +130,12 @@ class AppliedCurrent : public Function<dim>
 public:
   AppliedCurrent(const double final_time_current)
     : Function<dim>()
-    , p1{-0.015598, -0.0173368, 0.0307704}
-    , p2{0.0264292, -0.0043322, 0.0187656}
-    , p3{0.00155326, 0.0252701, 0.0248006}
+    // , p1{-0.015598, -0.0173368, 0.0307704}
+    // , p2{0.0264292, -0.0043322, 0.0187656}
+    // , p3{0.00155326, 0.0252701, 0.0248006}
+    , p1{0.0981402, -0.0970197, -0.0406029}
+    , p2{0.0981402, -0.0970197, -0.0406029}
+    , p3{0.0981402, -0.0970197, -0.0406029}
   {
     t_end_current = final_time_current;
     p.push_back(p1);
@@ -1326,8 +1331,7 @@ IonicModel<dim>::run()
   Triangulation<dim> tria_dummy;
   GridIn<dim>        grid_in;
   grid_in.attach_triangulation(tria_dummy);
-  std::ifstream mesh_file(
-    "../../meshes/idealized_lv.msh"); // idealized mesh of left ventricle
+  std::ifstream mesh_file(param.mesh_dir); // idealized mesh of left ventricle
   grid_in.read_msh(mesh_file);
 
   // scale triangulation by a suitable factor in order to work with mm
@@ -1448,7 +1452,9 @@ main(int argc, char *argv[])
   parameters.control.set_tolerance(1e-13); // used in CG solver
   parameters.control.set_max_steps(2000);
 
-  parameters.use_amg            = false;
+  parameters.use_amg = false;
+  // parameters.mesh_dir           = "../../meshes/idealized_lv.msh";
+  parameters.mesh_dir           = "../../meshes/realistic_lv.msh";
   parameters.fe_degree          = 1;
   parameters.dt                 = 1e-4;
   parameters.final_time         = 0.3;
