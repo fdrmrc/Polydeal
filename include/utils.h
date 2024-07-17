@@ -245,9 +245,9 @@ namespace Utils
    *
    * @note Supported direct solver types are: SparseDirectUMFPACK and
    * TrilinosWrappers::SolverDirect. Available vector types are the ones
-   * supported by the respective vmult() interfaces by such types. This means
-   * that SparseDirectUMFPACK supports only serial deal.II vectors, while
-   * TrilinosWrappers::SolverDirect supports as parallel vector types:
+   * supported by the respective solve() (or vmult()) interfaces by such types.
+   * This means that SparseDirectUMFPACK supports only serial deal.II vectors,
+   * while TrilinosWrappers::SolverDirect supports as parallel vector types:
    * LinearAlgebra::distributed::Vector and TrilinosWrappers::MPI::Vector.
    */
   template <typename VectorType, typename MatrixType, typename SolverType>
@@ -255,7 +255,8 @@ namespace Utils
   {
   public:
     explicit MGCoarseDirect(const MatrixType &matrix)
-      : coarse_matrix(matrix)
+      : direct_solver(TrilinosWrappers::SolverDirect::AdditionalData())
+      , coarse_matrix(matrix)
     {
       // Check if matrix types are supported
       static constexpr bool is_serial_matrix =
@@ -286,7 +287,8 @@ namespace Utils
         }
       else
         {
-          DEAL_II_NOT_IMPLEMENTED();
+          AssertThrow(false, ExcNotImplemented());
+          // DEAL_II_NOT_IMPLEMENTED(); //not available in older releases
         }
 
 
@@ -305,7 +307,7 @@ namespace Utils
       AssertDimension(coarse_matrix.m(), dst.size());
       double start, stop;
       start = MPI_Wtime();
-      direct_solver.vmult(dst, src);
+      const_cast<SolverType &>(direct_solver).solve(dst, src);
       stop = MPI_Wtime();
 #ifdef AGGLO_DEBUG
       MPI_Comm comm = dst.get_mpi_communicator();

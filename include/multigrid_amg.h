@@ -308,7 +308,7 @@ namespace dealii
 
 
     void
-    compute_level_matrices(MGLevelObject<MatrixType &> mg_matrices)
+    compute_level_matrices(MGLevelObject<MatrixType> &mg_matrices)
     {
       Assert(mg_matrices.n_levels() > 1,
              ExcMessage("Vector of matrices set to invalid size."));
@@ -331,14 +331,12 @@ namespace dealii
             transfer_matrices[l]->locally_owned_domain_indices(),
             communicator);
 
-          // mg_matrices[l] = std::make_unique<MatrixType>();
-
           // First, compute AP
-          mg_matrices[l + 1]->mmult(
+          mg_matrices[l + 1].mmult(
             level_operator,
             *transfer_matrices[l]); // result stored in level_operators[l]
                                     // Multiply by the transpose
-          transfer_matrices[l]->Tmmult(*mg_matrices[l], level_operator);
+          transfer_matrices[l]->Tmmult(mg_matrices[l], level_operator);
         }
     }
   };
