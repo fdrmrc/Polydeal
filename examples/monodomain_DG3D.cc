@@ -57,7 +57,7 @@ using namespace dealii;
 
 // static constexpr double       TOL            = 2.5e-3;
 static constexpr double       TOL            = 3e-3;
-static constexpr unsigned int starting_level = 2;
+static constexpr unsigned int starting_level = 1;
 
 namespace Utils
 {
@@ -72,6 +72,45 @@ namespace Utils
   {
     return (0.5 * (1 + std::tanh(k * (x - x0))));
   }
+
+  template <typename MatrixType, typename Number>
+  class MGCoarseIterative
+    : public MGCoarseGridBase<LinearAlgebra::distributed::Vector<Number>>
+  {
+  public:
+    MGCoarseIterative()
+    {}
+
+    void
+    initialize(const MatrixType &matrix)
+    {
+      coarse_matrix = &matrix;
+      precondition.initialize(*coarse_matrix);
+    }
+
+    virtual void
+    operator()(
+      const unsigned int                                level,
+      LinearAlgebra::distributed::Vector<double>       &dst,
+      const LinearAlgebra::distributed::Vector<double> &src) const override
+    {
+      (void)level;
+      ReductionControl solver_control(1e4, 1e-50, 1e-10);
+      SolverCG<LinearAlgebra::distributed::Vector<double>> solver_coarse(
+        solver_control);
+      double start, stop;
+      start = MPI_Wtime();
+      solver_coarse.solve(*coarse_matrix, dst, src, precondition);
+      stop = MPI_Wtime();
+
+      if (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
+        std::cout << "Coarse solver elapsed time: " << stop - start << "[s]"
+                  << std::endl;
+    }
+
+    const MatrixType                 *coarse_matrix;
+    TrilinosWrappers::PreconditionILU precondition;
+  };
 
 } // namespace Utils
 
@@ -116,7 +155,8 @@ struct ModelParameters
   double       k3                 = 2.0994;
   double       kso                = 2.0;
   bool         use_amg            = false;
-  std::string  mesh_dir           = "../../meshes/idealized_lv.msh";
+
+  std::string mesh_dir = "../../meshes/idealized_lv.msh";
 
   // eventually compute activation map at each time step
   bool compute_activation_map = false;
@@ -130,12 +170,12 @@ class AppliedCurrent : public Function<dim>
 public:
   AppliedCurrent(const double final_time_current)
     : Function<dim>()
-    // , p1{-0.015598, -0.0173368, 0.0307704}
-    // , p2{0.0264292, -0.0043322, 0.0187656}
-    // , p3{0.00155326, 0.0252701, 0.0248006}
-    , p1{0.0981402, -0.0970197, -0.0406029}
-    , p2{0.0981402, -0.0970197, -0.0406029}
-    , p3{0.0981402, -0.0970197, -0.0406029}
+    , p1{-0.015598, -0.0173368, 0.0307704}
+    , p2{0.0264292, -0.0043322, 0.0187656}
+    , p3{0.00155326, 0.0252701, 0.0248006}
+  // , p1{0.0981402, -0.0970197, -0.0406029}
+  // , p2{0.0981402, -0.0970197, -0.0406029}
+  // , p3{0.0981402, -0.0970197, -0.0406029}
   {
     t_end_current = final_time_current;
     p.push_back(p1);
@@ -480,9 +520,8 @@ private:
 
   std::unique_ptr<mg::Matrix<VectorType>> mg_matrix;
 
-  std::unique_ptr<Utils::MGCoarseDirect<VectorType,
-                                        TrilinosWrappers::SparseMatrix,
-                                        TrilinosWrappers::SolverDirect>>
+  std::unique_ptr<
+    Utils::MGCoarseIterative<TrilinosWrappers::SparseMatrix, double>>
     mg_coarse;
 
   std::unique_ptr<mg::SmootherRelaxation<SmootherType, VectorType>> mg_smoother;
@@ -870,11 +909,9 @@ IonicModel<dim>::setup_multigrid()
   // Define coarse grid solver
   const unsigned int min_level = 0;
 
-  mg_coarse =
-    std::make_unique<Utils::MGCoarseDirect<VectorType,
-                                           TrilinosWrappers::SparseMatrix,
-                                           TrilinosWrappers::SolverDirect>>(
-      multigrid_matrices[min_level]);
+  mg_coarse = std::make_unique<
+    Utils::MGCoarseIterative<TrilinosWrappers::SparseMatrix, double>>();
+  mg_coarse->initialize(multigrid_matrices[min_level]);
 
   pcout << "Coarse solver initialized" << std::endl;
 
@@ -1405,6 +1442,10 @@ IonicModel<dim>::run()
     setup_multigrid();
   pcout << "Setup multigrid: done " << std::endl;
 
+  double              min_value = std::numeric_limits<double>::min();
+  std::vector<double> min_values;
+  min_values.push_back(-84e-3);
+
   while (time <= end_time)
     {
       time += dt;
@@ -1429,6 +1470,15 @@ IonicModel<dim>::run()
       if ((iter_count % 10 == 0) || time < param.final_time_current)
         output_results();
 
+      // Store minimum value current action potential on each processor
+      min_value = *locally_relevant_solution_current.begin();
+      for (const double v : locally_relevant_solution_current)
+        if (v < min_value)
+          min_value = v;
+
+      min_values.push_back(Utilities::MPI::min(min_value, communicator));
+      pcout << Utilities::MPI::min(min_value, communicator) << std::endl;
+
       // update solutions
       locally_relevant_solution_pre = locally_relevant_solution_current;
       locally_relevant_w0_pre       = locally_relevant_w0_current;
@@ -1439,6 +1489,21 @@ IonicModel<dim>::run()
       system_rhs = 0.;
     }
   pcout << std::endl;
+
+  // Writing minimum values to file
+  if (Utilities::MPI::this_mpi_process(communicator) == 0)
+    {
+      std::ofstream file_min_values;
+      file_min_values.open("min_values_ord2" + std::to_string(param.fe_degree) +
+                           ".txt");
+      for (const double x : min_values)
+        {
+          file_min_values << x;
+          file_min_values << ",";
+          file_min_values << "\n";
+        }
+      file_min_values.close();
+    }
 }
 
 
@@ -1452,12 +1517,12 @@ main(int argc, char *argv[])
   parameters.control.set_tolerance(1e-13); // used in CG solver
   parameters.control.set_max_steps(2000);
 
-  parameters.use_amg = false;
-  // parameters.mesh_dir           = "../../meshes/idealized_lv.msh";
-  parameters.mesh_dir           = "../../meshes/realistic_lv.msh";
+  parameters.use_amg  = false;
+  parameters.mesh_dir = "../../meshes/idealized_lv.msh";
+  // parameters.mesh_dir           = "../../meshes/realistic_lv.msh";
   parameters.fe_degree          = 1;
   parameters.dt                 = 1e-4;
-  parameters.final_time         = 0.3;
+  parameters.final_time         = 0.2;
   parameters.final_time_current = 3e-3;
 
   IonicModel<3> problem(parameters);
