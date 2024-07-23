@@ -305,8 +305,7 @@ public:
   create_agglomeration_sparsity_pattern(
     SparsityPatternType             &sparsity_pattern,
     const AffineConstraints<Number> &constraints = AffineConstraints<Number>(),
-    const bool                       keep_constrained_dofs = true,
-    const types::subdomain_id subdomain_id = numbers::invalid_subdomain_id);
+    const bool                       keep_constrained_dofs = true);
 
   /**
    * Store internally that the given cells are agglomerated. The convenction we
