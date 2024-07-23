@@ -703,14 +703,21 @@ AgglomerationHandler<dim, spacedim>::create_agglomeration_sparsity_pattern(
         {
           const unsigned int n_current_faces = polytope->n_faces();
           polytope->get_dof_indices(current_dof_indices);
+          const CellId current_poly_id = polytope->id();
           for (unsigned int f = 0; f < n_current_faces; ++f)
             {
               const auto &neigh_polytope = polytope->neighbor(f);
-              if (neigh_polytope.state() == IteratorState::valid)
+              if (neigh_polytope.state() == IteratorState::valid &&
+                  (current_poly_id < neigh_polytope->id()))
                 {
                   neigh_polytope->get_dof_indices(neighbor_dof_indices);
                   constraints.add_entries_local_to_global(current_dof_indices,
                                                           neighbor_dof_indices,
+                                                          dsp,
+                                                          keep_constrained_dofs,
+                                                          {});
+                  constraints.add_entries_local_to_global(neighbor_dof_indices,
+                                                          current_dof_indices,
                                                           dsp,
                                                           keep_constrained_dofs,
                                                           {});
