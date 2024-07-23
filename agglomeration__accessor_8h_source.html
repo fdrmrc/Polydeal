@@ -324,7 +324,7 @@ $(function(){initNavTree('agglomeration__accessor_8h_source.html',''); initResiz
 <div class="foldopen" id="foldopen00302" data-start="{" data-end="}">
 <div class="line"><a id="l00302" name="l00302"></a><span class="lineno"><a class="line" href="class_agglomeration_accessor.html#afe96e5b90b05551ebbc1684bb69a1842">  302</a></span><a class="code hl_function" href="class_agglomeration_accessor.html#afe96e5b90b05551ebbc1684bb69a1842">AgglomerationAccessor&lt;dim, spacedim&gt;::n_faces</a>()<span class="keyword"> const</span></div>
 <div class="line"><a id="l00303" name="l00303"></a><span class="lineno">  303</span><span class="keyword"></span>{</div>
-<div class="line"><a id="l00304" name="l00304"></a><span class="lineno">  304</span>  Assert(!handler-&gt;is_slave_cell(<a class="code hl_function" href="class_agglomeration_iterator.html#a129ba4cc3629370f7a9eebfb95f4a34b">master_cell</a>),</div>
+<div class="line"><a id="l00304" name="l00304"></a><span class="lineno">  304</span>  <a class="code hl_defineRef" href="http://www.dealii.org/developer/doxygen/deal.II/group__Exceptions.html#ga70a0bb353656e704acf927945277bbc6">Assert</a>(!handler-&gt;is_slave_cell(<a class="code hl_function" href="class_agglomeration_iterator.html#a129ba4cc3629370f7a9eebfb95f4a34b">master_cell</a>),</div>
 <div class="line"><a id="l00305" name="l00305"></a><span class="lineno">  305</span>         ExcMessage(<span class="stringliteral">&quot;You cannot pass a slave cell.&quot;</span>));</div>
 <div class="line"><a id="l00306" name="l00306"></a><span class="lineno">  306</span>  <span class="keywordflow">return</span> handler-&gt;number_of_agglomerated_faces[present_index];</div>
 <div class="line"><a id="l00307" name="l00307"></a><span class="lineno">  307</span>}</div>
@@ -528,7 +528,7 @@ $(function(){initNavTree('agglomeration__accessor_8h_source.html',''); initResiz
 <div class="line"><a id="l00495" name="l00495"></a><span class="lineno">  495</span>  <span class="keyword">const</span> <a class="code hl_classRef" href="http://www.dealii.org/developer/doxygen/deal.II/classCellId.html">CellId</a>                              &amp;master_cell_id,</div>
 <div class="line"><a id="l00496" name="l00496"></a><span class="lineno">  496</span>  <span class="keyword">const</span> <a class="code hl_class" href="class_agglomeration_handler.html">AgglomerationHandler&lt;dim, spacedim&gt;</a> *ah)</div>
 <div class="line"><a id="l00497" name="l00497"></a><span class="lineno">  497</span>{</div>
-<div class="line"><a id="l00498" name="l00498"></a><span class="lineno">  498</span>  Assert(neigh_cell-&gt;is_ghost(), ExcInternalError());</div>
+<div class="line"><a id="l00498" name="l00498"></a><span class="lineno">  498</span>  <a class="code hl_defineRef" href="http://www.dealii.org/developer/doxygen/deal.II/group__Exceptions.html#ga70a0bb353656e704acf927945277bbc6">Assert</a>(neigh_cell-&gt;is_ghost(), ExcInternalError());</div>
 <div class="line"><a id="l00499" name="l00499"></a><span class="lineno">  499</span>  <span class="comment">// neigh_cell is ghosted</span></div>
 <div class="line"><a id="l00500" name="l00500"></a><span class="lineno">  500</span> </div>
 <div class="line"><a id="l00501" name="l00501"></a><span class="lineno">  501</span>  handler       = <span class="keyword">const_cast&lt;</span><a class="code hl_class" href="class_agglomeration_handler.html">AgglomerationHandler&lt;dim, spacedim&gt;</a> *<span class="keyword">&gt;</span>(ah);</div>
@@ -548,7 +548,7 @@ $(function(){initNavTree('agglomeration__accessor_8h_source.html',''); initResiz
 <div class="line"><a id="l00513" name="l00513"></a><span class="lineno"><a class="line" href="class_agglomeration_accessor.html#ae88e624f09079c54ca4cbdcad75b6299">  513</a></span><a class="code hl_function" href="class_agglomeration_accessor.html#ae88e624f09079c54ca4cbdcad75b6299">AgglomerationAccessor&lt;dim, spacedim&gt;::get_dof_indices</a>(</div>
 <div class="line"><a id="l00514" name="l00514"></a><span class="lineno">  514</span>  std::vector&lt;types::global_dof_index&gt; &amp;dof_indices)<span class="keyword"> const</span></div>
 <div class="line"><a id="l00515" name="l00515"></a><span class="lineno">  515</span><span class="keyword"></span>{</div>
-<div class="line"><a id="l00516" name="l00516"></a><span class="lineno">  516</span>  Assert(dof_indices.size() &gt; 0,</div>
+<div class="line"><a id="l00516" name="l00516"></a><span class="lineno">  516</span>  <a class="code hl_defineRef" href="http://www.dealii.org/developer/doxygen/deal.II/group__Exceptions.html#ga70a0bb353656e704acf927945277bbc6">Assert</a>(dof_indices.size() &gt; 0,</div>
 <div class="line"><a id="l00517" name="l00517"></a><span class="lineno">  517</span>         ExcMessage(</div>
 <div class="line"><a id="l00518" name="l00518"></a><span class="lineno">  518</span>           <span class="stringliteral">&quot;The vector of DoFs indices must be already properly resized.&quot;</span>));</div>
 <div class="line"><a id="l00519" name="l00519"></a><span class="lineno">  519</span>  <span class="keywordflow">if</span> (is_locally_owned())</div>
@@ -601,7 +601,7 @@ $(function(){initNavTree('agglomeration__accessor_8h_source.html',''); initResiz
 <div class="foldopen" id="foldopen00561" data-start="{" data-end="}">
 <div class="line"><a id="l00561" name="l00561"></a><span class="lineno"><a class="line" href="class_agglomeration_accessor.html#a2c928252e291003da95fd106425c9833">  561</a></span><a class="code hl_function" href="class_agglomeration_accessor.html#a2c928252e291003da95fd106425c9833">AgglomerationAccessor&lt;dim, spacedim&gt;::diameter</a>()<span class="keyword"> const</span></div>
 <div class="line"><a id="l00562" name="l00562"></a><span class="lineno">  562</span><span class="keyword"></span>{</div>
-<div class="line"><a id="l00563" name="l00563"></a><span class="lineno">  563</span>  Assert(!handler-&gt;is_slave_cell(<a class="code hl_function" href="class_agglomeration_iterator.html#a129ba4cc3629370f7a9eebfb95f4a34b">master_cell</a>),</div>
+<div class="line"><a id="l00563" name="l00563"></a><span class="lineno">  563</span>  <a class="code hl_defineRef" href="http://www.dealii.org/developer/doxygen/deal.II/group__Exceptions.html#ga70a0bb353656e704acf927945277bbc6">Assert</a>(!handler-&gt;is_slave_cell(<a class="code hl_function" href="class_agglomeration_iterator.html#a129ba4cc3629370f7a9eebfb95f4a34b">master_cell</a>),</div>
 <div class="line"><a id="l00564" name="l00564"></a><span class="lineno">  564</span>         ExcMessage(<span class="stringliteral">&quot;The present function cannot be called for slave cells.&quot;</span>));</div>
 <div class="line"><a id="l00565" name="l00565"></a><span class="lineno">  565</span> </div>
 <div class="line"><a id="l00566" name="l00566"></a><span class="lineno">  566</span>  <span class="keywordflow">if</span> (handler-&gt;is_master_cell(<a class="code hl_function" href="class_agglomeration_iterator.html#a129ba4cc3629370f7a9eebfb95f4a34b">master_cell</a>))</div>
@@ -640,7 +640,7 @@ $(function(){initNavTree('agglomeration__accessor_8h_source.html',''); initResiz
 <div class="foldopen" id="foldopen00596" data-start="{" data-end="}">
 <div class="line"><a id="l00596" name="l00596"></a><span class="lineno"><a class="line" href="class_agglomeration_accessor.html#a8c1aae776fa2ac7693c79625335ff1c3">  596</a></span><a class="code hl_function" href="class_agglomeration_accessor.html#a8c1aae776fa2ac7693c79625335ff1c3">AgglomerationAccessor&lt;dim, spacedim&gt;::volume</a>()<span class="keyword"> const</span></div>
 <div class="line"><a id="l00597" name="l00597"></a><span class="lineno">  597</span><span class="keyword"></span>{</div>
-<div class="line"><a id="l00598" name="l00598"></a><span class="lineno">  598</span>  Assert(!handler-&gt;is_slave_cell(<a class="code hl_function" href="class_agglomeration_iterator.html#a129ba4cc3629370f7a9eebfb95f4a34b">master_cell</a>),</div>
+<div class="line"><a id="l00598" name="l00598"></a><span class="lineno">  598</span>  <a class="code hl_defineRef" href="http://www.dealii.org/developer/doxygen/deal.II/group__Exceptions.html#ga70a0bb353656e704acf927945277bbc6">Assert</a>(!handler-&gt;is_slave_cell(<a class="code hl_function" href="class_agglomeration_iterator.html#a129ba4cc3629370f7a9eebfb95f4a34b">master_cell</a>),</div>
 <div class="line"><a id="l00599" name="l00599"></a><span class="lineno">  599</span>         ExcMessage(<span class="stringliteral">&quot;The present function cannot be called for slave cells.&quot;</span>));</div>
 <div class="line"><a id="l00600" name="l00600"></a><span class="lineno">  600</span> </div>
 <div class="line"><a id="l00601" name="l00601"></a><span class="lineno">  601</span>  <span class="keywordflow">if</span> (handler-&gt;is_master_cell(<a class="code hl_function" href="class_agglomeration_iterator.html#a129ba4cc3629370f7a9eebfb95f4a34b">master_cell</a>))</div>
@@ -803,7 +803,7 @@ $(function(){initNavTree('agglomeration__accessor_8h_source.html',''); initResiz
 <div class="line"><a id="l00737" name="l00737"></a><span class="lineno">  737</span>    }</div>
 <div class="line"><a id="l00738" name="l00738"></a><span class="lineno">  738</span>  <span class="keywordflow">else</span></div>
 <div class="line"><a id="l00739" name="l00739"></a><span class="lineno">  739</span>    {</div>
-<div class="line"><a id="l00740" name="l00740"></a><span class="lineno">  740</span>      Assert(!handler-&gt;is_slave_cell(<a class="code hl_function" href="class_agglomeration_iterator.html#a129ba4cc3629370f7a9eebfb95f4a34b">master_cell</a>),</div>
+<div class="line"><a id="l00740" name="l00740"></a><span class="lineno">  740</span>      <a class="code hl_defineRef" href="http://www.dealii.org/developer/doxygen/deal.II/group__Exceptions.html#ga70a0bb353656e704acf927945277bbc6">Assert</a>(!handler-&gt;is_slave_cell(<a class="code hl_function" href="class_agglomeration_iterator.html#a129ba4cc3629370f7a9eebfb95f4a34b">master_cell</a>),</div>
 <div class="line"><a id="l00741" name="l00741"></a><span class="lineno">  741</span>             ExcMessage(</div>
 <div class="line"><a id="l00742" name="l00742"></a><span class="lineno">  742</span>               <span class="stringliteral">&quot;This function should not be called for a slave cell.&quot;</span>));</div>
 <div class="line"><a id="l00743" name="l00743"></a><span class="lineno">  743</span> </div>
@@ -853,7 +853,7 @@ $(function(){initNavTree('agglomeration__accessor_8h_source.html',''); initResiz
 <div class="foldopen" id="foldopen00780" data-start="{" data-end="}">
 <div class="line"><a id="l00780" name="l00780"></a><span class="lineno"><a class="line" href="class_agglomeration_accessor.html#ab3cf08fbd3e70599efd23b7e8eac7a34">  780</a></span><a class="code hl_function" href="class_agglomeration_accessor.html#ab3cf08fbd3e70599efd23b7e8eac7a34">AgglomerationAccessor&lt;dim, spacedim&gt;::children</a>()<span class="keyword"> const</span></div>
 <div class="line"><a id="l00781" name="l00781"></a><span class="lineno">  781</span><span class="keyword"></span>{</div>
-<div class="line"><a id="l00782" name="l00782"></a><span class="lineno">  782</span>  Assert(!handler-&gt;parent_child_info.empty(), ExcInternalError());</div>
+<div class="line"><a id="l00782" name="l00782"></a><span class="lineno">  782</span>  <a class="code hl_defineRef" href="http://www.dealii.org/developer/doxygen/deal.II/group__Exceptions.html#ga70a0bb353656e704acf927945277bbc6">Assert</a>(!handler-&gt;parent_child_info.empty(), ExcInternalError());</div>
 <div class="line"><a id="l00783" name="l00783"></a><span class="lineno">  783</span>  <span class="keywordflow">return</span> handler-&gt;parent_child_info.at(</div>
 <div class="line"><a id="l00784" name="l00784"></a><span class="lineno">  784</span>    {present_index, handler-&gt;present_extraction_level});</div>
 <div class="line"><a id="l00785" name="l00785"></a><span class="lineno">  785</span>}</div>
@@ -935,6 +935,7 @@ $(function(){initNavTree('agglomeration__accessor_8h_source.html',''); initResiz
 <div class="ttc" id="aconfig_8h_html"><div class="ttname"><a href="http://www.dealii.org/developer/doxygen/deal.II/config_8h.html">config.h</a></div></div>
 <div class="ttc" id="afiltered__iterator_8h_html"><div class="ttname"><a href="http://www.dealii.org/developer/doxygen/deal.II/filtered__iterator_8h.html">filtered_iterator.h</a></div></div>
 <div class="ttc" id="agrid__out_8cc_html_a2cc229a4f1ffc75e83ed269d5f725729"><div class="ttname"><a href="http://www.dealii.org/developer/doxygen/deal.II/grid__out_8cc.html#a2cc229a4f1ffc75e83ed269d5f725729">second</a></div><div class="ttdeci">Point&lt; 2 &gt; second</div></div>
+<div class="ttc" id="agroup__Exceptions_html_ga70a0bb353656e704acf927945277bbc6"><div class="ttname"><a href="http://www.dealii.org/developer/doxygen/deal.II/group__Exceptions.html#ga70a0bb353656e704acf927945277bbc6">Assert</a></div><div class="ttdeci">#define Assert(cond, exc)</div></div>
 <div class="ttc" id="agroup__Exceptions_html_gafc0ca7ad85b3ebd64e8e51689ac85caf"><div class="ttname"><a href="http://www.dealii.org/developer/doxygen/deal.II/group__Exceptions.html#gafc0ca7ad85b3ebd64e8e51689ac85caf">AssertThrow</a></div><div class="ttdeci">#define AssertThrow(cond, exc)</div></div>
 <div class="ttc" id="aiterator__range_8h_html"><div class="ttname"><a href="http://www.dealii.org/developer/doxygen/deal.II/iterator__range_8h.html">iterator_range.h</a></div></div>
 <div class="ttc" id="anamespaceIteratorState_html_a4e92f4a9d339ff987cc3eb5b0a1ac507a457da025bc5a3a2231a667bd5c6f3c92"><div class="ttname"><a href="http://www.dealii.org/developer/doxygen/deal.II/namespaceIteratorState.html#a4e92f4a9d339ff987cc3eb5b0a1ac507a457da025bc5a3a2231a667bd5c6f3c92">IteratorState::valid</a></div><div class="ttdeci">valid</div></div>
@@ -949,7 +950,7 @@ $(function(){initNavTree('agglomeration__accessor_8h_source.html',''); initResiz
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="dir_aa394cd1d9abb8ffe941d9aaafca8d03.html">github</a></li><li class="navelem"><a class="el" href="dir_c52569aa89a7adbb6029022c2fa60a11.html">workspace</a></li><li class="navelem"><a class="el" href="dir_7a95a9cc00fcc7af5a429eec361b64d1.html">include</a></li><li class="navelem"><a class="el" href="agglomeration__accessor_8h.html">agglomeration_accessor.h</a></li>
-    <li class="footer">Generated on Wed May 29 2024 11:10:39 for PolyDEAL by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.11.0 </li>
+    <li class="footer">Generated on Tue Jul 23 2024 07:44:40 for PolyDEAL by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.11.0 </li>
   </ul>
 </div>
 </body>

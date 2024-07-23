@@ -425,7 +425,7 @@ $(function(){initNavTree('agglomerator_8h_source.html',''); initResizable(true);
 <div class="line"><a id="l00381" name="l00381"></a><span class="lineno">  381</span>    : extraction_level(extraction_level_)</div>
 <div class="line"><a id="l00382" name="l00382"></a><span class="lineno">  382</span>  {</div>
 <div class="line"><a id="l00383" name="l00383"></a><span class="lineno">  383</span>    <a class="code hl_variable" href="classdealii_1_1_cells_agglomerator.html#a7c1b89777e323121b18478f834dc4605">rtree</a> = <span class="keyword">const_cast&lt;</span>RtreeType *<span class="keyword">&gt;</span>(&amp;tree);</div>
-<div class="line"><a id="l00384" name="l00384"></a><span class="lineno">  384</span>    Assert(n_levels(*<a class="code hl_variable" href="classdealii_1_1_cells_agglomerator.html#a7c1b89777e323121b18478f834dc4605">rtree</a>), ExcMessage(<span class="stringliteral">&quot;At least two levels are needed.&quot;</span>));</div>
+<div class="line"><a id="l00384" name="l00384"></a><span class="lineno">  384</span>    <a class="code hl_defineRef" href="http://www.dealii.org/developer/doxygen/deal.II/group__Exceptions.html#ga70a0bb353656e704acf927945277bbc6">Assert</a>(n_levels(*<a class="code hl_variable" href="classdealii_1_1_cells_agglomerator.html#a7c1b89777e323121b18478f834dc4605">rtree</a>), ExcMessage(<span class="stringliteral">&quot;At least two levels are needed.&quot;</span>));</div>
 <div class="line"><a id="l00385" name="l00385"></a><span class="lineno">  385</span>  }</div>
 </div>
 <div class="line"><a id="l00386" name="l00386"></a><span class="lineno">  386</span> </div>
@@ -515,7 +515,7 @@ $(function(){initNavTree('agglomerator_8h_source.html',''); initResizable(true);
 <div class="foldopen" id="foldopen00464" data-start="{" data-end="}">
 <div class="line"><a id="l00464" name="l00464"></a><span class="lineno"><a class="line" href="classdealii_1_1_cells_agglomerator.html#a7dca177d24e496b5fd332c15580d524f">  464</a></span>  <a class="code hl_function" href="classdealii_1_1_cells_agglomerator.html#a7dca177d24e496b5fd332c15580d524f">CellsAgglomerator&lt;dim, RtreeType&gt;::get_hierarchy</a>()<span class="keyword"> const</span></div>
 <div class="line"><a id="l00465" name="l00465"></a><span class="lineno">  465</span><span class="keyword">  </span>{</div>
-<div class="line"><a id="l00466" name="l00466"></a><span class="lineno">  466</span>    Assert(parent_node_to_children_nodes.size(),</div>
+<div class="line"><a id="l00466" name="l00466"></a><span class="lineno">  466</span>    <a class="code hl_defineRef" href="http://www.dealii.org/developer/doxygen/deal.II/group__Exceptions.html#ga70a0bb353656e704acf927945277bbc6">Assert</a>(parent_node_to_children_nodes.size(),</div>
 <div class="line"><a id="l00467" name="l00467"></a><span class="lineno">  467</span>           ExcMessage(</div>
 <div class="line"><a id="l00468" name="l00468"></a><span class="lineno">  468</span>             <span class="stringliteral">&quot;The hierarchy has not been computed. Did you forget to call&quot;</span></div>
 <div class="line"><a id="l00469" name="l00469"></a><span class="lineno">  469</span>             <span class="stringliteral">&quot; extract_agglomerates() first?&quot;</span>));</div>
@@ -539,6 +539,7 @@ $(function(){initNavTree('agglomerator_8h_source.html',''); initResizable(true);
 <div class="ttc" id="aclassdealii_1_1_cells_agglomerator_html_af823d7ed5e67e16e247a61a08a4ced6b"><div class="ttname"><a href="classdealii_1_1_cells_agglomerator.html#af823d7ed5e67e16e247a61a08a4ced6b">dealii::CellsAgglomerator::n_nodes_per_level</a></div><div class="ttdeci">std::vector&lt; types::global_cell_index &gt; n_nodes_per_level</div><div class="ttdef"><b>Definition</b> <a href="#l00364">agglomerator.h:364</a></div></div>
 <div class="ttc" id="aconfig_8h_html"><div class="ttname"><a href="http://www.dealii.org/developer/doxygen/deal.II/config_8h.html">config.h</a></div></div>
 <div class="ttc" id="agrid__out_8cc_html_a9082f945c1d289684d0bcd51ee08e11e"><div class="ttname"><a href="http://www.dealii.org/developer/doxygen/deal.II/grid__out_8cc.html#a9082f945c1d289684d0bcd51ee08e11e">level</a></div><div class="ttdeci">unsigned int level</div></div>
+<div class="ttc" id="agroup__Exceptions_html_ga70a0bb353656e704acf927945277bbc6"><div class="ttname"><a href="http://www.dealii.org/developer/doxygen/deal.II/group__Exceptions.html#ga70a0bb353656e704acf927945277bbc6">Assert</a></div><div class="ttdeci">#define Assert(cond, exc)</div></div>
 <div class="ttc" id="agroup__Exceptions_html_gafc0ca7ad85b3ebd64e8e51689ac85caf"><div class="ttname"><a href="http://www.dealii.org/developer/doxygen/deal.II/group__Exceptions.html#gafc0ca7ad85b3ebd64e8e51689ac85caf">AssertThrow</a></div><div class="ttdeci">#define AssertThrow(cond, exc)</div></div>
 <div class="ttc" id="anamespacedealii_html"><div class="ttname"><a href="namespacedealii.html">dealii</a></div></div>
 <div class="ttc" id="anamespaceinternal_html"><div class="ttname"><a href="http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal.html">internal</a></div></div>
@@ -563,7 +564,7 @@ $(function(){initNavTree('agglomerator_8h_source.html',''); initResizable(true);
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="dir_aa394cd1d9abb8ffe941d9aaafca8d03.html">github</a></li><li class="navelem"><a class="el" href="dir_c52569aa89a7adbb6029022c2fa60a11.html">workspace</a></li><li class="navelem"><a class="el" href="dir_7a95a9cc00fcc7af5a429eec361b64d1.html">include</a></li><li class="navelem"><a class="el" href="agglomerator_8h.html">agglomerator.h</a></li>
-    <li class="footer">Generated on Wed May 29 2024 11:10:39 for PolyDEAL by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.11.0 </li>
+    <li class="footer">Generated on Tue Jul 23 2024 07:44:40 for PolyDEAL by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.11.0 </li>
   </ul>
 </div>
 </body>

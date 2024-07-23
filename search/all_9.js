@@ -34,5 +34,6 @@ var searchData=
   ['9_2e3_2e2_2dvs_2d9_2e3_2e3_2eh_31',['9.3.2-vs-9.3.3.h',['http://www.dealii.org/developer/doxygen/deal.II/9_83_82-vs-9_83_83_8h.html',1,'']]],
   ['9_2e3_2e3_2dvs_2d9_2e4_2e0_2eh_32',['9.3.3-vs-9.4.0.h',['http://www.dealii.org/developer/doxygen/deal.II/9_83_83-vs-9_84_80_8h.html',1,'']]],
   ['9_2e4_2e0_2dvs_2d9_2e5_2e0_2eh_33',['9.4.0-vs-9.5.0.h',['http://www.dealii.org/developer/doxygen/deal.II/9_84_80-vs-9_85_80_8h.html',1,'']]],
-  ['9_2e5_2e0_2dvs_2d9_2e5_2e2_2eh_34',['9.5.0-vs-9.5.2.h',['http://www.dealii.org/developer/doxygen/deal.II/9_85_80-vs-9_85_82_8h.html',1,'']]]
+  ['9_2e5_2e0_2dvs_2d9_2e5_2e2_2eh_34',['9.5.0-vs-9.5.2.h',['http://www.dealii.org/developer/doxygen/deal.II/9_85_80-vs-9_85_82_8h.html',1,'']]],
+  ['90_20tutorial_20program_35',['The step-90 tutorial program',['http://www.dealii.org/developer/doxygen/deal.II/step_90.html',1,'']]]
 ];

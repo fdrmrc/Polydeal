@@ -13,9 +13,10 @@ var searchData=
   ['fb_10',['Fb',['http://www.dealii.org/developer/doxygen/deal.II/namespaceCGALWrappers.html#abd91048d272174029b1055321a02e5b1',1,'CGALWrappers']]],
   ['fbb_11',['Fbb',['http://www.dealii.org/developer/doxygen/deal.II/namespaceCGALWrappers.html#afa5b29e80bd919ad3129e0ce7b5b9e26',1,'CGALWrappers']]],
   ['fe_5findex_12',['fe_index',['http://www.dealii.org/developer/doxygen/deal.II/namespacetypes.html#a6349a42041132a6bc7e1e9ffb7e119b3',1,'types']]],
-  ['firstcellfunctiontype_13',['FirstCellFunctionType',['http://www.dealii.org/developer/doxygen/deal.II/classDataOut.html#a19a12e8cf308de29f9d0861368bab16b',1,'DataOut']]],
-  ['flags_14',['Flags',['http://www.dealii.org/developer/doxygen/deal.II/classTimeStepBase__Tria.html#a0fa062dbe3e84eec6897ec334d10a98c',1,'TimeStepBase_Tria']]],
-  ['forest_15',['forest',['http://www.dealii.org/developer/doxygen/deal.II/structinternal_1_1p4est_1_1types_3_012_01_4.html#a97e8e4bf3ba51789d2513c228a0608c3',1,'internal::p4est::types&lt; 2 &gt;::forest'],['http://www.dealii.org/developer/doxygen/deal.II/structinternal_1_1p4est_1_1types_3_013_01_4.html#ad3d455ffc4b8f548b7e9750bdb11694c',1,'internal::p4est::types&lt; 3 &gt;::forest']]],
-  ['fourthderivativestype_16',['FourthDerivativesType',['http://www.dealii.org/developer/doxygen/deal.II/classBarycentricPolynomials.html#a470e1c396e2a729b0eee1c4af1451a8e',1,'BarycentricPolynomials']]],
-  ['function_5fptr_17',['function_ptr',['http://www.dealii.org/developer/doxygen/deal.II/classPreconditionUseMatrix.html#a32303b9134cd1128f9a0e2f6349eb3eb',1,'PreconditionUseMatrix']]]
+  ['feevaltype_13',['FEEvalType',['http://www.dealii.org/developer/doxygen/deal.II/classMatrixFreeTools_1_1internal_1_1ComputeMatrixScratchData.html#a5b4216f9c66ddbfba6c6a40a01bb8937',1,'MatrixFreeTools::internal::ComputeMatrixScratchData']]],
+  ['firstcellfunctiontype_14',['FirstCellFunctionType',['http://www.dealii.org/developer/doxygen/deal.II/classDataOut.html#a19a12e8cf308de29f9d0861368bab16b',1,'DataOut']]],
+  ['flags_15',['Flags',['http://www.dealii.org/developer/doxygen/deal.II/classTimeStepBase__Tria.html#a0fa062dbe3e84eec6897ec334d10a98c',1,'TimeStepBase_Tria']]],
+  ['forest_16',['forest',['http://www.dealii.org/developer/doxygen/deal.II/structinternal_1_1p4est_1_1types_3_012_01_4.html#a97e8e4bf3ba51789d2513c228a0608c3',1,'internal::p4est::types&lt; 2 &gt;::forest'],['http://www.dealii.org/developer/doxygen/deal.II/structinternal_1_1p4est_1_1types_3_013_01_4.html#ad3d455ffc4b8f548b7e9750bdb11694c',1,'internal::p4est::types&lt; 3 &gt;::forest']]],
+  ['fourthderivativestype_17',['FourthDerivativesType',['http://www.dealii.org/developer/doxygen/deal.II/classBarycentricPolynomials.html#a470e1c396e2a729b0eee1c4af1451a8e',1,'BarycentricPolynomials']]],
+  ['function_5fptr_18',['function_ptr',['http://www.dealii.org/developer/doxygen/deal.II/classPreconditionUseMatrix.html#a32303b9134cd1128f9a0e2f6349eb3eb',1,'PreconditionUseMatrix']]]
 ];
