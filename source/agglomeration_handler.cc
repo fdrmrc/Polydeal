@@ -662,8 +662,7 @@ void
 AgglomerationHandler<dim, spacedim>::create_agglomeration_sparsity_pattern(
   SparsityPatternType             &dsp,
   const AffineConstraints<Number> &constraints,
-  const bool                       keep_constrained_dofs,
-  const types::subdomain_id        subdomain_id)
+  const bool                       keep_constrained_dofs)
 {
   Assert(n_agglomerations > 0,
          ExcMessage("The agglomeration has not been set up correctly."));
@@ -685,11 +684,6 @@ AgglomerationHandler<dim, spacedim>::create_agglomeration_sparsity_pattern(
   else
     DEAL_II_ASSERT_UNREACHABLE();
 
-  // Create the sparsity pattern corresponding only to volumetric terms. The
-  // fluxes needed by DG methods will be filled later.
-  DoFTools::make_sparsity_pattern(
-    agglo_dh, dsp, constraints, keep_constrained_dofs, subdomain_id);
-
 
   const unsigned int dofs_per_cell = agglo_dh.get_fe(0).n_dofs_per_cell();
   std::vector<types::global_dof_index> current_dof_indices(dofs_per_cell);
@@ -703,7 +697,12 @@ AgglomerationHandler<dim, spacedim>::create_agglomeration_sparsity_pattern(
         {
           const unsigned int n_current_faces = polytope->n_faces();
           polytope->get_dof_indices(current_dof_indices);
-          const CellId current_poly_id = polytope->id();
+          // volumetric terms
+          constraints.add_entries_local_to_global(current_dof_indices,
+                                                  dsp,
+                                                  keep_constrained_dofs);
+          // fill flux terms
+          const CellId &current_poly_id = polytope->id();
           for (unsigned int f = 0; f < n_current_faces; ++f)
             {
               const auto &neigh_polytope = polytope->neighbor(f);
@@ -1330,42 +1329,36 @@ template void
 AgglomerationHandler<1>::create_agglomeration_sparsity_pattern(
   DynamicSparsityPattern          &sparsity_pattern,
   const AffineConstraints<double> &constraints,
-  const bool                       keep_constrained_dofs,
-  const types::subdomain_id        subdomain_id);
+  const bool                       keep_constrained_dofs);
 
 template void
 AgglomerationHandler<1>::create_agglomeration_sparsity_pattern(
   TrilinosWrappers::SparsityPattern &sparsity_pattern,
   const AffineConstraints<double>   &constraints,
-  const bool                         keep_constrained_dofs,
-  const types::subdomain_id          subdomain_id);
+  const bool                         keep_constrained_dofs);
 
 template class AgglomerationHandler<2>;
 template void
 AgglomerationHandler<2>::create_agglomeration_sparsity_pattern(
   DynamicSparsityPattern          &sparsity_pattern,
   const AffineConstraints<double> &constraints,
-  const bool                       keep_constrained_dofs,
-  const types::subdomain_id        subdomain_id);
+  const bool                       keep_constrained_dofs);
 
 template void
 AgglomerationHandler<2>::create_agglomeration_sparsity_pattern(
   TrilinosWrappers::SparsityPattern &sparsity_pattern,
   const AffineConstraints<double>   &constraints,
-  const bool                         keep_constrained_dofs,
-  const types::subdomain_id          subdomain_id);
+  const bool                         keep_constrained_dofs);
 
 template class AgglomerationHandler<3>;
 template void
 AgglomerationHandler<3>::create_agglomeration_sparsity_pattern(
   DynamicSparsityPattern          &sparsity_pattern,
   const AffineConstraints<double> &constraints,
-  const bool                       keep_constrained_dofs,
-  const types::subdomain_id        subdomain_id);
+  const bool                       keep_constrained_dofs);
 
 template void
 AgglomerationHandler<3>::create_agglomeration_sparsity_pattern(
   TrilinosWrappers::SparsityPattern &sparsity_pattern,
   const AffineConstraints<double>   &constraints,
-  const bool                         keep_constrained_dofs,
-  const types::subdomain_id          subdomain_id);
+  const bool                         keep_constrained_dofs);
