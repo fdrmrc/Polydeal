@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['6_200_0',['Changes between Version 5.2 and 6.0',['http://www.dealii.org/developer/doxygen/deal.II/changes_between_5_2_and_6_0.html',1,'']]],
+  ['6_200_0',['6 0',['http://www.dealii.org/developer/doxygen/deal.II/changes_between_5_2_and_6_0.html',1,'Changes between Version 5.2 and 6.0'],['http://www.dealii.org/developer/doxygen/deal.II/changes_between_9_5_2_and_9_6_0.html',1,'Changes between Version 9.5.2 and 9.6.0']]],
   ['6_200_20and_206_201_1',['Changes between Version 6.0 and 6.1',['http://www.dealii.org/developer/doxygen/deal.II/changes_between_6_0_and_6_1.html',1,'']]],
   ['6_201_2',['Changes between Version 6.0 and 6.1',['http://www.dealii.org/developer/doxygen/deal.II/changes_between_6_0_and_6_1.html',1,'']]],
   ['6_201_20and_206_202_3',['Changes between Version 6.1 and 6.2',['http://www.dealii.org/developer/doxygen/deal.II/changes_between_6_1_and_6_2.html',1,'']]],
