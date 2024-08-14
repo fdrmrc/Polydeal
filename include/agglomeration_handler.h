@@ -641,8 +641,8 @@ private:
 
   /**
    * Initialize all the necessary connectivity information for an
-   * agglomeration. #TODO: loop over polytopes, avoid using master cells
-   * explicitely.
+   * agglomeration. #TODO: loop over polytopes, avoid using explicitly
+   * master cells.
    */
   void
   setup_connectivity_of_agglomeration();

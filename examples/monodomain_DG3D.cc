@@ -95,17 +95,17 @@ namespace Utils
       const LinearAlgebra::distributed::Vector<double> &src) const override
     {
       (void)level;
-      ReductionControl solver_control(1e4, 1e-50, 1e-10);
+      ReductionControl solver_control(1e4, 1e-50, 1e-14);
       SolverCG<LinearAlgebra::distributed::Vector<double>> solver_coarse(
         solver_control);
-      double start, stop;
-      start = MPI_Wtime();
+      // double start, stop;
+      // start = MPI_Wtime();
       solver_coarse.solve(*coarse_matrix, dst, src, precondition);
-      stop = MPI_Wtime();
+      // stop = MPI_Wtime();
 
-      if (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
-        std::cout << "Coarse solver elapsed time: " << stop - start << "[s]"
-                  << std::endl;
+      // if (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
+      //   std::cout << "Coarse solver elapsed time: " << stop - start << "[s]"
+      //             << std::endl;
     }
 
     const MatrixType                 *coarse_matrix;
@@ -532,6 +532,7 @@ private:
   std::vector<TrilinosWrappers::SparseMatrix *>           transfer_matrices;
   std::vector<DoFHandler<dim> *>                          dof_handlers;
 
+  std::ofstream file_iterations;
 
 public:
   IonicModel(const ModelParameters &parameters);
@@ -720,6 +721,11 @@ IonicModel<dim>::setup_problem()
                                                             locally_owned_dofs,
                                                             dsp,
                                                             communicator);
+
+  file_iterations.open(
+    "iterations_level_" + std::to_string(total_tree_levels + 1) + "_" +
+    std::to_string(Utilities::MPI::n_mpi_processes(communicator)) +
+    "_procs_deg_" + std::to_string(dg_fe.degree) + ".txt");
 }
 
 
@@ -896,7 +902,6 @@ IonicModel<dim>::setup_multigrid()
           smoother_data[0].smoothing_range = 1e-3;
           smoother_data[0].degree = 5; // numbers::invalid_unsigned_int;
           smoother_data[0].eig_cg_n_iterations = classical_dh.n_dofs();
-          smoother_data[0].eig_cg_n_iterations = multigrid_matrices[0].m();
         }
     }
 
@@ -1283,6 +1288,11 @@ IonicModel<dim>::solve()
   pcout << "Number of outer iterations: " << param.control.last_step()
         << std::endl;
   // #endif
+  if (Utilities::MPI::this_mpi_process(communicator) == 0)
+    {
+      file_iterations << param.control.last_step();
+      file_iterations << ",";
+    }
 }
 
 
@@ -1467,8 +1477,8 @@ IonicModel<dim>::run()
       ++iter_count;
 
       // output results every 5 time steps
-      if ((iter_count % 10 == 0) || time < param.final_time_current)
-        output_results();
+      // if ((iter_count % 10 == 0) || time < param.final_time_current)
+      // output_results();
 
       // Store minimum value current action potential on each processor
       min_value = *locally_relevant_solution_current.begin();
@@ -1503,6 +1513,7 @@ IonicModel<dim>::run()
           file_min_values << "\n";
         }
       file_min_values.close();
+      file_iterations.close();
     }
 }
 
@@ -1513,20 +1524,21 @@ main(int argc, char *argv[])
 {
   Utilities::MPI::MPI_InitFinalize mpi_initialization(argc, argv, 1);
 
-  ModelParameters parameters;
-  parameters.control.set_tolerance(1e-13); // used in CG solver
-  parameters.control.set_max_steps(2000);
+  {
+    ModelParameters parameters;
+    parameters.control.set_tolerance(1e-13); // used in CG solver
+    parameters.control.set_max_steps(2000);
 
-  parameters.use_amg  = false;
-  parameters.mesh_dir = "../../meshes/idealized_lv.msh";
-  // parameters.mesh_dir           = "../../meshes/realistic_lv.msh";
-  parameters.fe_degree          = 1;
-  parameters.dt                 = 1e-4;
-  parameters.final_time         = 0.2;
-  parameters.final_time_current = 3e-3;
+    parameters.use_amg  = false;
+    parameters.mesh_dir = "../../meshes/idealized_lv.msh";
+    // parameters.mesh_dir           = "../../meshes/realistic_lv.msh";
+    parameters.fe_degree          = 2;
+    parameters.dt                 = 1e-4;
+    parameters.final_time         = 0.4;
+    parameters.final_time_current = 3e-3;
 
-  IonicModel<3> problem(parameters);
-  problem.run();
-
+    IonicModel<3> problem(parameters);
+    problem.run();
+  }
   return 0;
 }
