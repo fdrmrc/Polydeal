@@ -41,9 +41,7 @@
 #include <deal.II/numerics/vector_tools_interpolate.h>
 
 #include <agglomeration_handler.h>
-#include <agglomerator.h>
 #include <poly_utils.h>
-#include <utils.h>
 
 using namespace dealii;
 
@@ -448,7 +446,7 @@ DiffusionReactionProblem<dim>::setup_agglomerated_problem()
 
       namespace bgi = boost::geometry::index;
       static constexpr unsigned int max_elem_per_node =
-        Utils::constexpr_pow(2, dim); // 2^dim
+        PolyUtils::constexpr_pow(2, dim); // 2^dim
       std::vector<std::pair<BoundingBox<dim>,
                             typename Triangulation<dim>::active_cell_iterator>>
                    boxes(tria_pft.n_locally_owned_active_cells());
@@ -457,21 +455,16 @@ DiffusionReactionProblem<dim>::setup_agglomerated_problem()
         if (cell->is_locally_owned())
           boxes[i++] = std::make_pair(mapping.get_bounding_box(cell), cell);
 
-      auto tree = pack_rtree<bgi::rstar<max_elem_per_node>>(boxes);
+      const auto tree = pack_rtree<bgi::rstar<max_elem_per_node>>(boxes);
+      pcout << "Total number of available levels: " << n_levels(tree)
+            << std::endl;
 
       Assert(n_levels(tree) >= 2,
              ExcMessage("At least two levels are needed."));
 
-#ifdef AGGLO_DEBUG
-      std::cout << "Total number of available levels in process "
-                << Utilities::MPI::this_mpi_process(comm) << ": "
-                << n_levels(tree) << std::endl;
-#endif
-
-
-      CellsAgglomerator<dim, decltype(tree)> agglomerator{
-        tree, agglomeration_data.agglomeration_parameter};
-      const auto agglomerates = agglomerator.extract_agglomerates();
+      const auto &csr_and_agglomerates = PolyUtils::extract_children_of_level(
+        tree, agglomeration_data.agglomeration_parameter);
+      const auto &agglomerates = csr_and_agglomerates.second; // vec<vec<>>
 
       std::size_t agglo_index = 0;
       for (std::size_t i = 0; i < agglomerates.size(); ++i)
@@ -533,19 +526,21 @@ DiffusionReactionProblem<dim>::assemble_system()
                            QGauss<dim - 1>(face_quadrature_degree),
                            update_JxW_values);
 
-  TrilinosWrappers::SparsityPattern sparsity_pattern;
+  DynamicSparsityPattern sparsity_pattern;
   // double                 start_setup, stop_setup;
   // start_setup = MPI_Wtime();
   ah->distribute_agglomerated_dofs(fe_dg);
   ah->create_agglomeration_sparsity_pattern(sparsity_pattern);
-  sparsity_pattern.compress();
-  system_matrix.reinit(sparsity_pattern);
   // stop_setup = MPI_Wtime();
 
 
   locally_owned_dofs    = ah->agglo_dh.locally_owned_dofs();
   locally_relevant_dofs = DoFTools::extract_locally_relevant_dofs(ah->agglo_dh);
 
+  system_matrix.reinit(locally_owned_dofs,
+                       locally_owned_dofs,
+                       sparsity_pattern,
+                       comm);
   system_rhs.reinit(locally_owned_dofs, comm);
 
   std::unique_ptr<const RightHandSide<dim>> rhs_function;
@@ -942,7 +937,8 @@ main(int argc, char *argv[])
                                        comm)); // number of local agglomerates
 
   const unsigned int reaction_coefficient = 0.;
-  for (const AgglomerationData &agglomeration_strategy : {metis_data})
+  for (const AgglomerationData &agglomeration_strategy :
+       {rtree_data, metis_data})
     for (unsigned int degree : {1, 2, 3, 4, 5, 6})
       {
         DiffusionReactionProblem<dim> problem(agglomeration_strategy,
