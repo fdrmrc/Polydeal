@@ -213,14 +213,14 @@ do_test()
 
   ah.distribute_agglomerated_dofs(fe_dg);
 
-  TrilinosWrappers::SparsityPattern dsp;
+  DynamicSparsityPattern dsp;
   ah.create_agglomeration_sparsity_pattern(dsp);
-  dsp.compress();
 
-  system_matrix.reinit(dsp);
   const IndexSet &locally_owned_dofs = ah.agglo_dh.locally_owned_dofs();
   const IndexSet  locally_relevant_dofs =
     DoFTools::extract_locally_relevant_dofs(ah.agglo_dh);
+
+  system_matrix.reinit(locally_owned_dofs, locally_owned_dofs, dsp, comm);
 
   system_rhs.reinit(locally_owned_dofs, comm);
 

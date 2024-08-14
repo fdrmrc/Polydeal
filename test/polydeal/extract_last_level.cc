@@ -29,6 +29,7 @@
 
 #include <agglomeration_handler.h>
 #include <agglomerator.h>
+#include <poly_utils.h>
 #include <utils.h>
 
 
