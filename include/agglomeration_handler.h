@@ -300,12 +300,12 @@ public:
    * agglomerated cells are seen as one **unique** cell, with only the DoFs
    * associated to the master cell of the agglomeration.
    */
-  template <typename Number = double>
+  template <typename SparsityPatternType, typename Number = double>
   void
   create_agglomeration_sparsity_pattern(
-    DynamicSparsityPattern         &sparsity_pattern,
-    const AffineConstraints<Number> constraints = AffineConstraints<Number>(),
-    const bool                      keep_constrained_dofs = true,
+    SparsityPatternType             &sparsity_pattern,
+    const AffineConstraints<Number> &constraints = AffineConstraints<Number>(),
+    const bool                       keep_constrained_dofs = true,
     const types::subdomain_id subdomain_id = numbers::invalid_subdomain_id);
 
   /**

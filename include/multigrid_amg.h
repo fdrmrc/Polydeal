@@ -174,8 +174,7 @@ namespace dealii
     compute_level_matrices(
       MGLevelObject<LinearOperatorMG<VectorType, VectorType>> &mg_matrices)
     {
-      [[maybe_unsued]] const unsigned int n_levels = mg_matrices.n_levels();
-      Assert(n_levels > 1,
+      Assert(mg_matrices.n_levels() > 1,
              ExcMessage("Vector of matrices set to invalid size."));
       Assert(!mf_linear_operator.is_null_operator, ExcInternalError());
 
