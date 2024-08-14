@@ -20,11 +20,12 @@
 #include <deal.II/base/mg_level_object.h>
 
 #include <deal.II/lac/la_parallel_vector.h>
-#include <deal.II/lac/linear_operator.h>
 
 #include <deal.II/matrix_free/operators.h>
 
 #include <deal.II/multigrid/mg_base.h>
+
+#include <linear_operator_for_mg.h>
 
 namespace dealii
 {
@@ -56,14 +57,14 @@ namespace dealii
     std::vector<TrilinosWrappers::SparseMatrix *> transfer_matrices;
 
     /**
-     * LinearOperator for each level, storing Galerkin projections.
+     * LinearOperatorMG for each level, storing Galerkin projections.
      */
-    std::vector<LinearOperator<VectorType, VectorType>> level_operators;
+    std::vector<LinearOperatorMG<VectorType, VectorType>> level_operators;
 
     /**
      * For matrix-free operator evaluation
      */
-    LinearOperator<VectorType, VectorType> mf_linear_operator;
+    LinearOperatorMG<VectorType, VectorType> mf_linear_operator;
 
   public:
     /**
@@ -171,9 +172,9 @@ namespace dealii
      */
     void
     compute_level_matrices(
-      MGLevelObject<LinearOperator<VectorType, VectorType>> &mg_matrices)
+      MGLevelObject<LinearOperatorMG<VectorType, VectorType>> &mg_matrices)
     {
-      const unsigned int n_levels = mg_matrices.n_levels();
+      [[maybe_unsued]] const unsigned int n_levels = mg_matrices.n_levels();
       Assert(n_levels > 1,
              ExcMessage("Vector of matrices set to invalid size."));
       Assert(!mf_linear_operator.is_null_operator, ExcInternalError());
@@ -309,17 +310,18 @@ namespace dealii
 
     /**
      * Similar to above, but wrapping all multigrid matrices in a
-     * LinearOperator. This can be used if you want to use the matrix-free
+     * LinearOperatorMG. This can be used if you want to use the matrix-free
      * action on some levels, and the matrix-based version on other ones.
      * Since the common thing between these approaches is the presence of a
-     * @p vmult() function, a LinearOperator object can store both actions
+     * @p vmult() function, a LinearOperatorMG object can store both actions
      * simultaneously.
      */
     void
     compute_level_matrices_as_linear_operators(
       MGLevelObject<std::unique_ptr<MatrixType>> &mg_matrices,
-      MGLevelObject<LinearOperator<LinearAlgebra::distributed::Vector<Number>,
-                                   LinearAlgebra::distributed::Vector<Number>>>
+      MGLevelObject<
+        LinearOperatorMG<LinearAlgebra::distributed::Vector<Number>,
+                         LinearAlgebra::distributed::Vector<Number>>>
         &multigrid_matrices_lo)
     {
       Assert(mg_matrices.n_levels() > 1,
@@ -348,7 +350,7 @@ namespace dealii
 
           // Wrap every matrix into a linear operator now.
           multigrid_matrices_lo[l] =
-            linear_operator<VectorType, VectorType>(*mg_matrices[l]);
+            linear_operator_mg<VectorType, VectorType>(*mg_matrices[l]);
           multigrid_matrices_lo[l].vmult =
             [&mg_matrices, l](VectorType &dst, const VectorType &src) {
               mg_matrices[l]->vmult(dst, src);

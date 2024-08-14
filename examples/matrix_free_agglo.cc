@@ -25,7 +25,6 @@
 #include <deal.II/grid/grid_in.h>
 
 #include <deal.II/lac/la_parallel_vector.h>
-#include <deal.II/lac/linear_operator_tools.h>
 #include <deal.II/lac/precondition.h>
 #include <deal.II/lac/sparse_direct.h>
 #include <deal.II/lac/trilinos_precondition.h>
@@ -174,7 +173,7 @@ void
 AgglomeratedMG<dim>::agglomerate_and_compute_level_matrices()
 {
   using VectorType             = LinearAlgebra::distributed::Vector<double>;
-  using LevelMatrixType        = LinearOperator<VectorType, VectorType>;
+  using LevelMatrixType        = LinearOperatorMG<VectorType, VectorType>;
   const unsigned int min_level = 0;
 
 
@@ -251,7 +250,7 @@ AgglomeratedMG<dim>::agglomerate_and_compute_level_matrices()
   pcout << "Projected using transfer_matrices:" << std::endl;
 
   multigrid_matrices_lo[max_level] =
-    linear_operator<VectorType, VectorType>(system_matrix_dg);
+    linear_operator_mg<VectorType, VectorType>(system_matrix_dg);
   multigrid_matrices_lo[max_level].n_rows = system_matrix_dg.m();
   multigrid_matrices_lo[max_level].n_cols = system_matrix_dg.n();
 
@@ -323,8 +322,8 @@ AgglomeratedMG<dim>::agglomerate_and_compute_level_matrices()
 
   pcout << "Smoothers initialized" << std::endl;
 
-  // Define coarse grid solver. Avoid to use the LinearOperator for this level,
-  // use directly the matrix.
+  // Define coarse grid solver. Avoid to use the LinearOperatorMG for this
+  // level, use directly the matrix.
   Utils::MGCoarseDirect<VectorType,
                         TrilinosWrappers::SparseMatrix,
                         TrilinosWrappers::SolverDirect>

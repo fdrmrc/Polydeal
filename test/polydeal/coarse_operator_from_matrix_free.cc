@@ -26,7 +26,6 @@
 #include <deal.II/grid/grid_in.h>
 
 #include <deal.II/lac/la_parallel_vector.h>
-#include <deal.II/lac/linear_operator_tools.h>
 #include <deal.II/lac/trilinos_sparse_matrix.h>
 #include <deal.II/lac/trilinos_vector.h>
 
@@ -41,6 +40,7 @@
 #include <agglomeration_handler.h>
 #include <agglomerator.h>
 #include <multigrid_amg.h>
+#include <packaged_operation_for_mg.h>
 #include <poly_utils.h>
 
 using namespace dealii;
@@ -664,7 +664,7 @@ TestMGMatrix<dim>::agglomerate_and_compute_level_matrices()
                       double>
     mf_amg(system_matrix, transfers);
   using VectorType = LinearAlgebra::distributed::Vector<double>;
-  MGLevelObject<LinearOperator<VectorType, VectorType>> mg_matrices(0, 2);
+  MGLevelObject<LinearOperatorMG<VectorType, VectorType>> mg_matrices(0, 2);
   mf_amg.compute_level_matrices(mg_matrices);
 
 
