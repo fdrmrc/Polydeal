@@ -300,12 +300,13 @@ public:
    * agglomerated cells are seen as one **unique** cell, with only the DoFs
    * associated to the master cell of the agglomeration.
    */
-  template <typename SparsityPatternType, typename Number = double>
+  template <typename Number = double>
   void
   create_agglomeration_sparsity_pattern(
-    SparsityPatternType             &sparsity_pattern,
-    const AffineConstraints<Number> &constraints = AffineConstraints<Number>(),
-    const bool                       keep_constrained_dofs = true);
+    DynamicSparsityPattern         &sparsity_pattern,
+    const AffineConstraints<Number> constraints = AffineConstraints<Number>(),
+    const bool                      keep_constrained_dofs = true,
+    const types::subdomain_id subdomain_id = numbers::invalid_subdomain_id);
 
   /**
    * Store internally that the given cells are agglomerated. The convenction we
@@ -399,9 +400,7 @@ public:
   get_dof_handler() const;
 
   /**
-   * Returns the number of agglomerate cells on the whole grid. In case of a
-   * distributed grid, this function returns the sum of the number of
-   * agglomerates over all processors.
+   * Returns the number of agglomerate cells in the grid.
    */
   unsigned int
   n_agglomerates() const;
@@ -1102,7 +1101,7 @@ template <int dim, int spacedim>
 inline unsigned int
 AgglomerationHandler<dim, spacedim>::n_agglomerates() const
 {
-  return Utilities::MPI::sum(n_agglomerations, communicator);
+  return n_agglomerations;
 }
 
 
@@ -1189,7 +1188,6 @@ void
 AgglomerationHandler<dim, spacedim>::connect_hierarchy(
   const CellsAgglomerator<dim, RtreeType> &agglomerator)
 {
-  // Perform deep copy
   parent_child_info        = agglomerator.parent_node_to_children_nodes;
   present_extraction_level = agglomerator.extraction_level;
 }

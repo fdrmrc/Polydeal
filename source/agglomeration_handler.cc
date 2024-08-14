@@ -53,10 +53,6 @@ AgglomerationHandler<dim, spacedim>::define_agglomerate(
   // master cell.
   const types::global_cell_index global_master_idx =
     cells[0]->global_active_cell_index();
-
-  const auto &dh_master_cell = cells[0]->as_dof_handler_iterator(agglo_dh);
-  dh_master_cell->set_active_fe_index(CellAgglomerationType::master);
-
   const types::global_cell_index master_idx = cells[0]->active_cell_index();
   master_cells_container.push_back(cells[0]);
   master_slave_relationships[global_master_idx] = -1;
@@ -69,8 +65,6 @@ AgglomerationHandler<dim, spacedim>::define_agglomerate(
   for (auto it = ++cells.begin(); it != cells.end(); ++it)
     {
       slaves.push_back(*it);
-      const auto &dh_cell = (*it)->as_dof_handler_iterator(agglo_dh);
-      dh_cell->set_active_fe_index(CellAgglomerationType::slave); // slave cell
       master_slave_relationships[(*it)->global_active_cell_index()] =
         global_master_idx; // mark each slave
       master_slave_relationships_iterators[(*it)->active_cell_index()] =
@@ -471,6 +465,14 @@ AgglomerationHandler<dim, spacedim>::initialize_hp_structure()
            "Triangulation must not be empty upon calling this function."));
   Assert(n_agglomerations > 0,
          ExcMessage("No agglomeration has been performed."));
+  for (const auto &cell : agglo_dh.active_cell_iterators())
+    if (cell->is_locally_owned())
+      {
+        if (is_master_cell(cell))
+          cell->set_active_fe_index(CellAgglomerationType::master);
+        else if (is_slave_cell(cell))
+          cell->set_active_fe_index(CellAgglomerationType::slave); // slave cell
+      }
 
   agglo_dh.distribute_dofs(fe_collection);
   euler_mapping = std::make_unique<
@@ -657,12 +659,13 @@ AgglomerationHandler<dim, spacedim>::reinit_interface(
 
 
 template <int dim, int spacedim>
-template <typename SparsityPatternType, typename Number>
+template <typename Number>
 void
 AgglomerationHandler<dim, spacedim>::create_agglomeration_sparsity_pattern(
-  SparsityPatternType             &dsp,
-  const AffineConstraints<Number> &constraints,
-  const bool                       keep_constrained_dofs)
+  DynamicSparsityPattern         &dsp,
+  const AffineConstraints<Number> constraints,
+  const bool                      keep_constrained_dofs,
+  const types::subdomain_id       subdomain_id)
 {
   Assert(n_agglomerations > 0,
          ExcMessage("The agglomeration has not been set up correctly."));
@@ -674,15 +677,14 @@ AgglomerationHandler<dim, spacedim>::create_agglomeration_sparsity_pattern(
   const IndexSet  locally_relevant_dofs =
     DoFTools::extract_locally_relevant_dofs(agglo_dh);
 
-  if constexpr (std::is_same_v<SparsityPatternType, DynamicSparsityPattern>)
-    dsp.reinit(locally_owned_dofs.size(),
-               locally_owned_dofs.size(),
-               locally_relevant_dofs);
-  else if constexpr (std::is_same_v<SparsityPatternType,
-                                    TrilinosWrappers::SparsityPattern>)
-    dsp.reinit(locally_owned_dofs, communicator);
-  else
-    DEAL_II_ASSERT_UNREACHABLE();
+  dsp.reinit(locally_owned_dofs.size(),
+             locally_owned_dofs.size(),
+             locally_owned_dofs);
+
+  // Create the sparsity pattern corresponding only to volumetric terms. The
+  // fluxes needed by DG methods will be filled later.
+  DoFTools::make_sparsity_pattern(
+    agglo_dh, dsp, constraints, keep_constrained_dofs, subdomain_id);
 
 
   const unsigned int dofs_per_cell = agglo_dh.get_fe(0).n_dofs_per_cell();
@@ -697,17 +699,10 @@ AgglomerationHandler<dim, spacedim>::create_agglomeration_sparsity_pattern(
         {
           const unsigned int n_current_faces = polytope->n_faces();
           polytope->get_dof_indices(current_dof_indices);
-          // volumetric terms
-          constraints.add_entries_local_to_global(current_dof_indices,
-                                                  dsp,
-                                                  keep_constrained_dofs);
-          // fill flux terms
-          const CellId &current_poly_id = polytope->id();
           for (unsigned int f = 0; f < n_current_faces; ++f)
             {
               const auto &neigh_polytope = polytope->neighbor(f);
-              if (neigh_polytope.state() == IteratorState::valid &&
-                  (current_poly_id < neigh_polytope->id()))
+              if (neigh_polytope.state() == IteratorState::valid)
                 {
                   neigh_polytope->get_dof_indices(neighbor_dof_indices);
                   constraints.add_entries_local_to_global(current_dof_indices,
@@ -715,15 +710,16 @@ AgglomerationHandler<dim, spacedim>::create_agglomeration_sparsity_pattern(
                                                           dsp,
                                                           keep_constrained_dofs,
                                                           {});
-                  constraints.add_entries_local_to_global(neighbor_dof_indices,
-                                                          current_dof_indices,
-                                                          dsp,
-                                                          keep_constrained_dofs,
-                                                          {});
                 }
             }
         }
     }
+
+  if (Utilities::MPI::job_supports_mpi())
+    SparsityTools::distribute_sparsity_pattern(dsp,
+                                               locally_owned_dofs,
+                                               communicator,
+                                               locally_relevant_dofs);
 }
 
 
@@ -1327,38 +1323,23 @@ namespace dealii
 template class AgglomerationHandler<1>;
 template void
 AgglomerationHandler<1>::create_agglomeration_sparsity_pattern(
-  DynamicSparsityPattern          &sparsity_pattern,
-  const AffineConstraints<double> &constraints,
-  const bool                       keep_constrained_dofs);
-
-template void
-AgglomerationHandler<1>::create_agglomeration_sparsity_pattern(
-  TrilinosWrappers::SparsityPattern &sparsity_pattern,
-  const AffineConstraints<double>   &constraints,
-  const bool                         keep_constrained_dofs);
+  DynamicSparsityPattern         &sparsity_pattern,
+  const AffineConstraints<double> constraints,
+  const bool                      keep_constrained_dofs,
+  const types::subdomain_id       subdomain_id);
 
 template class AgglomerationHandler<2>;
 template void
 AgglomerationHandler<2>::create_agglomeration_sparsity_pattern(
-  DynamicSparsityPattern          &sparsity_pattern,
-  const AffineConstraints<double> &constraints,
-  const bool                       keep_constrained_dofs);
-
-template void
-AgglomerationHandler<2>::create_agglomeration_sparsity_pattern(
-  TrilinosWrappers::SparsityPattern &sparsity_pattern,
-  const AffineConstraints<double>   &constraints,
-  const bool                         keep_constrained_dofs);
+  DynamicSparsityPattern         &sparsity_pattern,
+  const AffineConstraints<double> constraints,
+  const bool                      keep_constrained_dofs,
+  const types::subdomain_id       subdomain_id);
 
 template class AgglomerationHandler<3>;
 template void
 AgglomerationHandler<3>::create_agglomeration_sparsity_pattern(
-  DynamicSparsityPattern          &sparsity_pattern,
-  const AffineConstraints<double> &constraints,
-  const bool                       keep_constrained_dofs);
-
-template void
-AgglomerationHandler<3>::create_agglomeration_sparsity_pattern(
-  TrilinosWrappers::SparsityPattern &sparsity_pattern,
-  const AffineConstraints<double>   &constraints,
-  const bool                         keep_constrained_dofs);
+  DynamicSparsityPattern         &sparsity_pattern,
+  const AffineConstraints<double> constraints,
+  const bool                      keep_constrained_dofs,
+  const types::subdomain_id       subdomain_id);
