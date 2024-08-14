@@ -424,22 +424,17 @@ DiffusionReactionProblem<dim>::assemble_system()
 
   ah->distribute_agglomerated_dofs(fe_dg);
 
-  DynamicSparsityPattern sparsity_pattern;
-  ah->create_agglomeration_sparsity_pattern(sparsity_pattern);
+  TrilinosWrappers::SparsityPattern dsp;
+  ah->create_agglomeration_sparsity_pattern(dsp);
+  system_matrix.reinit(dsp);
 
   locally_owned_dofs    = ah->agglo_dh.locally_owned_dofs();
   locally_relevant_dofs = DoFTools::extract_locally_relevant_dofs(ah->agglo_dh);
-
-  system_matrix.reinit(locally_owned_dofs,
-                       locally_owned_dofs,
-                       sparsity_pattern,
-                       comm);
   system_rhs.reinit(locally_owned_dofs, comm);
 
   std::unique_ptr<const RightHandSide<dim>> rhs_function;
   rhs_function =
     std::make_unique<const RightHandSide<dim>>(reaction_coefficient);
-
 
   const unsigned int dofs_per_cell = fe_dg.n_dofs_per_cell();
 
