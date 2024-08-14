@@ -890,7 +890,7 @@ namespace dealii::PolyUtils
 
     DynamicSparsityPattern dsp(output_dh->n_dofs(),
                                agglo_dh.n_dofs(),
-                               output_dh->locally_owned_dofs());
+                               locally_relevant_dofs);
 
     std::vector<types::global_dof_index> agglo_dof_indices(fe.dofs_per_cell);
     std::vector<types::global_dof_index> standard_dof_indices(fe.dofs_per_cell);
