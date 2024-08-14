@@ -11,7 +11,8 @@
 // -----------------------------------------------------------------------------
 
 
-// Check the operator restriction on coarser, agglomerate, levels.
+// Agglomerated multigrid. Verbose implementation, where agglomerated levels
+// have been constructed explicitly.
 
 #include <deal.II/base/conditional_ostream.h>
 #include <deal.II/base/function_lib.h>
@@ -55,7 +56,7 @@
 
 using namespace dealii;
 
-static constexpr unsigned int degree_finite_element = 3;
+static constexpr unsigned int degree_finite_element = 1;
 static constexpr unsigned int n_components          = 1;
 static constexpr bool         CHECK_AMG             = true;
 
@@ -386,38 +387,21 @@ public:
       DoFTools::extract_locally_relevant_dofs(dof_handler);
 
 
-    // create an empty sparsity pattern
-    // TrilinosWrappers::SparsityPattern dsp;
-    // dsp.reinit(system_partitioning,
-    //            system_partitioning,
-    //            system_relevant_set,
-    //            data.get_task_info().communicator);
-    // DoFTools::make_flux_sparsity_pattern(dof_handler, dsp);
-
-
-    // dsp.compress();
-    // mg_matrix.reinit(dsp);
-
 
     DynamicSparsityPattern dsp(dof_handler.n_dofs(),
                                dof_handler.n_dofs(),
                                system_relevant_set);
     DoFTools::make_flux_sparsity_pattern(dof_handler, dsp);
 
-    std::cout << "Before distributing" << std::endl;
     SparsityTools::distribute_sparsity_pattern(
       dsp,
       system_partitioning,
       data.get_task_info().communicator,
       system_relevant_set);
-    std::cout << "After distributing" << std::endl;
     mg_matrix.reinit(system_partitioning,
                      dsp,
                      data.get_task_info().communicator);
-    std::cout << "Reinited the matrix" << std::endl;
-    // DoFTools::make_flux_sparsity_pattern(dof_han);
 
-    // Assemble system matrix.
 
     MatrixFreeTools::compute_matrix<dim,
                                     degree,
@@ -1062,13 +1046,13 @@ TestMGMatrix<dim>::make_fine_grid(const unsigned int n_global_refinements)
         }
       else
         {
-          // std::ifstream abaqus_file("../../meshes/piston_3.inp"); // piston
+          std::ifstream abaqus_file("../../meshes/piston_3.inp"); // piston
           // mesh
-          std::ifstream abaqus_file(
-            "../../meshes/idealized_lv.msh"); // idealized mesh
+          // std::ifstream abaqus_file(
+          //   "../../meshes/idealized_lv.msh"); // idealized mesh
           // std::ifstream abaqus_file(
           // "../../meshes/realistic_lv.msh"); // idealized mesh
-          grid_in.read_msh(abaqus_file);
+          grid_in.read_abaqus(abaqus_file);
           // grid_in.read_abaqus(abaqus_file);
           // tria.refine_global(n_global_refinements - 3);
         }
@@ -1076,7 +1060,7 @@ TestMGMatrix<dim>::make_fine_grid(const unsigned int n_global_refinements)
   else if (grid_type == GridType::grid_generator)
     {
       GridGenerator::hyper_cube(tria, 0., 1.);
-      tria.refine_global(n_global_refinements + 3);
+      tria.refine_global(n_global_refinements);
     }
   else
     {
@@ -1333,18 +1317,19 @@ TestMGMatrix<dim>::agglomerate_and_compute_level_matrices()
       if (level > 0)
         {
           smoother_data[level].smoothing_range     = 20.; // 15.;
-          smoother_data[level].degree              = 5;   // 5;
+          smoother_data[level].degree              = 3;   // 5;
           smoother_data[level].eig_cg_n_iterations = 20;
         }
       else
         {
           smoother_data[0].smoothing_range = 1e-3;
-          smoother_data[0].degree = 5; // numbers::invalid_unsigned_int;
+          smoother_data[0].degree = 3; // numbers::invalid_unsigned_int;
           smoother_data[0].eig_cg_n_iterations = dof_handler.n_dofs();
           smoother_data[0].eig_cg_n_iterations = multigrid_matrices[0]->m();
         }
     }
 
+  mg_smoother.set_steps(5);
   mg_smoother.initialize(multigrid_matrices, smoother_data);
 
   pcout << "Smoothers initialized" << std::endl;
@@ -1566,14 +1551,14 @@ main(int argc, char *argv[])
 {
   Utilities::MPI::MPI_InitFinalize mpi_initialization(argc, argv, 1);
   const MPI_Comm                   comm = MPI_COMM_WORLD;
-  static constexpr unsigned int    dim  = 3;
+  static constexpr unsigned int    dim  = 2;
 
   if (Utilities::MPI::this_mpi_process(comm) == 0)
     std::cout << "Degree: " << degree_finite_element << std::endl;
 
   for (unsigned int starting_level = 0; starting_level < 3; ++starting_level)
     {
-      TestMGMatrix<dim> problem(GridType::unstructured,
+      TestMGMatrix<dim> problem(GridType::grid_generator,
                                 degree_finite_element,
                                 starting_level,
                                 comm);
