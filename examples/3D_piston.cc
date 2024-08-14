@@ -526,21 +526,15 @@ DiffusionReactionProblem<dim>::assemble_system()
                            QGauss<dim - 1>(face_quadrature_degree),
                            update_JxW_values);
 
-  DynamicSparsityPattern sparsity_pattern;
-  // double                 start_setup, stop_setup;
-  // start_setup = MPI_Wtime();
-  ah->distribute_agglomerated_dofs(fe_dg);
-  ah->create_agglomeration_sparsity_pattern(sparsity_pattern);
-  // stop_setup = MPI_Wtime();
 
+  ah->distribute_agglomerated_dofs(fe_dg);
+
+  TrilinosWrappers::SparsityPattern dsp;
+  ah->create_agglomeration_sparsity_pattern(dsp);
+  system_matrix.reinit(dsp);
 
   locally_owned_dofs    = ah->agglo_dh.locally_owned_dofs();
   locally_relevant_dofs = DoFTools::extract_locally_relevant_dofs(ah->agglo_dh);
-
-  system_matrix.reinit(locally_owned_dofs,
-                       locally_owned_dofs,
-                       sparsity_pattern,
-                       comm);
   system_rhs.reinit(locally_owned_dofs, comm);
 
   std::unique_ptr<const RightHandSide<dim>> rhs_function;
