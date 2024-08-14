@@ -155,7 +155,7 @@ main(int argc, char *argv[])
                             update_quadrature_points | update_JxW_values |
                             update_values,
                           QGauss<1>(face_quadrature_degree));
-  
+
 
   ah.distribute_agglomerated_dofs(
     fe_dg); // setup_ghost_polytopes has been called here
