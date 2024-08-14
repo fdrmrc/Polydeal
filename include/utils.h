@@ -26,7 +26,12 @@
 #include <deal.II/lac/trilinos_solver.h>
 #include <deal.II/lac/trilinos_sparse_matrix.h>
 
+#include <deal.II/matrix_free/fe_evaluation.h>
+#include <deal.II/matrix_free/matrix_free.h>
+#include <deal.II/matrix_free/operators.h>
+
 #include <multigrid_amg.h>
+
 
 
 template <int dim, typename RtreeType>
@@ -305,16 +310,7 @@ namespace Utils
     {
       AssertDimension(coarse_matrix.n(), src.size());
       AssertDimension(coarse_matrix.m(), dst.size());
-      double start, stop;
-      start = MPI_Wtime();
       const_cast<SolverType &>(direct_solver).solve(dst, src);
-      stop = MPI_Wtime();
-#ifdef AGGLO_DEBUG
-      MPI_Comm comm = dst.get_mpi_communicator();
-      if (Utilities::MPI::this_mpi_process(comm) == 0)
-        std::cout << "Direct solver elapsed time: " << stop - start << "[s]"
-                  << std::endl;
-#endif
     }
 
 
@@ -446,6 +442,734 @@ namespace Utils
                                           TrilinosWrappers::SparseMatrix,
                                           TrilinosWrappers::SolverDirect>>
       mg_coarse_level_polytopal_hierarchy;
+  };
+
+
+  /**
+   * Class that implements the action of symmetric interior penalty operator on
+   * a vector.
+   * @note The member function rhs() assume the source term is 1. Different source terms
+   * can be defined by suitably changing that function.
+   */
+  template <int dim,
+            int degree,
+            int n_qpoints,
+            int n_components,
+            typename number = double>
+  class LaplaceOperatorDG : public Subscriptor
+  {
+  public:
+    using value_type          = number;
+    using VectorizedArrayType = VectorizedArray<number>;
+    using VectorType          = LinearAlgebra::distributed::Vector<number>;
+
+
+    LaplaceOperatorDG(){};
+
+    void
+    reinit(const Mapping<dim>    &mapping,
+           const DoFHandler<dim> &dof_handler,
+           const unsigned int     level = numbers::invalid_unsigned_int)
+    {
+      fe_degree = dof_handler.get_fe().degree;
+
+      const QGauss<1>                                  quad(n_qpoints);
+      typename MatrixFree<dim, number>::AdditionalData addit_data;
+      addit_data.tasks_parallel_scheme =
+        MatrixFree<dim, number>::AdditionalData::none;
+      addit_data.tasks_block_size = 3;
+      addit_data.mg_level         = level;
+      addit_data.mapping_update_flags_inner_faces =
+        (update_gradients | update_JxW_values);
+      addit_data.mapping_update_flags_boundary_faces =
+        (update_gradients | update_JxW_values);
+      constraints.close();
+
+      data.reinit(mapping, dof_handler, constraints, quad, addit_data);
+
+      compute_inverse_diagonal();
+    }
+
+    void
+    vmult(LinearAlgebra::distributed::Vector<number>       &dst,
+          const LinearAlgebra::distributed::Vector<number> &src) const
+    {
+      dst = 0;
+      vmult_add(dst, src);
+    }
+
+    void
+    Tvmult(LinearAlgebra::distributed::Vector<number>       &dst,
+           const LinearAlgebra::distributed::Vector<number> &src) const
+    {
+      dst = 0;
+      vmult_add(dst, src);
+    }
+
+    void
+    Tvmult_add(LinearAlgebra::distributed::Vector<number>       &dst,
+               const LinearAlgebra::distributed::Vector<number> &src) const
+    {
+      vmult_add(dst, src);
+    }
+
+    void
+    vmult_add(LinearAlgebra::distributed::Vector<number>       &dst,
+              const LinearAlgebra::distributed::Vector<number> &src) const
+    {
+      if (!src.partitioners_are_globally_compatible(
+            *data.get_dof_info(0).vector_partitioner))
+        {
+          LinearAlgebra::distributed::Vector<number> src_copy;
+          src_copy.reinit(data.get_dof_info().vector_partitioner);
+          src_copy = src;
+          const_cast<LinearAlgebra::distributed::Vector<number> &>(src).swap(
+            src_copy);
+        }
+      if (!dst.partitioners_are_globally_compatible(
+            *data.get_dof_info(0).vector_partitioner))
+        {
+          LinearAlgebra::distributed::Vector<number> dst_copy;
+          dst_copy.reinit(data.get_dof_info().vector_partitioner);
+          dst_copy = dst;
+          dst.swap(dst_copy);
+        }
+      dst.zero_out_ghost_values();
+      data.loop(&LaplaceOperatorDG::local_apply,
+                &LaplaceOperatorDG::local_apply_face,
+                &LaplaceOperatorDG::local_apply_boundary,
+                this,
+                dst,
+                src);
+    }
+
+    types::global_dof_index
+    m() const
+    {
+      return data.get_vector_partitioner()->size();
+    }
+
+    types::global_dof_index
+    n() const
+    {
+      return data.get_vector_partitioner()->size();
+    }
+
+    number
+    el(const unsigned int row, const unsigned int col) const
+    {
+      (void)row;
+      (void)col;
+      AssertThrow(false,
+                  ExcMessage("Matrix-free does not allow for entry access"));
+      return number();
+    }
+
+    void
+    initialize_dof_vector(
+      LinearAlgebra::distributed::Vector<number> &vector) const
+    {
+      data.initialize_dof_vector(vector);
+    }
+
+
+    const DoFHandler<dim> &
+    get_dof_handler() const
+    {
+      return data.get_dof_handler();
+    }
+
+
+    const Triangulation<dim> &
+    get_triangulation() const
+    {
+      return data.get_dof_handler().get_triangulation();
+    }
+
+    const LinearAlgebra::distributed::Vector<number> &
+    get_matrix_diagonal_inverse() const
+    {
+      return inverse_diagonal_entries;
+    }
+
+
+    const MatrixFree<dim, number> *
+    get_matrix_free() const
+    {
+      return &data;
+    }
+
+
+
+    const TrilinosWrappers::SparseMatrix &
+    get_system_matrix() const
+    {
+      // Boilerplate for SIP-DG form. TODO: unify interface.
+      //////////////////////////////////////////////////
+      const auto cell_operation = [&](auto &phi) {
+        phi.evaluate(EvaluationFlags::gradients);
+        for (unsigned int q = 0; q < phi.n_q_points; ++q)
+          phi.submit_gradient(phi.get_gradient(q), q);
+        phi.integrate(EvaluationFlags::gradients);
+      };
+
+      const auto face_operation = [&](auto &phi_m, auto &phi_p) {
+        phi_m.evaluate(EvaluationFlags::values | EvaluationFlags::gradients);
+        phi_p.evaluate(EvaluationFlags::values | EvaluationFlags::gradients);
+
+        VectorizedArrayType sigmaF =
+          (std::abs(
+             (phi_m.normal_vector(0) * phi_m.inverse_jacobian(0))[dim - 1]) +
+           std::abs(
+             (phi_m.normal_vector(0) * phi_p.inverse_jacobian(0))[dim - 1])) *
+          (number)(std::max(fe_degree, 1) * (fe_degree + 1.0));
+
+        for (unsigned int q = 0; q < phi_m.n_q_points; ++q)
+          {
+            VectorizedArrayType average_value =
+              (phi_m.get_value(q) - phi_p.get_value(q)) * 0.5;
+            VectorizedArrayType average_valgrad =
+              phi_m.get_normal_derivative(q) + phi_p.get_normal_derivative(q);
+            average_valgrad =
+              average_value * 2. * sigmaF - average_valgrad * 0.5;
+            phi_m.submit_normal_derivative(-average_value, q);
+            phi_p.submit_normal_derivative(-average_value, q);
+            phi_m.submit_value(average_valgrad, q);
+            phi_p.submit_value(-average_valgrad, q);
+          }
+        phi_m.integrate(EvaluationFlags::values | EvaluationFlags::gradients);
+        phi_p.integrate(EvaluationFlags::values | EvaluationFlags::gradients);
+      };
+
+      const auto boundary_operation = [&](auto &phi_m) {
+        phi_m.evaluate(EvaluationFlags::values | EvaluationFlags::gradients);
+        VectorizedArrayType sigmaF =
+          std::abs(
+            (phi_m.normal_vector(0) * phi_m.inverse_jacobian(0))[dim - 1]) *
+          number(std::max(fe_degree, 1) * (fe_degree + 1.0)) * 2.0;
+
+        for (unsigned int q = 0; q < phi_m.n_q_points; ++q)
+          {
+            VectorizedArrayType average_value = phi_m.get_value(q);
+            VectorizedArrayType average_valgrad =
+              -phi_m.get_normal_derivative(q);
+            average_valgrad += average_value * sigmaF * 2.0;
+            phi_m.submit_normal_derivative(-average_value, q);
+            phi_m.submit_value(average_valgrad, q);
+          }
+
+        phi_m.integrate(EvaluationFlags::values | EvaluationFlags::gradients);
+      };
+
+
+      //////////////////////////////////////////////////
+
+
+      // Check if matrix has already been set up.
+      if (system_matrix.m() == 0 && system_matrix.n() == 0)
+        {
+          // Set up sparsity pattern of system matrix.
+          const auto &dof_handler = data.get_dof_handler();
+
+          TrilinosWrappers::SparsityPattern dsp(
+            data.get_mg_level() != numbers::invalid_unsigned_int ?
+              dof_handler.locally_owned_mg_dofs(data.get_mg_level()) :
+              dof_handler.locally_owned_dofs(),
+            data.get_task_info().communicator);
+
+          if (data.get_mg_level() != numbers::invalid_unsigned_int)
+            MGTools::make_flux_sparsity_pattern(dof_handler,
+                                                dsp,
+                                                data.get_mg_level(),
+                                                constraints);
+          else
+            DoFTools::make_flux_sparsity_pattern(dof_handler, dsp, constraints);
+
+          dsp.compress();
+          system_matrix.reinit(dsp);
+
+          // Assemble system matrix. Notice that degree 1 has been hardcoded.
+
+          MatrixFreeTools::compute_matrix<dim,
+                                          degree,
+                                          n_qpoints,
+                                          n_components,
+                                          number,
+                                          VectorizedArrayType>(
+            data,
+            constraints,
+            system_matrix,
+            cell_operation,
+            face_operation,
+            boundary_operation);
+        }
+
+      return system_matrix;
+    }
+
+
+
+    void
+    get_system_matrix(TrilinosWrappers::SparseMatrix &mg_matrix) const
+    {
+      // Boilerplate for SIP-DG form. TODO: unify interface.
+      //////////////////////////////////////////////////
+      const auto cell_operation = [&](auto &phi) {
+        phi.evaluate(EvaluationFlags::gradients);
+        for (unsigned int q = 0; q < phi.n_q_points; ++q)
+          phi.submit_gradient(phi.get_gradient(q), q);
+        phi.integrate(EvaluationFlags::gradients);
+      };
+
+      const auto face_operation = [&](auto &phi_m, auto &phi_p) {
+        phi_m.evaluate(EvaluationFlags::values | EvaluationFlags::gradients);
+        phi_p.evaluate(EvaluationFlags::values | EvaluationFlags::gradients);
+
+        VectorizedArrayType sigmaF =
+          (std::abs(
+             (phi_m.normal_vector(0) * phi_m.inverse_jacobian(0))[dim - 1]) +
+           std::abs(
+             (phi_m.normal_vector(0) * phi_p.inverse_jacobian(0))[dim - 1])) *
+          (number)(std::max(fe_degree, 1) * (fe_degree + 1.0));
+
+        for (unsigned int q = 0; q < phi_m.n_q_points; ++q)
+          {
+            VectorizedArrayType average_value =
+              (phi_m.get_value(q) - phi_p.get_value(q)) * 0.5;
+            VectorizedArrayType average_valgrad =
+              phi_m.get_normal_derivative(q) + phi_p.get_normal_derivative(q);
+            average_valgrad =
+              average_value * 2. * sigmaF - average_valgrad * 0.5;
+            phi_m.submit_normal_derivative(-average_value, q);
+            phi_p.submit_normal_derivative(-average_value, q);
+            phi_m.submit_value(average_valgrad, q);
+            phi_p.submit_value(-average_valgrad, q);
+          }
+        phi_m.integrate(EvaluationFlags::values | EvaluationFlags::gradients);
+        phi_p.integrate(EvaluationFlags::values | EvaluationFlags::gradients);
+      };
+
+      const auto boundary_operation = [&](auto &phi_m) {
+        phi_m.evaluate(EvaluationFlags::values | EvaluationFlags::gradients);
+        VectorizedArrayType sigmaF =
+          std::abs(
+            (phi_m.normal_vector(0) * phi_m.inverse_jacobian(0))[dim - 1]) *
+          number(std::max(fe_degree, 1) * (fe_degree + 1.0)) * 2.0;
+
+        for (unsigned int q = 0; q < phi_m.n_q_points; ++q)
+          {
+            VectorizedArrayType average_value = phi_m.get_value(q);
+            VectorizedArrayType average_valgrad =
+              -phi_m.get_normal_derivative(q);
+            average_valgrad += average_value * sigmaF * 2.0;
+            phi_m.submit_normal_derivative(-average_value, q);
+            phi_m.submit_value(average_valgrad, q);
+          }
+
+        phi_m.integrate(EvaluationFlags::values | EvaluationFlags::gradients);
+      };
+
+
+      //////////////////////////////////////////////////
+
+      // Check if matrix has already been set up.
+      AssertThrow((mg_matrix.m() == 0 && mg_matrix.n() == 0),
+                  ExcInternalError());
+
+      // Set up sparsity pattern of system matrix.
+      const DoFHandler<dim> &dof_handler = data.get_dof_handler();
+
+      const IndexSet &system_partitioning = dof_handler.locally_owned_dofs();
+      const IndexSet  system_relevant_set =
+        DoFTools::extract_locally_relevant_dofs(dof_handler);
+
+
+      DynamicSparsityPattern dsp(dof_handler.n_dofs(),
+                                 dof_handler.n_dofs(),
+                                 system_relevant_set);
+      DoFTools::make_flux_sparsity_pattern(dof_handler, dsp);
+
+      SparsityTools::distribute_sparsity_pattern(
+        dsp,
+        system_partitioning,
+        data.get_task_info().communicator,
+        system_relevant_set);
+      mg_matrix.reinit(system_partitioning,
+                       dsp,
+                       data.get_task_info().communicator);
+
+      // Assemble system matrix.
+      MatrixFreeTools::compute_matrix<dim,
+                                      degree,
+                                      n_qpoints,
+                                      n_components,
+                                      number,
+                                      VectorizedArrayType>(data,
+                                                           constraints,
+                                                           mg_matrix,
+                                                           cell_operation,
+                                                           face_operation,
+                                                           boundary_operation);
+    }
+
+
+
+    void
+    rhs(LinearAlgebra::distributed::Vector<number> &b) const
+    {
+      const int dummy = 0;
+
+
+      data.template cell_loop<LinearAlgebra::distributed::Vector<number>, int>(
+        [](const auto &matrix_free, auto &dst, const auto &, const auto cells) {
+          FEEvaluation<dim, -1, 0, n_components, number> phi(matrix_free,
+                                                             cells);
+          for (unsigned int cell = cells.first; cell < cells.second; ++cell)
+            {
+              phi.reinit(cell);
+              for (unsigned int q = 0; q < phi.n_q_points; ++q)
+                {
+                  if constexpr (n_components == 1)
+                    {
+                      phi.submit_value(1.0, q);
+                    }
+                  else
+                    {
+                      Tensor<1, n_components, VectorizedArray<number>> temp;
+                      for (unsigned int v = 0;
+                           v < VectorizedArray<number>::size();
+                           ++v)
+                        {
+                          for (unsigned int i = 0; i < n_components; i++)
+                            temp[i][v] = 1.;
+                        }
+                      phi.submit_value(temp, q);
+                    }
+                }
+
+              phi.integrate_scatter(EvaluationFlags::values, dst);
+            }
+        },
+        b,
+        dummy,
+        true);
+    }
+
+
+
+    void
+    compute_inverse_diagonal()
+    {
+      data.initialize_dof_vector(inverse_diagonal_entries);
+      unsigned int dummy = 0;
+      data.loop(&LaplaceOperatorDG::local_diagonal_cell,
+                &LaplaceOperatorDG::local_diagonal_face,
+                &LaplaceOperatorDG::local_diagonal_boundary,
+                this,
+                inverse_diagonal_entries,
+                dummy);
+
+      for (unsigned int i = 0;
+           i < inverse_diagonal_entries.locally_owned_size();
+           ++i)
+        if (std::abs(inverse_diagonal_entries.local_element(i)) > 1e-10)
+          inverse_diagonal_entries.local_element(i) =
+            1. / inverse_diagonal_entries.local_element(i);
+    }
+
+
+  private:
+    void
+    local_apply(const MatrixFree<dim, number>                    &data,
+                LinearAlgebra::distributed::Vector<number>       &dst,
+                const LinearAlgebra::distributed::Vector<number> &src,
+                const std::pair<unsigned int, unsigned int> &cell_range) const
+    {
+      FEEvaluation<dim, -1, 0, 1, number> phi(data);
+
+      for (unsigned int cell = cell_range.first; cell < cell_range.second;
+           ++cell)
+        {
+          phi.reinit(cell);
+          phi.read_dof_values(src);
+          phi.evaluate(EvaluationFlags::gradients);
+          for (unsigned int q = 0; q < phi.n_q_points; ++q)
+            phi.submit_gradient(phi.get_gradient(q), q);
+          phi.integrate(EvaluationFlags::gradients);
+          phi.distribute_local_to_global(dst);
+        }
+    }
+
+    void
+    local_apply_face(
+      const MatrixFree<dim, number>                    &data,
+      LinearAlgebra::distributed::Vector<number>       &dst,
+      const LinearAlgebra::distributed::Vector<number> &src,
+      const std::pair<unsigned int, unsigned int>      &face_range) const
+    {
+      FEFaceEvaluation<dim, -1, 0, 1, number> fe_eval(data, true);
+      FEFaceEvaluation<dim, -1, 0, 1, number> fe_eval_neighbor(data, false);
+
+      for (unsigned int face = face_range.first; face < face_range.second;
+           ++face)
+        {
+          fe_eval.reinit(face);
+          fe_eval_neighbor.reinit(face);
+
+          fe_eval.read_dof_values(src);
+          fe_eval.evaluate(EvaluationFlags::values |
+                           EvaluationFlags::gradients);
+          fe_eval_neighbor.read_dof_values(src);
+          fe_eval_neighbor.evaluate(EvaluationFlags::values |
+                                    EvaluationFlags::gradients);
+          VectorizedArray<number> sigmaF =
+            (std::abs((fe_eval.normal_vector(0) *
+                       fe_eval.inverse_jacobian(0))[dim - 1]) +
+             std::abs((fe_eval.normal_vector(0) *
+                       fe_eval_neighbor.inverse_jacobian(0))[dim - 1])) *
+            (number)(std::max(fe_degree, 1) * (fe_degree + 1.0));
+
+          for (unsigned int q = 0; q < fe_eval.n_q_points; ++q)
+            {
+              VectorizedArray<number> average_value =
+                (fe_eval.get_value(q) - fe_eval_neighbor.get_value(q)) * 0.5;
+              VectorizedArray<number> average_valgrad =
+                fe_eval.get_normal_derivative(q) +
+                fe_eval_neighbor.get_normal_derivative(q);
+              average_valgrad =
+                average_value * 2. * sigmaF - average_valgrad * 0.5;
+              fe_eval.submit_normal_derivative(-average_value, q);
+              fe_eval_neighbor.submit_normal_derivative(-average_value, q);
+              fe_eval.submit_value(average_valgrad, q);
+              fe_eval_neighbor.submit_value(-average_valgrad, q);
+            }
+          fe_eval.integrate(EvaluationFlags::values |
+                            EvaluationFlags::gradients);
+          fe_eval.distribute_local_to_global(dst);
+          fe_eval_neighbor.integrate(EvaluationFlags::values |
+                                     EvaluationFlags::gradients);
+          fe_eval_neighbor.distribute_local_to_global(dst);
+        }
+    }
+
+    void
+    local_apply_boundary(
+      const MatrixFree<dim, number>                    &data,
+      LinearAlgebra::distributed::Vector<number>       &dst,
+      const LinearAlgebra::distributed::Vector<number> &src,
+      const std::pair<unsigned int, unsigned int>      &face_range) const
+    {
+      FEFaceEvaluation<dim, -1, 0, 1, number> fe_eval(data, true);
+      for (unsigned int face = face_range.first; face < face_range.second;
+           ++face)
+        {
+          fe_eval.reinit(face);
+          fe_eval.read_dof_values(src);
+          fe_eval.evaluate(EvaluationFlags::values |
+                           EvaluationFlags::gradients);
+          VectorizedArray<number> sigmaF =
+            std::abs((fe_eval.normal_vector(0) *
+                      fe_eval.inverse_jacobian(0))[dim - 1]) *
+            number(std::max(fe_degree, 1) * (fe_degree + 1.0)) * 2.0;
+
+          for (unsigned int q = 0; q < fe_eval.n_q_points; ++q)
+            {
+              VectorizedArray<number> average_value = fe_eval.get_value(q);
+              VectorizedArray<number> average_valgrad =
+                -fe_eval.get_normal_derivative(q);
+              average_valgrad += average_value * sigmaF * 2.0;
+              fe_eval.submit_normal_derivative(-average_value, q);
+              fe_eval.submit_value(average_valgrad, q);
+            }
+
+          fe_eval.integrate(EvaluationFlags::values |
+                            EvaluationFlags::gradients);
+          fe_eval.distribute_local_to_global(dst);
+        }
+    }
+
+
+    void
+    local_diagonal_cell(
+      const MatrixFree<dim, number>              &data,
+      LinearAlgebra::distributed::Vector<number> &dst,
+      const unsigned int &,
+      const std::pair<unsigned int, unsigned int> &cell_range) const
+    {
+      FEEvaluation<dim, -1, 0, 1, number>    phi(data);
+      AlignedVector<VectorizedArray<number>> local_diagonal_vector(
+        phi.dofs_per_cell);
+
+      for (unsigned int cell = cell_range.first; cell < cell_range.second;
+           ++cell)
+        {
+          phi.reinit(cell);
+
+          for (unsigned int i = 0; i < phi.dofs_per_cell; ++i)
+            {
+              for (unsigned int j = 0; j < phi.dofs_per_cell; ++j)
+                phi.begin_dof_values()[j] = VectorizedArray<number>();
+              phi.begin_dof_values()[i] = 1.;
+              phi.evaluate(EvaluationFlags::gradients);
+              for (unsigned int q = 0; q < phi.n_q_points; ++q)
+                phi.submit_gradient(phi.get_gradient(q), q);
+              phi.integrate(EvaluationFlags::gradients);
+              local_diagonal_vector[i] = phi.begin_dof_values()[i];
+            }
+          for (unsigned int i = 0; i < phi.dofs_per_cell; ++i)
+            phi.begin_dof_values()[i] = local_diagonal_vector[i];
+          phi.distribute_local_to_global(dst);
+        }
+    }
+
+    void
+    local_diagonal_face(
+      const MatrixFree<dim, number>              &data,
+      LinearAlgebra::distributed::Vector<number> &dst,
+      const unsigned int &,
+      const std::pair<unsigned int, unsigned int> &face_range) const
+    {
+      FEFaceEvaluation<dim, -1, 0, 1, number> phi(data, true);
+      FEFaceEvaluation<dim, -1, 0, 1, number> phi_outer(data, false);
+      AlignedVector<VectorizedArray<number>>  local_diagonal_vector(
+        phi.dofs_per_cell);
+
+      for (unsigned int face = face_range.first; face < face_range.second;
+           ++face)
+        {
+          phi.reinit(face);
+          phi_outer.reinit(face);
+
+          VectorizedArray<number> sigmaF =
+            (std::abs(
+               (phi.normal_vector(0) * phi.inverse_jacobian(0))[dim - 1]) +
+             std::abs((phi.normal_vector(0) *
+                       phi_outer.inverse_jacobian(0))[dim - 1])) *
+            (number)(std::max(fe_degree, 1) * (fe_degree + 1.0));
+
+          // Compute phi part
+          for (unsigned int j = 0; j < phi.dofs_per_cell; ++j)
+            phi_outer.begin_dof_values()[j] = VectorizedArray<number>();
+          phi_outer.evaluate(EvaluationFlags::values |
+                             EvaluationFlags::gradients);
+          for (unsigned int i = 0; i < phi.dofs_per_cell; ++i)
+            {
+              for (unsigned int j = 0; j < phi.dofs_per_cell; ++j)
+                phi.begin_dof_values()[j] = VectorizedArray<number>();
+              phi.begin_dof_values()[i] = 1.;
+              phi.evaluate(EvaluationFlags::values |
+                           EvaluationFlags::gradients);
+
+              for (unsigned int q = 0; q < phi.n_q_points; ++q)
+                {
+                  VectorizedArray<number> average_value =
+                    (phi.get_value(q) - phi_outer.get_value(q)) * 0.5;
+                  VectorizedArray<number> average_valgrad =
+                    phi.get_normal_derivative(q) +
+                    phi_outer.get_normal_derivative(q);
+                  average_valgrad =
+                    average_value * 2. * sigmaF - average_valgrad * 0.5;
+                  phi.submit_normal_derivative(-average_value, q);
+                  phi.submit_value(average_valgrad, q);
+                }
+              phi.integrate(EvaluationFlags::values |
+                            EvaluationFlags::gradients);
+              local_diagonal_vector[i] = phi.begin_dof_values()[i];
+            }
+          for (unsigned int i = 0; i < phi.dofs_per_cell; ++i)
+            phi.begin_dof_values()[i] = local_diagonal_vector[i];
+          phi.distribute_local_to_global(dst);
+
+          // Compute phi_outer part
+          for (unsigned int j = 0; j < phi.dofs_per_cell; ++j)
+            phi.begin_dof_values()[j] = VectorizedArray<number>();
+          phi.evaluate(EvaluationFlags::values | EvaluationFlags::gradients);
+          for (unsigned int i = 0; i < phi.dofs_per_cell; ++i)
+            {
+              for (unsigned int j = 0; j < phi.dofs_per_cell; ++j)
+                phi_outer.begin_dof_values()[j] = VectorizedArray<number>();
+              phi_outer.begin_dof_values()[i] = 1.;
+              phi_outer.evaluate(EvaluationFlags::values |
+                                 EvaluationFlags::gradients);
+
+              for (unsigned int q = 0; q < phi.n_q_points; ++q)
+                {
+                  VectorizedArray<number> average_value =
+                    (phi.get_value(q) - phi_outer.get_value(q)) * 0.5;
+                  VectorizedArray<number> average_valgrad =
+                    phi.get_normal_derivative(q) +
+                    phi_outer.get_normal_derivative(q);
+                  average_valgrad =
+                    average_value * 2. * sigmaF - average_valgrad * 0.5;
+                  phi_outer.submit_normal_derivative(-average_value, q);
+                  phi_outer.submit_value(-average_valgrad, q);
+                }
+              phi_outer.integrate(EvaluationFlags::values |
+                                  EvaluationFlags::gradients);
+              local_diagonal_vector[i] = phi_outer.begin_dof_values()[i];
+            }
+          for (unsigned int i = 0; i < phi.dofs_per_cell; ++i)
+            phi_outer.begin_dof_values()[i] = local_diagonal_vector[i];
+          phi_outer.distribute_local_to_global(dst);
+        }
+    }
+
+    void
+    local_diagonal_boundary(
+      const MatrixFree<dim, number>              &data,
+      LinearAlgebra::distributed::Vector<number> &dst,
+      const unsigned int &,
+      const std::pair<unsigned int, unsigned int> &face_range) const
+    {
+      FEFaceEvaluation<dim, -1, 0, 1, number> phi(data);
+      AlignedVector<VectorizedArray<number>>  local_diagonal_vector(
+        phi.dofs_per_cell);
+
+      for (unsigned int face = face_range.first; face < face_range.second;
+           ++face)
+        {
+          phi.reinit(face);
+
+          VectorizedArray<number> sigmaF =
+            std::abs(
+              (phi.normal_vector(0) * phi.inverse_jacobian(0))[dim - 1]) *
+            number(std::max(fe_degree, 1) * (fe_degree + 1.0)) * 2.0;
+
+          for (unsigned int i = 0; i < phi.dofs_per_cell; ++i)
+            {
+              for (unsigned int j = 0; j < phi.dofs_per_cell; ++j)
+                phi.begin_dof_values()[j] = VectorizedArray<number>();
+              phi.begin_dof_values()[i] = 1.;
+              phi.evaluate(EvaluationFlags::values |
+                           EvaluationFlags::gradients);
+
+              for (unsigned int q = 0; q < phi.n_q_points; ++q)
+                {
+                  VectorizedArray<number> average_value = phi.get_value(q);
+                  VectorizedArray<number> average_valgrad =
+                    -phi.get_normal_derivative(q);
+                  average_valgrad += average_value * sigmaF * 2.0;
+                  phi.submit_normal_derivative(-average_value, q);
+                  phi.submit_value(average_valgrad, q);
+                }
+
+              phi.integrate(EvaluationFlags::values |
+                            EvaluationFlags::gradients);
+              local_diagonal_vector[i] = phi.begin_dof_values()[i];
+            }
+          for (unsigned int i = 0; i < phi.dofs_per_cell; ++i)
+            phi.begin_dof_values()[i] = local_diagonal_vector[i];
+          phi.distribute_local_to_global(dst);
+        }
+    }
+
+
+
+    MatrixFree<dim, number>                    data;
+    LinearAlgebra::distributed::Vector<number> inverse_diagonal_entries;
+    int                                        fe_degree;
+    mutable TrilinosWrappers::SparseMatrix     system_matrix;
+    AffineConstraints<number>                  constraints;
   };
 
 
