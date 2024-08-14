@@ -237,23 +237,35 @@ namespace dealii
      */
     AmgProjector(const std::vector<TrilinosWrappers::SparseMatrix> &transfers_)
     {
-      // Only DGQ discretizations are supported.
-
       using VectorType = LinearAlgebra::distributed::Vector<Number>;
-
-      // Check parallel layout is identical on every level
-      // for (unsigned int l = 0; l < transfers_.size(); ++l)
-      // Assert((fine_operator.locally_owned_range_indices() ==
-      //         transfers_[transfers_.size() -
-      //         1].locally_owned_range_indices()),
-      //        ExcInternalError());
-
       // get communicator from first Trilinos matrix
       communicator = transfers_[0].get_mpi_communicator();
       transfer_matrices.resize(transfers_.size());
 
       // Store pointers to fine operator and transfers
       for (unsigned int l = 0; l < transfers_.size(); ++l)
+        {
+          // std::cout << "transferring matrix l= " << l << std::endl;
+          transfer_matrices[l] = &transfers_[l];
+        }
+    }
+
+
+    /**
+     * Same as above, but taking a vector of TrilinosWrappers::SparseMatrix
+     * objects to be used in a multilevel context.
+     */
+    AmgProjector(
+      const MGLevelObject<TrilinosWrappers::SparseMatrix> &transfers_)
+    {
+      using VectorType = LinearAlgebra::distributed::Vector<Number>;
+
+      // get communicator from first Trilinos matrix
+      communicator = transfers_[0].get_mpi_communicator();
+      transfer_matrices.resize(transfers_.n_levels());
+
+      // Store pointers to fine operator and transfers
+      for (unsigned int l = 0; l < transfer_matrices.size(); ++l)
         {
           // std::cout << "transferring matrix l= " << l << std::endl;
           transfer_matrices[l] = &transfers_[l];
@@ -302,6 +314,59 @@ namespace dealii
             *transfer_matrices[l]); // result stored in level_operators[l]
                                     // Multiply by the transpose
           transfer_matrices[l]->Tmmult(*mg_matrices[l], level_operator);
+        }
+    }
+
+
+
+    /**
+     * Similar to above, but wrapping all multigrid matrices in a
+     * LinearOperator. This can be used if you want to use the matrix-free
+     * action on some levels, and the matrix-based version on other ones.
+     * Since the common thing between these approaches is the presence of a
+     * @p vmult() function, a LinearOperator object can store both actions
+     * simultaneously.
+     */
+    void
+    compute_level_matrices_as_linear_operators(
+      MGLevelObject<std::unique_ptr<MatrixType>> &mg_matrices,
+      MGLevelObject<LinearOperator<LinearAlgebra::distributed::Vector<Number>,
+                                   LinearAlgebra::distributed::Vector<Number>>>
+        &multigrid_matrices_lo)
+    {
+      Assert(mg_matrices.n_levels() > 1,
+             ExcMessage("Vector of matrices set to invalid size."));
+      using VectorType = LinearAlgebra::distributed::Vector<Number>;
+
+      const unsigned int min_level = mg_matrices.min_level();
+      const unsigned int max_level = mg_matrices.max_level();
+
+      for (unsigned int l = max_level; l-- > min_level;)
+        {
+          // Set parallel layout of intermediate operators AP
+          MatrixType level_operator(
+            transfer_matrices[l]->locally_owned_range_indices(),
+            transfer_matrices[l]->locally_owned_domain_indices(),
+            communicator);
+
+          mg_matrices[l] = std::make_unique<MatrixType>();
+
+          // First, compute AP
+          mg_matrices[l + 1]->mmult(
+            level_operator,
+            *transfer_matrices[l]); // result stored in level_operators[l]
+                                    // Multiply by the transpose
+          transfer_matrices[l]->Tmmult(*mg_matrices[l], level_operator);
+
+          // Wrap every matrix into a linear operator now.
+          multigrid_matrices_lo[l] =
+            linear_operator<VectorType, VectorType>(*mg_matrices[l]);
+          multigrid_matrices_lo[l].vmult =
+            [&mg_matrices, l](VectorType &dst, const VectorType &src) {
+              mg_matrices[l]->vmult(dst, src);
+            };
+          multigrid_matrices_lo[l].n_rows = mg_matrices[l]->m();
+          multigrid_matrices_lo[l].n_cols = mg_matrices[l]->n();
         }
     }
 
@@ -360,6 +425,14 @@ namespace dealii
     MGTransferAgglomeration(
       const MGLevelObject<TrilinosWrappers::SparseMatrix *> &transfer_matrices,
       const std::vector<DoFHandler<dim> *>                  &dof_handlers);
+
+    /**
+     * Same as above, but taking vectors of Trilinos::SparseMatrix objects,
+     * instead of pointers.
+     */
+    MGTransferAgglomeration(
+      const MGLevelObject<TrilinosWrappers::SparseMatrix> &transfer_matrices,
+      const std::vector<DoFHandler<dim> *>                &dof_handlers);
 
 
     /**

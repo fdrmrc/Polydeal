@@ -36,11 +36,29 @@ namespace dealii
         transfer_matrices[l] = transfer_matrices_[l];
         dof_handlers[l]      = dof_handlers_[l];
       }
+  }
 
-    // transfer_matrices[dof_handlers_.size() - 1] =
-    //   transfer_matrices_[dof_handlers_.size() - 1];
-    // dof_handlers[dof_handlers_.size() - 1] =
-    //   dof_handlers_[dof_handlers_.size() - 1];
+
+
+  template <int dim, typename VectorType>
+  MGTransferAgglomeration<dim, VectorType>::MGTransferAgglomeration(
+    const MGLevelObject<TrilinosWrappers::SparseMatrix> &transfer_matrices_,
+    const std::vector<DoFHandler<dim> *>                &dof_handlers_)
+  {
+    Assert(transfer_matrices_.n_levels() > 0, ExcInternalError());
+    transfer_matrices.resize(0, dof_handlers_.size());
+    dof_handlers.resize(dof_handlers_.size());
+
+    for (unsigned int l = transfer_matrices_.min_level();
+         l <= transfer_matrices_.max_level();
+         ++l)
+      {
+        // std::cout << "l in build transfers: " << l << std::endl;
+        transfer_matrices[l] =
+          const_cast<dealii::TrilinosWrappers::SparseMatrix *>(
+            &transfer_matrices_[l]);
+        dof_handlers[l] = dof_handlers_[l];
+      }
   }
 
 
@@ -67,13 +85,7 @@ namespace dealii
   {
     Assert(transfer_matrices[to_level - 1] != nullptr,
            ExcMessage("Transfer matrix has not been initialized."));
-    double start_pro, stop_pro;
-    start_pro = MPI_Wtime();
     transfer_matrices[to_level - 1]->vmult_add(dst, src);
-    stop_pro = MPI_Wtime();
-    // if (Utilities::MPI::this_mpi_process(dst.get_mpi_communicator()) == 0)
-    //   std::cout << "Prolongation elapsed time: " << stop_pro - start_pro
-    //             << "[s]" << std::endl;
   }
 
 
@@ -92,14 +104,7 @@ namespace dealii
     //           << std::endl;
     Assert(transfer_matrices[from_level - 1] != nullptr,
            ExcMessage("Matrix has not been initialized."));
-    double start_pro, stop_pro;
-    start_pro = MPI_Wtime();
     transfer_matrices[from_level - 1]->Tvmult_add(dst, src);
-    stop_pro = MPI_Wtime();
-    // if (Utilities::MPI::this_mpi_process(dst.get_mpi_communicator()) == 0)
-    //   std::cout << "Restriction elapsed time: " << stop_pro - start_pro <<
-    //   "[s]"
-    //             << std::endl;
   }
 
 
