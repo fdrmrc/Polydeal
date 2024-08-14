@@ -17,6 +17,7 @@
 
 #include <deal.II/base/config.h>
 
+#include <deal.II/base/conditional_ostream.h>
 #include <deal.II/base/point.h>
 #include <deal.II/base/quadrature.h>
 #include <deal.II/base/std_cxx20/iota_view.h>
@@ -1383,6 +1384,118 @@ namespace dealii::PolyUtils
       interpolation_matrix.compress(VectorOperation::add);
   }
 
+
+
+  /**
+   * Utility function that builds the multilevel hierarchy from the tree level
+   * @p starting_level. This function fills the vector of
+   * @p AgglomerationHandlers objects by distributing degrees of freedom on
+   * each level of the hierarchy. It returns the total number of levels in the
+   * hierarchy.
+   */
+  template <int dim>
+  unsigned int
+  construct_agglomerated_levels(
+    const Triangulation<dim> &tria,
+    std::vector<std::unique_ptr<AgglomerationHandler<dim>>>
+                       &agglomeration_handlers,
+    const FE_DGQ<dim>  &fe_dg,
+    const unsigned int  degree_finite_element,
+    const Mapping<dim> &mapping,
+    const unsigned int  starting_tree_level)
+  {
+    const auto parallel_tria =
+      dynamic_cast<const parallel::TriangulationBase<dim> *>(&tria);
+
+    GridTools::Cache<dim> cached_tria(tria);
+    Assert(parallel_tria->n_active_cells() > 0, ExcInternalError());
+
+    const MPI_Comm     comm = parallel_tria->get_communicator();
+    ConditionalOStream pcout(std::cout,
+                             (Utilities::MPI::this_mpi_process(comm) == 0));
+
+    // Start building R-tree
+    namespace bgi = boost::geometry::index;
+    static constexpr unsigned int max_elem_per_node =
+      constexpr_pow(2, dim); // 2^dim
+    std::vector<std::pair<BoundingBox<dim>,
+                          typename Triangulation<dim>::active_cell_iterator>>
+                 boxes(parallel_tria->n_locally_owned_active_cells());
+    unsigned int i = 0;
+    for (const auto &cell : parallel_tria->active_cell_iterators())
+      if (cell->is_locally_owned())
+        boxes[i++] = std::make_pair(mapping.get_bounding_box(cell), cell);
+
+    auto tree = pack_rtree<bgi::rstar<max_elem_per_node>>(boxes);
+    Assert(n_levels(tree) >= 2, ExcMessage("At least two levels are needed."));
+    pcout << "Total number of available levels: " << n_levels(tree)
+          << std::endl;
+
+    pcout << "Starting level: " << starting_tree_level << std::endl;
+    const unsigned int total_tree_levels =
+      n_levels(tree) - starting_tree_level + 1;
+
+
+    // Resize the agglomeration handlers to the right size
+
+    agglomeration_handlers.resize(total_tree_levels);
+    // Loop through the available levels and set AgglomerationHandlers up.
+    for (unsigned int extraction_level = starting_tree_level;
+         extraction_level <= n_levels(tree);
+         ++extraction_level)
+      {
+        agglomeration_handlers[extraction_level - starting_tree_level] =
+          std::make_unique<AgglomerationHandler<dim>>(cached_tria);
+        CellsAgglomerator<dim, decltype(tree)> agglomerator{tree,
+                                                            extraction_level};
+        const auto agglomerates = agglomerator.extract_agglomerates();
+        agglomeration_handlers[extraction_level - starting_tree_level]
+          ->connect_hierarchy(agglomerator);
+
+        // Flag elements for agglomeration
+        unsigned int agglo_index = 0;
+        for (unsigned int i = 0; i < agglomerates.size(); ++i)
+          {
+            const auto &agglo = agglomerates[i]; // i-th agglomerate
+            for (const auto &el : agglo)
+              {
+                el->set_material_id(agglo_index);
+              }
+            ++agglo_index;
+          }
+
+        const unsigned int n_local_agglomerates = agglo_index;
+        unsigned int       total_agglomerates =
+          Utilities::MPI::sum(n_local_agglomerates, comm);
+        pcout << "Total agglomerates per (tree) level: " << extraction_level
+              << ": " << total_agglomerates << std::endl;
+
+
+        // Now, perform agglomeration within each locally owned partition
+        std::vector<
+          std::vector<typename Triangulation<dim>::active_cell_iterator>>
+          cells_per_subdomain(n_local_agglomerates);
+        for (const auto &cell : parallel_tria->active_cell_iterators())
+          if (cell->is_locally_owned())
+            cells_per_subdomain[cell->material_id()].push_back(cell);
+
+        // For every subdomain, agglomerate elements together
+        for (std::size_t i = 0; i < cells_per_subdomain.size(); ++i)
+          agglomeration_handlers[extraction_level - starting_tree_level]
+            ->define_agglomerate(cells_per_subdomain[i]);
+
+        agglomeration_handlers[extraction_level - starting_tree_level]
+          ->initialize_fe_values(QGauss<dim>(degree_finite_element + 1),
+                                 update_values | update_gradients |
+                                   update_JxW_values | update_quadrature_points,
+                                 QGauss<dim - 1>(degree_finite_element + 1),
+                                 update_JxW_values);
+        agglomeration_handlers[extraction_level - starting_tree_level]
+          ->distribute_agglomerated_dofs(fe_dg);
+      }
+
+    return total_tree_levels;
+  }
 
 
 } // namespace dealii::PolyUtils
