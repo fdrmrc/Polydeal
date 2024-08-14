@@ -30,6 +30,8 @@
 #include <deal.II/matrix_free/matrix_free.h>
 #include <deal.II/matrix_free/operators.h>
 
+#include <deal.II/multigrid/mg_tools.h>
+
 #include <multigrid_amg.h>
 
 
@@ -321,128 +323,6 @@ namespace Utils
     const MatrixType &coarse_matrix;
   };
 
-
-
-  template <int dim,
-            typename VectorType,
-            typename MatrixType,
-            typename SolverType = SolverCG<VectorType>>
-  class MGCoarsePolytopalSolver : public MGCoarseGridBase<VectorType>
-  {
-  public:
-    MGCoarsePolytopalSolver() = delete;
-
-    MGCoarsePolytopalSolver(
-      const MatrixType                               &coarse_level_operator_,
-      const DoFHandler<dim>                          &coarse_dof_handler,
-      const mg::Matrix<VectorType>                   &mg_matrix,
-      const TrilinosWrappers::SparseMatrix           &coarse_trilinos_matrix,
-      const MGTransferAgglomeration<dim, VectorType> &transfer,
-      const MGSmootherBase<VectorType>               &pre_smooth,
-      const MGSmootherBase<VectorType>               &post_smooth,
-      SolverControl                                  &solver_control)
-      : comm(coarse_level_operator_.get_dof_handler().get_communicator())
-      , solver(solver_control)
-    {
-      control = &solver_control;
-      // extract communicator from operator in the coarsest level.
-      coarse_level_matrix = &coarse_level_operator_;
-      coarse_dh           = &coarse_dof_handler;
-      Assert((coarse_dh->n_dofs() == coarse_level_operator_.m()),
-             ExcInternalError());
-
-      mg_coarse_level_polytopal_hierarchy =
-        std::make_unique<Utils::MGCoarseDirect<VectorType,
-                                               TrilinosWrappers::SparseMatrix,
-                                               TrilinosWrappers::SolverDirect>>(
-          coarse_trilinos_matrix); // coarse polytopal level trilinos matrix
-
-      //  Create a Multigrid object and a PreconditionMG object to be fed to the
-      //  CG solver constructed in this class. The coarse grid solver is
-      //  performed through a direct solver, see the
-      //  mg_coarse_level_polytopal_hierarchy member of this class.
-
-      mg = std::make_unique<Multigrid<VectorType>>(
-        mg_matrix,
-        *mg_coarse_level_polytopal_hierarchy,
-        transfer,
-        pre_smooth,
-        post_smooth);
-      preconditioner_mg = std::make_unique<
-        PreconditionMG<dim,
-                       VectorType,
-                       MGTransferAgglomeration<dim, VectorType>>>(*coarse_dh,
-                                                                  *mg,
-                                                                  transfer);
-    }
-
-
-    void
-    operator()(const unsigned int,
-               VectorType       &dst,
-               const VectorType &src) const override
-    {
-      double start, stop;
-      start = MPI_Wtime();
-      const_cast<SolverType &>(solver).solve(*coarse_level_matrix,
-                                             dst,
-                                             src,
-                                             *preconditioner_mg);
-      stop = MPI_Wtime();
-
-      if (Utilities::MPI::this_mpi_process(comm) == 0)
-        std::cout << "Coarse polytopal solver elapsed time: " << stop - start
-                  << "[s] with " << control->last_step() << "iterations. "
-                  << std::endl;
-    }
-
-
-    ~MGCoarsePolytopalSolver() = default;
-
-  private:
-    /**
-     * MPI communicator.
-     */
-    const MPI_Comm comm;
-
-    /**
-     * Multigrid object to construct the preconditioner.
-     */
-    std::unique_ptr<Multigrid<VectorType>> mg;
-
-    /**
-     * Precondtioner to be given to the conjugate-gradient solver.
-     */
-    std::unique_ptr<
-      PreconditionMG<dim, VectorType, MGTransferAgglomeration<dim, VectorType>>>
-      preconditioner_mg;
-
-    /**
-     * Coarsest level matrix within the polynomial hierarchy.
-     */
-    const MatrixType *coarse_level_matrix;
-
-    /**
-     * Coarsest DoFHandler in the polynomial hierarchy.
-     */
-    const DoFHandler<dim> *coarse_dh;
-
-    /**
-     * Iterative solver to be invoked by operator().
-     */
-    const SolverType solver;
-
-    const SolverControl *control;
-
-
-    /**
-     * Coarse direct solver to be used in the coarsest agglomerate level.
-     */
-    std::unique_ptr<Utils::MGCoarseDirect<VectorType,
-                                          TrilinosWrappers::SparseMatrix,
-                                          TrilinosWrappers::SolverDirect>>
-      mg_coarse_level_polytopal_hierarchy;
-  };
 
 
   /**
