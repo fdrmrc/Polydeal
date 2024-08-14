@@ -659,7 +659,10 @@ TestMGMatrix<dim>::agglomerate_and_compute_level_matrices()
   std::vector<TrilinosWrappers::SparseMatrix *> transfers(1);
   transfers[0] = &embedding_matrix;
 
-  MatrixFreeProjector<dim, double> mf_amg(system_matrix, transfers);
+  MatrixFreeProjector<dim,
+                      LaplaceOperator<dim, degree_finite_element, double>,
+                      double>
+    mf_amg(system_matrix, transfers);
   using VectorType = LinearAlgebra::distributed::Vector<double>;
   MGLevelObject<LinearOperator<VectorType, VectorType>> mg_matrices(0, 2);
   mf_amg.compute_level_matrices(mg_matrices);
