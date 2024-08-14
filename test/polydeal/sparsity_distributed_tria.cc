@@ -155,14 +155,16 @@ main(int argc, char *argv[])
                             update_quadrature_points | update_JxW_values |
                             update_values,
                           QGauss<1>(face_quadrature_degree));
-  ah.distribute_agglomerated_dofs(fe_dg);
+  
 
-  DynamicSparsityPattern sparsity_pattern;
-  ah.create_agglomeration_sparsity_pattern(sparsity_pattern);
-  sparsity_pattern.compress();
+  ah.distribute_agglomerated_dofs(
+    fe_dg); // setup_ghost_polytopes has been called here
+
+  TrilinosWrappers::SparsityPattern dsp;
+  ah.create_agglomeration_sparsity_pattern(dsp);
 
   // Print (the locally owned part of) the sparsity pattern to the given stream,
   // using the format (line,col), only from rank 0
   if (my_rank == 0)
-    sparsity_pattern.print(std::cout);
+    dsp.print(std::cout);
 }

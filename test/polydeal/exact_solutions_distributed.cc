@@ -211,16 +211,16 @@ do_test()
                           QGauss<dim - 1>(face_quadrature_degree),
                           update_JxW_values);
 
-  ah.distribute_agglomerated_dofs(fe_dg);
+  ah.distribute_agglomerated_dofs(
+    fe_dg); // setup_ghost_polytopes has been called here
 
-  DynamicSparsityPattern dsp;
+  TrilinosWrappers::SparsityPattern dsp;
   ah.create_agglomeration_sparsity_pattern(dsp);
+  system_matrix.reinit(dsp);
 
   const IndexSet &locally_owned_dofs = ah.agglo_dh.locally_owned_dofs();
   const IndexSet  locally_relevant_dofs =
     DoFTools::extract_locally_relevant_dofs(ah.agglo_dh);
-
-  system_matrix.reinit(locally_owned_dofs, locally_owned_dofs, dsp, comm);
 
   system_rhs.reinit(locally_owned_dofs, comm);
 
