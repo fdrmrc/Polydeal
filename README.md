@@ -33,9 +33,9 @@ To enable to computation of some quality metrics, mostly of theoretical interest
 We currently support the following features:
 * Unified interface for 2D and 3D problems.
 * Distributed-memory implementation through MPI.
+* Parallel agglomerated multigrid support.
 * Discontinuous Galerkin spaces of order $p$.
 * Different agglomeration strategies.
-* Multigrid support (still experimental)
 
 ## Building polyDEAL 
 Assuming deal.II is installed on your machine and meets the requirements above, all is required to do is:
