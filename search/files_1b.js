@@ -30,7 +30,7 @@ var searchData=
   ['smartpointer_2eh_27',['smartpointer.h',['http://www.dealii.org/developer/doxygen/deal.II/smartpointer_8h.html',1,'']]],
   ['smoothness_5festimator_2ecc_28',['smoothness_estimator.cc',['http://www.dealii.org/developer/doxygen/deal.II/smoothness__estimator_8cc.html',1,'']]],
   ['smoothness_5festimator_2eh_29',['smoothness_estimator.h',['http://www.dealii.org/developer/doxygen/deal.II/smoothness__estimator_8h.html',1,'']]],
-  ['solution_5ftransfer_2ecc_30',['solution_transfer.cc',['http://www.dealii.org/developer/doxygen/deal.II/distributed_2solution__transfer_8cc.html',1,'(Global Namespace)'],['http://www.dealii.org/developer/doxygen/deal.II/numerics_2solution__transfer_8cc.html',1,'(Global Namespace)']]],
+  ['solution_5ftransfer_2ecc_30',['solution_transfer.cc',['http://www.dealii.org/developer/doxygen/deal.II/solution__transfer_8cc.html',1,'']]],
   ['solution_5ftransfer_2eh_31',['solution_transfer.h',['http://www.dealii.org/developer/doxygen/deal.II/distributed_2solution__transfer_8h.html',1,'(Global Namespace)'],['http://www.dealii.org/developer/doxygen/deal.II/numerics_2solution__transfer_8h.html',1,'(Global Namespace)']]],
   ['solution_5ftransfer_5finst2_2ecc_32',['solution_transfer_inst2.cc',['http://www.dealii.org/developer/doxygen/deal.II/solution__transfer__inst2_8cc.html',1,'']]],
   ['solution_5ftransfer_5finst3_2ecc_33',['solution_transfer_inst3.cc',['http://www.dealii.org/developer/doxygen/deal.II/solution__transfer__inst3_8cc.html',1,'']]],
