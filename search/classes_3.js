@@ -88,12 +88,11 @@ var searchData=
   ['dofpair_85',['DoFPair',['http://www.dealii.org/developer/doxygen/deal.II/structinternal_1_1MGTransfer_1_1DoFPair.html',1,'internal::MGTransfer']]],
   ['dofprintsolverstep_86',['DoFPrintSolverStep',['http://www.dealii.org/developer/doxygen/deal.II/classDoFPrintSolverStep.html',1,'']]],
   ['dot_87',['Dot',['http://www.dealii.org/developer/doxygen/deal.II/structinternal_1_1VectorOperations_1_1Dot.html',1,'internal::VectorOperations']]],
-  ['dotproduct_88',['DotProduct',['http://www.dealii.org/developer/doxygen/deal.II/structLinearAlgebra_1_1CUDAWrappers_1_1kernel_1_1DotProduct.html',1,'LinearAlgebra::CUDAWrappers::kernel']]],
-  ['double_89',['Double',['http://www.dealii.org/developer/doxygen/deal.II/classPatterns_1_1Double.html',1,'Patterns']]],
-  ['double_5fcontraction_5fresult_90',['double_contraction_result',['http://www.dealii.org/developer/doxygen/deal.II/structinternal_1_1SymmetricTensorAccessors_1_1double__contraction__result.html',1,'internal::SymmetricTensorAccessors']]],
-  ['double_5fcontraction_5fresult_3c_202_2c_202_2c_20dim_2c_20number_2c_20othernumber_20_3e_91',['double_contraction_result&lt; 2, 2, dim, Number, OtherNumber &gt;',['http://www.dealii.org/developer/doxygen/deal.II/structinternal_1_1SymmetricTensorAccessors_1_1double__contraction__result_3_012_00_012_00_01dim_bde24087db8a52ec06f500b41dd95304.html',1,'internal::SymmetricTensorAccessors']]],
-  ['duplicatedcommunicator_92',['DuplicatedCommunicator',['http://www.dealii.org/developer/doxygen/deal.II/classUtilities_1_1MPI_1_1DuplicatedCommunicator.html',1,'Utilities::MPI']]],
-  ['dx_93',['DX',['http://www.dealii.org/developer/doxygen/deal.II/structGridOutFlags_1_1DX.html',1,'GridOutFlags']]],
-  ['dxflags_94',['DXFlags',['http://www.dealii.org/developer/doxygen/deal.II/structDataOutBase_1_1DXFlags.html',1,'DataOutBase']]],
-  ['dynamicsparsitypattern_95',['DynamicSparsityPattern',['http://www.dealii.org/developer/doxygen/deal.II/classDynamicSparsityPattern.html',1,'']]]
+  ['double_88',['Double',['http://www.dealii.org/developer/doxygen/deal.II/classPatterns_1_1Double.html',1,'Patterns']]],
+  ['double_5fcontraction_5fresult_89',['double_contraction_result',['http://www.dealii.org/developer/doxygen/deal.II/structinternal_1_1SymmetricTensorAccessors_1_1double__contraction__result.html',1,'internal::SymmetricTensorAccessors']]],
+  ['double_5fcontraction_5fresult_3c_202_2c_202_2c_20dim_2c_20number_2c_20othernumber_20_3e_90',['double_contraction_result&lt; 2, 2, dim, Number, OtherNumber &gt;',['http://www.dealii.org/developer/doxygen/deal.II/structinternal_1_1SymmetricTensorAccessors_1_1double__contraction__result_3_012_00_012_00_01dim_bde24087db8a52ec06f500b41dd95304.html',1,'internal::SymmetricTensorAccessors']]],
+  ['duplicatedcommunicator_91',['DuplicatedCommunicator',['http://www.dealii.org/developer/doxygen/deal.II/classUtilities_1_1MPI_1_1DuplicatedCommunicator.html',1,'Utilities::MPI']]],
+  ['dx_92',['DX',['http://www.dealii.org/developer/doxygen/deal.II/structGridOutFlags_1_1DX.html',1,'GridOutFlags']]],
+  ['dxflags_93',['DXFlags',['http://www.dealii.org/developer/doxygen/deal.II/structDataOutBase_1_1DXFlags.html',1,'DataOutBase']]],
+  ['dynamicsparsitypattern_94',['DynamicSparsityPattern',['http://www.dealii.org/developer/doxygen/deal.II/classDynamicSparsityPattern.html',1,'']]]
 ];

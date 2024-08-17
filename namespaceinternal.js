@@ -61,7 +61,6 @@ var namespaceinternal =
       [ "mu_sec", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1FunctionParser.html#a3679207c892432e24a7f6a1df1132038", null ]
     ] ],
     [ "GrowingVectorMemoryImplementation", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1GrowingVectorMemoryImplementation.html", [
-      [ "release_all_unused_cuda_memory", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1GrowingVectorMemoryImplementation.html#a8b2aa1609c1789445cb4502428c552a2", null ],
       [ "release_all_unused_memory", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1GrowingVectorMemoryImplementation.html#a22ab878d5eb78d7c48927469bfd5267d", null ]
     ] ],
     [ "hp", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1hp.html", null ],

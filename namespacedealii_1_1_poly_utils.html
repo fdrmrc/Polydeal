@@ -158,9 +158,9 @@ Functions</h2></td></tr>
 <tr class="memitem:a1a82a5c9715de902af2b6cf4ae63c17f" id="r_a1a82a5c9715de902af2b6cf4ae63c17f"><td class="memTemplParams" colspan="2">template&lt;int dim, int spacedim, typename MatrixType &gt; </td></tr>
 <tr class="memitem:a1a82a5c9715de902af2b6cf4ae63c17f"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a1a82a5c9715de902af2b6cf4ae63c17f">fill_interpolation_matrix</a> (const <a class="el" href="class_agglomeration_handler.html">AgglomerationHandler</a>&lt; dim, spacedim &gt; &amp;agglomeration_handler, MatrixType &amp;interpolation_matrix)</td></tr>
 <tr class="separator:a1a82a5c9715de902af2b6cf4ae63c17f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad409326687c7cfd9597507c804182839" id="r_ad409326687c7cfd9597507c804182839"><td class="memTemplParams" colspan="2">template&lt;int dim&gt; </td></tr>
-<tr class="memitem:ad409326687c7cfd9597507c804182839"><td class="memTemplItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#ad409326687c7cfd9597507c804182839">construct_agglomerated_levels</a> (const <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classTriangulation.html">Triangulation</a>&lt; dim &gt; &amp;tria, std::vector&lt; std::unique_ptr&lt; <a class="el" href="class_agglomeration_handler.html">AgglomerationHandler</a>&lt; dim &gt; &gt; &gt; &amp;agglomeration_handlers, const <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classFE__DGQ.html">FE_DGQ</a>&lt; dim &gt; &amp;fe_dg, const unsigned int degree_finite_element, const <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classMapping.html">Mapping</a>&lt; dim &gt; &amp;mapping, const unsigned int starting_tree_level)</td></tr>
-<tr class="separator:ad409326687c7cfd9597507c804182839"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a77f890d646c3d8fc496cc84e953747ed" id="r_a77f890d646c3d8fc496cc84e953747ed"><td class="memTemplParams" colspan="2">template&lt;int dim&gt; </td></tr>
+<tr class="memitem:a77f890d646c3d8fc496cc84e953747ed"><td class="memTemplItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a77f890d646c3d8fc496cc84e953747ed">construct_agglomerated_levels</a> (const <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classTriangulation.html">Triangulation</a>&lt; dim &gt; &amp;tria, std::vector&lt; std::unique_ptr&lt; <a class="el" href="class_agglomeration_handler.html">AgglomerationHandler</a>&lt; dim &gt; &gt; &gt; &amp;agglomeration_handlers, const <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classFE__DGQ.html">FE_DGQ</a>&lt; dim &gt; &amp;fe_dg, const <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classMapping.html">Mapping</a>&lt; dim &gt; &amp;mapping, const unsigned int starting_tree_level)</td></tr>
+<tr class="separator:a77f890d646c3d8fc496cc84e953747ed"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Function Documentation</h2>
 <a id="a9b1f017e9d2cedf0e4362bf8a7d62419" name="a9b1f017e9d2cedf0e4362bf8a7d62419"></a>
@@ -290,8 +290,8 @@ template&lt;typename T &gt; </div>
 
 </div>
 </div>
-<a id="ad409326687c7cfd9597507c804182839" name="ad409326687c7cfd9597507c804182839"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ad409326687c7cfd9597507c804182839">&#9670;&#160;</a></span>construct_agglomerated_levels()</h2>
+<a id="a77f890d646c3d8fc496cc84e953747ed" name="a77f890d646c3d8fc496cc84e953747ed"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a77f890d646c3d8fc496cc84e953747ed">&#9670;&#160;</a></span>construct_agglomerated_levels()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -316,11 +316,6 @@ template&lt;int dim&gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const unsigned int</td>          <td class="paramname"><span class="paramname"><em>degree_finite_element</em></span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
           <td class="paramtype">const <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classMapping.html">Mapping</a>&lt; dim &gt; &amp;</td>          <td class="paramname"><span class="paramname"><em>mapping</em></span>, </td>
         </tr>
         <tr>
@@ -334,7 +329,7 @@ template&lt;int dim&gt; </div>
 
 <p class="definition">Definition at line <a class="el" href="poly__utils_8h_source.html#l01211">1211</a> of file <a class="el" href="poly__utils_8h_source.html">poly_utils.h</a>.</p>
 
-<p class="reference">References <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/group__Exceptions.html#ga70a0bb353656e704acf927945277bbc6">Assert</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/parallel__in__time_8h.html#adfb95b57d46b70264b307e57f9522cfe">comm</a>, <a class="el" href="poly__utils_8h_source.html#l00804">constexpr_pow()</a>, <a class="el" href="agglomerator_8h_source.html#l00392">dealii::CellsAgglomerator&lt; dim, RtreeType &gt;::extract_agglomerates()</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classMapping.html#a4c7e58a3e6c82b4c1a30cadbd7db9420">Mapping&lt; int dim, int spacedim &gt;::get_bounding_box()</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/namespaceUtilities_1_1MPI.html#a2d0b85e7f2c375999968a0f438174e0c">Utilities::MPI::sum()</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/namespaceUtilities_1_1MPI.html#a7ebd336c94126a6ab230f766f8f25ff7">Utilities::MPI::this_mpi_process()</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/group__feaccess.html#ggaa94b67d2fdcc390690c523f28019e52facbcc430975fa6af05f75ca786dc6fe20">update_gradients</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/group__feaccess.html#ggaa94b67d2fdcc390690c523f28019e52fa714204722e9eeb43aadbd0d5ddc48c85">update_JxW_values</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/group__feaccess.html#ggaa94b67d2fdcc390690c523f28019e52fad5c9ff886b9615349a5d04a6c782df4a">update_quadrature_points</a>, and <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/group__feaccess.html#ggaa94b67d2fdcc390690c523f28019e52fa4057ca2f127aa619c65886a9d3ad4aea">update_values</a>.</p>
+<p class="reference">References <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/group__Exceptions.html#ga70a0bb353656e704acf927945277bbc6">Assert</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/parallel__in__time_8h.html#adfb95b57d46b70264b307e57f9522cfe">comm</a>, <a class="el" href="poly__utils_8h_source.html#l00804">constexpr_pow()</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classFiniteElementData.html#a2cbf5ad6b464871261dbd054bced18a8">FE_DGQ&lt; int dim, int spacedim &gt;::degree</a>, <a class="el" href="agglomerator_8h_source.html#l00392">dealii::CellsAgglomerator&lt; dim, RtreeType &gt;::extract_agglomerates()</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classMapping.html#a4c7e58a3e6c82b4c1a30cadbd7db9420">Mapping&lt; int dim, int spacedim &gt;::get_bounding_box()</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/namespaceUtilities_1_1MPI.html#a2d0b85e7f2c375999968a0f438174e0c">Utilities::MPI::sum()</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/namespaceUtilities_1_1MPI.html#a7ebd336c94126a6ab230f766f8f25ff7">Utilities::MPI::this_mpi_process()</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/group__feaccess.html#ggaa94b67d2fdcc390690c523f28019e52facbcc430975fa6af05f75ca786dc6fe20">update_gradients</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/group__feaccess.html#ggaa94b67d2fdcc390690c523f28019e52fa714204722e9eeb43aadbd0d5ddc48c85">update_JxW_values</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/group__feaccess.html#ggaa94b67d2fdcc390690c523f28019e52fad5c9ff886b9615349a5d04a6c782df4a">update_quadrature_points</a>, and <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/group__feaccess.html#ggaa94b67d2fdcc390690c523f28019e52fa4057ca2f127aa619c65886a9d3ad4aea">update_values</a>.</p>
 
 </div>
 </div>
@@ -533,7 +528,7 @@ template&lt;int dim, int spacedim&gt; </div>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="namespacedealii.html">dealii</a></li><li class="navelem"><a class="el" href="namespacedealii_1_1_poly_utils.html">PolyUtils</a></li>
-    <li class="footer">Generated on Thu Aug 15 2024 08:40:06 for PolyDEAL by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.12.0 </li>
+    <li class="footer">Generated on Sat Aug 17 2024 11:19:16 for PolyDEAL by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.12.0 </li>
   </ul>
 </div>
 </body>

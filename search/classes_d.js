@@ -39,9 +39,7 @@ var searchData=
   ['numbertraits_36',['NumberTraits',['http://www.dealii.org/developer/doxygen/deal.II/structDifferentiation_1_1AD_1_1NumberTraits.html',1,'Differentiation::AD::NumberTraits&lt; typename ScalarType, enum NumberTypes ADNumberTypeCode, typename T &gt;'],['http://www.dealii.org/developer/doxygen/deal.II/structnumbers_1_1NumberTraits.html',1,'numbers::NumberTraits&lt; typename number &gt;']]],
   ['numbertraits_3c_20std_3a_3acomplex_3c_20number_20_3e_20_3e_37',['NumberTraits&lt; std::complex&lt; number &gt; &gt;',['http://www.dealii.org/developer/doxygen/deal.II/structnumbers_1_1NumberTraits_3_01std_1_1complex_3_01number_01_4_01_4.html',1,'numbers']]],
   ['numbertype_38',['NumberType',['http://www.dealii.org/developer/doxygen/deal.II/structDifferentiation_1_1AD_1_1internal_1_1NumberType.html',1,'Differentiation::AD::internal::NumberType&lt; typename T &gt;'],['http://www.dealii.org/developer/doxygen/deal.II/structinternal_1_1NumberType.html',1,'internal::NumberType&lt; typename T &gt;']]],
-  ['numbertype_3c_20cucomplex_20_3e_39',['NumberType&lt; cuComplex &gt;',['http://www.dealii.org/developer/doxygen/deal.II/structinternal_1_1NumberType_3_01cuComplex_01_4.html',1,'internal']]],
-  ['numbertype_3c_20cudoublecomplex_20_3e_40',['NumberType&lt; cuDoubleComplex &gt;',['http://www.dealii.org/developer/doxygen/deal.II/structinternal_1_1NumberType_3_01cuDoubleComplex_01_4.html',1,'internal']]],
-  ['numbertype_3c_20std_3a_3acomplex_3c_20t_20_3e_20_3e_41',['NumberType&lt; std::complex&lt; T &gt; &gt;',['http://www.dealii.org/developer/doxygen/deal.II/structinternal_1_1NumberType_3_01std_1_1complex_3_01T_01_4_01_4.html',1,'internal']]],
-  ['nurbspatchmanifold_42',['NURBSPatchManifold',['http://www.dealii.org/developer/doxygen/deal.II/classOpenCASCADE_1_1NURBSPatchManifold.html',1,'OpenCASCADE']]],
-  ['nvectorview_43',['NVectorView',['http://www.dealii.org/developer/doxygen/deal.II/classSUNDIALS_1_1internal_1_1NVectorView.html',1,'SUNDIALS::internal']]]
+  ['numbertype_3c_20std_3a_3acomplex_3c_20t_20_3e_20_3e_39',['NumberType&lt; std::complex&lt; T &gt; &gt;',['http://www.dealii.org/developer/doxygen/deal.II/structinternal_1_1NumberType_3_01std_1_1complex_3_01T_01_4_01_4.html',1,'internal']]],
+  ['nurbspatchmanifold_40',['NURBSPatchManifold',['http://www.dealii.org/developer/doxygen/deal.II/classOpenCASCADE_1_1NURBSPatchManifold.html',1,'OpenCASCADE']]],
+  ['nvectorview_41',['NVectorView',['http://www.dealii.org/developer/doxygen/deal.II/classSUNDIALS_1_1internal_1_1NVectorView.html',1,'SUNDIALS::internal']]]
 ];

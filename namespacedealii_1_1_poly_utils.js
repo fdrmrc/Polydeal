@@ -9,7 +9,7 @@ var namespacedealii_1_1_poly_utils =
     [ "compute_h_orthogonal", "namespacedealii_1_1_poly_utils.html#a692c4e431675a877af2ebcdfa416129b", null ],
     [ "compute_quality_metrics", "namespacedealii_1_1_poly_utils.html#ac329601a2032214e06afc75f5a983bab", null ],
     [ "constexpr_pow", "namespacedealii_1_1_poly_utils.html#a89da96594fcfe50937b5bd5da3a376e7", null ],
-    [ "construct_agglomerated_levels", "namespacedealii_1_1_poly_utils.html#ad409326687c7cfd9597507c804182839", null ],
+    [ "construct_agglomerated_levels", "namespacedealii_1_1_poly_utils.html#a77f890d646c3d8fc496cc84e953747ed", null ],
     [ "export_polygon_to_csv_file", "namespacedealii_1_1_poly_utils.html#adaa85317847a77d75fa0144435cde0ae", null ],
     [ "extract_children_of_level", "namespacedealii_1_1_poly_utils.html#a36f50c815c9532815b4fc1c11a14f5b1", null ],
     [ "fill_interpolation_matrix", "namespacedealii_1_1_poly_utils.html#a1a82a5c9715de902af2b6cf4ae63c17f", null ],

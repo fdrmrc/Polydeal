@@ -47,6 +47,5 @@ var searchData=
   ['correctionrelaxations_44',['CorrectionRelaxations',['http://www.dealii.org/developer/doxygen/deal.II/structTimeStepBase__Tria__Flags_1_1RefinementFlags.html#aa79f9d3726cc745120cd0e9c8b052cae',1,'TimeStepBase_Tria_Flags::RefinementFlags']]],
   ['cpu_5fclock_5ftype_45',['cpu_clock_type',['http://www.dealii.org/developer/doxygen/deal.II/classTimer.html#aab66fb74f709f66674e2bf06082da240',1,'Timer']]],
   ['criteria_46',['Criteria',['http://www.dealii.org/developer/doxygen/deal.II/namespaceCGALWrappers.html#a7e1bd4e3c7e8decb3d3af9d17304c80b',1,'CGALWrappers']]],
-  ['cuda_47',['CUDA',['http://www.dealii.org/developer/doxygen/deal.II/namespaceMemorySpace.html#a0cd4f812808b8338d996529044435f70',1,'MemorySpace']]],
-  ['curl_5ftype_48',['curl_type',['http://www.dealii.org/developer/doxygen/deal.II/classFEValuesViews_1_1Vector.html#aba53ba83450bae0223a1a0b567ee3df6',1,'FEValuesViews::Vector']]]
+  ['curl_5ftype_47',['curl_type',['http://www.dealii.org/developer/doxygen/deal.II/classFEValuesViews_1_1Vector.html#aba53ba83450bae0223a1a0b567ee3df6',1,'FEValuesViews::Vector']]]
 ];
