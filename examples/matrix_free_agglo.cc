@@ -192,12 +192,8 @@ AgglomeratedMG<dim>::agglomerate_and_compute_level_matrices()
 
   // Start defining agglomerated quantities
   const unsigned int total_tree_levels =
-    PolyUtils::construct_agglomerated_levels(tria_pft,
-                                             agglomeration_handlers,
-                                             fe_dg,
-                                             degree_finite_element,
-                                             mapping,
-                                             starting_level);
+    PolyUtils::construct_agglomerated_levels(
+      tria_pft, agglomeration_handlers, fe_dg, mapping, starting_level);
 
   //  Start the multigrid setup
 

@@ -1213,7 +1213,6 @@ namespace dealii::PolyUtils
     std::vector<std::unique_ptr<AgglomerationHandler<dim>>>
                        &agglomeration_handlers,
     const FE_DGQ<dim>  &fe_dg,
-    const unsigned int  degree_finite_element,
     const Mapping<dim> &mapping,
     const unsigned int  starting_tree_level)
   {
@@ -1298,10 +1297,10 @@ namespace dealii::PolyUtils
             ->define_agglomerate(cells_per_subdomain[i]);
 
         agglomeration_handlers[extraction_level - starting_tree_level]
-          ->initialize_fe_values(QGauss<dim>(degree_finite_element + 1),
+          ->initialize_fe_values(QGauss<dim>(fe_dg.degree + 1),
                                  update_values | update_gradients |
                                    update_JxW_values | update_quadrature_points,
-                                 QGauss<dim - 1>(degree_finite_element + 1),
+                                 QGauss<dim - 1>(fe_dg.degree + 1),
                                  update_JxW_values);
         agglomeration_handlers[extraction_level - starting_tree_level]
           ->distribute_agglomerated_dofs(fe_dg);
