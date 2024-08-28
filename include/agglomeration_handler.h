@@ -243,9 +243,10 @@ public:
   void
   distribute_agglomerated_dofs(const FiniteElement &fe_space)
   {
-    Assert((dynamic_cast<const FE_DGQ<dim, spacedim> *>(&fe_space)),
+    Assert((std::is_same_v<const FE_DGQ<dim> &, decltype(fe_space)>),
            ExcNotImplemented(
-             "Currently, this interface supports only DG discretizations."));
+             "Currently, this interface supports only DG discretizations"
+             " and tensor product elements."));
     fe = std::make_unique<FE_DGQ<dim, spacedim>>(fe_space);
 
     if (hybrid_mesh)

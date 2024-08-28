@@ -465,6 +465,7 @@ Poisson<dim>::make_grid()
     }
   std::cout << "Size of tria: " << tria.n_active_cells() << std::endl;
   cached_tria = std::make_unique<GridTools::Cache<dim>>(tria, mapping);
+  ah          = std::make_unique<AgglomerationHandler<dim>>(*cached_tria);
 
   if (partitioner_type == PartitionerType::metis)
     {
@@ -493,8 +494,8 @@ Poisson<dim>::make_grid()
       for (const auto &cell : tria.active_cell_iterators())
         boxes[i++] = std::make_pair(mapping.get_bounding_box(cell), cell);
 
-      auto       start = std::chrono::system_clock::now();
-      const auto tree  = pack_rtree<bgi::rstar<max_elem_per_node>>(boxes);
+      auto start = std::chrono::system_clock::now();
+      auto tree  = pack_rtree<bgi::rstar<max_elem_per_node>>(boxes);
       std::cout << "Total number of available levels: " << n_levels(tree)
                 << std::endl;
 
@@ -505,23 +506,23 @@ Poisson<dim>::make_grid()
              ExcMessage("At least two levels are needed."));
 #endif
 
-      const auto &csr_and_agglomerates =
-        PolyUtils::extract_children_of_level(tree, extraction_level);
-      const auto &agglomerates = csr_and_agglomerates.second; // vec<vec<>>
+      CellsAgglomerator<dim, decltype(tree)> agglomerator{tree,
+                                                          extraction_level};
+      const auto agglomerates = agglomerator.extract_agglomerates();
+      // ah->connect_hierarchy(agglomerator);
 
-      std::size_t agglo_index = 0;
-      for (std::size_t i = 0; i < agglomerates.size(); ++i)
+      // Flag elements for agglomeration
+      unsigned int agglo_index = 0;
+      for (unsigned int i = 0; i < agglomerates.size(); ++i)
         {
-          // std::cout << "AGGLO " + std::to_string(i) << std::endl;
-          const auto &agglo = agglomerates[i];
+          const auto &agglo = agglomerates[i]; // i-th agglomerate
           for (const auto &el : agglo)
             {
               el->set_subdomain_id(agglo_index);
-              // std::cout << el->active_cell_index() << std::endl;
             }
-          ++agglo_index; // one agglomerate has been processed, increment
-                         // counter
+          ++agglo_index;
         }
+
       std::chrono::duration<double> wctduration =
         (std::chrono::system_clock::now() - start);
       std::cout << "R-tree agglomerates built in " << wctduration.count()
@@ -529,8 +530,6 @@ Poisson<dim>::make_grid()
       n_subdomains = agglo_index;
 
       std::cout << "N subdomains = " << n_subdomains << std::endl;
-
-
 
       // Check number of agglomerates
       if constexpr (dim == 2)
@@ -572,8 +571,6 @@ template <int dim>
 void
 Poisson<dim>::setup_agglomeration()
 {
-  ah = std::make_unique<AgglomerationHandler<dim>>(*cached_tria);
-
   if (partitioner_type != PartitionerType::no_partition)
     {
       std::vector<
@@ -1112,20 +1109,6 @@ main()
 {
   std::cout << "Benchmarking with Rtree:" << std::endl;
 
-  // const unsigned int fe_degree = 1;
-  // for (const unsigned int extraction_level : {2, 3})
-  // for (const unsigned int extraction_level : {2, 3, 4, 5, 6, 7})
-  //   {
-  //     std::cout << "Level " << extraction_level << std::endl;
-  //     Poisson<2> poisson_problem{GridType::unstructured,
-  //                                PartitionerType::rtree,
-  //                                SolutionType::product,
-  //                                extraction_level,
-  //                                0,
-  //                                fe_degree};
-  //     poisson_problem.run();
-  //   }
-
   // Testing p-convergence
   std::cout << "Testing p-convergence" << std::endl;
   {
@@ -1146,37 +1129,10 @@ main()
 
   std::cout << std::endl;
   return 0;
-
-  // std::cout << "Benchmarking with METIS:" << std::endl;
   // for (const unsigned int target_partitions :
   //      {16, 64, 256, 1024, 4096}) // ball
   //                                 //  {6, 23, 91, 364, 1456, 5824}) //
   //                                 //  unstructured {16, 64, 256, 1024,
   //                                 //  4096})
   //                                 //  // structured square
-  //   {
-  //     Poisson<2> poisson_problem{GridType::grid_generator,
-  //                                PartitionerType::metis,
-  //                                SolutionType::product,
-  //                                0,
-  //                                target_partitions,
-  //                                fe_degree};
-  //     poisson_problem.run();
-  //   }
-
-  // Testing p-convergence
-  // std::cout << "Testing p-convergence" << std::endl;
-  // {
-  //   for (unsigned int fe_degree : {1, 2, 3, 4, 5})
-  //     {
-  //       std::cout << "Fe degree: " << fe_degree << std::endl;
-  //       Poisson<2> poisson_problem{GridType::grid_generator,
-  //                                  PartitionerType::metis,
-  //                                  SolutionType::product_sine,
-  //                                  0 /*extaction_level*/,
-  //                                  1024,
-  //                                  fe_degree};
-  //       poisson_problem.run();
-  //     }
-  // }
 }
