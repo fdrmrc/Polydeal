@@ -1,5 +1,12 @@
 var NAVTREEINDEX4 =
 {
+"namespaceDoFTools_1_1internal.html#aefcb004ed33058d0aedcd64af08a9112":[0,0,25,0,14],
+"namespaceDoFTools_1_1internal.html#af539027bba9331145773d7340eb6ad2e":[0,0,25,0,2],
+"namespaceDoFTools_1_1internal_1_1Assembler.html":[0,0,25,0,0],
+"namespaceDynamicSparsityPatternIterators.html":[0,0,26],
+"namespaceDynamicSparsityPatternIterators.html#a55d4a609ddf51cf0645ddeeb04ae8168":[0,0,26,0],
+"namespaceEvaluationFlags.html":[0,0,29],
+"namespaceEvaluationFlags.html#a13a274365d8897d39017c341dce13cde":[0,0,29,3],
 "namespaceEvaluationFlags.html#a9b7c6d689cb76386839d0d13640f59ae":[0,0,29,0],
 "namespaceEvaluationFlags.html#a9b7c6d689cb76386839d0d13640f59aea5f2c95ea073cc4f276c70ae12aceb88c":[0,0,29,7],
 "namespaceEvaluationFlags.html#a9b7c6d689cb76386839d0d13640f59aea91b5f00e4be473005cc331b8644ab2f1":[0,0,29,5],
@@ -242,12 +249,5 @@ var NAVTREEINDEX4 =
 "namespaceGridTools.html#a83d12f8567a8a310620f2326942e4ce8":[0,0,52,11],
 "namespaceGridTools.html#a84f7b02080d7740cdb0fe73f3917af36":[0,0,52,65],
 "namespaceGridTools.html#a8b245fd5c1463b800d0cc5d7c4e2b818":[0,0,52,92],
-"namespaceGridTools.html#a8c212a30784bec20b1ae13fad3fd579c":[0,0,52,35],
-"namespaceGridTools.html#a8c62199a24e6cd42bb4b0ef5a93c0566":[0,0,52,86],
-"namespaceGridTools.html#a90221d4afe481ab23792286fe21e71dd":[0,0,52,75],
-"namespaceGridTools.html#a98e89706e7e925b16d42d288c462e9d8":[0,0,52,20],
-"namespaceGridTools.html#a995b90803c22dbe67fc6d510494b2e51":[0,0,52,1],
-"namespaceGridTools.html#a995b90803c22dbe67fc6d510494b2e51a0f9bb3e7869273e59af59d0bbba24264":[0,0,52,132],
-"namespaceGridTools.html#a995b90803c22dbe67fc6d510494b2e51a215721b4991552d164d0076a25f98f0f":[0,0,52,137],
-"namespaceGridTools.html#a995b90803c22dbe67fc6d510494b2e51a3f53fb4be316505bd3d554a60f36b66b":[0,0,52,131]
+"namespaceGridTools.html#a8c212a30784bec20b1ae13fad3fd579c":[0,0,52,35]
 };

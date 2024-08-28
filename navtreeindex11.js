@@ -1,5 +1,13 @@
 var NAVTREEINDEX11 =
 {
+"structMatrixFreeTools_1_1ElementActivationAndDeactivationMatrixFree_1_1AdditionalData.html":[0,0,79,0],
+"structMatrixFree_1_1AdditionalData.html":[0,0,77],
+"structNonMatching_1_1MappingInfo_1_1AdditionalData.html":[0,0,92,1],
+"structNonMatching_1_1internal_1_1QuadratureGeneratorImplementation_1_1RootFinder_1_1AdditionalData.html":[0,0,92,0,2,0],
+"structPArpackSolver_1_1AdditionalData.html":[0,0,96],
+"structPETScWrappers_1_1PreconditionBDDC_1_1AdditionalData.html":[0,0,99,4],
+"structPETScWrappers_1_1PreconditionBlockJacobi_1_1AdditionalData.html":[0,0,99,5],
+"structPETScWrappers_1_1PreconditionBoomerAMG_1_1AdditionalData.html":[0,0,99,6],
 "structPETScWrappers_1_1PreconditionICC_1_1AdditionalData.html":[0,0,99,7],
 "structPETScWrappers_1_1PreconditionILU_1_1AdditionalData.html":[0,0,99,8],
 "structPETScWrappers_1_1PreconditionJacobi_1_1AdditionalData.html":[0,0,99,9],

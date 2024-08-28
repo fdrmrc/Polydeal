@@ -1,5 +1,10 @@
 var NAVTREEINDEX10 =
 {
+"namespaceinternal_1_1QRImplementation.html#a1ae2421a2ffba8456cf49a6ef8eb598f":[0,0,56,49,2],
+"namespaceinternal_1_1QRImplementation.html#a3a525751a2be4ea93e6849081a034df5":[0,0,56,49,4],
+"namespaceinternal_1_1QRImplementation.html#a3b3d821c200343f262040d8f9af210f2":[0,0,56,49,8],
+"namespaceinternal_1_1QRImplementation.html#a697b0189130f4b830d6bafdd2bbc58b5":[0,0,56,49,7],
+"namespaceinternal_1_1QRImplementation.html#a6a2ded8de5ab9a6991fe15c88675ca62":[0,0,56,49,6],
 "namespaceinternal_1_1QRImplementation.html#a7b42436cc982445748bf2809b3dace38":[0,0,56,49,0],
 "namespaceinternal_1_1QRImplementation.html#ad225dd5f3521960f58f8b35cf0dd467b":[0,0,56,49,5],
 "namespaceinternal_1_1QRImplementation.html#adbc6aa414d1a485bb74edd6b85d3cf00":[0,0,56,49,1],
@@ -7,6 +12,9 @@ var NAVTREEINDEX10 =
 "namespaceinternal_1_1QRImplementation.html#aed0ffe65cfc75cff216e4596a511ba73":[0,0,56,49,3],
 "namespaceinternal_1_1SD.html":[0,0,56,50],
 "namespaceinternal_1_1SolverGMRESImplementation.html":[0,0,56,51],
+"namespaceinternal_1_1SolverGMRESImplementation.html#a29ff9ebb668bdadd7dd56c41f75be9c8":[0,0,56,51,2],
+"namespaceinternal_1_1SolverGMRESImplementation.html#a4a706281e2255cfeff645397c9aca37e":[0,0,56,51,1],
+"namespaceinternal_1_1SolverGMRESImplementation.html#acb781ceeb479b45b7b152adf92cd9fe3":[0,0,56,51,0],
 "namespaceinternal_1_1SolverIDRImplementation.html":[0,0,56,52],
 "namespaceinternal_1_1SparseMatrixImplementation.html":[0,0,56,53],
 "namespaceinternal_1_1SparseMatrixImplementation.html#ab3b84e121953503dd5c4eb96a13cd1c9":[0,0,56,53,0],
@@ -241,13 +249,5 @@ var NAVTREEINDEX10 =
 "structLinearAlgebra_1_1TpetraWrappers_1_1SolverDirectKLU2_1_1AdditionalData.html":[0,0,63,3,2],
 "structLinearAlgebra_1_1TpetraWrappers_1_1SolverDirect_1_1AdditionalData.html":[0,0,63,3,1],
 "structMGTwoLevelTransferNonNested_1_1AdditionalData.html":[0,0,89],
-"structMGTwoLevelTransfer_1_1MatrixFreeRelatedData.html":[0,0,88],
-"structMatrixFreeTools_1_1ElementActivationAndDeactivationMatrixFree_1_1AdditionalData.html":[0,0,79,0],
-"structMatrixFree_1_1AdditionalData.html":[0,0,77],
-"structNonMatching_1_1MappingInfo_1_1AdditionalData.html":[0,0,92,1],
-"structNonMatching_1_1internal_1_1QuadratureGeneratorImplementation_1_1RootFinder_1_1AdditionalData.html":[0,0,92,0,2,0],
-"structPArpackSolver_1_1AdditionalData.html":[0,0,96],
-"structPETScWrappers_1_1PreconditionBDDC_1_1AdditionalData.html":[0,0,99,4],
-"structPETScWrappers_1_1PreconditionBlockJacobi_1_1AdditionalData.html":[0,0,99,5],
-"structPETScWrappers_1_1PreconditionBoomerAMG_1_1AdditionalData.html":[0,0,99,6]
+"structMGTwoLevelTransfer_1_1MatrixFreeRelatedData.html":[0,0,88]
 };

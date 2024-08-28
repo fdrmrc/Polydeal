@@ -18,7 +18,7 @@ var searchData=
   ['scratch_15',['Scratch',['http://www.dealii.org/developer/doxygen/deal.II/structDerivativeApproximation_1_1internal_1_1Assembler_1_1Scratch.html',1,'DerivativeApproximation::internal::Assembler::Scratch'],['http://www.dealii.org/developer/doxygen/deal.II/structDoFTools_1_1internal_1_1Assembler_1_1Scratch.html',1,'DoFTools::internal::Assembler::Scratch']]],
   ['scratchandcopydataobjects_16',['ScratchAndCopyDataObjects',['http://www.dealii.org/developer/doxygen/deal.II/structWorkStream_1_1internal_1_1tbb__colored_1_1ScratchAndCopyDataObjects.html',1,'WorkStream::internal::tbb_colored']]],
   ['scratchdata_17',['ScratchData',['http://www.dealii.org/developer/doxygen/deal.II/classMeshWorker_1_1ScratchData.html',1,'MeshWorker']]],
-  ['scratchdataobject_18',['ScratchDataObject',['http://www.dealii.org/developer/doxygen/deal.II/structWorkStream_1_1internal_1_1tbb__no__coloring_1_1IteratorRangeToItemStream_1_1ItemType_1_1ScratchDataObject.html',1,'WorkStream::internal::tbb_no_coloring::IteratorRangeToItemStream::ItemType']]],
+  ['scratchdataobject_18',['ScratchDataObject',['http://www.dealii.org/developer/doxygen/deal.II/structWorkStream_1_1internal_1_1ScratchDataObject.html',1,'WorkStream::internal']]],
   ['secondcoupling_19',['SecondCoupling',['http://www.dealii.org/developer/doxygen/deal.II/structFEValuesExtractors_1_1SecondCoupling.html',1,'FEValuesExtractors']]],
   ['secondderivative_20',['SecondDerivative',['http://www.dealii.org/developer/doxygen/deal.II/classDerivativeApproximation_1_1internal_1_1SecondDerivative.html',1,'DerivativeApproximation::internal']]],
   ['section_21',['Section',['http://www.dealii.org/developer/doxygen/deal.II/structTimerOutput_1_1Section.html',1,'TimerOutput']]],

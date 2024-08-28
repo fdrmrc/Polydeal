@@ -246,7 +246,11 @@ var namespaceinternal =
       [ "call_trtrs", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1QRImplementation.html#aec784525511d9191c4ca0c182891bcce", null ]
     ] ],
     [ "SD", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1SD.html", null ],
-    [ "SolverGMRESImplementation", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1SolverGMRESImplementation.html", null ],
+    [ "SolverGMRESImplementation", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1SolverGMRESImplementation.html", [
+      [ "do_add", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1SolverGMRESImplementation.html#acb781ceeb479b45b7b152adf92cd9fe3", null ],
+      [ "do_subtract_and_norm", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1SolverGMRESImplementation.html#a4a706281e2255cfeff645397c9aca37e", null ],
+      [ "do_Tvmult_add", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1SolverGMRESImplementation.html#a29ff9ebb668bdadd7dd56c41f75be9c8", null ]
+    ] ],
     [ "SolverIDRImplementation", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1SolverIDRImplementation.html", null ],
     [ "SparseMatrixImplementation", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1SparseMatrixImplementation.html", [
       [ "minimum_parallel_grain_size", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1SparseMatrixImplementation.html#ab3b84e121953503dd5c4eb96a13cd1c9", null ]

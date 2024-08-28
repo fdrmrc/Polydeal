@@ -1,5 +1,10 @@
 var NAVTREEINDEX9 =
 {
+"namespaceinternal.html#a3aadb38f137c10d889967d85b73c3b1f":[0,0,56,119],
+"namespaceinternal.html#a41de75e3aa581da531ba61cabc136687":[0,0,56,137],
+"namespaceinternal.html#a42cc0ff9eb1744ad8d54293d803be44c":[0,0,56,83],
+"namespaceinternal.html#a42d513a98712c04fcaeba98bdea27d35":[0,0,56,149],
+"namespaceinternal.html#a434a674a07ead867bbf0ff3d3c9f9de1":[0,0,56,115],
 "namespaceinternal.html#a43cf1cfad93eeae23c894d39f93bf2c7":[0,0,56,102],
 "namespaceinternal.html#a43d17ad28db4a56fb7b8be1a1b348669":[0,0,56,163],
 "namespaceinternal.html#a43fad79b63d32c36130b116f9d84bbdc":[0,0,56,160],
@@ -244,10 +249,5 @@ var NAVTREEINDEX9 =
 "namespaceinternal_1_1QGaussRadauChebyshev.html#a799560d47c7882513b37b123cffbbc94":[0,0,56,46,0],
 "namespaceinternal_1_1QIteratedImplementation.html":[0,0,56,47],
 "namespaceinternal_1_1QProjector.html":[0,0,56,48],
-"namespaceinternal_1_1QRImplementation.html":[0,0,56,49],
-"namespaceinternal_1_1QRImplementation.html#a1ae2421a2ffba8456cf49a6ef8eb598f":[0,0,56,49,2],
-"namespaceinternal_1_1QRImplementation.html#a3a525751a2be4ea93e6849081a034df5":[0,0,56,49,4],
-"namespaceinternal_1_1QRImplementation.html#a3b3d821c200343f262040d8f9af210f2":[0,0,56,49,8],
-"namespaceinternal_1_1QRImplementation.html#a697b0189130f4b830d6bafdd2bbc58b5":[0,0,56,49,7],
-"namespaceinternal_1_1QRImplementation.html#a6a2ded8de5ab9a6991fe15c88675ca62":[0,0,56,49,6]
+"namespaceinternal_1_1QRImplementation.html":[0,0,56,49]
 };

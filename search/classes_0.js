@@ -94,12 +94,13 @@ var searchData=
   ['argument_5ftype_3c_20t_28u_29_3e_91',['argument_type&lt; T(U)&gt;',['http://www.dealii.org/developer/doxygen/deal.II/structinternal_1_1argument__type_3_01T_07U_08_4.html',1,'internal']]],
   ['arkode_92',['ARKode',['http://www.dealii.org/developer/doxygen/deal.II/classSUNDIALS_1_1ARKode.html',1,'SUNDIALS']]],
   ['arnoldiprocess_93',['ArnoldiProcess',['http://www.dealii.org/developer/doxygen/deal.II/classinternal_1_1SolverGMRESImplementation_1_1ArnoldiProcess.html',1,'internal::SolverGMRESImplementation']]],
-  ['arpacksolver_94',['ArpackSolver',['http://www.dealii.org/developer/doxygen/deal.II/classArpackSolver.html',1,'']]],
-  ['arrayview_95',['ArrayView',['http://www.dealii.org/developer/doxygen/deal.II/classArrayView.html',1,'']]],
-  ['arrayview_3c_20const_20t_20_3e_96',['ArrayView&lt; const T &gt;',['http://www.dealii.org/developer/doxygen/deal.II/classArrayView.html',1,'']]],
-  ['arrayview_3c_20number_20_3e_97',['ArrayView&lt; Number &gt;',['http://www.dealii.org/developer/doxygen/deal.II/classArrayView.html',1,'']]],
-  ['arrayview_3c_20vectorizedarraytype_20_3e_98',['ArrayView&lt; VectorizedArrayType &gt;',['http://www.dealii.org/developer/doxygen/deal.II/classArrayView.html',1,'']]],
-  ['atboundary_99',['AtBoundary',['http://www.dealii.org/developer/doxygen/deal.II/classIteratorFilters_1_1AtBoundary.html',1,'IteratorFilters']]],
-  ['autoderivativefunction_100',['AutoDerivativeFunction',['http://www.dealii.org/developer/doxygen/deal.II/classAutoDerivativeFunction.html',1,'']]],
-  ['autoderivativefunction_3c_20dim_20_3e_101',['AutoDerivativeFunction&lt; dim &gt;',['http://www.dealii.org/developer/doxygen/deal.II/classAutoDerivativeFunction.html',1,'']]]
+  ['arnoldiprocess_3c_20typename_20vectortype_3a_3avalue_5ftype_20_3e_94',['ArnoldiProcess&lt; typename VectorType::value_type &gt;',['http://www.dealii.org/developer/doxygen/deal.II/classinternal_1_1SolverGMRESImplementation_1_1ArnoldiProcess.html',1,'internal::SolverGMRESImplementation']]],
+  ['arpacksolver_95',['ArpackSolver',['http://www.dealii.org/developer/doxygen/deal.II/classArpackSolver.html',1,'']]],
+  ['arrayview_96',['ArrayView',['http://www.dealii.org/developer/doxygen/deal.II/classArrayView.html',1,'']]],
+  ['arrayview_3c_20const_20t_20_3e_97',['ArrayView&lt; const T &gt;',['http://www.dealii.org/developer/doxygen/deal.II/classArrayView.html',1,'']]],
+  ['arrayview_3c_20number_20_3e_98',['ArrayView&lt; Number &gt;',['http://www.dealii.org/developer/doxygen/deal.II/classArrayView.html',1,'']]],
+  ['arrayview_3c_20vectorizedarraytype_20_3e_99',['ArrayView&lt; VectorizedArrayType &gt;',['http://www.dealii.org/developer/doxygen/deal.II/classArrayView.html',1,'']]],
+  ['atboundary_100',['AtBoundary',['http://www.dealii.org/developer/doxygen/deal.II/classIteratorFilters_1_1AtBoundary.html',1,'IteratorFilters']]],
+  ['autoderivativefunction_101',['AutoDerivativeFunction',['http://www.dealii.org/developer/doxygen/deal.II/classAutoDerivativeFunction.html',1,'']]],
+  ['autoderivativefunction_3c_20dim_20_3e_102',['AutoDerivativeFunction&lt; dim &gt;',['http://www.dealii.org/developer/doxygen/deal.II/classAutoDerivativeFunction.html',1,'']]]
 ];
