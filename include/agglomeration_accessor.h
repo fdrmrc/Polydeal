@@ -474,7 +474,7 @@ inline AgglomerationAccessor<dim, spacedim>::AgglomerationAccessor(
   if (&(*handler->master_cells_container.end()) == std::addressof(cell))
     {
       present_index        = handler->master_cells_container.size();
-      master_cell          = handler->master_cells_container[present_index - 1];
+      master_cell          = *handler->master_cells_container.end();
       present_id           = CellId(); // invalid id (TODO)
       present_subdomain_id = numbers::invalid_subdomain_id;
     }
