@@ -429,8 +429,7 @@ AgglomerationAccessor<dim, spacedim>::neighbor_of_agglomerated_neighbor(
           const CellId &master_id_neighbor = neigh_polytope->id();
 
           // Then, get the neighboring rank
-          const unsigned int sender_rank =
-            neigh_polytope.master_cell()->subdomain_id();
+          const unsigned int sender_rank = neigh_polytope->subdomain_id();
 
           // From the neighboring rank, use the CellId of the neighboring
           // polytope to get the number of its faces.
