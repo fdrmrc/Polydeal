@@ -845,11 +845,6 @@ namespace dealii
 
         for (const auto &[deal_cell, local_face_idx] : common_face)
           {
-            // std::cout << "deal cell = " << deal_cell->active_cell_index()
-            //           << std::endl;
-            // std::cout << "local face index = " << local_face_idx <<
-            // std::endl;
-
             handler.no_face_values->reinit(deal_cell, local_face_idx);
 
             auto q_points    = handler.no_face_values->get_quadrature_points();
@@ -1038,8 +1033,8 @@ namespace dealii
                                            .visited_cell_and_faces))
                               {
                                 handler.polytope_cache
-                                  .interface[{
-                                  current_polytope_id, neighbor_polytope_id}]
+                                  .interface[{current_polytope_id,
+                                              neighbor_polytope_id}]
                                   .emplace_back(cell, f);
 
                                 handler.polytope_cache.visited_cell_and_faces
@@ -1053,8 +1048,8 @@ namespace dealii
                                            .visited_cell_and_faces))
                               {
                                 handler.polytope_cache
-                                  .interface[{
-                                  neighbor_polytope_id, current_polytope_id}]
+                                  .interface[{neighbor_polytope_id,
+                                              current_polytope_id}]
                                   .emplace_back(neighboring_cell, nof);
 
                                 handler.polytope_cache.visited_cell_and_faces
@@ -1105,8 +1100,8 @@ namespace dealii
                                            .visited_cell_and_faces))
                               {
                                 handler.polytope_cache
-                                  .interface[{
-                                  current_polytope_id, neighbor_polytope_id}]
+                                  .interface[{current_polytope_id,
+                                              neighbor_polytope_id}]
                                   .emplace_back(cell, f);
 
                                 handler.polytope_cache.visited_cell_and_faces
@@ -1119,8 +1114,8 @@ namespace dealii
                                            .visited_cell_and_faces))
                               {
                                 handler.polytope_cache
-                                  .interface[{
-                                  neighbor_polytope_id, current_polytope_id}]
+                                  .interface[{neighbor_polytope_id,
+                                              current_polytope_id}]
                                   .emplace_back(neighboring_cell, nof);
 
                                 handler.polytope_cache.visited_cell_and_faces
@@ -1198,8 +1193,8 @@ namespace dealii
                               handler.polytope_cache.visited_cell_and_faces_id))
                           {
                             handler.polytope_cache
-                              .interface[{
-                              current_polytope_id, check_neigh_polytope_id}]
+                              .interface[{current_polytope_id,
+                                          check_neigh_polytope_id}]
                               .emplace_back(cell, f);
 
                             // std::cout << "ADDED ("
@@ -1220,8 +1215,8 @@ namespace dealii
                               handler.polytope_cache.visited_cell_and_faces_id))
                           {
                             handler.polytope_cache
-                              .interface[{
-                              check_neigh_polytope_id, current_polytope_id}]
+                              .interface[{check_neigh_polytope_id,
+                                          current_polytope_id}]
                               .emplace_back(neighboring_cell, nof);
 
                             handler.polytope_cache.visited_cell_and_faces_id
@@ -1237,8 +1232,6 @@ namespace dealii
                     handler.polygon_boundary[master_cell].push_back(
                       cell->face(f));
 
-
-
                     if (visited_polygonal_neighbors.find(
                           std::numeric_limits<unsigned int>::max()) ==
                         std::end(visited_polygonal_neighbors))
@@ -1251,16 +1244,9 @@ namespace dealii
                             [current_polytope_index]}] = {true,
                                                           neighboring_cell};
 
-
-
                         const unsigned int n_face =
                           handler.number_of_agglomerated_faces
                             [current_polytope_index];
-
-                        std::pair<CellId, unsigned int> p{current_polytope_id,
-                                                          n_face};
-
-                        std::pair<bool, CellId> bdary_info{true, CellId()};
 
                         is_face_at_boundary[n_face] = true;
 
@@ -1278,8 +1264,7 @@ namespace dealii
                         std::end(handler.polytope_cache.visited_cell_and_faces))
                       {
                         handler.polytope_cache
-                          .interface[{
-                          current_polytope_id, current_polytope_id}]
+                          .interface[{current_polytope_id, current_polytope_id}]
                           .emplace_back(cell, f);
 
                         handler.polytope_cache.visited_cell_and_faces.insert(

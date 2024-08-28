@@ -415,7 +415,7 @@ AgglomerationAccessor<dim, spacedim>::neighbor_of_agglomerated_neighbor(
 
       unsigned int n_faces_agglomerated_neighbor;
 
-      // if it's not locally owned, retrieve the number of faces
+      // if it is locally owned, retrieve the number of faces
       if (neigh_polytope->is_locally_owned())
         {
           n_faces_agglomerated_neighbor = neigh_polytope->n_faces();
