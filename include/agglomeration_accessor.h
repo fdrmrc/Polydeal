@@ -474,7 +474,7 @@ inline AgglomerationAccessor<dim, spacedim>::AgglomerationAccessor(
   if (&(*handler->master_cells_container.end()) == std::addressof(cell))
     {
       present_index        = handler->master_cells_container.size();
-      master_cell          = handler->master_cells_container[present_index];
+      master_cell          = handler->master_cells_container[present_index - 1];
       present_id           = CellId(); // invalid id (TODO)
       present_subdomain_id = numbers::invalid_subdomain_id;
     }
@@ -616,11 +616,11 @@ AgglomerationAccessor<dim, spacedim>::next()
 {
   // Increment the present index and update the polytope
   ++present_index;
-  master_cell = handler->master_cells_container[present_index];
 
   // Make sure not to query the CellId if it's past the last
-  if (present_index != handler->master_cells_container.size())
+  if (present_index < handler->master_cells_container.size())
     {
+      master_cell          = handler->master_cells_container[present_index];
       present_id           = master_cell->id();
       present_subdomain_id = master_cell->subdomain_id();
     }
