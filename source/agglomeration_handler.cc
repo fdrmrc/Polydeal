@@ -57,6 +57,10 @@ AgglomerationHandler<dim, spacedim>::define_agglomerate(
   master_cells_container.push_back(cells[0]);
   master_slave_relationships[global_master_idx] = -1;
 
+  const typename DoFHandler<dim>::active_cell_iterator cell_dh =
+    cells[0]->as_dof_handler_iterator(agglo_dh);
+  cell_dh->set_active_fe_index(CellAgglomerationType::master);
+
   // Store slave cells and save the relationship with the parent
   std::vector<typename Triangulation<dim, spacedim>::active_cell_iterator>
     slaves;
@@ -69,6 +73,10 @@ AgglomerationHandler<dim, spacedim>::define_agglomerate(
         global_master_idx; // mark each slave
       master_slave_relationships_iterators[(*it)->active_cell_index()] =
         cells[0];
+
+      const typename DoFHandler<dim>::active_cell_iterator cell =
+        (*it)->as_dof_handler_iterator(agglo_dh);
+      cell->set_active_fe_index(CellAgglomerationType::slave); // slave cell
 
       // If we have a p::d::T, check that all cells are in the same subdomain.
       // If serial, just check that the subdomain_id is invalid.
@@ -465,14 +473,6 @@ AgglomerationHandler<dim, spacedim>::initialize_hp_structure()
            "Triangulation must not be empty upon calling this function."));
   Assert(n_agglomerations > 0,
          ExcMessage("No agglomeration has been performed."));
-  for (const auto &cell : agglo_dh.active_cell_iterators())
-    if (cell->is_locally_owned())
-      {
-        if (is_master_cell(cell))
-          cell->set_active_fe_index(CellAgglomerationType::master);
-        else if (is_slave_cell(cell))
-          cell->set_active_fe_index(CellAgglomerationType::slave); // slave cell
-      }
 
   agglo_dh.distribute_dofs(fe_collection);
   euler_mapping = std::make_unique<
