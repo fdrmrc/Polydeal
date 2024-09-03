@@ -63,6 +63,34 @@ struct AgglomerationData
 };
 
 
+struct Timers
+{
+  double reinit;
+  double sparsity_pattern;
+  double distribute_dofs;
+  double assembly;
+  double solve;
+  void
+  print_summary(const MPI_Comm &communicator) const
+  {
+    if (Utilities::MPI::this_mpi_process(communicator) == 0)
+      {
+        std::cout << "- - - - - - - - - - - Summary - - - - - - - - - - -"
+                  << std::endl;
+        std::cout << std::left << std::setw(24) << std::scientific
+                  << "Reinit: " << std::setw(6) << reinit << " [s]"
+                  << std::endl;
+        std::cout << std::left << std::setw(24) << std::scientific
+                  << "Sparsity: " << sparsity_pattern << " [s]" << std::endl;
+        std::cout << std::left << std::setw(24) << std::scientific
+                  << "Assembly: " << assembly << " [s]" << std::endl;
+        std::cout << std::left << std::setw(24) << std::scientific
+                  << "Solve: " << solve << " [s]" << std::endl;
+      }
+  }
+};
+
+
 /**
  * Utility to compute jump terms when the interface is locally owned, i.e. both
  * elements are locally owned.
@@ -358,6 +386,8 @@ private:
   TrilinosWrappers::MPI::Vector  interpolated_solution;
 
   Solution<dim> analytical_solution;
+
+  Timers times;
 };
 
 
@@ -520,14 +550,7 @@ WeakScalingTest<dim>::assemble_system()
                            QGauss<dim - 1>(face_quadrature_degree),
                            update_JxW_values);
 
-  //   DynamicSparsityPattern sparsity_pattern;
-  //   double                 start_setup, stop_setup;
-  // start_setup = MPI_Wtime();
   ah->distribute_agglomerated_dofs(fe_dg);
-  // stop_setup = MPI_Wtime();
-  // pcout << "Setup DoFs in: " << stop_setup - start_setup << "[s]."
-  //       << std::endl;
-
 
   TrilinosWrappers::SparsityPattern dsp;
   double                            start_sparsity, stop_sparsity;
@@ -539,8 +562,9 @@ WeakScalingTest<dim>::assemble_system()
   locally_owned_dofs    = ah->agglo_dh.locally_owned_dofs();
   locally_relevant_dofs = DoFTools::extract_locally_relevant_dofs(ah->agglo_dh);
   pcout << "N DoFs: " << locally_owned_dofs.size() << std::endl;
-  pcout << "Sparsity in: " << stop_sparsity - start_sparsity << "[s]."
-        << std::endl;
+  pcout << "Creation of SparsityPattern in: " << stop_sparsity - start_sparsity
+        << "[s]." << std::endl;
+  times.sparsity_pattern = stop_sparsity - start_sparsity;
 
 
   double start_reinit, stop_reinit;
@@ -550,6 +574,7 @@ WeakScalingTest<dim>::assemble_system()
   stop_reinit = MPI_Wtime();
   pcout << "Reinit matrix in: " << stop_reinit - start_reinit << "[s]."
         << std::endl;
+  times.reinit = stop_reinit - start_reinit;
   system_rhs.reinit(locally_owned_dofs, comm);
 
   std::unique_ptr<const RightHandSide<dim>> rhs_function;
@@ -796,6 +821,7 @@ WeakScalingTest<dim>::assemble_system()
   stop_assembly = MPI_Wtime();
   pcout << "Assembled in: " << stop_assembly - start_assembly << "[s]."
         << std::endl;
+  times.assembly = stop_assembly - start_assembly;
 }
 
 
@@ -831,6 +857,7 @@ WeakScalingTest<dim>::solve()
   pcout << "Linear system solved in: " << stop_solver - start_solver << "[s]."
         << std::endl;
   pcout << "Number of outer iterations: " << control.last_step() << std::endl;
+  times.solve = stop_solver - start_solver;
 
   constraints.distribute(completely_distributed_solution);
   locally_relevant_solution = completely_distributed_solution;
@@ -878,6 +905,7 @@ WeakScalingTest<dim>::run()
   setup_agglomerated_problem();
   assemble_system();
   solve();
+  times.print_summary(comm);
 }
 
 
@@ -885,44 +913,53 @@ WeakScalingTest<dim>::run()
 int
 main(int argc, char *argv[])
 {
-  Utilities::MPI::MPI_InitFinalize mpi_initialization(argc, argv, 1);
-  const MPI_Comm                   comm = MPI_COMM_WORLD;
-  static constexpr unsigned int    dim  = 3;
-
-  // Setup agglomeration data for METIS
-  const unsigned int             n_cycles = 8;
-  double                         n_agglo  = 500;
-  std::vector<AgglomerationData> metis_datas;
-  AgglomerationData              data;
-  data.partitioning_strategy   = PartitionerType::metis;
-  data.agglomeration_parameter = static_cast<unsigned int>(
-    n_agglo / Utilities::MPI::n_mpi_processes(comm)); // agglomerate per process
-  metis_datas.push_back(data);
-
-  for (unsigned int cycle = 1; cycle < n_cycles; ++cycle)
+  try
     {
-      n_agglo *= 8;
-      AgglomerationData data;
-      data.partitioning_strategy   = PartitionerType::metis;
-      data.agglomeration_parameter = static_cast<unsigned int>(
-        n_agglo / Utilities::MPI::n_mpi_processes(comm));
-      metis_datas.push_back(data);
-    }
+      Utilities::MPI::MPI_InitFinalize mpi_initialization(argc, argv, 1);
+      const MPI_Comm                   comm = MPI_COMM_WORLD;
+      static constexpr unsigned int    dim  = 3;
+      AssertThrow(argc == 3,
+                  ExcMessage("Wrong number of command line arguments."));
 
-  const unsigned int        reaction_coefficient = 0.;
-  const unsigned int        degree               = 2;
-  std::vector<unsigned int> n_global_refinements;
-  for (unsigned int cycle = 0; cycle < n_cycles; ++cycle)
-    {
-      n_global_refinements.push_back(4 + cycle);
+      // Setup agglomeration data
+      const unsigned int level = std::atoi(argv[1]); // 2
+      AgglomerationData  data;
+      data.partitioning_strategy   = PartitionerType::rtree;
+      data.agglomeration_parameter = level;
+
+      const unsigned int reaction_coefficient = 0.;
+      const unsigned int degree               = 1;
+      const unsigned int n_global_refinements = 5 + std::atoi(argv[2]);
       if (Utilities::MPI::this_mpi_process(comm) == 0)
-        std::cout << "N_refinements: " << n_global_refinements[cycle]
-                  << std::endl;
-      WeakScalingTest<dim> problem(metis_datas[cycle],
-                                   degree,
-                                   reaction_coefficient,
-                                   n_global_refinements[cycle],
-                                   comm);
+        std::cout << "N_refinements: " << n_global_refinements << std::endl;
+      WeakScalingTest<dim> problem(
+        data, degree, reaction_coefficient, n_global_refinements, comm);
       problem.run();
     }
+  catch (std::exception &exc)
+    {
+      std::cerr << std::endl
+                << std::endl
+                << "----------------------------------------------------"
+                << std::endl;
+      std::cerr << "Exception on processing: " << std::endl
+                << exc.what() << std::endl
+                << "Aborting!" << std::endl
+                << "----------------------------------------------------"
+                << std::endl;
+      return 1;
+    }
+  catch (...)
+    {
+      std::cerr << std::endl
+                << std::endl
+                << "----------------------------------------------------"
+                << std::endl;
+      std::cerr << "Unknown exception!" << std::endl
+                << "Aborting!" << std::endl
+                << "----------------------------------------------------"
+                << std::endl;
+      return 1;
+    }
+  return 0;
 }
