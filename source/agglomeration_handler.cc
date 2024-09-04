@@ -204,16 +204,15 @@ void
 AgglomerationHandler<dim, spacedim>::distribute_agglomerated_dofs(
   const FiniteElement<dim> &fe_space)
 {
-  Assert((std::is_same_v<const FE_DGQ<dim> &, decltype(fe_space)> ||
-          std::is_same_v<const FE_DGP<dim> &, decltype(fe_space)>),
-         ExcNotImplemented(
-           "Currently, this interface supports only DGQ and DGP bases."));
   if (dynamic_cast<const FE_DGQ<dim> *>(&fe_space))
     fe = std::make_unique<FE_DGQ<dim>>(fe_space.degree);
   else if (dynamic_cast<const FE_DGP<dim> *>(&fe_space))
     fe = std::make_unique<FE_DGP<dim>>(fe_space.degree);
   else
-    AssertThrow(false, ExcInternalError());
+    AssertThrow(
+      false,
+      ExcNotImplemented(
+        "Currently, this interface supports only DGQ and DGP bases."));
 
 
   if (hybrid_mesh)
