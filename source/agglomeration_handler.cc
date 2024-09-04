@@ -11,8 +11,6 @@
 // -----------------------------------------------------------------------------
 
 
-#include <deal.II/fe/fe_dgp.h>
-#include <deal.II/fe/fe_dgq.h>
 
 #include <deal.II/lac/sparsity_tools.h>
 
