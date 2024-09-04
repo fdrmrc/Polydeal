@@ -22,8 +22,6 @@
 #include <deal.II/dofs/dof_handler.h>
 #include <deal.II/dofs/dof_tools.h>
 
-#include <deal.II/fe/fe_dgp.h>
-#include <deal.II/fe/fe_dgq.h>
 #include <deal.II/fe/fe_nothing.h>
 #include <deal.II/fe/fe_system.h>
 #include <deal.II/fe/fe_values.h>
@@ -55,6 +53,9 @@
 using namespace dealii;
 
 // Forward declarations
+template <int dim>
+class FinitElement;
+
 template <int dim, int spacedim>
 class AgglomerationHandler;
 
@@ -241,53 +242,7 @@ public:
    * agglomerated.
    */
   void
-  distribute_agglomerated_dofs(const FiniteElement<dim> &fe_space)
-  {
-    Assert((std::is_same_v<const FE_DGQ<dim> &, decltype(fe_space)> ||
-            std::is_same_v<const FE_DGP<dim> &, decltype(fe_space)>),
-           ExcNotImplemented(
-             "Currently, this interface supports only DGQ and DGP bases."));
-    if (dynamic_cast<const FE_DGQ<dim> *>(&fe_space))
-      fe = std::make_unique<FE_DGQ<dim>>(fe_space.degree);
-    else if (dynamic_cast<const FE_DGP<dim> *>(&fe_space))
-      fe = std::make_unique<FE_DGP<dim>>(fe_space.degree);
-    else
-      AssertThrow(false, ExcInternalError());
-
-
-    if (hybrid_mesh)
-      {
-        // the mesh is composed by standard and agglomerate cells. initialize
-        // classes needed for standard cells in order to treat that finite
-        // element space as defined on a standard shape and not on the
-        // BoundingBox.
-        standard_scratch =
-          std::make_unique<ScratchData>(*mapping,
-                                        *fe,
-                                        QGauss<dim>(2 * fe_space.degree + 2),
-                                        internal_agglomeration_flags);
-      }
-
-
-    fe_collection.push_back(*fe);                         // master
-    fe_collection.push_back(FE_Nothing<dim, spacedim>()); // slave
-
-    initialize_hp_structure();
-
-    // in case the tria is distributed, communicate ghost information with
-    // neighboring ranks
-    const bool needs_ghost_info =
-      dynamic_cast<const parallel::TriangulationBase<dim, spacedim> *>(
-        &*tria) != nullptr;
-    if (needs_ghost_info)
-      setup_ghost_polytopes();
-
-    setup_connectivity_of_agglomeration();
-
-    if (needs_ghost_info)
-      exchange_interface_values();
-  }
-
+  distribute_agglomerated_dofs(const FiniteElement<dim> &fe_space);
 
   /**
    *
