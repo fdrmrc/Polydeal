@@ -22,6 +22,7 @@
 #include <deal.II/dofs/dof_handler.h>
 #include <deal.II/dofs/dof_tools.h>
 
+#include <deal.II/fe/fe_dgp.h>
 #include <deal.II/fe/fe_dgq.h>
 #include <deal.II/fe/fe_nothing.h>
 #include <deal.II/fe/fe_system.h>
@@ -239,15 +240,20 @@ public:
    * Distribute degrees of freedom on a grid where some cells have been
    * agglomerated.
    */
-  template <class FiniteElement>
   void
-  distribute_agglomerated_dofs(const FiniteElement &fe_space)
+  distribute_agglomerated_dofs(const FiniteElement<dim> &fe_space)
   {
-    Assert((std::is_same_v<const FE_DGQ<dim> &, decltype(fe_space)>),
+    Assert((std::is_same_v<const FE_DGQ<dim> &, decltype(fe_space)> ||
+            std::is_same_v<const FE_DGP<dim> &, decltype(fe_space)>),
            ExcNotImplemented(
-             "Currently, this interface supports only DG discretizations"
-             " and tensor product elements."));
-    fe = std::make_unique<FE_DGQ<dim, spacedim>>(fe_space);
+             "Currently, this interface supports only DGQ and DGP bases."));
+    if (dynamic_cast<const FE_DGQ<dim> *>(&fe_space))
+      fe = std::make_unique<FE_DGQ<dim>>(fe_space.degree);
+    else if (dynamic_cast<const FE_DGP<dim> *>(&fe_space))
+      fe = std::make_unique<FE_DGP<dim>>(fe_space.degree);
+    else
+      AssertThrow(false, ExcInternalError());
+
 
     if (hybrid_mesh)
       {
@@ -792,8 +798,9 @@ private:
 
   const MPI_Comm communicator;
 
-  // The FE_DGQ space we have on each cell
-  std::unique_ptr<FE_DGQ<dim, spacedim>> fe;
+  // The FiniteElement space we have on each cell. Currently supported types are
+  // FE_DGQ and FE_DGP elements.
+  std::unique_ptr<FiniteElement<dim>> fe;
 
   hp::FECollection<dim, spacedim> fe_collection;
 
