@@ -1,3 +1,6 @@
+#include <deal.II/fe/fe_simplex_p.h>
+#include <deal.II/fe/mapping_fe.h>
+
 #include <deal.II/grid/grid_generator.h>
 #include <deal.II/grid/grid_in.h>
 #include <deal.II/grid/grid_out.h>
@@ -47,7 +50,7 @@ private:
   make_grid();
 
   Triangulation<dim>                         tria;
-  MappingQ<dim>                              mapping;
+  MappingFE<dim>                             mapping;
   std::unique_ptr<AgglomerationHandler<dim>> ah;
 
 public:
@@ -74,7 +77,7 @@ AgglomerationBenchmark<dim>::AgglomerationBenchmark(
   const PartitionerType &partitioner_type,
   const unsigned int     extraction_level,
   const unsigned int     n_subdomains)
-  : mapping(1)
+  : mapping(FE_SimplexDGP<dim>(1))
   , grid_type(grid_type)
   , partitioner_type(partitioner_type)
   , extraction_level(extraction_level)
@@ -105,9 +108,11 @@ AgglomerationBenchmark<dim>::make_grid()
           // }
           grid_in.attach_triangulation(tria);
           std::ifstream mesh_file(
-            "../../meshes/csf_brain_filled_centered_UCD.inp"); // piston mesh
-          grid_in.read_ucd(mesh_file);
-          tria.refine_global(1);
+            "../../meshes/gray_level_image1.vtk"); // liver mesh
+          grid_in.read_vtk(mesh_file);
+          // grid_in.read_ucd(mesh_file);
+          // "../../meshes/csf_brain_filled_centered_UCD.inp"); // brain mesh
+          // tria.refine_global(1);
         }
     }
   else
@@ -158,8 +163,8 @@ AgglomerationBenchmark<dim>::make_grid()
 
 
       // const auto tree = pack_rtree<bgi::rstar<max_elem_per_node>>(boxes);
-      auto       start = std::chrono::system_clock::now();
-      const auto tree  = pack_rtree<bgi::rstar<max_elem_per_node>>(boxes);
+      auto start = std::chrono::system_clock::now();
+      auto tree  = pack_rtree<bgi::rstar<max_elem_per_node>>(boxes);
       std::cout << "Total number of available levels: " << n_levels(tree)
                 << std::endl;
 
@@ -169,9 +174,9 @@ AgglomerationBenchmark<dim>::make_grid()
              ExcMessage("At least two levels are needed."));
 #endif
 
-      const auto &csr_and_agglomerates =
-        PolyUtils::extract_children_of_level(tree, extraction_level);
-      const auto &agglomerates = csr_and_agglomerates.second; // vec<vec<>>
+      CellsAgglomerator<dim, decltype(tree)> agglomerator{tree,
+                                                          extraction_level};
+      const auto agglomerates = agglomerator.extract_agglomerates();
 
       std::size_t agglo_index = 0;
       for (std::size_t i = 0; i < agglomerates.size(); ++i)
@@ -240,7 +245,7 @@ main()
   std::cout << "Benchmarking with Rtree:" << std::endl;
   // for (unsigned int i = 0; i < 10; ++i)
   //   {
-  for (const unsigned int extraction_level : {2, 3, 4, 5})
+  for (const unsigned int extraction_level : {2, 3, 4, 5, 6})
     {
       AgglomerationBenchmark<3> poisson_problem{GridType::unstructured,
                                                 PartitionerType::rtree,
@@ -255,12 +260,15 @@ main()
   // //   {
   // // for (const unsigned int target_partitions : {12, 90, 715, 5715})
   // //piston
-  for (const unsigned int target_partitions : {47, 372, 2976, 23804}) // brain
+  // for (const unsigned int target_partitions : {47, 372, 2976, 23804}) //
+  // brain
+  for (const unsigned int target_partitions :
+       {9, 70, 556, 4441, 29000}) // liver
     {
       AgglomerationBenchmark<3> poisson_problem{GridType::unstructured,
                                                 PartitionerType::metis,
                                                 0,
-                                                target_partitions}; // 16, 64
+                                                target_partitions};
       poisson_problem.run();
     }
 }

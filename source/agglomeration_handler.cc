@@ -142,7 +142,6 @@ AgglomerationHandler<dim, spacedim>::define_agglomerate_with_check(
 }
 
 
-
 template <int dim, int spacedim>
 void
 AgglomerationHandler<dim, spacedim>::initialize_fe_values(
@@ -247,6 +246,8 @@ AgglomerationHandler<dim, spacedim>::distribute_agglomerated_dofs(
     fe = std::make_unique<FE_DGQ<dim>>(fe_space.degree);
   else if (dynamic_cast<const FE_DGP<dim> *>(&fe_space))
     fe = std::make_unique<FE_DGP<dim>>(fe_space.degree);
+  else if (dynamic_cast<const FE_SimplexDGP<dim> *>(&fe_space))
+    fe = std::make_unique<FE_SimplexDGP<dim>>(fe_space.degree);
   else
     AssertThrow(
       false,
