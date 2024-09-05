@@ -57,6 +57,30 @@ namespace Utils
 
 
   /**
+   * We describe a undirect graph through a vector of nodes and its adjacency
+  information
+   */
+  struct Graph
+  {
+    std::vector<types::global_cell_index>              nodes;
+    std::vector<std::vector<types::global_cell_index>> adjacency;
+
+    void
+    print_graph() const
+    {
+      std::cout << "Graph information" << std::endl;
+      for (const auto &node : nodes)
+        {
+          std::cout << "Neighbors for node " << node << std::endl;
+          for (const auto &neigh_node : adjacency[node])
+            std::cout << neigh_node << std::endl;
+        }
+    }
+  };
+
+
+
+  /**
    * Given a coarse AgglomerationHandler @p coarse_ah and a fine
    * AgglomerationHandler @p fine_ah, this function fills the injection matrix
    * @p matrix and the associated SparsityPattern @p sp from the coarse space
@@ -1051,6 +1075,96 @@ namespace Utils
     mutable TrilinosWrappers::SparseMatrix     system_matrix;
     AffineConstraints<number>                  constraints;
   };
+
+
+
+  /**
+   * Helper function to compute the position of index @p index in vector @p v.
+   */
+  inline types::global_cell_index
+  get_index(const std::vector<types::global_cell_index> &v,
+            const types::global_cell_index               index)
+  {
+    return std::distance(v.begin(), std::find(v.begin(), v.end(), index));
+  }
+
+
+
+  template <int dim>
+  void
+  create_graph_from_agglomerate(
+    const std::vector<typename Triangulation<dim>::active_cell_iterator> &cells,
+    Graph                                                                &g)
+  {
+    Assert(cells.size() > 0, ExcMessage("No cells to be agglomerated."));
+    const unsigned int n_faces = cells[0]->n_faces();
+
+    std::vector<types::global_cell_index> vec_cells(cells.size());
+    for (size_t i = 0; i < cells.size(); i++)
+      vec_cells[i] = cells[i]->active_cell_index();
+
+    g.adjacency.resize(cells.size());
+    for (const auto &cell : cells)
+      {
+        // std::cout << "Cell idx: " << cell->active_cell_index() << std::endl;
+        // std::cout << "new idx: "
+        //           << get_index(vec_cells, cell->active_cell_index())
+        //           << std::endl;
+        g.nodes.push_back(get_index(vec_cells, cell->active_cell_index()));
+        for (unsigned int f = 0; f < n_faces; ++f)
+          {
+            const auto &neigh = cell->neighbor(f);
+            if (neigh.state() == IteratorState::IteratorStates::valid &&
+                std::find(cells.begin(), cells.end(), neigh) != std::end(cells))
+              g.adjacency[get_index(vec_cells, cell->active_cell_index())]
+                .push_back(get_index(vec_cells, neigh->active_cell_index()));
+          }
+      }
+  }
+
+
+
+  inline void
+  dfs(std::vector<types::global_cell_index> &comp,
+      std::vector<bool>                     &visited,
+      const Graph                           &g,
+      const types::global_cell_index         v)
+  {
+    visited[v] = true;
+    comp.push_back(v);
+    for (const types::global_cell_index u : g.adjacency[v])
+      {
+        if (!visited[u])
+          dfs(comp, visited, g, u);
+      }
+  }
+
+
+
+  void
+  compute_connected_components(
+    Graph                                              &g,
+    std::vector<std::vector<types::global_cell_index>> &connected_components)
+  {
+    Assert(g.nodes.size() > 0, ExcMessage("No nodes in this graph."));
+    Assert(
+      connected_components.size() == 0,
+      ExcMessage(
+        "Connected components have to be computed by the present function."));
+
+    std::vector<bool> visited(g.nodes.size()); // register visited node
+    std::fill(visited.begin(), visited.end(), 0);
+
+
+    for (types::global_cell_index v : g.nodes)
+      {
+        if (!visited[v])
+          {
+            connected_components.emplace_back();
+            dfs(connected_components.back(), visited, g, v);
+          }
+      }
+  }
 
 
 
