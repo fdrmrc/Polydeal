@@ -11,6 +11,8 @@
 // -----------------------------------------------------------------------------
 
 
+#include <deal.II/fe/fe_dgp.h>
+
 #include <deal.II/grid/grid_generator.h>
 #include <deal.II/grid/grid_in.h>
 #include <deal.II/grid/grid_out.h>
@@ -32,6 +34,43 @@
 
 #include <algorithm>
 #include <chrono>
+
+
+
+struct ConvergenceInfo
+{
+  ConvergenceInfo() = default;
+  void
+  add(const std::pair<types::global_dof_index, std::pair<double, double>>
+        &dofs_and_errs)
+  {
+    vec_data.push_back(dofs_and_errs);
+  }
+
+
+
+  void
+  print()
+  {
+    Assert(vec_data.size() > 0, ExcInternalError());
+    for (const auto &dof_and_errs : vec_data)
+      std::cout << std::left << std::setw(24) << std::scientific
+                << "N DoFs: " << dof_and_errs.first << std::endl;
+
+    for (const auto &dof_and_errs : vec_data)
+      std::cout << std::left << std::setw(24) << std::scientific
+                << "L2 error: " << dof_and_errs.second.first << std::endl;
+    for (const auto &dof_and_errs : vec_data)
+      std::cout << std::left << std::setw(24) << std::scientific
+                << "H1 error: " << dof_and_errs.second.second << std::endl;
+  }
+
+
+
+  std::vector<std::pair<types::global_dof_index, std::pair<double, double>>>
+    vec_data;
+};
+
 
 
 template <typename T>
@@ -261,6 +300,11 @@ public:
   virtual Tensor<1, dim>
   gradient(const Point<dim>  &p,
            const unsigned int component = 0) const override;
+
+  virtual void
+  gradient_list(const std::vector<Point<dim>> &points,
+                std::vector<Tensor<1, dim>>   &gradients,
+                const unsigned int /*component*/) const override;
 };
 
 template <int dim>
@@ -289,6 +333,18 @@ SolutionProduct<dim>::value_list(const std::vector<Point<dim>> &points,
 {
   for (unsigned int i = 0; i < values.size(); ++i)
     values[i] = this->value(points[i]);
+}
+
+
+
+template <int dim>
+void
+SolutionProduct<dim>::gradient_list(const std::vector<Point<dim>> &points,
+                                    std::vector<Tensor<1, dim>>   &gradients,
+                                    const unsigned int /*component*/) const
+{
+  for (unsigned int i = 0; i < gradients.size(); ++i)
+    gradients[i] = this->gradient(points[i]);
 }
 
 
@@ -389,12 +445,20 @@ public:
   void
   run();
 
+  types::global_dof_index
+  get_n_dofs() const;
+
+  std::pair<double, double>
+  get_error() const;
+
   GridType        grid_type;
   PartitionerType partitioner_type;
   SolutionType    solution_type;
   unsigned int    extraction_level;
   unsigned int    n_subdomains;
   double penalty_constant = 60.; // 10*(p+1)(p+d) for p = 1 and d = 2 => 60
+  double l2_err;
+  double semih1_err;
 };
 
 
@@ -461,7 +525,7 @@ Poisson<dim>::make_grid()
   else
     {
       GridGenerator::hyper_cube(tria, 0., 1.);
-      tria.refine_global(9);
+      tria.refine_global(8);
     }
   std::cout << "Size of tria: " << tria.n_active_cells() << std::endl;
   cached_tria = std::make_unique<GridTools::Cache<dim>>(tria, mapping);
@@ -1041,7 +1105,24 @@ Poisson<dim>::output_results()
                              "agglo_idx",
                              DataOut<dim>::type_cell_data);
 
+    data_out.build_patches(mapping);
+    data_out.write_vtu(output);
 
+    // Compute L2 and semiH1 norm of error
+    std::vector<double> errors;
+    PolyUtils::compute_global_error(*ah,
+                                    solution,
+                                    *analytical_solution,
+                                    {VectorTools::L2_norm,
+                                     VectorTools::H1_seminorm},
+                                    errors);
+    l2_err     = errors[0];
+    semih1_err = errors[1];
+    std::cout << "Error (L2): " << l2_err << std::endl;
+    std::cout << "Error (H1): " << semih1_err << std::endl;
+
+// Old version
+#ifdef FALSE
     {
       // L2 error
       Vector<float> difference_per_cell(tria.n_active_cells());
@@ -1085,11 +1166,29 @@ Poisson<dim>::output_results()
 
       std::cout << "H1 seminorm:" << H1_seminorm << std::endl;
     }
-
-    data_out.build_patches(mapping);
-    data_out.write_vtu(output);
+#endif
   }
 }
+
+
+
+template <int dim>
+inline types::global_dof_index
+Poisson<dim>::get_n_dofs() const
+{
+  return ah->n_dofs();
+}
+
+
+
+template <int dim>
+inline std::pair<double, double>
+Poisson<dim>::get_error() const
+{
+  return std::make_pair(l2_err, semih1_err);
+}
+
+
 
 template <int dim>
 void
@@ -1107,32 +1206,28 @@ Poisson<dim>::run()
 int
 main()
 {
-  std::cout << "Benchmarking with Rtree:" << std::endl;
-
   // Testing p-convergence
+  ConvergenceInfo convergence_info;
   std::cout << "Testing p-convergence" << std::endl;
   {
-    // for (unsigned int fe_degree : {1, 2, 3, 4, 5})
-    for (unsigned int fe_degree : {1})
+    for (unsigned int fe_degree : {1, 2, 3, 4, 5, 6})
       {
         std::cout << "Fe degree: " << fe_degree << std::endl;
-        Poisson<2> poisson_problem{GridType::grid_generator,
-                                   PartitionerType::rtree,
+        Poisson<2> poisson_problem{GridType::unstructured,
+                                   PartitionerType::metis,
                                    SolutionType::product_sine,
-                                   5 /*extaction_level*/,
-                                   0,
+                                   0 /*extraction_level*/,
+                                   364,
                                    fe_degree};
         poisson_problem.run();
+        convergence_info.add(
+          std::make_pair<types::global_dof_index, std::pair<double, double>>(
+            poisson_problem.get_n_dofs(), poisson_problem.get_error()));
       }
   }
+  convergence_info.print();
 
 
   std::cout << std::endl;
   return 0;
-  // for (const unsigned int target_partitions :
-  //      {16, 64, 256, 1024, 4096}) // ball
-  //                                 //  {6, 23, 91, 364, 1456, 5824}) //
-  //                                 //  unstructured {16, 64, 256, 1024,
-  //                                 //  4096})
-  //                                 //  // structured square
 }

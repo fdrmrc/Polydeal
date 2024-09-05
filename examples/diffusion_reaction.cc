@@ -718,6 +718,8 @@ DiffusionReactionProblem<dim>::solve()
                                       interpolated_solution,
                                       completely_distributed_solution);
 
+  // Use other method to compute the error
+#ifdef FALSE
   Vector<double> cellwise_error(completely_distributed_solution.size());
   VectorTools::integrate_difference(ah->output_dh,
                                     interpolated_solution,
@@ -740,9 +742,19 @@ DiffusionReactionProblem<dim>::solve()
     VectorTools::compute_global_error(tria_pft,
                                       cellwise_error,
                                       VectorTools::NormType::H1_seminorm);
+#endif
 
-  pcout << "L2 error (exponential solution): " << error << std::endl;
-  pcout << "Semi H1 error (exponential solution): " << semiH1error << std::endl;
+  std::vector<double> global_errors;
+  PolyUtils::compute_global_error(*ah,
+                                  completely_distributed_solution,
+                                  Solution<dim>(),
+                                  {VectorTools::L2_norm,
+                                   VectorTools::H1_seminorm},
+                                  global_errors);
+
+  pcout << "L2 error (exponential solution): " << global_errors[0] << std::endl;
+  pcout << "Semi H1 error (exponential solution): " << global_errors[1]
+        << std::endl;
 }
 
 
