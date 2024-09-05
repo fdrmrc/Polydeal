@@ -1349,7 +1349,6 @@ namespace dealii::PolyUtils
                        const std::vector<VectorTools::NormType> &norms,
                        std::vector<double>                      &global_errors)
   {
-    Assert((dim == spacedim), ExcNotImplemented());
     Assert(solution.size() > 0,
            ExcNotImplemented(
              "Solution vector must be non-empty upon calling this function."));
