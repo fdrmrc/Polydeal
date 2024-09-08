@@ -22,13 +22,7 @@
 #include <chrono>
 
 
-// This test checks that the solution u(x,y)= x+y-1 is computed exactly when
-// the polygonal mesh is made by polygons whose faces are not axis-aligned. The
-// grid used in this test is a 4x4 grid "randomly distorted". Then, the 4 blocks
-// naturally induced by the parent-child structure are agglomerated together
-// manually.
-// Then, the same is done but with a quadratic solution u(x,y)=x^2+y^2-1 and a
-// quadratic discontinuous finite element space.
+// Same as exact_solutions.cc, but with a DGP space.
 
 static constexpr double TOL = 1e-14;
 
