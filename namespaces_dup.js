@@ -1116,6 +1116,7 @@ var namespaces_dup =
       [ "compute_diagonal", "http://www.dealii.org/developer/doxygen/deal.II/namespaceMatrixFreeTools.html#a08cd17d09ebd2be9e313e33bdd102d30", null ],
       [ "compute_diagonal", "http://www.dealii.org/developer/doxygen/deal.II/namespaceMatrixFreeTools.html#a59adb5f087771c71eab392651233b71f", null ],
       [ "compute_diagonal", "http://www.dealii.org/developer/doxygen/deal.II/namespaceMatrixFreeTools.html#ab08bf1c657fb11d14b70a300709b8562", null ],
+      [ "compute_diagonal", "http://www.dealii.org/developer/doxygen/deal.II/namespaceMatrixFreeTools.html#ab325c4e64a3bc829f915a2a2191ed3dc", null ],
       [ "compute_matrix", "http://www.dealii.org/developer/doxygen/deal.II/namespaceMatrixFreeTools.html#a388df1dd6f7009b23b622e42e39ae7f1", null ],
       [ "compute_matrix", "http://www.dealii.org/developer/doxygen/deal.II/namespaceMatrixFreeTools.html#a3ba5519f766048a16ab2c5db7e67f85a", null ],
       [ "compute_matrix", "http://www.dealii.org/developer/doxygen/deal.II/namespaceMatrixFreeTools.html#a8a793fe9e55efbf3521466cf71ba4905", null ],
@@ -1434,8 +1435,8 @@ var namespaces_dup =
       ] ],
       [ "MatrixIterators", "http://www.dealii.org/developer/doxygen/deal.II/namespacePETScWrappers_1_1MatrixIterators.html", null ],
       [ "MPI", "http://www.dealii.org/developer/doxygen/deal.II/namespacePETScWrappers_1_1MPI.html", [
-        [ "swap", "http://www.dealii.org/developer/doxygen/deal.II/namespacePETScWrappers_1_1MPI.html#a5dc3ddc43667ba31268e5d6531bfd8e7", null ],
-        [ "swap", "http://www.dealii.org/developer/doxygen/deal.II/namespacePETScWrappers_1_1MPI.html#af853f838d421f8a008f6a57f3231bdc3", null ]
+        [ "swap", "http://www.dealii.org/developer/doxygen/deal.II/namespacePETScWrappers_1_1MPI.html#a6eb740cb3974671940dc394f635e72dc", null ],
+        [ "swap", "http://www.dealii.org/developer/doxygen/deal.II/namespacePETScWrappers_1_1MPI.html#ab68a5e695e0b01646a5178561372812d", null ]
       ] ],
       [ "PreconditionBDDC", "http://www.dealii.org/developer/doxygen/deal.II/structPETScWrappers_1_1PreconditionBDDC_1_1AdditionalData.html", null ],
       [ "PreconditionBlockJacobi", "http://www.dealii.org/developer/doxygen/deal.II/structPETScWrappers_1_1PreconditionBlockJacobi_1_1AdditionalData.html", null ],

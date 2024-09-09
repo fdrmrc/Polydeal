@@ -1,5 +1,7 @@
 var NAVTREEINDEX9 =
 {
+"namespaceinternal.html#a37e3a5916390514d6c6215a43ef1c53a":[0,0,56,88],
+"namespaceinternal.html#a38181f4582ff69679bda7d8e31c37291":[0,0,56,171],
 "namespaceinternal.html#a3aadb38f137c10d889967d85b73c3b1f":[0,0,56,119],
 "namespaceinternal.html#a41de75e3aa581da531ba61cabc136687":[0,0,56,137],
 "namespaceinternal.html#a42cc0ff9eb1744ad8d54293d803be44c":[0,0,56,83],
@@ -247,7 +249,5 @@ var NAVTREEINDEX9 =
 "namespaceinternal_1_1QGaussRadauChebyshev.html":[0,0,56,46],
 "namespaceinternal_1_1QGaussRadauChebyshev.html#a7927bb9b182c301ee734be92a72120e8":[0,0,56,46,1],
 "namespaceinternal_1_1QGaussRadauChebyshev.html#a799560d47c7882513b37b123cffbbc94":[0,0,56,46,0],
-"namespaceinternal_1_1QIteratedImplementation.html":[0,0,56,47],
-"namespaceinternal_1_1QProjector.html":[0,0,56,48],
-"namespaceinternal_1_1QRImplementation.html":[0,0,56,49]
+"namespaceinternal_1_1QIteratedImplementation.html":[0,0,56,47]
 };

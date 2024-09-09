@@ -1,5 +1,7 @@
 var NAVTREEINDEX11 =
 {
+"structMGTwoLevelTransferNonNested_1_1AdditionalData.html":[0,0,89],
+"structMGTwoLevelTransfer_1_1MatrixFreeRelatedData.html":[0,0,88],
 "structMatrixFreeTools_1_1ElementActivationAndDeactivationMatrixFree_1_1AdditionalData.html":[0,0,79,0],
 "structMatrixFree_1_1AdditionalData.html":[0,0,77],
 "structNonMatching_1_1MappingInfo_1_1AdditionalData.html":[0,0,92,1],

@@ -1,5 +1,7 @@
 var NAVTREEINDEX10 =
 {
+"namespaceinternal_1_1QProjector.html":[0,0,56,48],
+"namespaceinternal_1_1QRImplementation.html":[0,0,56,49],
 "namespaceinternal_1_1QRImplementation.html#a1ae2421a2ffba8456cf49a6ef8eb598f":[0,0,56,49,2],
 "namespaceinternal_1_1QRImplementation.html#a3a525751a2be4ea93e6849081a034df5":[0,0,56,49,4],
 "namespaceinternal_1_1QRImplementation.html#a3b3d821c200343f262040d8f9af210f2":[0,0,56,49,8],
@@ -247,7 +249,5 @@ var NAVTREEINDEX10 =
 "structGridIn_1_1ExodusIIData.html":[0,0,49],
 "structLinearAlgebra_1_1TpetraWrappers_1_1PreconditionBase_1_1AdditionalData.html":[0,0,63,3,0],
 "structLinearAlgebra_1_1TpetraWrappers_1_1SolverDirectKLU2_1_1AdditionalData.html":[0,0,63,3,2],
-"structLinearAlgebra_1_1TpetraWrappers_1_1SolverDirect_1_1AdditionalData.html":[0,0,63,3,1],
-"structMGTwoLevelTransferNonNested_1_1AdditionalData.html":[0,0,89],
-"structMGTwoLevelTransfer_1_1MatrixFreeRelatedData.html":[0,0,88]
+"structLinearAlgebra_1_1TpetraWrappers_1_1SolverDirect_1_1AdditionalData.html":[0,0,63,3,1]
 };

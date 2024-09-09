@@ -8,6 +8,7 @@ var hierarchy =
     [ "dealii::AmgProjector< dim, MatrixType, Number >", "classdealii_1_1_amg_projector.html", null ],
     [ "dealii::CellsAgglomerator< dim, RtreeType >", "classdealii_1_1_cells_agglomerator.html", null ],
     [ "internal::LinearOperatorMGImplementation::EmptyPayload", "classinternal_1_1_linear_operator_m_g_implementation_1_1_empty_payload.html", null ],
+    [ "FinitElement< dim >", "class_finit_element.html", null ],
     [ "FunctionTime< typename Number >", "http://www.dealii.org/developer/doxygen/deal.II/classFunctionTime.html", [
       [ "Function< dim >", "http://www.dealii.org/developer/doxygen/deal.II/classFunction.html", [
         [ "RightHandSide< dim >", "class_right_hand_side.html", null ]

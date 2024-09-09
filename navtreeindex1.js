@@ -1,5 +1,6 @@
 var NAVTREEINDEX1 =
 {
+"class_utils_1_1_laplace_operator_d_g.html":[0,0,160,0],
 "class_utils_1_1_laplace_operator_d_g.html":[1,0,2,0],
 "class_utils_1_1_laplace_operator_d_g.html#a042bb8c36ab6c584b599a8880ed6d4d4":[0,0,160,0,2],
 "class_utils_1_1_laplace_operator_d_g.html#a042bb8c36ab6c584b599a8880ed6d4d4":[1,0,2,0,2],
@@ -248,6 +249,5 @@ var NAVTREEINDEX1 =
 "group__Exceptions.html#ga164db35888d05c5a7589c54fb21f3396":[0,0,159,20],
 "group__Exceptions.html#ga180daa35e4f8cf6ec429163291265055":[0,0,139,30],
 "group__Exceptions.html#ga1af054329605166c3f8c8cb15ee13d93":[0,0,25,18],
-"group__Exceptions.html#ga1e447471726466b163ae971034a0ddc4":[0,0,56,134],
-"group__Exceptions.html#ga215c112ff92f6625e662447d0e52c3a9":[0,0,42,7]
+"group__Exceptions.html#ga1e447471726466b163ae971034a0ddc4":[0,0,56,134]
 };

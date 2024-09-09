@@ -16,7 +16,7 @@ var searchData=
   ['scopedlock_13',['ScopedLock',['http://www.dealii.org/developer/doxygen/deal.II/classUtilities_1_1MPI_1_1CollectiveMutex_1_1ScopedLock.html',1,'Utilities::MPI::CollectiveMutex']]],
   ['scopeexit_14',['ScopeExit',['http://www.dealii.org/developer/doxygen/deal.II/classScopeExit.html',1,'']]],
   ['scratch_15',['Scratch',['http://www.dealii.org/developer/doxygen/deal.II/structDerivativeApproximation_1_1internal_1_1Assembler_1_1Scratch.html',1,'DerivativeApproximation::internal::Assembler::Scratch'],['http://www.dealii.org/developer/doxygen/deal.II/structDoFTools_1_1internal_1_1Assembler_1_1Scratch.html',1,'DoFTools::internal::Assembler::Scratch']]],
-  ['scratchandcopydataobjects_16',['ScratchAndCopyDataObjects',['http://www.dealii.org/developer/doxygen/deal.II/structWorkStream_1_1internal_1_1tbb__colored_1_1ScratchAndCopyDataObjects.html',1,'WorkStream::internal::tbb_colored']]],
+  ['scratchandcopydataobjects_16',['ScratchAndCopyDataObjects',['http://www.dealii.org/developer/doxygen/deal.II/structWorkStream_1_1internal_1_1ScratchAndCopyDataObjects.html',1,'WorkStream::internal']]],
   ['scratchdata_17',['ScratchData',['http://www.dealii.org/developer/doxygen/deal.II/classMeshWorker_1_1ScratchData.html',1,'MeshWorker']]],
   ['scratchdataobject_18',['ScratchDataObject',['http://www.dealii.org/developer/doxygen/deal.II/structWorkStream_1_1internal_1_1ScratchDataObject.html',1,'WorkStream::internal']]],
   ['secondcoupling_19',['SecondCoupling',['http://www.dealii.org/developer/doxygen/deal.II/structFEValuesExtractors_1_1SecondCoupling.html',1,'FEValuesExtractors']]],
