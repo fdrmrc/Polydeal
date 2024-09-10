@@ -106,6 +106,40 @@ AgglomerationHandler<dim, spacedim>::define_agglomerate(
 
 template <int dim, int spacedim>
 void
+AgglomerationHandler<dim, spacedim>::define_agglomerate_with_check(
+  const AgglomerationContainer &cells)
+{
+  Assert(cells.size() > 0, ExcMessage("No cells to be agglomerated."));
+
+  // Compute the graph associated to the agglomerate
+  Utils::Graph g;
+  Utils::create_graph_from_agglomerate<dim>(cells, g);
+  std::vector<std::vector<types::global_cell_index>> connected_components;
+  Utils::compute_connected_components(g, connected_components);
+
+  // Be verbose in debug mode
+#ifdef AGGLO_DEBUG
+  if (connected_components.size() > 1)
+    std::cout << "Disconnected elements. Connected components will be "
+                 "computed and agglomerated together."
+              << std::endl;
+#endif
+
+  // Get connected components and define one agglomerate for each one of them.
+  for (const auto &comp : connected_components)
+    {
+      std::vector<typename Triangulation<dim>::active_cell_iterator>
+        agglomerate;
+      for (const auto &x : comp)
+        agglomerate.push_back(cells[x]);
+      define_agglomerate(agglomerate);
+    }
+}
+
+
+
+template <int dim, int spacedim>
+void
 AgglomerationHandler<dim, spacedim>::initialize_fe_values(
   const Quadrature<dim>     &cell_quadrature,
   const UpdateFlags         &flags,
@@ -547,8 +581,8 @@ AgglomerationHandler<dim, spacedim>::reinit(
 
   // First check if the polytope is made just by a single cell. If so, use
   // classical FEValues
-  if (polytope->n_background_cells() == 1)
-    return standard_scratch->reinit(deal_cell);
+  // if (polytope->n_background_cells() == 1)
+  //   return standard_scratch->reinit(deal_cell);
 
   const auto &agglo_cells = polytope->get_agglomerate();
 
@@ -972,9 +1006,13 @@ namespace dealii
                                                   &master_cell,
         const AgglomerationHandler<dim, spacedim> &handler)
       {
-        Assert(handler.master_slave_relationships
-                   [master_cell->global_active_cell_index()] == -1,
-               ExcMessage("The present cell is not a master one."));
+        Assert(
+          handler.master_slave_relationships[master_cell
+                                               ->global_active_cell_index()] ==
+            -1,
+          ExcMessage("The present cell with index " +
+                     std::to_string(master_cell->global_active_cell_index()) +
+                     "is not a master one."));
 
         const auto &agglomeration = handler.get_agglomerate(master_cell);
         const types::global_cell_index current_polytope_index =
