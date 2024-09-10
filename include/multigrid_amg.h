@@ -19,6 +19,8 @@
 
 #include <deal.II/base/mg_level_object.h>
 
+#include <deal.II/fe/fe_dgq.h>
+
 #include <deal.II/lac/la_parallel_vector.h>
 
 #include <deal.II/matrix_free/operators.h>
