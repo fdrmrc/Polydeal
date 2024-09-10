@@ -114,6 +114,8 @@ AgglomerationHandler<dim, spacedim>::define_agglomerate_with_check(
   // Compute the graph associated to the agglomerate
   Utils::Graph g;
   Utils::create_graph_from_agglomerate<dim>(cells, g);
+
+  // The following vector will be filled with connected components
   std::vector<std::vector<types::global_cell_index>> connected_components;
   Utils::compute_connected_components(g, connected_components);
 
@@ -126,13 +128,16 @@ AgglomerationHandler<dim, spacedim>::define_agglomerate_with_check(
 #endif
 
   // Get connected components and define one agglomerate for each one of them.
+  std::vector<typename Triangulation<dim>::active_cell_iterator> agglomerate;
   for (const auto &comp : connected_components)
     {
-      std::vector<typename Triangulation<dim>::active_cell_iterator>
-        agglomerate;
-      for (const auto &x : comp)
-        agglomerate.push_back(cells[x]);
+      agglomerate.reserve(comp.size());
+      for (const types::global_cell_index local_idx : comp)
+        agglomerate.push_back(cells[local_idx]);
+
+      // Perform agglomeration
       define_agglomerate(agglomerate);
+      agglomerate.clear();
     }
 }
 
