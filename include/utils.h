@@ -1097,8 +1097,6 @@ namespace Utils
     Graph                                                                &g)
   {
     Assert(cells.size() > 0, ExcMessage("No cells to be agglomerated."));
-    // std::all_of(cells.begin(),cells.end(),[](){};) //check all same
-    // reference cell
     const unsigned int n_faces = cells[0]->n_faces();
 
     std::vector<types::global_cell_index> vec_cells(cells.size());
