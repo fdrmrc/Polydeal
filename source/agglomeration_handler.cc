@@ -224,7 +224,7 @@ AgglomerationHandler<dim, spacedim>::update_agglomerate(
   const typename Triangulation<dim, spacedim>::active_cell_iterator
     &master_cell)
 {
-  Assert(master_cell->is_master_cell(), ExcInternalError());
+  Assert(is_master_cell(master_cell), ExcInternalError());
 
   std::cout << "Updating agglomerate" << std::endl;
   // update data structure related to polytope
