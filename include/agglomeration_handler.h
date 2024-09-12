@@ -762,7 +762,11 @@ private:
 
   ObserverPointer<const Triangulation<dim, spacedim>> tria;
 
+<<<<<<< HEAD
   ObserverPointer<const Mapping<dim, spacedim>> mapping;
+=======
+  SmartPointer<const Mapping<dim, spacedim>> mapping;
+>>>>>>> 49f3083 (Add new class MappingBox, implementing bbox mapping on general (hex or tet) cells)
 
   std::unique_ptr<GridTools::Cache<dim, spacedim>> cached_tria;
 
