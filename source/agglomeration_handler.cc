@@ -137,8 +137,137 @@ AgglomerationHandler<dim, spacedim>::define_agglomerate_with_check(
 
       // Perform agglomeration
       define_agglomerate(agglomerate);
+
+      // register master cell of 'small' disconnected component
+      if (comp.size() == 1)
+        {
+          const types::global_cell_index polytope_index =
+            master2polygon.at(agglomerate[0]->active_cell_index());
+          master_disconnected.push_back(master_cells_container[polytope_index]);
+        }
       agglomerate.clear();
     }
+}
+
+
+template <int dim, int spacedim>
+void
+AgglomerationHandler<dim, spacedim>::repair_grid()
+{
+  const auto merge_with_neighbor =
+    [&](const typename Triangulation<dim>::active_cell_iterator
+          &master_to_be_repaired,
+        const typename Triangulation<dim>::active_cell_iterator &neigh)
+    -> void {
+    std::cout << "Repairing polytope idx: "
+              << master2polygon.at(master_to_be_repaired->active_cell_index())
+              << std::endl;
+
+    std::vector<typename Triangulation<dim>::active_cell_iterator> agglomerate;
+    const types::global_cell_index master_of_neigh =
+      get_master_idx_of_cell(neigh);
+    agglomerate.push_back(
+      master_slave_relationships_iterators[master_of_neigh]);
+
+    auto &slaves = get_slaves_of_idx(master_of_neigh);
+    for (const auto &cell : slaves)
+      agglomerate.push_back(cell);
+
+    // define new agglomerate as union of the present one and the neighbor
+    update_agglomerate(
+      agglomerate,
+      master_to_be_repaired); // update agglomerate with singleton
+  };
+
+
+
+  // Loop over all the potential singletons
+  std::cout << "Polytopes to repair: " << master_disconnected.size()
+            << std::endl;
+  for (const auto &master : master_disconnected)
+    {
+      const unsigned int n_faces =
+        ReferenceCell::n_vertices_to_type(dim, master->n_vertices()).n_faces();
+      for (unsigned int f = 0; f < n_faces; ++f)
+        {
+          const auto &neigh = master->neighbor(0);
+          merge_with_neighbor(master, neigh);
+          break;
+        }
+    }
+
+  // Recompute all the boxes
+  bboxes.clear();
+  std::vector<typename Triangulation<dim>::active_cell_iterator> agglomerate;
+
+  for (const auto &new_master_cell : master_cells_container)
+    {
+      const types::global_cell_index master_idx =
+        new_master_cell->active_cell_index();
+
+      agglomerate.push_back(new_master_cell);
+      const auto &slaves = master2slaves[new_master_cell->active_cell_index()];
+      for (const auto &slave : slaves)
+        agglomerate.push_back(slave);
+      create_bounding_box(agglomerate, master_idx);
+
+      agglomerate.clear();
+    }
+}
+
+
+
+template <int dim, int spacedim>
+void
+AgglomerationHandler<dim, spacedim>::update_agglomerate(
+  AgglomerationContainer &polytope_to_update,
+  const typename Triangulation<dim, spacedim>::active_cell_iterator
+    &master_cell)
+{
+  Assert(master_cell->is_master_cell(), ExcInternalError());
+
+  std::cout << "Updating agglomerate" << std::endl;
+  // update data structure related to polytope
+  master_slave_relationships[master_cell->global_active_cell_index()] =
+    polytope_to_update[0]->global_active_cell_index(); // mark each slave
+  master_slave_relationships_iterators[master_cell->active_cell_index()] =
+    polytope_to_update[0];
+
+  const types::global_cell_index master_idx =
+    polytope_to_update[0]->active_cell_index();
+
+  master2slaves[master_idx].push_back(master_cell);
+  std::cout << "Second update" << std::endl;
+
+  polytope_to_update.push_back(master_cell);
+
+  // update vector of bboxes
+  std::cout << "size vector of boxes " << bboxes.size() << std::endl;
+  std::cout << "master_idx " << master_idx << std::endl;
+
+  std::cout << "master2polygon " << master2polygon.at(master_idx) << std::endl;
+
+
+  // erase previous content related to old agglomeration
+  std::cout << "Erase master " << std::endl;
+  master_cells_container.erase(
+    master_cells_container.begin() +
+    master2polygon.at(master_cell->active_cell_index()));
+  std::cout << "Updating masters" << std::endl;
+
+  for (const auto &master : master_cells_container)
+    std::cout << "Master: " << master->active_cell_index() << std::endl;
+
+  // decrease the number of agglomerates.
+  auto it = master2polygon.begin();
+  std::advance(it, master2polygon.at(master_cell->active_cell_index()));
+  while (it != master2polygon.end())
+    {
+      master2polygon[it->first] = (it->second) - 1;
+      ++it;
+    }
+
+  --n_agglomerations;
 }
 
 

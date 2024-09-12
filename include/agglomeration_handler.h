@@ -284,6 +284,9 @@ public:
   agglomeration_iterator
   define_agglomerate(const AgglomerationContainer &cells);
 
+  void
+  repair_grid();
+
   /**
    * Same as above, but checking that every vector of cells is connected. If
    * not, each connected component is agglomerated by calling the
@@ -533,6 +536,12 @@ private:
   void
   initialize_agglomeration_data(
     const std::unique_ptr<GridTools::Cache<dim, spacedim>> &cache_tria);
+
+  void
+  update_agglomerate(
+    AgglomerationContainer &polytope,
+    const typename Triangulation<dim, spacedim>::active_cell_iterator
+      &master_cell);
 
   /**
    * Reinitialize the agglomeration data.
@@ -830,6 +839,10 @@ private:
 
   // Map the master cell index with the polytope index
   std::map<types::global_cell_index, types::global_cell_index> master2polygon;
+
+
+  std::vector<typename Triangulation<dim>::active_cell_iterator>
+    master_disconnected;
 
   // Dummy FiniteElement objects needed only to generate quadratures
 
