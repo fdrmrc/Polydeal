@@ -50,6 +50,7 @@
 
 #include <agglomeration_iterator.h>
 #include <agglomerator.h>
+#include <mapping_box.h>
 #include <utils.h>
 
 #include <fstream>
@@ -467,11 +468,7 @@ public:
    */
   DoFHandler<dim, spacedim> output_dh;
 
-
-  std::unique_ptr<
-    MappingFEField<dim, spacedim, LinearAlgebra::distributed::Vector<double>>>
-    euler_mapping;
-
+  std::unique_ptr<MappingBox<dim>> box_mapping;
 
   /**
    * This function stores the information needed to identify which polytopes are
@@ -535,6 +532,12 @@ private:
   initialize_agglomeration_data(
     const std::unique_ptr<GridTools::Cache<dim, spacedim>> &cache_tria);
 
+  void
+  update_agglomerate(
+    AgglomerationContainer &polytope,
+    const typename Triangulation<dim, spacedim>::active_cell_iterator
+      &master_cell);
+
   /**
    * Reinitialize the agglomeration data.
    */
@@ -562,8 +565,7 @@ private:
    * cells. This fills also the euler vector
    */
   void
-  create_bounding_box(const AgglomerationContainer  &polytope,
-                      const types::global_cell_index master_idx);
+  create_bounding_box(const AgglomerationContainer &polytope);
 
 
   inline types::global_cell_index
@@ -758,8 +760,6 @@ private:
   ObserverPointer<const Triangulation<dim, spacedim>> tria;
 
   ObserverPointer<const Mapping<dim, spacedim>> mapping;
-
-  std::unique_ptr<FESystem<dim, spacedim>> euler_fe;
 
   std::unique_ptr<GridTools::Cache<dim, spacedim>> cached_tria;
 

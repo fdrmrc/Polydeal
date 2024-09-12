@@ -12,22 +12,19 @@
 
 
 #include <deal.II/fe/fe_dgp.h>
+#include <deal.II/fe/mapping_fe.h>
 
 #include <deal.II/grid/grid_generator.h>
 #include <deal.II/grid/grid_in.h>
 #include <deal.II/grid/grid_out.h>
 #include <deal.II/grid/grid_tools.h>
-#include <deal.II/grid/reference_cell.h>
 
 #include <deal.II/lac/precondition.h>
 #include <deal.II/lac/solver_cg.h>
-#include <deal.II/lac/solver_gmres.h>
 #include <deal.II/lac/sparse_direct.h>
 #include <deal.II/lac/sparse_matrix.h>
 
 #include <deal.II/numerics/data_out.h>
-#include <deal.II/numerics/vector_tools_integrate_difference.h>
-#include <deal.II/numerics/vector_tools_interpolate.h>
 
 #include <agglomeration_handler.h>
 #include <poly_utils.h>
@@ -35,7 +32,7 @@
 #include <algorithm>
 #include <chrono>
 
-
+#define HEX TRUE
 
 struct ConvergenceInfo
 {
@@ -70,17 +67,6 @@ struct ConvergenceInfo
   std::vector<std::pair<types::global_dof_index, std::pair<double, double>>>
     vec_data;
 };
-
-
-
-template <typename T>
-constexpr T
-constexpr_pow(T num, unsigned int pow)
-{
-  return (pow >= sizeof(unsigned int) * 8) ? 0 :
-         pow == 0                          ? 1 :
-                                             num * constexpr_pow(num, pow - 1);
-}
 
 
 
@@ -421,9 +407,14 @@ private:
   output_results();
 
 
-  Triangulation<dim>                         tria;
-  MappingQ<dim>                              mapping;
-  FE_DGQ<dim>                                dg_fe;
+  Triangulation<dim> tria;
+#ifdef HEX
+  MappingQ1<dim> mapping;
+  FE_DGQ<dim>    dg_fe;
+#else
+  MappingFE<dim>     mapping;
+  FE_SimplexDGP<dim> dg_fe;
+#endif
   std::unique_ptr<AgglomerationHandler<dim>> ah;
   AffineConstraints<double>                  constraints;
   SparsityPattern                            sparsity;
@@ -470,7 +461,12 @@ Poisson<dim>::Poisson(const GridType        &grid_type,
                       const unsigned int     extraction_level,
                       const unsigned int     n_subdomains,
                       const unsigned int     fe_degree)
-  : mapping(1)
+  :
+#ifdef HEX
+  mapping()
+#else
+  mapping(FE_SimplexP<dim>{1})
+#endif
   , dg_fe(fe_degree)
   , grid_type(grid_type)
   , partitioner_type(partitioner_type)
@@ -502,30 +498,42 @@ Poisson<dim>::make_grid()
       if constexpr (dim == 2)
         {
           grid_in.attach_triangulation(tria);
+#ifdef HEX
           std::ifstream gmsh_file(
-            "../../meshes/t3.msh"); // unstructured square [0,1]^2
+            "../../meshes/t3.msh"); // unstructured square made by triangles
+#else
+          std::ifstream gmsh_file(
+            "../../meshes/square_simplex_coarser.msh"); // unstructured square
+                                                        // made by triangles
+#endif
           grid_in.read_msh(gmsh_file);
-          tria.refine_global(5); // 4
+          tria.refine_global(2); // 4
         }
       else if constexpr (dim == 3)
         {
-          // {
-          //   grid_in.attach_triangulation(tria);
-          //   std::ifstream gmsh_file("../../meshes/piston_3.inp"); //
-          // piston
-          //   mesh grid_in.read_abaqus(gmsh_file); tria.refine_global(1);
-          // }
           grid_in.attach_triangulation(tria);
-          std::ifstream mesh_file(
-            "../../meshes/csf_brain_filled_centered_UCD.inp"); // piston mesh
-          grid_in.read_ucd(mesh_file);
-          tria.refine_global(1);
+#ifdef HEX
+          std::ifstream filename("../../meshes/piston_3.inp"); // piston mesh
+          grid_in.read_abaqus(filename);
+#else
+          std::ifstream filename(
+            "../../meshes/gray_level_image1.vtk"); // liver or brain domain
+          grid_in.read_vtk(filename);
+
+#endif
         }
     }
   else
     {
+#ifdef HEX
       GridGenerator::hyper_cube(tria, 0., 1.);
-      tria.refine_global(8);
+      tria.refine_global(4);
+#else
+      Triangulation<dim> tria_hex;
+      GridGenerator::hyper_cube(tria_hex, 0., 1.);
+      tria_hex.refine_global(4);
+      GridGenerator::convert_hypercube_to_simplex_mesh(tria_hex, tria);
+#endif
     }
   std::cout << "Size of tria: " << tria.n_active_cells() << std::endl;
   cached_tria = std::make_unique<GridTools::Cache<dim>>(tria, mapping);
@@ -550,7 +558,7 @@ Poisson<dim>::make_grid()
 
       namespace bgi = boost::geometry::index;
       static constexpr unsigned int max_elem_per_node =
-        constexpr_pow(2, dim); // 2^dim
+        PolyUtils::constexpr_pow(2, dim); // 2^dim
       std::vector<std::pair<BoundingBox<dim>,
                             typename Triangulation<dim>::active_cell_iterator>>
                    boxes(tria.n_active_cells());
@@ -693,42 +701,6 @@ Poisson<dim>::setup_agglomeration()
     data_out.build_patches(mapping);
     data_out.write_vtu(output);
   }
-
-
-
-  /*
-  #ifdef AGGLO_DEBUG
-  {
-     for (const auto &cell : ah->agglomeration_cell_iterators())
-       {
-         std::cout << "Cell with idx: " << cell->active_cell_index()
-                   << std::endl;
-         unsigned int n_agglomerated_faces_per_cell = ah->n_faces(cell);
-         std::cout << "Number of faces for the agglomeration: "
-                   << n_agglomerated_faces_per_cell << std::endl;
-         for (unsigned int f = 0; f < n_agglomerated_faces_per_cell; ++f)
-           {
-             std::cout << "Agglomerated face with idx: " << f << std::endl;
-             const auto &[local_face_idx, neigh, local_face_idx_out, dummy] =
-               ah->get_agglomerated_connectivity()[{cell, f}];
-             {
-               std::cout << "Face idx: " << local_face_idx << std::endl;
-               if (neigh.state() == IteratorState::valid)
-                 {
-                   std::cout << "Neighbor idx: " <<
-                   neigh->active_cell_index()
-                             << std::endl;
-                 }
-
-               std::cout << "Face idx from outside: " << local_face_idx_out
-                         << std::endl;
-             }
-             std::cout << std::endl;
-           }
-       }
-   }
-   #endif
-   */
 }
 
 
@@ -741,15 +713,24 @@ Poisson<dim>::assemble_system()
   solution.reinit(ah->n_dofs());
   system_rhs.reinit(ah->n_dofs());
 
-  const unsigned int quadrature_degree      = 2 * dg_fe.get_degree() + 1;
-  const unsigned int face_quadrature_degree = 2 * dg_fe.get_degree() + 1;
+  const unsigned int quadrature_degree      = dg_fe.get_degree() + 1;
+  const unsigned int face_quadrature_degree = dg_fe.get_degree() + 1;
+#ifdef HEX
   ah->initialize_fe_values(QGauss<dim>(quadrature_degree),
                            update_gradients | update_JxW_values |
                              update_quadrature_points | update_JxW_values |
                              update_values,
                            QGauss<dim - 1>(face_quadrature_degree));
+#else
+  ah->initialize_fe_values(QGaussSimplex<dim>(quadrature_degree),
+                           update_gradients | update_JxW_values |
+                             update_quadrature_points | update_JxW_values |
+                             update_values,
+                           QGaussSimplex<dim - 1>(face_quadrature_degree));
+#endif
 
   const unsigned int dofs_per_cell = ah->n_dofs_per_cell();
+  std::cout << "DoFs per cell: " << dofs_per_cell << std::endl;
 
   FullMatrix<double> cell_matrix(dofs_per_cell, dofs_per_cell);
   Vector<double>     cell_rhs(dofs_per_cell);
@@ -911,7 +892,7 @@ Poisson<dim>::assemble_system()
                          ++i)
                       {
                         double d = (points0[i] - points1[i]).norm();
-                        Assert(
+                        AssertThrow(
                           d < 1e-15,
                           ExcMessage(
                             "Face qpoints at the interface do not match!"));
@@ -930,11 +911,6 @@ Poisson<dim>::assemble_system()
 
                   const auto &normals = fe_faces0.get_normal_vectors();
 
-                  // const double penalty =
-                  //   penalty_constant /
-                  //   PolyUtils::compute_h_orthogonal(f,
-                  //                                   polygon_boundary_vertices,
-                  //                                   normals[0]);
                   const double penalty =
                     penalty_constant / std::fabs(polytope->diameter());
 
@@ -1027,12 +1003,6 @@ Poisson<dim>::assemble_system()
 
 
 
-void
-output_double_number(double input, const std::string &text)
-{
-  std::cout << text << input << std::endl;
-}
-
 template <int dim>
 void
 Poisson<dim>::solve()
@@ -1049,27 +1019,6 @@ void
 Poisson<dim>::output_results()
 {
   {
-    const std::string filename = "agglomerated_Poisson.vtu";
-    std::ofstream     output(filename);
-
-    DataOut<dim> data_out;
-    data_out.attach_dof_handler(ah->agglo_dh);
-    data_out.add_data_vector(solution, "u", DataOut<dim>::type_dof_data);
-    data_out.build_patches(/**(ah->euler_mapping)*/ mapping);
-    data_out.write_vtu(output);
-  }
-  {
-    const std::string filename = "agglomerated_Poisson_test.vtu";
-    std::ofstream     output(filename);
-
-    DataOut<dim> data_out;
-    data_out.attach_dof_handler(ah->agglo_dh);
-    data_out.add_data_vector(solution, "u", DataOut<dim>::type_dof_data);
-    data_out.build_patches(*(ah->euler_mapping), 3);
-    data_out.write_vtu(output);
-  }
-
-  {
     std::string partitioner;
     if (partitioner_type == PartitionerType::metis)
       partitioner = "metis";
@@ -1078,13 +1027,16 @@ Poisson<dim>::output_results()
     else
       partitioner = "no_partitioning";
 
-    const std::string filename = "interpolated_solution_" + partitioner + "_" +
+    const std::string filename = "interpolated_solution" + partitioner + "_" +
                                  std::to_string(n_subdomains) + ".vtu";
     std::ofstream output(filename);
 
     DataOut<dim>   data_out;
     Vector<double> interpolated_solution;
-    PolyUtils::interpolate_to_fine_grid(*ah, interpolated_solution, solution);
+    PolyUtils::interpolate_to_fine_grid(*ah,
+                                        interpolated_solution,
+                                        solution,
+                                        true /*no_the_fly*/);
     data_out.attach_dof_handler(ah->output_dh);
     data_out.add_data_vector(interpolated_solution,
                              "u",
@@ -1120,53 +1072,6 @@ Poisson<dim>::output_results()
     semih1_err = errors[1];
     std::cout << "Error (L2): " << l2_err << std::endl;
     std::cout << "Error (H1): " << semih1_err << std::endl;
-
-// Old version
-#ifdef FALSE
-    {
-      // L2 error
-      Vector<float> difference_per_cell(tria.n_active_cells());
-      VectorTools::integrate_difference(mapping,
-                                        ah->output_dh,
-                                        interpolated_solution,
-                                        *analytical_solution,
-                                        difference_per_cell,
-                                        QGauss<dim>(dg_fe.degree),
-                                        VectorTools::L2_norm);
-
-      // Plot the error per cell
-
-      data_out.add_data_vector(difference_per_cell,
-                               "error_per_cell",
-                               DataOut<dim>::type_cell_data);
-
-      const double L2_error =
-        VectorTools::compute_global_error(tria,
-                                          difference_per_cell,
-                                          VectorTools::L2_norm);
-
-      std::cout << "L2 error:" << L2_error << std::endl;
-    }
-
-    {
-      // H1 seminorm
-      Vector<float> difference_per_cell(tria.n_active_cells());
-      VectorTools::integrate_difference(mapping,
-                                        ah->output_dh,
-                                        interpolated_solution,
-                                        *analytical_solution,
-                                        difference_per_cell,
-                                        QGauss<dim>(dg_fe.degree + 1),
-                                        VectorTools::H1_seminorm);
-
-      const double H1_seminorm =
-        VectorTools::compute_global_error(tria,
-                                          difference_per_cell,
-                                          VectorTools::H1_seminorm);
-
-      std::cout << "H1 seminorm:" << H1_seminorm << std::endl;
-    }
-#endif
   }
 }
 
@@ -1196,7 +1101,14 @@ Poisson<dim>::run()
 {
   make_grid();
   setup_agglomeration();
+  auto start = std::chrono::high_resolution_clock::now();
   assemble_system();
+  auto stop = std::chrono::high_resolution_clock::now();
+  auto duration =
+    std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+
+  std::cout << "Time taken by assemble_system(): " << duration.count() / 1e6
+            << " seconds" << std::endl;
   solve();
   output_results();
 }
@@ -1210,7 +1122,11 @@ main()
   ConvergenceInfo convergence_info;
   std::cout << "Testing p-convergence" << std::endl;
   {
-    for (unsigned int fe_degree : {1, 2, 3, 4, 5, 6})
+#ifdef HEX
+    for (unsigned int fe_degree : {1, 2, 3, 4})
+#else
+    for (unsigned int fe_degree : {1, 2, 3})
+#endif
       {
         std::cout << "Fe degree: " << fe_degree << std::endl;
         Poisson<2> poisson_problem{GridType::unstructured,
