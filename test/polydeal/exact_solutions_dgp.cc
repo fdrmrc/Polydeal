@@ -1,5 +1,3 @@
-#include <deal.II/fe/fe_dgp.h>
-
 #include <deal.II/grid/grid_generator.h>
 #include <deal.II/grid/grid_in.h>
 #include <deal.II/grid/grid_out.h>
@@ -16,6 +14,7 @@
 #include <deal.II/numerics/vector_tools_interpolate.h>
 
 #include <agglomeration_handler.h>
+#include <fe_agglodgp.h>
 #include <poly_utils.h>
 
 #include <algorithm>
@@ -241,7 +240,7 @@ private:
 
   Triangulation<dim>                         tria;
   MappingQ<dim>                              mapping;
-  FE_DGP<dim>                               *dg_fe;
+  FE_AGGLODGP<dim>                          *dg_fe;
   std::unique_ptr<AgglomerationHandler<dim>> ah;
   // no hanging node in DG discretization, we define an AffineConstraints
   // object
@@ -276,12 +275,12 @@ Poisson<dim>::Poisson(const SolutionType &solution_type)
 {
   if (sol_type == SolutionType::LinearSolution)
     {
-      dg_fe               = new FE_DGP<dim>{1};
+      dg_fe               = new FE_AGGLODGP<dim>{1};
       analytical_solution = new SolutionLinear<dim>();
     }
   else
     {
-      dg_fe               = new FE_DGP<dim>{2};
+      dg_fe               = new FE_AGGLODGP<dim>{2};
       analytical_solution = new SolutionQuadratic<dim>();
     }
 }

@@ -22,7 +22,6 @@
 #include <deal.II/dofs/dof_handler.h>
 #include <deal.II/dofs/dof_tools.h>
 
-#include <deal.II/fe/fe_dgp.h>
 #include <deal.II/fe/fe_dgq.h>
 #include <deal.II/fe/fe_nothing.h>
 #include <deal.II/fe/fe_simplex_p.h>
@@ -50,6 +49,7 @@
 
 #include <agglomeration_iterator.h>
 #include <agglomerator.h>
+#include <fe_agglodgp.h>
 #include <mapping_box.h>
 #include <utils.h>
 
