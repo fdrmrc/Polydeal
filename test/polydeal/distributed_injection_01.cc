@@ -354,7 +354,8 @@ DistributedHierarchyTest<dim>::setup_agglomerated_problem()
     ah_coarse->agglo_dh.locally_owned_dofs();
   TrilinosWrappers::MPI::Vector interp_coarse(locally_owned_dofs_coarse, comm);
 
-  VectorTools::interpolate(*(ah_coarse->euler_mapping),
+  VectorTools::interpolate(ah_coarse->get_agglomeration_mapping(),
+                           ,
                            ah_coarse->agglo_dh,
                            func,
                            interp_coarse);
@@ -425,7 +426,7 @@ DistributedHierarchyTest<dim>::setup_agglomerated_problem()
   // Compute error:
   TrilinosWrappers::MPI::Vector interp_fine(
     dst.locally_owned_elements(), comm); // take parallel layout from dst
-  VectorTools::interpolate(*(ah_fine->euler_mapping),
+  VectorTools::interpolate(ah_fine->get_agglomeration_mapping(),
                            ah_fine->agglo_dh,
                            func,
                            interp_fine);

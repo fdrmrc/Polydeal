@@ -389,7 +389,7 @@ LaplaceOperator<dim>::perform_sanity_check()
   for (const auto &func : functions)
     {
       Vector<double> interp_vector(ah->get_dof_handler().n_dofs());
-      VectorTools::interpolate(*(ah->euler_mapping),
+      VectorTools::interpolate(ah->get_agglomeration_mapping(),
                                ah->get_dof_handler(),
                                *func,
                                interp_vector);

@@ -467,12 +467,12 @@ main(int argc, char *argv[])
     LinearFunction<2> xfunction{{1, 0}};
     LinearFunction<2> xplusyfunction{{1, 1}};
 
-    VectorTools::interpolate(*(ah.euler_mapping),
+    VectorTools::interpolate(ah->get_agglomeration_mapping(),
                              ah.get_dof_handler(),
                              xfunction,
                              interpx);
 
-    VectorTools::interpolate(*(ah.euler_mapping),
+    VectorTools::interpolate(ah->get_agglomeration_mapping(),
                              ah.get_dof_handler(),
                              xplusyfunction,
                              interpxplusy);

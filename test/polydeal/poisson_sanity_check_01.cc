@@ -428,11 +428,11 @@ LaplaceOperator<dim>::perform_sanity_check()
     Vector<double>      interpone(ah->get_dof_handler().n_dofs());
     LinearFunction<dim> xfunction{{1, 0}};
     LinearFunction<dim> xplusfunction{{1, 1}};
-    VectorTools::interpolate(*(ah->euler_mapping),
+    VectorTools::interpolate(ah->get_agglomeration_mapping(),
                              ah->get_dof_handler(),
                              xfunction,
                              interpx);
-    VectorTools::interpolate(*(ah->euler_mapping),
+    VectorTools::interpolate(ah->get_agglomeration_mapping(),
                              ah->get_dof_handler(),
                              xplusfunction,
                              interpxplusy);

@@ -300,6 +300,9 @@ public:
   inline const Mapping<dim> &
   get_mapping() const;
 
+  inline const MappingBox<dim> &
+  get_agglomeration_mapping() const;
+
   inline const std::vector<BoundingBox<dim>> &
   get_local_bboxes() const;
 
@@ -893,6 +896,15 @@ inline const Mapping<dim> &
 AgglomerationHandler<dim, spacedim>::get_mapping() const
 {
   return *mapping;
+}
+
+
+
+template <int dim, int spacedim>
+inline const MappingBox<dim> &
+AgglomerationHandler<dim, spacedim>::get_agglomeration_mapping() const
+{
+  return *box_mapping;
 }
 
 

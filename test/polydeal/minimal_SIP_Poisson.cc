@@ -71,8 +71,6 @@ private:
   assemble_system();
   void
   solve();
-  void
-  output_results();
 
   bool                                       to_agglomerate;
   Triangulation<dim>                         tria;
@@ -477,39 +475,12 @@ Poisson<dim>::solve()
 
 template <int dim>
 void
-Poisson<dim>::output_results()
-{
-  {
-    const std::string filename = "agglomerated_Poisson.vtu";
-    std::ofstream     output(filename);
-
-    DataOut<dim> data_out;
-    data_out.attach_dof_handler(ah->get_dof_handler());
-    data_out.add_data_vector(solution, "u", DataOut<dim>::type_dof_data);
-    data_out.build_patches(mapping);
-    data_out.write_vtu(output);
-  }
-  {
-    const std::string filename = "agglomerated_Poisson_test.vtu";
-    std::ofstream     output(filename);
-
-    DataOut<dim> data_out;
-    data_out.attach_dof_handler(ah->get_dof_handler());
-    data_out.add_data_vector(solution, "u", DataOut<dim>::type_dof_data);
-    data_out.build_patches(*(ah->euler_mapping));
-    data_out.write_vtu(output);
-  }
-}
-
-template <int dim>
-void
 Poisson<dim>::run()
 {
   make_grid();
   setup_agglomeration();
   assemble_system();
   solve();
-  output_results();
 }
 
 template <int dim>
