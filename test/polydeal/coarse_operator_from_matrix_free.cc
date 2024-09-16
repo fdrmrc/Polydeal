@@ -526,7 +526,7 @@ TestMGMatrix<dim>::agglomerate_and_compute_level_matrices()
   LinearAlgebra::distributed::Vector<double> dst_coarse_op;
   dst_coarse_op.reinit(agglomeration_handler->agglo_dh.locally_owned_dofs(),
                        comm);
-  VectorTools::interpolate(ah->get_agglomeration_mapping(),
+  VectorTools::interpolate(agglomeration_handler->get_agglomeration_mapping(),
                            agglomeration_handler->agglo_dh,
                            func,
                            src_coarse);

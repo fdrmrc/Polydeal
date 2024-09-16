@@ -355,7 +355,6 @@ DistributedHierarchyTest<dim>::setup_agglomerated_problem()
   TrilinosWrappers::MPI::Vector interp_coarse(locally_owned_dofs_coarse, comm);
 
   VectorTools::interpolate(ah_coarse->get_agglomeration_mapping(),
-                           ,
                            ah_coarse->agglo_dh,
                            func,
                            interp_coarse);

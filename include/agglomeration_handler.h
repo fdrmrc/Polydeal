@@ -361,7 +361,7 @@ public:
   void
   print_agglomeration(StreamType &out)
   {
-    for (const auto &cell : euler_dh.active_cell_iterators())
+    for (const auto &cell : tria->active_cell_iterators())
       out << "Cell with index: " << cell->active_cell_index()
           << " has associated value: "
           << master_slave_relationships[cell->global_active_cell_index()]
@@ -773,11 +773,6 @@ private:
   std::unique_ptr<FiniteElement<dim>> fe;
 
   hp::FECollection<dim, spacedim> fe_collection;
-
-  /**
-   * DoFHandler for the physical space
-   */
-  DoFHandler<dim, spacedim> euler_dh;
 
   /**
    * Eulerian vector describing the new cells obtained by the bounding boxes
