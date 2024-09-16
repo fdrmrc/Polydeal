@@ -11,7 +11,6 @@
 // -----------------------------------------------------------------------------
 
 
-#include <deal.II/fe/fe_dgp.h>
 #include <deal.II/fe/mapping_fe.h>
 
 #include <deal.II/grid/grid_generator.h>
@@ -409,8 +408,8 @@ private:
 
   Triangulation<dim> tria;
 #ifdef HEX
-  MappingQ1<dim> mapping;
-  FE_DGQ<dim>    dg_fe;
+  MappingQ1<dim>   mapping;
+  FE_AGGLODGP<dim> dg_fe;
 #else
   MappingFE<dim>     mapping;
   FE_SimplexDGP<dim> dg_fe;
