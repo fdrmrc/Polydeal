@@ -1,5 +1,8 @@
 var NAVTREEINDEX9 =
 {
+"namespaceinternal.html#a2fe00852228ff93751eb55d08d819eb7":[0,0,56,184],
+"namespaceinternal.html#a34999ad82068a5c9cda395535f3ee6c5":[0,0,56,150],
+"namespaceinternal.html#a34c5fb12892625b30ac573fd71f64686":[0,0,56,86],
 "namespaceinternal.html#a37e3a5916390514d6c6215a43ef1c53a":[0,0,56,88],
 "namespaceinternal.html#a38181f4582ff69679bda7d8e31c37291":[0,0,56,171],
 "namespaceinternal.html#a3aadb38f137c10d889967d85b73c3b1f":[0,0,56,119],
@@ -246,8 +249,5 @@ var NAVTREEINDEX9 =
 "namespaceinternal_1_1QGaussRadau.html#a7496853d1008872886b09fb4393576a3":[0,0,56,45,0],
 "namespaceinternal_1_1QGaussRadau.html#a8a00dd745103efb8ac0edb2bbe57fa17":[0,0,56,45,3],
 "namespaceinternal_1_1QGaussRadau.html#a90a5bec602b639faaa77cc8ac6cd40dd":[0,0,56,45,2],
-"namespaceinternal_1_1QGaussRadauChebyshev.html":[0,0,56,46],
-"namespaceinternal_1_1QGaussRadauChebyshev.html#a7927bb9b182c301ee734be92a72120e8":[0,0,56,46,1],
-"namespaceinternal_1_1QGaussRadauChebyshev.html#a799560d47c7882513b37b123cffbbc94":[0,0,56,46,0],
-"namespaceinternal_1_1QIteratedImplementation.html":[0,0,56,47]
+"namespaceinternal_1_1QGaussRadauChebyshev.html":[0,0,56,46]
 };

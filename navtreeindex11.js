@@ -1,5 +1,10 @@
 var NAVTREEINDEX11 =
 {
+"structFE__Enriched_1_1InternalData_1_1EnrichmentValues.html":[0,0,31],
+"structGridIn_1_1ExodusIIData.html":[0,0,49],
+"structLinearAlgebra_1_1TpetraWrappers_1_1PreconditionBase_1_1AdditionalData.html":[0,0,63,3,0],
+"structLinearAlgebra_1_1TpetraWrappers_1_1SolverDirectKLU2_1_1AdditionalData.html":[0,0,63,3,2],
+"structLinearAlgebra_1_1TpetraWrappers_1_1SolverDirect_1_1AdditionalData.html":[0,0,63,3,1],
 "structMGTwoLevelTransferNonNested_1_1AdditionalData.html":[0,0,89],
 "structMGTwoLevelTransfer_1_1MatrixFreeRelatedData.html":[0,0,88],
 "structMatrixFreeTools_1_1ElementActivationAndDeactivationMatrixFree_1_1AdditionalData.html":[0,0,79,0],

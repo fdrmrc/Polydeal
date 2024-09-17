@@ -621,6 +621,7 @@ var namespaces_dup =
         [ "create_triangulation", "http://www.dealii.org/developer/doxygen/deal.II/namespaceGridGenerator_1_1Airfoil.html#aba2454eb933cce1ab7d0d68b4f6041ff", null ],
         [ "create_triangulation", "http://www.dealii.org/developer/doxygen/deal.II/namespaceGridGenerator_1_1Airfoil.html#afed4c8d56cb20e71a44e3556bcf11b27", null ]
       ] ],
+      [ "alfeld_split_of_simplex_mesh", "http://www.dealii.org/developer/doxygen/deal.II/namespaceGridGenerator.html#a8f64748a8cd39b5880fc892bebb3fbdc", null ],
       [ "channel_with_cylinder", "http://www.dealii.org/developer/doxygen/deal.II/namespaceGridGenerator.html#a9d0b8a34fe5ca58425aa1fcf0d6132f1", null ],
       [ "cheese", "http://www.dealii.org/developer/doxygen/deal.II/namespaceGridGenerator.html#a76c54698f4666a44ac3982ee62f87ee9", null ],
       [ "concentric_hyper_shells", "http://www.dealii.org/developer/doxygen/deal.II/namespaceGridGenerator.html#abfcc142a9fc905a1abec9315693a57d4", null ],
