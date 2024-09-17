@@ -832,8 +832,6 @@ namespace dealii
         const auto &bbox =
           handler.bboxes[handler.master2polygon.at(cell->active_cell_index())];
 
-        // const double bbox_measure = bbox.volume();
-
         CellId polytope_out_id;
         if (neigh_polytope.state() == IteratorState::valid)
           polytope_out_id = neigh_polytope->id();
@@ -847,53 +845,30 @@ namespace dealii
         std::vector<double>          final_weights;
         std::vector<Tensor<1, dim>>  final_normals;
 
+        const unsigned int expected_qpoints =
+          common_face.size() * handler.agglomeration_face_quad.size();
+        final_unit_q_points.reserve(expected_qpoints);
+        final_weights.reserve(expected_qpoints);
+        final_normals.reserve(expected_qpoints);
+
 
         for (const auto &[deal_cell, local_face_idx] : common_face)
           {
             handler.no_face_values->reinit(deal_cell, local_face_idx);
 
-            auto q_points    = handler.no_face_values->get_quadrature_points();
-            const auto &JxWs = handler.no_face_values->get_JxW_values();
+            const auto &q_points =
+              handler.no_face_values->get_quadrature_points();
+            const auto &JxWs    = handler.no_face_values->get_JxW_values();
             const auto &normals = handler.no_face_values->get_normal_vectors();
 
-            std::vector<Point<spacedim>> unit_q_points;
-            std::transform(q_points.begin(),
-                           q_points.end(),
-                           std::back_inserter(unit_q_points),
-                           [&](const Point<spacedim> &p) {
-                             return bbox.real_to_unit(p);
-                           });
+            const unsigned int n_qpoints_agglo = q_points.size();
 
-            // Weights must be scaled with det(J)*|J^-t n| for each
-            // quadrature point. Use the fact that we are using a BBox, so
-            // the jacobi entries are the side_length in each direction.
-            // Unfortunately, normal vectors will be scaled internally by
-            // deal.II by using a covariant transformation. In order not to
-            // change the normals, we multiply by the correct factors in
-            // order to obtain the original normal after the call to
-            // `reinit(cell)`.
-            // std::vector<double>         scale_factors(q_points.size());
-            // std::vector<double>         scaled_weights(q_points.size());
-            // std::vector<Tensor<1, dim>> scaled_normals(q_points.size());
-
-            // for (unsigned int q = 0; q < q_points.size(); ++q)
-            //   {
-            //     for (unsigned int direction = 0; direction < spacedim;
-            //          ++direction)
-            //       scaled_normals[q][direction] =
-            //         normals[q][direction] * (bbox.side_length(direction));
-
-            //     scaled_weights[q] =
-            //       (JxWs[q] * scaled_normals[q].norm()) / bbox_measure;
-            //     scaled_normals[q] /= scaled_normals[q].norm();
-            //   }
-
-            for (const auto &point : unit_q_points)
-              final_unit_q_points.push_back(point);
-            for (const auto &weight : JxWs)
-              final_weights.push_back(weight);
-            for (const auto &normal : normals)
-              final_normals.push_back(normal);
+            for (unsigned int q = 0; q < n_qpoints_agglo; ++q)
+              {
+                final_unit_q_points.push_back(bbox.real_to_unit(q_points[q]));
+                final_weights.push_back(JxWs[q]);
+                final_normals.push_back(normals[q]);
+              }
           }
 
         NonMatching::ImmersedSurfaceQuadrature<dim, spacedim> surface_quad(
