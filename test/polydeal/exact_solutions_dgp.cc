@@ -240,7 +240,7 @@ private:
 
   Triangulation<dim>                         tria;
   MappingQ<dim>                              mapping;
-  FE_AGGLODGP<dim>                          *dg_fe;
+  FE_AggloDGP<dim>                          *dg_fe;
   std::unique_ptr<AgglomerationHandler<dim>> ah;
   // no hanging node in DG discretization, we define an AffineConstraints
   // object
@@ -275,12 +275,12 @@ Poisson<dim>::Poisson(const SolutionType &solution_type)
 {
   if (sol_type == SolutionType::LinearSolution)
     {
-      dg_fe               = new FE_AGGLODGP<dim>{1};
+      dg_fe               = new FE_AggloDGP<dim>{1};
       analytical_solution = new SolutionLinear<dim>();
     }
   else
     {
-      dg_fe               = new FE_AGGLODGP<dim>{2};
+      dg_fe               = new FE_AggloDGP<dim>{2};
       analytical_solution = new SolutionQuadratic<dim>();
     }
 }

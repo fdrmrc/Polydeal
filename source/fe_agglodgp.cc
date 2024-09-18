@@ -25,7 +25,7 @@
 DEAL_II_NAMESPACE_OPEN
 
 template <int dim, int spacedim>
-FE_AGGLODGP<dim, spacedim>::FE_AGGLODGP(const unsigned int degree)
+FE_AggloDGP<dim, spacedim>::FE_AggloDGP(const unsigned int degree)
   : FE_Poly<dim, spacedim>(
       PolynomialSpace<dim>(
         Polynomials::Legendre::generate_complete_basis(degree)),
@@ -57,14 +57,14 @@ FE_AGGLODGP<dim, spacedim>::FE_AGGLODGP(const unsigned int degree)
 
 template <int dim, int spacedim>
 std::string
-FE_AGGLODGP<dim, spacedim>::get_name() const
+FE_AggloDGP<dim, spacedim>::get_name() const
 {
   // note that the FETools::get_fe_by_name function depends on the
   // particular format of the string this function returns, so they have to be
   // kept in sync
 
   std::ostringstream namebuf;
-  namebuf << "FE_AGGLODGP<" << Utilities::dim_string(dim, spacedim) << ">("
+  namebuf << "FE_AggloDGP<" << Utilities::dim_string(dim, spacedim) << ">("
           << this->degree << ")";
 
   return namebuf.str();
@@ -74,9 +74,9 @@ FE_AGGLODGP<dim, spacedim>::get_name() const
 
 template <int dim, int spacedim>
 std::unique_ptr<FiniteElement<dim, spacedim>>
-FE_AGGLODGP<dim, spacedim>::clone() const
+FE_AggloDGP<dim, spacedim>::clone() const
 {
-  return std::make_unique<FE_AGGLODGP<dim, spacedim>>(*this);
+  return std::make_unique<FE_AggloDGP<dim, spacedim>>(*this);
 }
 
 
@@ -88,7 +88,7 @@ FE_AGGLODGP<dim, spacedim>::clone() const
 
 template <int dim, int spacedim>
 std::vector<unsigned int>
-FE_AGGLODGP<dim, spacedim>::get_dpo_vector(const unsigned int deg)
+FE_AggloDGP<dim, spacedim>::get_dpo_vector(const unsigned int deg)
 {
   std::vector<unsigned int> dpo(dim + 1, 0U);
   dpo[dim] = deg + 1;
@@ -104,7 +104,7 @@ FE_AGGLODGP<dim, spacedim>::get_dpo_vector(const unsigned int deg)
 
 template <int dim, int spacedim>
 void
-FE_AGGLODGP<dim, spacedim>::get_face_interpolation_matrix(
+FE_AggloDGP<dim, spacedim>::get_face_interpolation_matrix(
   const FiniteElement<dim, spacedim> &x_source_fe,
   FullMatrix<double>                 &interpolation_matrix,
   const unsigned int) const
@@ -115,8 +115,8 @@ FE_AGGLODGP<dim, spacedim>::get_face_interpolation_matrix(
   // need to do here.
   (void)interpolation_matrix;
   using FE    = FiniteElement<dim, spacedim>;
-  using FEDGP = FE_AGGLODGP<dim, spacedim>;
-  AssertThrow((x_source_fe.get_name().find("FE_AGGLODGP<") == 0) ||
+  using FEDGP = FE_AggloDGP<dim, spacedim>;
+  AssertThrow((x_source_fe.get_name().find("FE_AggloDGP<") == 0) ||
                 (dynamic_cast<const FEDGP *>(&x_source_fe) != nullptr),
               typename FE::ExcInterpolationNotImplemented());
 
@@ -130,7 +130,7 @@ FE_AGGLODGP<dim, spacedim>::get_face_interpolation_matrix(
 
 template <int dim, int spacedim>
 void
-FE_AGGLODGP<dim, spacedim>::get_subface_interpolation_matrix(
+FE_AggloDGP<dim, spacedim>::get_subface_interpolation_matrix(
   const FiniteElement<dim, spacedim> &x_source_fe,
   const unsigned int,
   FullMatrix<double> &interpolation_matrix,
@@ -142,8 +142,8 @@ FE_AGGLODGP<dim, spacedim>::get_subface_interpolation_matrix(
   // need to do here.
   (void)interpolation_matrix;
   using FE    = FiniteElement<dim, spacedim>;
-  using FEDGP = FE_AGGLODGP<dim, spacedim>;
-  AssertThrow((x_source_fe.get_name().find("FE_AGGLODGP<") == 0) ||
+  using FEDGP = FE_AggloDGP<dim, spacedim>;
+  AssertThrow((x_source_fe.get_name().find("FE_AggloDGP<") == 0) ||
                 (dynamic_cast<const FEDGP *>(&x_source_fe) != nullptr),
               typename FE::ExcInterpolationNotImplemented());
 
@@ -157,7 +157,7 @@ FE_AGGLODGP<dim, spacedim>::get_subface_interpolation_matrix(
 
 template <int dim, int spacedim>
 bool
-FE_AGGLODGP<dim, spacedim>::hp_constraints_are_implemented() const
+FE_AggloDGP<dim, spacedim>::hp_constraints_are_implemented() const
 {
   return true;
 }
@@ -166,7 +166,7 @@ FE_AGGLODGP<dim, spacedim>::hp_constraints_are_implemented() const
 
 template <int dim, int spacedim>
 std::vector<std::pair<unsigned int, unsigned int>>
-FE_AGGLODGP<dim, spacedim>::hp_vertex_dof_identities(
+FE_AggloDGP<dim, spacedim>::hp_vertex_dof_identities(
   const FiniteElement<dim, spacedim> &fe_other) const
 {
   (void)fe_other;
@@ -177,11 +177,11 @@ FE_AGGLODGP<dim, spacedim>::hp_vertex_dof_identities(
 
 template <int dim, int spacedim>
 std::vector<std::pair<unsigned int, unsigned int>>
-FE_AGGLODGP<dim, spacedim>::hp_line_dof_identities(
+FE_AggloDGP<dim, spacedim>::hp_line_dof_identities(
   const FiniteElement<dim, spacedim> &fe_other) const
 {
   // there are no such constraints for DGP elements at all
-  if (dynamic_cast<const FE_AGGLODGP<dim, spacedim> *>(&fe_other) != nullptr)
+  if (dynamic_cast<const FE_AggloDGP<dim, spacedim> *>(&fe_other) != nullptr)
     return std::vector<std::pair<unsigned int, unsigned int>>();
   else
     {
@@ -194,12 +194,12 @@ FE_AGGLODGP<dim, spacedim>::hp_line_dof_identities(
 
 template <int dim, int spacedim>
 std::vector<std::pair<unsigned int, unsigned int>>
-FE_AGGLODGP<dim, spacedim>::hp_quad_dof_identities(
+FE_AggloDGP<dim, spacedim>::hp_quad_dof_identities(
   const FiniteElement<dim, spacedim> &fe_other,
   const unsigned int) const
 {
   // there are no such constraints for DGP elements at all
-  if (dynamic_cast<const FE_AGGLODGP<dim, spacedim> *>(&fe_other) != nullptr)
+  if (dynamic_cast<const FE_AggloDGP<dim, spacedim> *>(&fe_other) != nullptr)
     return std::vector<std::pair<unsigned int, unsigned int>>();
   else
     {
@@ -212,7 +212,7 @@ FE_AGGLODGP<dim, spacedim>::hp_quad_dof_identities(
 
 template <int dim, int spacedim>
 FiniteElementDomination::Domination
-FE_AGGLODGP<dim, spacedim>::compare_for_domination(
+FE_AggloDGP<dim, spacedim>::compare_for_domination(
   const FiniteElement<dim, spacedim> &fe_other,
   const unsigned int                  codim) const
 {
@@ -228,8 +228,8 @@ FE_AGGLODGP<dim, spacedim>::compare_for_domination(
 
   // cell domination
   // ---------------
-  if (const FE_AGGLODGP<dim, spacedim> *fe_dgp_other =
-        dynamic_cast<const FE_AGGLODGP<dim, spacedim> *>(&fe_other))
+  if (const FE_AggloDGP<dim, spacedim> *fe_dgp_other =
+        dynamic_cast<const FE_AggloDGP<dim, spacedim> *>(&fe_other))
     {
       if (this->degree < fe_dgp_other->degree)
         return FiniteElementDomination::this_element_dominates;
@@ -258,7 +258,7 @@ FE_AGGLODGP<dim, spacedim>::compare_for_domination(
 
 template <int dim, int spacedim>
 bool
-FE_AGGLODGP<dim, spacedim>::has_support_on_face(const unsigned int,
+FE_AggloDGP<dim, spacedim>::has_support_on_face(const unsigned int,
                                                 const unsigned int) const
 {
   // all shape functions have support on all faces
@@ -269,7 +269,7 @@ FE_AGGLODGP<dim, spacedim>::has_support_on_face(const unsigned int,
 
 template <int dim, int spacedim>
 std::pair<Table<2, bool>, std::vector<unsigned int>>
-FE_AGGLODGP<dim, spacedim>::get_constant_modes() const
+FE_AggloDGP<dim, spacedim>::get_constant_modes() const
 {
   Table<2, bool> constant_modes(1, this->n_dofs_per_cell());
   constant_modes(0, 0) = true;
@@ -281,7 +281,7 @@ FE_AGGLODGP<dim, spacedim>::get_constant_modes() const
 
 template <int dim, int spacedim>
 std::size_t
-FE_AGGLODGP<dim, spacedim>::memory_consumption() const
+FE_AggloDGP<dim, spacedim>::memory_consumption() const
 {
   DEAL_II_NOT_IMPLEMENTED();
   return 0;
@@ -290,9 +290,9 @@ FE_AGGLODGP<dim, spacedim>::memory_consumption() const
 
 
 // explicit instantiations
-template class FE_AGGLODGP<1>;
-template class FE_AGGLODGP<2>;
-template class FE_AGGLODGP<3>;
+template class FE_AggloDGP<1>;
+template class FE_AggloDGP<2>;
+template class FE_AggloDGP<3>;
 
 
 DEAL_II_NAMESPACE_CLOSE

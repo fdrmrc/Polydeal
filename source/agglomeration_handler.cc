@@ -232,8 +232,8 @@ AgglomerationHandler<dim, spacedim>::distribute_agglomerated_dofs(
 {
   if (dynamic_cast<const FE_DGQ<dim> *>(&fe_space))
     fe = std::make_unique<FE_DGQ<dim>>(fe_space.degree);
-  else if (dynamic_cast<const FE_AGGLODGP<dim> *>(&fe_space))
-    fe = std::make_unique<FE_AGGLODGP<dim>>(fe_space.degree);
+  else if (dynamic_cast<const FE_AggloDGP<dim> *>(&fe_space))
+    fe = std::make_unique<FE_AggloDGP<dim>>(fe_space.degree);
   else if (dynamic_cast<const FE_SimplexDGP<dim> *>(&fe_space))
     fe = std::make_unique<FE_SimplexDGP<dim>>(fe_space.degree);
   else

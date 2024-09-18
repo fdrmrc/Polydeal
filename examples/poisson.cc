@@ -409,7 +409,7 @@ private:
   Triangulation<dim> tria;
 #ifdef HEX
   MappingQ1<dim>   mapping;
-  FE_AGGLODGP<dim> dg_fe;
+  FE_AggloDGP<dim> dg_fe;
 #else
   MappingFE<dim>     mapping;
   FE_SimplexDGP<dim> dg_fe;

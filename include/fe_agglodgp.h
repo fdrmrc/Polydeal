@@ -33,7 +33,7 @@ DEAL_II_NAMESPACE_OPEN
  *
  * This finite element implements complete polynomial spaces, that is,
  * dim-dimensional polynomials of degree p. For example, in 2d the element
- * FE_AGGLODGP(1) would represent the span of the functions $\{1,\hat x,\hat
+ * FE_AggloDGP(1) would represent the span of the functions $\{1,\hat x,\hat
  * y\}$, which is in contrast to the element FE_DGQ(1) that is formed by the
  * span of
  * $\{1,\hat x,\hat y,\hat x\hat y\}$. Since the DGP space has only three
@@ -54,7 +54,7 @@ DEAL_II_NAMESPACE_OPEN
  *
  * The shape functions are defined in the class PolynomialSpace. The
  * polynomials used inside PolynomialSpace are Polynomials::Legendre up to
- * degree <tt>p</tt> given in FE_AGGLODGP. For the ordering of the basis
+ * degree <tt>p</tt> given in FE_AggloDGP. For the ordering of the basis
  * functions, refer to PolynomialSpace, remembering that the Legendre
  * polynomials are ordered by ascending degree.
  *
@@ -84,7 +84,7 @@ DEAL_II_NAMESPACE_OPEN
  * described by this element does not contain $P(k)$, even if we use a basis
  * of polynomials of degree $k$. Consequently, for example, on meshes with
  * non-affine cells, a linear function can not be exactly represented by
- * elements of type FE_AGGLODGP(1) or FE_DGPMonomial(1).
+ * elements of type FE_AggloDGP(1) or FE_DGPMonomial(1).
  *
  * This can be understood by the following 2-d example: consider the cell with
  * vertices at $(0,0),(1,0),(0,1),(s,s)$:
@@ -308,17 +308,17 @@ DEAL_II_NAMESPACE_OPEN
  * <td align="center"></td> </tr> </table>
  */
 template <int dim, int spacedim = dim>
-class FE_AGGLODGP : public FE_Poly<dim, spacedim>
+class FE_AggloDGP : public FE_Poly<dim, spacedim>
 {
 public:
   /**
    * Constructor for tensor product polynomials of degree @p p.
    */
-  FE_AGGLODGP(const unsigned int p);
+  FE_AggloDGP(const unsigned int p);
 
   /**
    * Return a string that uniquely identifies a finite element. This class
-   * returns <tt>FE_AGGLODGP<dim>(degree)</tt>, with @p dim and @p degree replaced
+   * returns <tt>FE_AggloDGP<dim>(degree)</tt>, with @p dim and @p degree replaced
    * by appropriate values.
    */
   virtual std::string
@@ -377,7 +377,7 @@ public:
    * Return whether this element implements its hanging node constraints in
    * the new way, which has to be used to make elements "hp-compatible".
    *
-   * For the FE_AGGLODGP class the result is always true (independent of the
+   * For the FE_AggloDGP class the result is always true (independent of the
    * degree of the element), as it has no hanging nodes (being a discontinuous
    * element).
    */
