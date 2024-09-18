@@ -8,5 +8,5 @@ var classdealii_1_1_m_g_transfer_agglomeration =
     [ "prolongate_and_add", "classdealii_1_1_m_g_transfer_agglomeration.html#ae50ea3003a92f407718186e99ec62b5d", null ],
     [ "restrict_and_add", "classdealii_1_1_m_g_transfer_agglomeration.html#acf0dd05e183f0e0b09cdb0e385b98be5", null ],
     [ "dof_handlers", "classdealii_1_1_m_g_transfer_agglomeration.html#adbc9e7051b0c252fedf79076b4dd9b19", null ],
-    [ "transfer_matrices", "classdealii_1_1_m_g_transfer_agglomeration.html#a168cd29361179c7c54558e1cb1ef66a8", null ]
+    [ "transfer_matrices", "classdealii_1_1_m_g_transfer_agglomeration.html#abccbd5d12072fb5a1e112e1d9a6bd6d0", null ]
 ];
