@@ -124,8 +124,8 @@ $(function(){initNavTree('multigrid__amg_8cc_source.html',''); initResizable(tru
 <div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span><span class="comment">//</span></div>
 <div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span><span class="comment">// -----------------------------------------------------------------------------</span></div>
 <div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span> </div>
-<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span> </div>
-<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span><span class="preprocessor">#include &lt;<a class="code" href="agglomeration__handler_8h.html">agglomeration_handler.h</a>&gt;</span></div>
+<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span><span class="preprocessor">#include &lt;<a class="codeRef" href="http://www.dealii.org/developer/doxygen/deal.II/trilinos__sparse__matrix_8h.html">deal.II/lac/trilinos_sparse_matrix.h</a>&gt;</span></div>
+<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span> </div>
 <div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span><span class="preprocessor">#include &lt;<a class="code" href="multigrid__amg_8h.html">multigrid_amg.h</a>&gt;</span></div>
 <div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span> </div>
 <div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span><span class="keyword">namespace </span><a class="code hl_namespace" href="namespacedealii.html">dealii</a></div>
@@ -286,14 +286,13 @@ $(function(){initNavTree('multigrid__amg_8cc_source.html',''); initResizable(tru
 <div class="line"><a id="l00158" name="l00158"></a><span class="lineno">  158</span>    3,</div>
 <div class="line"><a id="l00159" name="l00159"></a><span class="lineno">  159</span>    <a class="code hl_classRef" href="http://www.dealii.org/developer/doxygen/deal.II/classLinearAlgebra_1_1distributed_1_1Vector.html">LinearAlgebra::distributed::Vector&lt;double&gt;</a>&gt;;</div>
 <div class="line"><a id="l00160" name="l00160"></a><span class="lineno">  160</span>} <span class="comment">// namespace dealii</span></div>
-<div class="ttc" id="aagglomeration__handler_8h_html"><div class="ttname"><a href="agglomeration__handler_8h.html">agglomeration_handler.h</a></div></div>
 <div class="ttc" id="aclassDoFHandler_html"><div class="ttname"><a href="http://www.dealii.org/developer/doxygen/deal.II/classDoFHandler.html">DoFHandler</a></div></div>
 <div class="ttc" id="aclassLinearAlgebra_1_1distributed_1_1Vector_html"><div class="ttname"><a href="http://www.dealii.org/developer/doxygen/deal.II/classLinearAlgebra_1_1distributed_1_1Vector.html">LinearAlgebra::distributed::Vector</a></div></div>
 <div class="ttc" id="aclassMGLevelObject_html"><div class="ttname"><a href="http://www.dealii.org/developer/doxygen/deal.II/classMGLevelObject.html">MGLevelObject</a></div></div>
 <div class="ttc" id="aclassMGLevelObject_html_ac23dab254a8a1c611301d194a266a2ed"><div class="ttname"><a href="http://www.dealii.org/developer/doxygen/deal.II/classMGLevelObject.html#ac23dab254a8a1c611301d194a266a2ed">MGLevelObject::max_level</a></div><div class="ttdeci">unsigned int max_level() const</div></div>
 <div class="ttc" id="aclassMGLevelObject_html_ad004414cdad0e128a97cf7dd693613af"><div class="ttname"><a href="http://www.dealii.org/developer/doxygen/deal.II/classMGLevelObject.html#ad004414cdad0e128a97cf7dd693613af">MGLevelObject::min_level</a></div><div class="ttdeci">unsigned int min_level() const</div></div>
 <div class="ttc" id="aclassMGLevelObject_html_adca2fa1a29fdf05fd62ae77cd9b3614a"><div class="ttname"><a href="http://www.dealii.org/developer/doxygen/deal.II/classMGLevelObject.html#adca2fa1a29fdf05fd62ae77cd9b3614a">MGLevelObject::n_levels</a></div><div class="ttdeci">unsigned int n_levels() const</div></div>
-<div class="ttc" id="aclassdealii_1_1_m_g_transfer_agglomeration_html"><div class="ttname"><a href="classdealii_1_1_m_g_transfer_agglomeration.html">dealii::MGTransferAgglomeration</a></div><div class="ttdef"><b>Definition</b> <a href="multigrid__amg_8h_source.html#l00407">multigrid_amg.h:408</a></div></div>
+<div class="ttc" id="aclassdealii_1_1_m_g_transfer_agglomeration_html"><div class="ttname"><a href="classdealii_1_1_m_g_transfer_agglomeration.html">dealii::MGTransferAgglomeration</a></div><div class="ttdef"><b>Definition</b> <a href="multigrid__amg_8h_source.html#l00409">multigrid_amg.h:410</a></div></div>
 <div class="ttc" id="aclassdealii_1_1_m_g_transfer_agglomeration_html_a7946bc5438e07a440a57197d38e0d030"><div class="ttname"><a href="classdealii_1_1_m_g_transfer_agglomeration.html#a7946bc5438e07a440a57197d38e0d030">dealii::MGTransferAgglomeration::prolongate</a></div><div class="ttdeci">void prolongate(const unsigned int to_level, VectorType &amp;dst, const VectorType &amp;src) const override</div><div class="ttdef"><b>Definition</b> <a href="#l00068">multigrid_amg.cc:68</a></div></div>
 <div class="ttc" id="aclassdealii_1_1_m_g_transfer_agglomeration_html_a8d8ae8ef5d95b14dd379ae1c313c0656"><div class="ttname"><a href="classdealii_1_1_m_g_transfer_agglomeration.html#a8d8ae8ef5d95b14dd379ae1c313c0656">dealii::MGTransferAgglomeration::copy_from_mg</a></div><div class="ttdeci">void copy_from_mg(const DoFHandler&lt; dim &gt; &amp;dof_handler, VectorType &amp;dst, const MGLevelObject&lt; VectorType &gt; &amp;src) const</div><div class="ttdef"><b>Definition</b> <a href="#l00135">multigrid_amg.cc:135</a></div></div>
 <div class="ttc" id="aclassdealii_1_1_m_g_transfer_agglomeration_html_abae5a86ac79f61a6bda6fec472874197"><div class="ttname"><a href="classdealii_1_1_m_g_transfer_agglomeration.html#abae5a86ac79f61a6bda6fec472874197">dealii::MGTransferAgglomeration::MGTransferAgglomeration</a></div><div class="ttdeci">MGTransferAgglomeration(const MGLevelObject&lt; TrilinosWrappers::SparseMatrix * &gt; &amp;transfer_matrices, const std::vector&lt; DoFHandler&lt; dim &gt; * &gt; &amp;dof_handlers)</div><div class="ttdef"><b>Definition</b> <a href="#l00023">multigrid_amg.cc:23</a></div></div>
@@ -305,13 +304,14 @@ $(function(){initNavTree('multigrid__amg_8cc_source.html',''); initResizable(tru
 <div class="ttc" id="amultigrid__amg_8h_html"><div class="ttname"><a href="multigrid__amg_8h.html">multigrid_amg.h</a></div></div>
 <div class="ttc" id="anamespacePhysics_1_1Elasticity_1_1Kinematics_html_a6aa80537de93aad86dee48bc73f6600b"><div class="ttname"><a href="http://www.dealii.org/developer/doxygen/deal.II/namespacePhysics_1_1Elasticity_1_1Kinematics.html#a6aa80537de93aad86dee48bc73f6600b">l</a></div><div class="ttdeci">Tensor&lt; 2, dim, Number &gt; l(const Tensor&lt; 2, dim, Number &gt; &amp;F, const Tensor&lt; 2, dim, Number &gt; &amp;dF_dt)</div></div>
 <div class="ttc" id="anamespacedealii_html"><div class="ttname"><a href="namespacedealii.html">dealii</a></div></div>
+<div class="ttc" id="atrilinos__sparse__matrix_8h_html"><div class="ttname"><a href="http://www.dealii.org/developer/doxygen/deal.II/trilinos__sparse__matrix_8h.html">trilinos_sparse_matrix.h</a></div></div>
 </div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="dir_aa394cd1d9abb8ffe941d9aaafca8d03.html">github</a></li><li class="navelem"><a class="el" href="dir_c52569aa89a7adbb6029022c2fa60a11.html">workspace</a></li><li class="navelem"><a class="el" href="dir_37bdb9d2191b5493db509660c6a8c15a.html">source</a></li><li class="navelem"><a class="el" href="multigrid__amg_8cc.html">multigrid_amg.cc</a></li>
-    <li class="footer">Generated on Tue Sep 17 2024 09:39:12 for PolyDEAL by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.12.0 </li>
+    <li class="footer">Generated on Wed Sep 18 2024 08:36:32 for PolyDEAL by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.12.0 </li>
   </ul>
 </div>
 </body>

@@ -24,6 +24,7 @@ var annotated_dup =
       ] ]
     ] ],
     [ "Utils", "namespace_utils.html", [
+      [ "Graph", "struct_utils_1_1_graph.html", "struct_utils_1_1_graph" ],
       [ "LaplaceOperatorDG", "class_utils_1_1_laplace_operator_d_g.html", "class_utils_1_1_laplace_operator_d_g" ],
       [ "MGCoarseDirect", "class_utils_1_1_m_g_coarse_direct.html", "class_utils_1_1_m_g_coarse_direct" ]
     ] ],

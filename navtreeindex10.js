@@ -1,5 +1,10 @@
 var NAVTREEINDEX10 =
 {
+"namespaceinternal_1_1QGaussRadau.html#a6cdf1725972f949732eb55c98037ac22":[0,0,56,45,1],
+"namespaceinternal_1_1QGaussRadau.html#a7496853d1008872886b09fb4393576a3":[0,0,56,45,0],
+"namespaceinternal_1_1QGaussRadau.html#a8a00dd745103efb8ac0edb2bbe57fa17":[0,0,56,45,3],
+"namespaceinternal_1_1QGaussRadau.html#a90a5bec602b639faaa77cc8ac6cd40dd":[0,0,56,45,2],
+"namespaceinternal_1_1QGaussRadauChebyshev.html":[0,0,56,46],
 "namespaceinternal_1_1QGaussRadauChebyshev.html#a7927bb9b182c301ee734be92a72120e8":[0,0,56,46,1],
 "namespaceinternal_1_1QGaussRadauChebyshev.html#a799560d47c7882513b37b123cffbbc94":[0,0,56,46,0],
 "namespaceinternal_1_1QIteratedImplementation.html":[0,0,56,47],
@@ -244,10 +249,5 @@ var NAVTREEINDEX10 =
 "poly__utils_8h_source.html":[2,0,0,0,0,7],
 "structArpackSolver_1_1AdditionalData.html":[0,0,5],
 "structDoFHandler_1_1ActiveFEIndexTransfer.html":[0,0,23],
-"structEigenInverse_1_1AdditionalData.html":[0,0,27],
-"structEigenPower_1_1AdditionalData.html":[0,0,28],
-"structFESystem_1_1BaseOffsets.html":[0,0,36],
-"structFEValuesViews_1_1SymmetricTensor_3_012_00_01dim_00_01spacedim_01_4_1_1ShapeFunctionData.html":[0,0,40,1],
-"structFEValuesViews_1_1Tensor_3_012_00_01dim_00_01spacedim_01_4_1_1ShapeFunctionData.html":[0,0,40,2],
-"structFEValuesViews_1_1Vector_1_1ShapeFunctionData.html":[0,0,40,3]
+"structEigenInverse_1_1AdditionalData.html":[0,0,27]
 };

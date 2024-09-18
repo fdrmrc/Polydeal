@@ -149,7 +149,7 @@ Private Attributes</h2></td></tr>
 <div class="textblock"><div class="compoundTemplParams">template&lt;int dim, typename MatrixType, typename Number = double&gt;<br />
 class dealii::AmgProjector&lt; dim, MatrixType, Number &gt;</div><p>Same as above, but matrix-based. </p>
 
-<p class="definition">Definition at line <a class="el" href="multigrid__amg_8h_source.html#l00200">200</a> of file <a class="el" href="multigrid__amg_8h_source.html">multigrid_amg.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="multigrid__amg_8h_source.html#l00202">202</a> of file <a class="el" href="multigrid__amg_8h_source.html">multigrid_amg.h</a>.</p>
 </div><h2 class="groupheader">Member Typedef Documentation</h2>
 <a id="a7d11e2aa14b14f2709deb4c8b150133c" name="a7d11e2aa14b14f2709deb4c8b150133c"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a7d11e2aa14b14f2709deb4c8b150133c">&#9670;&#160;</a></span>VectorType</h2>
@@ -173,7 +173,7 @@ template&lt;int dim, typename MatrixType , typename Number  = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="multigrid__amg_8h_source.html#l00203">203</a> of file <a class="el" href="multigrid__amg_8h_source.html">multigrid_amg.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="multigrid__amg_8h_source.html#l00205">205</a> of file <a class="el" href="multigrid__amg_8h_source.html">multigrid_amg.h</a>.</p>
 
 </div>
 </div>
@@ -204,9 +204,9 @@ template&lt;int dim, typename MatrixType , typename Number  = double&gt; </div>
 </div><div class="memdoc">
 <p>Constructor. It takes the matrix-free operator evaluation on the finest level, and a series of transfers from levels. </p>
 
-<p class="definition">Definition at line <a class="el" href="multigrid__amg_8h_source.html#l00226">226</a> of file <a class="el" href="multigrid__amg_8h_source.html">multigrid_amg.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="multigrid__amg_8h_source.html#l00228">228</a> of file <a class="el" href="multigrid__amg_8h_source.html">multigrid_amg.h</a>.</p>
 
-<p class="reference">References <a class="el" href="multigrid__amg_8h_source.html#l00207">dealii::AmgProjector&lt; dim, MatrixType, Number &gt;::communicator</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classLinearAlgebra_1_1distributed_1_1Vector.html#ad2c543771bde0d4613bf244bdcda5d5c">LinearAlgebra::distributed::Vector&lt; typename Number, typename MemorySpace &gt;::get_mpi_communicator()</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/namespacePhysics_1_1Elasticity_1_1Kinematics.html#a6aa80537de93aad86dee48bc73f6600b">l()</a>, and <a class="el" href="multigrid__amg_8h_source.html#l00217">dealii::AmgProjector&lt; dim, MatrixType, Number &gt;::transfer_matrices</a>.</p>
+<p class="reference">References <a class="el" href="multigrid__amg_8h_source.html#l00209">dealii::AmgProjector&lt; dim, MatrixType, Number &gt;::communicator</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classLinearAlgebra_1_1distributed_1_1Vector.html#ad2c543771bde0d4613bf244bdcda5d5c">LinearAlgebra::distributed::Vector&lt; typename Number, typename MemorySpace &gt;::get_mpi_communicator()</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/namespacePhysics_1_1Elasticity_1_1Kinematics.html#a6aa80537de93aad86dee48bc73f6600b">l()</a>, and <a class="el" href="multigrid__amg_8h_source.html#l00219">dealii::AmgProjector&lt; dim, MatrixType, Number &gt;::transfer_matrices</a>.</p>
 
 </div>
 </div>
@@ -236,9 +236,9 @@ template&lt;int dim, typename MatrixType , typename Number  = double&gt; </div>
 </div><div class="memdoc">
 <p>Same as above, but taking a vector of <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classTrilinosWrappers_1_1SparseMatrix.html">TrilinosWrappers::SparseMatrix</a> objects to be used in a multilevel context. </p>
 
-<p class="definition">Definition at line <a class="el" href="multigrid__amg_8h_source.html#l00246">246</a> of file <a class="el" href="multigrid__amg_8h_source.html">multigrid_amg.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="multigrid__amg_8h_source.html#l00248">248</a> of file <a class="el" href="multigrid__amg_8h_source.html">multigrid_amg.h</a>.</p>
 
-<p class="reference">References <a class="el" href="multigrid__amg_8h_source.html#l00207">dealii::AmgProjector&lt; dim, MatrixType, Number &gt;::communicator</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/namespacePhysics_1_1Elasticity_1_1Kinematics.html#a6aa80537de93aad86dee48bc73f6600b">l()</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classMGLevelObject.html#adca2fa1a29fdf05fd62ae77cd9b3614a">MGLevelObject&lt; class Object &gt;::n_levels()</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classMGLevelObject.html#a9fa7f1c94cdd86ea18edfa8dc3f9d3a7">MGLevelObject&lt; class Object &gt;::resize()</a>, and <a class="el" href="multigrid__amg_8h_source.html#l00217">dealii::AmgProjector&lt; dim, MatrixType, Number &gt;::transfer_matrices</a>.</p>
+<p class="reference">References <a class="el" href="multigrid__amg_8h_source.html#l00209">dealii::AmgProjector&lt; dim, MatrixType, Number &gt;::communicator</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/namespacePhysics_1_1Elasticity_1_1Kinematics.html#a6aa80537de93aad86dee48bc73f6600b">l()</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classMGLevelObject.html#adca2fa1a29fdf05fd62ae77cd9b3614a">MGLevelObject&lt; class Object &gt;::n_levels()</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classMGLevelObject.html#a9fa7f1c94cdd86ea18edfa8dc3f9d3a7">MGLevelObject&lt; class Object &gt;::resize()</a>, and <a class="el" href="multigrid__amg_8h_source.html#l00219">dealii::AmgProjector&lt; dim, MatrixType, Number &gt;::transfer_matrices</a>.</p>
 
 </div>
 </div>
@@ -268,9 +268,9 @@ template&lt;int dim, typename MatrixType , typename Number  = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="multigrid__amg_8h_source.html#l00365">365</a> of file <a class="el" href="multigrid__amg_8h_source.html">multigrid_amg.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="multigrid__amg_8h_source.html#l00367">367</a> of file <a class="el" href="multigrid__amg_8h_source.html">multigrid_amg.h</a>.</p>
 
-<p class="reference">References <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/group__Exceptions.html#ga70a0bb353656e704acf927945277bbc6">Assert</a>, <a class="el" href="multigrid__amg_8h_source.html#l00207">dealii::AmgProjector&lt; dim, MatrixType, Number &gt;::communicator</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/namespacePhysics_1_1Elasticity_1_1Kinematics.html#a6aa80537de93aad86dee48bc73f6600b">l()</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classMGLevelObject.html#ac23dab254a8a1c611301d194a266a2ed">MGLevelObject&lt; class Object &gt;::max_level()</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classMGLevelObject.html#ad004414cdad0e128a97cf7dd693613af">MGLevelObject&lt; class Object &gt;::min_level()</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classMGLevelObject.html#adca2fa1a29fdf05fd62ae77cd9b3614a">MGLevelObject&lt; class Object &gt;::n_levels()</a>, and <a class="el" href="multigrid__amg_8h_source.html#l00217">dealii::AmgProjector&lt; dim, MatrixType, Number &gt;::transfer_matrices</a>.</p>
+<p class="reference">References <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/group__Exceptions.html#ga70a0bb353656e704acf927945277bbc6">Assert</a>, <a class="el" href="multigrid__amg_8h_source.html#l00209">dealii::AmgProjector&lt; dim, MatrixType, Number &gt;::communicator</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/namespacePhysics_1_1Elasticity_1_1Kinematics.html#a6aa80537de93aad86dee48bc73f6600b">l()</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classMGLevelObject.html#ac23dab254a8a1c611301d194a266a2ed">MGLevelObject&lt; class Object &gt;::max_level()</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classMGLevelObject.html#ad004414cdad0e128a97cf7dd693613af">MGLevelObject&lt; class Object &gt;::min_level()</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classMGLevelObject.html#adca2fa1a29fdf05fd62ae77cd9b3614a">MGLevelObject&lt; class Object &gt;::n_levels()</a>, and <a class="el" href="multigrid__amg_8h_source.html#l00219">dealii::AmgProjector&lt; dim, MatrixType, Number &gt;::transfer_matrices</a>.</p>
 
 </div>
 </div>
@@ -301,9 +301,9 @@ template&lt;int dim, typename MatrixType , typename Number  = double&gt; </div>
 <p>Initialize level matrices using the operator evaluation and the transfer matrices provided in the constructor.</p>
 <p>In particular, matrix[0]= A0, while for the other levels it holds that: matrix[l] = P_l^T A_l-1 P_l, being P_l the two-level injection. </p>
 
-<p class="definition">Definition at line <a class="el" href="multigrid__amg_8h_source.html#l00273">273</a> of file <a class="el" href="multigrid__amg_8h_source.html">multigrid_amg.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="multigrid__amg_8h_source.html#l00275">275</a> of file <a class="el" href="multigrid__amg_8h_source.html">multigrid_amg.h</a>.</p>
 
-<p class="reference">References <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/group__Exceptions.html#ga70a0bb353656e704acf927945277bbc6">Assert</a>, <a class="el" href="multigrid__amg_8h_source.html#l00207">dealii::AmgProjector&lt; dim, MatrixType, Number &gt;::communicator</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/namespacePhysics_1_1Elasticity_1_1Kinematics.html#a6aa80537de93aad86dee48bc73f6600b">l()</a>, and <a class="el" href="multigrid__amg_8h_source.html#l00217">dealii::AmgProjector&lt; dim, MatrixType, Number &gt;::transfer_matrices</a>.</p>
+<p class="reference">References <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/group__Exceptions.html#ga70a0bb353656e704acf927945277bbc6">Assert</a>, <a class="el" href="multigrid__amg_8h_source.html#l00209">dealii::AmgProjector&lt; dim, MatrixType, Number &gt;::communicator</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/namespacePhysics_1_1Elasticity_1_1Kinematics.html#a6aa80537de93aad86dee48bc73f6600b">l()</a>, and <a class="el" href="multigrid__amg_8h_source.html#l00219">dealii::AmgProjector&lt; dim, MatrixType, Number &gt;::transfer_matrices</a>.</p>
 
 </div>
 </div>
@@ -337,9 +337,9 @@ template&lt;int dim, typename MatrixType , typename Number  = double&gt; </div>
 </div><div class="memdoc">
 <p>Similar to above, but wrapping all multigrid matrices in a <a class="el" href="class_linear_operator_m_g.html">LinearOperatorMG</a>. This can be used if you want to use the matrix-free action on some levels, and the matrix-based version on other ones. Since the common thing between these approaches is the presence of a <code>vmult()</code> function, a <a class="el" href="class_linear_operator_m_g.html">LinearOperatorMG</a> object can store both actions simultaneously. </p>
 
-<p class="definition">Definition at line <a class="el" href="multigrid__amg_8h_source.html#l00319">319</a> of file <a class="el" href="multigrid__amg_8h_source.html">multigrid_amg.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="multigrid__amg_8h_source.html#l00321">321</a> of file <a class="el" href="multigrid__amg_8h_source.html">multigrid_amg.h</a>.</p>
 
-<p class="reference">References <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/group__Exceptions.html#ga70a0bb353656e704acf927945277bbc6">Assert</a>, <a class="el" href="multigrid__amg_8h_source.html#l00207">dealii::AmgProjector&lt; dim, MatrixType, Number &gt;::communicator</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/namespacePhysics_1_1Elasticity_1_1Kinematics.html#a6aa80537de93aad86dee48bc73f6600b">l()</a>, and <a class="el" href="multigrid__amg_8h_source.html#l00217">dealii::AmgProjector&lt; dim, MatrixType, Number &gt;::transfer_matrices</a>.</p>
+<p class="reference">References <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/group__Exceptions.html#ga70a0bb353656e704acf927945277bbc6">Assert</a>, <a class="el" href="multigrid__amg_8h_source.html#l00209">dealii::AmgProjector&lt; dim, MatrixType, Number &gt;::communicator</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/namespacePhysics_1_1Elasticity_1_1Kinematics.html#a6aa80537de93aad86dee48bc73f6600b">l()</a>, and <a class="el" href="multigrid__amg_8h_source.html#l00219">dealii::AmgProjector&lt; dim, MatrixType, Number &gt;::transfer_matrices</a>.</p>
 
 </div>
 </div>
@@ -367,9 +367,9 @@ template&lt;int dim, typename MatrixType , typename Number  = double&gt; </div>
 </div><div class="memdoc">
 <p>MPI communicator used by Trilinos objects. </p>
 
-<p class="definition">Definition at line <a class="el" href="multigrid__amg_8h_source.html#l00207">207</a> of file <a class="el" href="multigrid__amg_8h_source.html">multigrid_amg.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="multigrid__amg_8h_source.html#l00209">209</a> of file <a class="el" href="multigrid__amg_8h_source.html">multigrid_amg.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="multigrid__amg_8h_source.html#l00246">dealii::AmgProjector&lt; dim, MatrixType, Number &gt;::AmgProjector()</a>, <a class="el" href="multigrid__amg_8h_source.html#l00226">dealii::AmgProjector&lt; dim, MatrixType, Number &gt;::AmgProjector()</a>, <a class="el" href="multigrid__amg_8h_source.html#l00365">dealii::AmgProjector&lt; dim, MatrixType, Number &gt;::compute_level_matrices()</a>, <a class="el" href="multigrid__amg_8h_source.html#l00273">dealii::AmgProjector&lt; dim, MatrixType, Number &gt;::compute_level_matrices()</a>, and <a class="el" href="multigrid__amg_8h_source.html#l00319">dealii::AmgProjector&lt; dim, MatrixType, Number &gt;::compute_level_matrices_as_linear_operators()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="multigrid__amg_8h_source.html#l00248">dealii::AmgProjector&lt; dim, MatrixType, Number &gt;::AmgProjector()</a>, <a class="el" href="multigrid__amg_8h_source.html#l00228">dealii::AmgProjector&lt; dim, MatrixType, Number &gt;::AmgProjector()</a>, <a class="el" href="multigrid__amg_8h_source.html#l00367">dealii::AmgProjector&lt; dim, MatrixType, Number &gt;::compute_level_matrices()</a>, <a class="el" href="multigrid__amg_8h_source.html#l00275">dealii::AmgProjector&lt; dim, MatrixType, Number &gt;::compute_level_matrices()</a>, and <a class="el" href="multigrid__amg_8h_source.html#l00321">dealii::AmgProjector&lt; dim, MatrixType, Number &gt;::compute_level_matrices_as_linear_operators()</a>.</p>
 
 </div>
 </div>
@@ -396,9 +396,9 @@ template&lt;int dim, typename MatrixType , typename Number  = double&gt; </div>
 </div><div class="memdoc">
 <p>Fine operator evaluation. <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classVector.html">Vector</a> of (pointers of) Trilinos Matrices storing two-level projections. </p>
 
-<p class="definition">Definition at line <a class="el" href="multigrid__amg_8h_source.html#l00217">217</a> of file <a class="el" href="multigrid__amg_8h_source.html">multigrid_amg.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="multigrid__amg_8h_source.html#l00219">219</a> of file <a class="el" href="multigrid__amg_8h_source.html">multigrid_amg.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="multigrid__amg_8h_source.html#l00246">dealii::AmgProjector&lt; dim, MatrixType, Number &gt;::AmgProjector()</a>, <a class="el" href="multigrid__amg_8h_source.html#l00226">dealii::AmgProjector&lt; dim, MatrixType, Number &gt;::AmgProjector()</a>, <a class="el" href="multigrid__amg_8h_source.html#l00365">dealii::AmgProjector&lt; dim, MatrixType, Number &gt;::compute_level_matrices()</a>, <a class="el" href="multigrid__amg_8h_source.html#l00273">dealii::AmgProjector&lt; dim, MatrixType, Number &gt;::compute_level_matrices()</a>, and <a class="el" href="multigrid__amg_8h_source.html#l00319">dealii::AmgProjector&lt; dim, MatrixType, Number &gt;::compute_level_matrices_as_linear_operators()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="multigrid__amg_8h_source.html#l00248">dealii::AmgProjector&lt; dim, MatrixType, Number &gt;::AmgProjector()</a>, <a class="el" href="multigrid__amg_8h_source.html#l00228">dealii::AmgProjector&lt; dim, MatrixType, Number &gt;::AmgProjector()</a>, <a class="el" href="multigrid__amg_8h_source.html#l00367">dealii::AmgProjector&lt; dim, MatrixType, Number &gt;::compute_level_matrices()</a>, <a class="el" href="multigrid__amg_8h_source.html#l00275">dealii::AmgProjector&lt; dim, MatrixType, Number &gt;::compute_level_matrices()</a>, and <a class="el" href="multigrid__amg_8h_source.html#l00321">dealii::AmgProjector&lt; dim, MatrixType, Number &gt;::compute_level_matrices_as_linear_operators()</a>.</p>
 
 </div>
 </div>
@@ -411,7 +411,7 @@ template&lt;int dim, typename MatrixType , typename Number  = double&gt; </div>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="namespacedealii.html">dealii</a></li><li class="navelem"><a class="el" href="classdealii_1_1_amg_projector.html">AmgProjector</a></li>
-    <li class="footer">Generated on Tue Sep 17 2024 09:39:12 for PolyDEAL by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.12.0 </li>
+    <li class="footer">Generated on Wed Sep 18 2024 08:36:32 for PolyDEAL by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.12.0 </li>
   </ul>
 </div>
 </body>

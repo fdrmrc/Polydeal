@@ -14,6 +14,7 @@ var hierarchy =
         [ "RightHandSide< dim >", "class_right_hand_side.html", null ]
       ] ]
     ] ],
+    [ "Utils::Graph", "struct_utils_1_1_graph.html", null ],
     [ "internal::LinearOperatorMGImplementation::has_vmult_add_and_Tvmult_add< Range, Domain, T >", "classinternal_1_1_linear_operator_m_g_implementation_1_1has__vmult__add__and___tvmult__add.html", null ],
     [ "dealii::MatrixFreeProjector< dim, OperatorType, Number >", "classdealii_1_1_matrix_free_projector.html", null ],
     [ "internal::LinearOperatorMGImplementation::MatrixInterfaceWithoutVmultAdd< Range, Domain, Payload >", "classinternal_1_1_linear_operator_m_g_implementation_1_1_matrix_interface_without_vmult_add.html", null ],

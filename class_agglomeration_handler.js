@@ -21,6 +21,7 @@ var class_agglomeration_handler =
     [ "create_agglomeration_sparsity_pattern", "class_agglomeration_handler.html#a78f486b9b47307a432bd7fb9748ce5d4", null ],
     [ "create_bounding_box", "class_agglomeration_handler.html#a4ac96c54e21cc1b8d648d92a27c2467c", null ],
     [ "define_agglomerate", "class_agglomeration_handler.html#abf88b7b46f79f27ad7877400d068fc56", null ],
+    [ "define_agglomerate_with_check", "class_agglomeration_handler.html#acae73aab2995f5c9ca54347bae983529", null ],
     [ "distribute_agglomerated_dofs", "class_agglomeration_handler.html#a92fddd27c3b7a9eb0ba5561953bf1b68", null ],
     [ "end", "class_agglomeration_handler.html#ac6a4c5c431acef6776be0247d4884f1b", null ],
     [ "end", "class_agglomeration_handler.html#a0b83da0f4882d1d0ea2dccdab0e1b5c3", null ],

@@ -135,6 +135,8 @@ $(function(){initNavTree('utils_8h.html',''); initResizable(true); });
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
 Classes</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_utils_1_1_graph.html">Utils::Graph</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_utils_1_1_m_g_coarse_direct.html">Utils::MGCoarseDirect&lt; VectorType, MatrixType, SolverType &gt;</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_utils_1_1_laplace_operator_d_g.html">Utils::LaplaceOperatorDG&lt; dim, degree, n_qpoints, n_components, number &gt;</a></td></tr>
@@ -153,6 +155,15 @@ Functions</h2></td></tr>
 <tr class="memitem:a8d004aa1fdf7d5f8ac389737cf3aa8c3" id="r_a8d004aa1fdf7d5f8ac389737cf3aa8c3"><td class="memTemplParams" colspan="2">template&lt;int dim, int spacedim, typename MatrixType &gt; </td></tr>
 <tr class="memitem:a8d004aa1fdf7d5f8ac389737cf3aa8c3"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespace_utils.html#a8d004aa1fdf7d5f8ac389737cf3aa8c3">Utils::fill_injection_matrix</a> (const <a class="el" href="class_agglomeration_handler.html">AgglomerationHandler</a>&lt; dim, spacedim &gt; &amp;coarse_ah, const <a class="el" href="class_agglomeration_handler.html">AgglomerationHandler</a>&lt; dim, spacedim &gt; &amp;fine_ah, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classSparsityPattern.html">SparsityPattern</a> &amp;sp, MatrixType &amp;matrix)</td></tr>
 <tr class="separator:a8d004aa1fdf7d5f8ac389737cf3aa8c3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aff9398947a7954808767cae70f9c8f1b" id="r_aff9398947a7954808767cae70f9c8f1b"><td class="memItemLeft" align="right" valign="top"><a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/namespacetypes.html#a88f8129eb3e40ecc8022e92a1e15d70e">types::global_cell_index</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_utils.html#aff9398947a7954808767cae70f9c8f1b">Utils::get_index</a> (const std::vector&lt; <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/namespacetypes.html#a88f8129eb3e40ecc8022e92a1e15d70e">types::global_cell_index</a> &gt; &amp;v, const <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/namespacetypes.html#a88f8129eb3e40ecc8022e92a1e15d70e">types::global_cell_index</a> index)</td></tr>
+<tr class="separator:aff9398947a7954808767cae70f9c8f1b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3e561fe27b3225c8c9b1c40e024d0feb" id="r_a3e561fe27b3225c8c9b1c40e024d0feb"><td class="memTemplParams" colspan="2">template&lt;int dim&gt; </td></tr>
+<tr class="memitem:a3e561fe27b3225c8c9b1c40e024d0feb"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespace_utils.html#a3e561fe27b3225c8c9b1c40e024d0feb">Utils::create_graph_from_agglomerate</a> (const std::vector&lt; typename <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classTriangulation.html">Triangulation</a>&lt; dim &gt;::active_cell_iterator &gt; &amp;cells, <a class="el" href="struct_utils_1_1_graph.html">Graph</a> &amp;g)</td></tr>
+<tr class="separator:a3e561fe27b3225c8c9b1c40e024d0feb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a58bea36407f8872592c4b3ac0f7111c3" id="r_a58bea36407f8872592c4b3ac0f7111c3"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_utils.html#a58bea36407f8872592c4b3ac0f7111c3">Utils::dfs</a> (std::vector&lt; <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/namespacetypes.html#a88f8129eb3e40ecc8022e92a1e15d70e">types::global_cell_index</a> &gt; &amp;comp, std::vector&lt; bool &gt; &amp;visited, const <a class="el" href="struct_utils_1_1_graph.html">Graph</a> &amp;g, const <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/namespacetypes.html#a88f8129eb3e40ecc8022e92a1e15d70e">types::global_cell_index</a> v)</td></tr>
+<tr class="separator:a58bea36407f8872592c4b3ac0f7111c3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa4232d6367b5618dd8e181c9a8918591" id="r_aa4232d6367b5618dd8e181c9a8918591"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_utils.html#aa4232d6367b5618dd8e181c9a8918591">Utils::compute_connected_components</a> (<a class="el" href="struct_utils_1_1_graph.html">Graph</a> &amp;g, std::vector&lt; std::vector&lt; <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/namespacetypes.html#a88f8129eb3e40ecc8022e92a1e15d70e">types::global_cell_index</a> &gt; &gt; &amp;connected_components)</td></tr>
+<tr class="separator:aa4232d6367b5618dd8e181c9a8918591"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 </div><!-- contents -->
 </div><!-- doc-content -->
@@ -160,7 +171,7 @@ Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="dir_aa394cd1d9abb8ffe941d9aaafca8d03.html">github</a></li><li class="navelem"><a class="el" href="dir_c52569aa89a7adbb6029022c2fa60a11.html">workspace</a></li><li class="navelem"><a class="el" href="dir_7a95a9cc00fcc7af5a429eec361b64d1.html">include</a></li><li class="navelem"><a class="el" href="utils_8h.html">utils.h</a></li>
-    <li class="footer">Generated on Tue Sep 17 2024 09:39:12 for PolyDEAL by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.12.0 </li>
+    <li class="footer">Generated on Wed Sep 18 2024 08:36:32 for PolyDEAL by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.12.0 </li>
   </ul>
 </div>
 </body>

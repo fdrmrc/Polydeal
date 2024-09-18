@@ -144,7 +144,7 @@ Public Attributes</h2></td></tr>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><div class="compoundTemplParams">template&lt;int dim, int spacedim&gt;<br />
 class dealii::internal::PolytopeCache&lt; dim, spacedim &gt;</div>
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00087">87</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00088">88</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a643e95c0cb9852af6ecf474a79b9281a" name="a643e95c0cb9852af6ecf474a79b9281a"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a643e95c0cb9852af6ecf474a79b9281a">&#9670;&#160;</a></span>PolytopeCache()</h2>
@@ -228,9 +228,9 @@ template&lt;int dim, int spacedim&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00101">101</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00102">102</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
-<p class="reference">References <a class="el" href="agglomeration__handler_8h_source.html#l00137">dealii::internal::PolytopeCache&lt; dim, spacedim &gt;::cell_face_at_boundary</a>, <a class="el" href="agglomeration__handler_8h_source.html#l00161">dealii::internal::PolytopeCache&lt; dim, spacedim &gt;::interface</a>, and <a class="el" href="agglomeration__handler_8h_source.html#l00117">dealii::internal::PolytopeCache&lt; dim, spacedim &gt;::visited_cell_and_faces</a>.</p>
+<p class="reference">References <a class="el" href="agglomeration__handler_8h_source.html#l00138">dealii::internal::PolytopeCache&lt; dim, spacedim &gt;::cell_face_at_boundary</a>, <a class="el" href="agglomeration__handler_8h_source.html#l00162">dealii::internal::PolytopeCache&lt; dim, spacedim &gt;::interface</a>, and <a class="el" href="agglomeration__handler_8h_source.html#l00118">dealii::internal::PolytopeCache&lt; dim, spacedim &gt;::visited_cell_and_faces</a>.</p>
 
 </div>
 </div>
@@ -258,9 +258,9 @@ template&lt;int dim, int spacedim&gt; </div>
 </div><div class="memdoc">
 <p>Map that associate the pair of (polytopal index, polytopal face) to (b,cell). The latter pair indicates whether or not the present face is on boundary. If it's on the boundary, then b is true and cell is an invalid cell iterator. Otherwise, b is false and cell points to the neighboring polytopal cell. </p>
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00137">137</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00138">138</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="agglomeration__handler_8h_source.html#l00101">dealii::internal::PolytopeCache&lt; dim, spacedim &gt;::clear()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="agglomeration__handler_8h_source.html#l00102">dealii::internal::PolytopeCache&lt; dim, spacedim &gt;::clear()</a>.</p>
 
 </div>
 </div>
@@ -287,7 +287,7 @@ template&lt;int dim, int spacedim&gt; </div>
 </div><div class="memdoc">
 <p>Map that associate the <b>local</b> pair of (polytope id, polytopal face) to the master id of the neighboring <b>ghosted</b> cell. </p>
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00144">144</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00145">145</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
 </div>
 </div>
@@ -314,9 +314,9 @@ template&lt;int dim, int spacedim&gt; </div>
 </div><div class="memdoc">
 <p>Standard std::map that associated to a pair of neighboring polytopic cells (current_polytope, neighboring_polytope) a sequence of ({deal_cell,deal_face_index}) which is meant to describe their interface. Indeed, the pair is identified by the two polytopic global indices, while the interface is described by a std::vector of deal.II cells and faces. </p>
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00161">161</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00162">162</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="agglomeration__handler_8h_source.html#l00101">dealii::internal::PolytopeCache&lt; dim, spacedim &gt;::clear()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="agglomeration__handler_8h_source.html#l00102">dealii::internal::PolytopeCache&lt; dim, spacedim &gt;::clear()</a>.</p>
 
 </div>
 </div>
@@ -343,9 +343,9 @@ template&lt;int dim, int spacedim&gt; </div>
 </div><div class="memdoc">
 <p>Standard std::set for recording the standard cells and faces (in the deal.II lingo) that have been already visited. The first argument of the pair identifies the global index of a deal.II cell, while the second its local face number. </p>
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00117">117</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00118">118</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="agglomeration__handler_8h_source.html#l00101">dealii::internal::PolytopeCache&lt; dim, spacedim &gt;::clear()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="agglomeration__handler_8h_source.html#l00102">dealii::internal::PolytopeCache&lt; dim, spacedim &gt;::clear()</a>.</p>
 
 </div>
 </div>
@@ -371,7 +371,7 @@ template&lt;int dim, int spacedim&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00121">121</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="agglomeration__handler_8h_source.html#l00122">122</a> of file <a class="el" href="agglomeration__handler_8h_source.html">agglomeration_handler.h</a>.</p>
 
 </div>
 </div>
@@ -384,7 +384,7 @@ template&lt;int dim, int spacedim&gt; </div>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="namespacedealii.html">dealii</a></li><li class="navelem"><a class="el" href="namespacedealii_1_1internal.html">internal</a></li><li class="navelem"><a class="el" href="classdealii_1_1internal_1_1_polytope_cache.html">PolytopeCache</a></li>
-    <li class="footer">Generated on Tue Sep 17 2024 09:39:12 for PolyDEAL by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.12.0 </li>
+    <li class="footer">Generated on Wed Sep 18 2024 08:36:32 for PolyDEAL by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.12.0 </li>
   </ul>
 </div>
 </body>

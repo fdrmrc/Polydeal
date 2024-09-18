@@ -59,17 +59,17 @@ var NAVTREE =
 var NAVTREEINDEX =
 [
 "agglomeration__accessor_8h.html",
-"class_utils_1_1_laplace_operator_d_g.html",
-"group__Exceptions.html#ga215c112ff92f6625e662447d0e52c3a9",
-"namespaceCGALWrappers.html#abd91048d272174029b1055321a02e5b1",
-"namespaceDoFTools_1_1internal.html#ae33b256a07de3cf804082e76115a8d6b",
-"namespaceGridTools.html#a8b245fd5c1463b800d0cc5d7c4e2b818",
-"namespaceMatrixCreator.html#aca3d881827dcfdaff10922400e218a78",
-"namespaceThreads_1_1internal.html#a5246626b1da69027f76a8add3346230f",
-"namespaceUtilities_1_1MPI_1_1internal_1_1Tags.html#a1c190e50dabbd9b60e230b843c6caa44a3bae91904beddee81c4a43d556ef2eec",
-"namespaceinternal.html#a2fe00852228ff93751eb55d08d819eb7",
-"namespaceinternal_1_1QGaussRadauChebyshev.html#a7927bb9b182c301ee734be92a72120e8",
-"structFE__Enriched_1_1InternalData_1_1EnrichmentValues.html"
+"class_right_hand_side.html#a43457a3771a9b424178c96ce660a6f71",
+"group__Exceptions.html#ga1e447471726466b163ae971034a0ddc4",
+"namespaceCGALWrappers.html#ab7217bb4ac46512126b8cbc73beaf40f",
+"namespaceDoFTools_1_1internal.html#ae01a54c56148d8c0fa3bc4789348e599",
+"namespaceGridTools.html#a84f7b02080d7740cdb0fe73f3917af36",
+"namespaceMatrixCreator.html#ac275b5f347785b1b4ee3c48e2e8b42db",
+"namespaceThreads_1_1internal.html#a1a0c1d26c8985dca139d7d98d56be36e",
+"namespaceUtilities_1_1MPI_1_1internal_1_1Tags.html#a1c190e50dabbd9b60e230b843c6caa44a38a5781f5f5d3bf0c4f52e36130e2448",
+"namespaceinternal.html#a28016ca71bb3ae3041ff30a3f5b38a68",
+"namespaceinternal_1_1QGaussRadau.html#a6cdf1725972f949732eb55c98037ac22",
+"structEigenPower_1_1AdditionalData.html"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

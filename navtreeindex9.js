@@ -1,5 +1,10 @@
 var NAVTREEINDEX9 =
 {
+"namespaceinternal.html#a28016ca71bb3ae3041ff30a3f5b38a68":[0,0,56,143],
+"namespaceinternal.html#a2879ea8e9c8ad1d99a234569c675f3fb":[0,0,56,178],
+"namespaceinternal.html#a29e425b5a2fee77c57b8c9c9b6064dd5":[0,0,56,80],
+"namespaceinternal.html#a2b3d48efdf7c94da455dc6a3553bab79":[0,0,56,85],
+"namespaceinternal.html#a2e51593ed3bbe58d13d4e8ae643a3e50":[0,0,56,156],
 "namespaceinternal.html#a2fe00852228ff93751eb55d08d819eb7":[0,0,56,184],
 "namespaceinternal.html#a34999ad82068a5c9cda395535f3ee6c5":[0,0,56,150],
 "namespaceinternal.html#a34c5fb12892625b30ac573fd71f64686":[0,0,56,86],
@@ -244,10 +249,5 @@ var NAVTREEINDEX9 =
 "namespaceinternal_1_1QGaussLobattoChebyshev.html":[0,0,56,44],
 "namespaceinternal_1_1QGaussLobattoChebyshev.html#a837bc4f5764b0faeb777925c230a2920":[0,0,56,44,0],
 "namespaceinternal_1_1QGaussLobattoChebyshev.html#ac6eee2f525174bb0c3b25db03e13e68b":[0,0,56,44,1],
-"namespaceinternal_1_1QGaussRadau.html":[0,0,56,45],
-"namespaceinternal_1_1QGaussRadau.html#a6cdf1725972f949732eb55c98037ac22":[0,0,56,45,1],
-"namespaceinternal_1_1QGaussRadau.html#a7496853d1008872886b09fb4393576a3":[0,0,56,45,0],
-"namespaceinternal_1_1QGaussRadau.html#a8a00dd745103efb8ac0edb2bbe57fa17":[0,0,56,45,3],
-"namespaceinternal_1_1QGaussRadau.html#a90a5bec602b639faaa77cc8ac6cd40dd":[0,0,56,45,2],
-"namespaceinternal_1_1QGaussRadauChebyshev.html":[0,0,56,46]
+"namespaceinternal_1_1QGaussRadau.html":[0,0,56,45]
 };
