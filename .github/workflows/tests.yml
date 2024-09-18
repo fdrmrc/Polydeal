@@ -7,6 +7,17 @@ on:
     branches: [ main ]
 
 jobs:
+  compile:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Test debug
+      run: |
+         ./scripts/dr.sh "rm -rf build_linux_debug"
+         ./scripts/dr.sh "mkdir build_linux_debug; cd build_linux_debug; cmake .. -GNinja -DCMAKE_BUILD_TYPE=Debug; ninja"
+
   debug:
 
     runs-on: ubuntu-latest
