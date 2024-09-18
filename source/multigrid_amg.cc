@@ -10,8 +10,8 @@
 //
 // -----------------------------------------------------------------------------
 
+#include <deal.II/lac/trilinos_sparse_matrix.h>
 
-#include <agglomeration_handler.h>
 #include <multigrid_amg.h>
 
 namespace dealii

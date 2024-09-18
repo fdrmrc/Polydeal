@@ -49,6 +49,7 @@
 
 #include <agglomeration_iterator.h>
 #include <agglomerator.h>
+#include <utils.h>
 
 #include <fstream>
 
@@ -282,6 +283,14 @@ public:
    */
   agglomeration_iterator
   define_agglomerate(const AgglomerationContainer &cells);
+
+  /**
+   * Same as above, but checking that every vector of cells is connected. If
+   * not, each connected component is agglomerated by calling the
+   * define_agglomerate() function defined above.
+   */
+  void
+  define_agglomerate_with_check(const AgglomerationContainer &cells);
 
   inline const Triangulation<dim, spacedim> &
   get_triangulation() const;

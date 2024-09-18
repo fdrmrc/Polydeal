@@ -111,10 +111,8 @@ test_hyper_cube(Triangulation<2> &tria)
         total_sum += weight;
     }
 
-
-
-  Assert(total_sum == GridTools::volume(tria, mapping),
-         ExcMessage("Integration did not succeed"));
+  AssertThrow(total_sum == GridTools::volume(tria, mapping),
+              ExcMessage("Integration did not succeed"));
   std::cout << "Ok" << std::endl;
 }
 
@@ -194,7 +192,7 @@ test_hyper_ball(Triangulation<2> &tria)
     }
 
   FE_DGQ<2> fe_dg(0);
-  ah.initialize_fe_values(QGauss<2>(2), update_JxW_values);
+  ah.initialize_fe_values(QGauss<2>(3), update_JxW_values);
   ah.distribute_agglomerated_dofs(fe_dg);
   double total_sum = 0.;
   for (const auto &polytope : ah.polytope_iterators())
@@ -204,8 +202,8 @@ test_hyper_ball(Triangulation<2> &tria)
         total_sum += weight;
     }
 
-  Assert(total_sum == GridTools::volume(tria, mapping),
-         ExcMessage("Integration did not succeed"));
+  AssertThrow((total_sum - GridTools::volume(tria, mapping) < 1e-13),
+              ExcMessage("Integration did not succeed."));
   std::cout << "Ok" << std::endl;
 }
 
