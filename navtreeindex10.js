@@ -1,5 +1,6 @@
 var NAVTREEINDEX10 =
 {
+"namespaceinternal_1_1QGaussRadau.html":[0,0,56,45],
 "namespaceinternal_1_1QGaussRadau.html#a6cdf1725972f949732eb55c98037ac22":[0,0,56,45,1],
 "namespaceinternal_1_1QGaussRadau.html#a7496853d1008872886b09fb4393576a3":[0,0,56,45,0],
 "namespaceinternal_1_1QGaussRadau.html#a8a00dd745103efb8ac0edb2bbe57fa17":[0,0,56,45,3],
@@ -248,6 +249,5 @@ var NAVTREEINDEX10 =
 "poly__utils_8h.html#af3f69f2eb83fd6281070f540543c1207":[2,0,0,0,0,7,11],
 "poly__utils_8h_source.html":[2,0,0,0,0,7],
 "structArpackSolver_1_1AdditionalData.html":[0,0,5],
-"structDoFHandler_1_1ActiveFEIndexTransfer.html":[0,0,23],
-"structEigenInverse_1_1AdditionalData.html":[0,0,27]
+"structDoFHandler_1_1ActiveFEIndexTransfer.html":[0,0,23]
 };

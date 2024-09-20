@@ -1,5 +1,6 @@
 var NAVTREEINDEX3 =
 {
+"namespaceCGALWrappers.html#ab217c479619d0c8e5868636bdf720fdb":[0,0,9,3],
 "namespaceCGALWrappers.html#ab7217bb4ac46512126b8cbc73beaf40f":[0,0,9,31],
 "namespaceCGALWrappers.html#abd91048d272174029b1055321a02e5b1":[0,0,9,18],
 "namespaceCGALWrappers.html#ac0f15f5ccbb0660e1bf09ecaddb4e9e5":[0,0,9,9],
@@ -248,6 +249,5 @@ var NAVTREEINDEX3 =
 "namespaceDoFTools_1_1internal.html#aa6027abb270ff54a76661ca1c2bf2bcf":[0,0,25,0,12],
 "namespaceDoFTools_1_1internal.html#ab5b1cacb8c5c131d5e0f86742c64e226":[0,0,25,0,16],
 "namespaceDoFTools_1_1internal.html#abe866825835bb267b66e0a7b6a3908b6":[0,0,25,0,17],
-"namespaceDoFTools_1_1internal.html#ac8fb3858c74e5732550d26a2edf1bdf2":[0,0,25,0,8],
-"namespaceDoFTools_1_1internal.html#ad2ef140f5d6f248aa4eebdac221fa94c":[0,0,25,0,13]
+"namespaceDoFTools_1_1internal.html#ac8fb3858c74e5732550d26a2edf1bdf2":[0,0,25,0,8]
 };

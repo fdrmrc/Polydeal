@@ -1,6 +1,7 @@
 var NAVTREEINDEX1 =
 {
-"class_right_hand_side.html#a43457a3771a9b424178c96ce660a6f71":[1,0,11,0],
+"class_right_hand_side.html#a40b0328af2e35b605e3daa57fd779bb6":[1,0,10,1],
+"class_right_hand_side.html#a43457a3771a9b424178c96ce660a6f71":[1,0,10,0],
 "class_utils_1_1_laplace_operator_d_g.html":[0,0,160,1],
 "class_utils_1_1_laplace_operator_d_g.html":[1,0,2,1],
 "class_utils_1_1_laplace_operator_d_g.html#a042bb8c36ab6c584b599a8880ed6d4d4":[0,0,160,1,2],
@@ -248,6 +249,5 @@ var NAVTREEINDEX1 =
 "group__Exceptions.html#ga1340f1502fcb9ced323b02b25084e128":[0,0,56,65,17],
 "group__Exceptions.html#ga14f2b48d380177dac1dd7f43826bc45a":[0,0,37,27],
 "group__Exceptions.html#ga164db35888d05c5a7589c54fb21f3396":[0,0,159,20],
-"group__Exceptions.html#ga180daa35e4f8cf6ec429163291265055":[0,0,139,30],
-"group__Exceptions.html#ga1af054329605166c3f8c8cb15ee13d93":[0,0,25,18]
+"group__Exceptions.html#ga180daa35e4f8cf6ec429163291265055":[0,0,139,30]
 };

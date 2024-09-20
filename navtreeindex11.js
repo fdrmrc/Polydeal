@@ -1,5 +1,6 @@
 var NAVTREEINDEX11 =
 {
+"structEigenInverse_1_1AdditionalData.html":[0,0,27],
 "structEigenPower_1_1AdditionalData.html":[0,0,28],
 "structFESystem_1_1BaseOffsets.html":[0,0,36],
 "structFEValuesViews_1_1SymmetricTensor_3_012_00_01dim_00_01spacedim_01_4_1_1ShapeFunctionData.html":[0,0,40,1],
