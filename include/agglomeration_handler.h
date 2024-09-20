@@ -25,6 +25,7 @@
 #include <deal.II/fe/fe_dgp.h>
 #include <deal.II/fe/fe_dgq.h>
 #include <deal.II/fe/fe_nothing.h>
+#include <deal.II/fe/fe_simplex_p.h>
 #include <deal.II/fe/fe_system.h>
 #include <deal.II/fe/fe_values.h>
 #include <deal.II/fe/mapping_fe_field.h>
@@ -56,9 +57,6 @@
 using namespace dealii;
 
 // Forward declarations
-template <int dim>
-class FinitElement;
-
 template <int dim, int spacedim>
 class AgglomerationHandler;
 
@@ -297,6 +295,9 @@ public:
 
   inline const FiniteElement<dim, spacedim> &
   get_fe() const;
+
+  inline const Mapping<dim> &
+  get_mapping() const;
 
   inline const std::vector<BoundingBox<dim>> &
   get_local_bboxes() const;
@@ -831,6 +832,10 @@ private:
   // Map the master cell index with the polytope index
   std::map<types::global_cell_index, types::global_cell_index> master2polygon;
 
+
+  std::vector<typename Triangulation<dim>::active_cell_iterator>
+    master_disconnected;
+
   // Dummy FiniteElement objects needed only to generate quadratures
 
   /**
@@ -879,6 +884,15 @@ inline const FiniteElement<dim, spacedim> &
 AgglomerationHandler<dim, spacedim>::get_fe() const
 {
   return *fe;
+}
+
+
+
+template <int dim, int spacedim>
+inline const Mapping<dim> &
+AgglomerationHandler<dim, spacedim>::get_mapping() const
+{
+  return *mapping;
 }
 
 

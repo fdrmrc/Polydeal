@@ -878,13 +878,22 @@ namespace dealii::PolyUtils
         const_cast<DoFHandler<dim, spacedim> *>(
           &agglomeration_handler.output_dh);
       const FiniteElement<dim, spacedim> &fe = agglomeration_handler.get_fe();
+      const Mapping<dim> &mapping = agglomeration_handler.get_mapping();
       const Triangulation<dim, spacedim> &tria =
         agglomeration_handler.get_triangulation();
       const auto &bboxes = agglomeration_handler.get_local_bboxes();
 
+      std::unique_ptr<FiniteElement<dim>> output_fe;
+      if (tria.all_reference_cells_are_hyper_cube())
+        output_fe = std::make_unique<FE_DGQ<dim>>(fe.degree);
+      else if (tria.all_reference_cells_are_simplex())
+        output_fe = std::make_unique<FE_SimplexDGP<dim>>(fe.degree);
+      else
+        AssertThrow(false, ExcNotImplemented());
+
       // Setup an auxiliary DoFHandler for output purposes
       output_dh->reinit(tria);
-      output_dh->distribute_dofs(fe);
+      output_dh->distribute_dofs(*output_fe);
 
       const IndexSet &locally_owned_dofs = output_dh->locally_owned_dofs();
       const IndexSet  locally_relevant_dofs =
@@ -900,10 +909,12 @@ namespace dealii::PolyUtils
       std::vector<types::global_dof_index> agglo_dof_indices(fe.dofs_per_cell);
       std::vector<types::global_dof_index> standard_dof_indices(
         fe.dofs_per_cell);
-      std::vector<types::global_dof_index> output_dof_indices(fe.dofs_per_cell);
+      std::vector<types::global_dof_index> output_dof_indices(
+        output_fe->dofs_per_cell);
 
-      Quadrature<dim>         quad(fe.get_unit_support_points());
-      FEValues<dim, spacedim> output_fe_values(fe,
+      Quadrature<dim>         quad(output_fe->get_unit_support_points());
+      FEValues<dim, spacedim> output_fe_values(mapping,
+                                               *output_fe,
                                                quad,
                                                update_quadrature_points);
 
@@ -1076,19 +1087,25 @@ namespace dealii::PolyUtils
         // otherwise, do not create any matrix
         const Triangulation<dim, spacedim> &tria =
           agglomeration_handler.get_triangulation();
+        const Mapping<dim> &mapping = agglomeration_handler.get_mapping();
         const FiniteElement<dim, spacedim> &original_fe =
           agglomeration_handler.get_fe();
 
-        // We use DGQ nodal elements of the same degree as the ones in the
-        // agglomeration handler to generate the output also in the case in
-        // which different elements are used, such as DGP.
+        // We use DGQ (on tensor-product meshes) or DGP (on simplex meshes)
+        // nodal elements of the same degree as the ones in the agglomeration
+        // handler to interpolate the solution onto the finer grid.
+        std::unique_ptr<FiniteElement<dim>> output_fe;
+        if (tria.all_reference_cells_are_hyper_cube())
+          output_fe = std::make_unique<FE_DGQ<dim>>(original_fe.degree);
+        else if (tria.all_reference_cells_are_simplex())
+          output_fe = std::make_unique<FE_SimplexDGP<dim>>(original_fe.degree);
+        else
+          AssertThrow(false, ExcNotImplemented());
 
-        FE_DGQ<dim>      output_fe(original_fe.degree);
         DoFHandler<dim> &output_dh =
           const_cast<DoFHandler<dim> &>(agglomeration_handler.output_dh);
-
         output_dh.reinit(tria);
-        output_dh.distribute_dofs(output_fe);
+        output_dh.distribute_dofs(*output_fe);
 
         if constexpr (std::is_same_v<VectorType, TrilinosWrappers::MPI::Vector>)
           {
@@ -1112,9 +1129,10 @@ namespace dealii::PolyUtils
 
         const unsigned int dofs_per_cell =
           agglomeration_handler.n_dofs_per_cell();
-        const unsigned int output_dofs_per_cell = output_fe.n_dofs_per_cell();
-        Quadrature<dim>    quad(output_fe.get_unit_support_points());
-        FEValues<dim>      output_fe_values(output_fe,
+        const unsigned int output_dofs_per_cell = output_fe->n_dofs_per_cell();
+        Quadrature<dim>    quad(output_fe->get_unit_support_points());
+        FEValues<dim>      output_fe_values(mapping,
+                                       *output_fe,
                                        quad,
                                        update_quadrature_points);
 
