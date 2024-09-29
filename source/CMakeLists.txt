@@ -3,7 +3,7 @@ SET(_d2_build_types "Release;Debug")
 SET(Release_postfix "")
 SET(Debug_postfix ".g")
 
-set(_files agglomeration_handler.cc multigrid_amg.cc mapping_box.cc)
+set(_files agglomeration_handler.cc multigrid_amg.cc mapping_box.cc fe_agglodgp.cc)
 
 FOREACH(_build_type ${_d2_build_types})
   # Postfix to use everywhere
