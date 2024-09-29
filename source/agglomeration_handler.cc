@@ -15,6 +15,7 @@
 #include <deal.II/lac/sparsity_tools.h>
 
 #include <agglomeration_handler.h>
+#include <fe_agglodgp.h>
 
 template <int dim, int spacedim>
 AgglomerationHandler<dim, spacedim>::AgglomerationHandler(
@@ -236,8 +237,8 @@ AgglomerationHandler<dim, spacedim>::distribute_agglomerated_dofs(
 {
   if (dynamic_cast<const FE_DGQ<dim> *>(&fe_space))
     fe = std::make_unique<FE_DGQ<dim>>(fe_space.degree);
-  else if (dynamic_cast<const FE_DGP<dim> *>(&fe_space))
-    fe = std::make_unique<FE_DGP<dim>>(fe_space.degree);
+  else if (dynamic_cast<const FE_AggloDGP<dim> *>(&fe_space))
+    fe = std::make_unique<FE_AggloDGP<dim>>(fe_space.degree);
   else if (dynamic_cast<const FE_SimplexDGP<dim> *>(&fe_space))
     fe = std::make_unique<FE_SimplexDGP<dim>>(fe_space.degree);
   else
