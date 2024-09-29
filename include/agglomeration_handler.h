@@ -50,6 +50,7 @@
 
 #include <agglomeration_iterator.h>
 #include <agglomerator.h>
+#include <mapping_box.h>
 #include <utils.h>
 
 #include <fstream>
@@ -299,6 +300,9 @@ public:
   inline const Mapping<dim> &
   get_mapping() const;
 
+  inline const MappingBox<dim> &
+  get_agglomeration_mapping() const;
+
   inline const std::vector<BoundingBox<dim>> &
   get_local_bboxes() const;
 
@@ -357,7 +361,7 @@ public:
   void
   print_agglomeration(StreamType &out)
   {
-    for (const auto &cell : euler_dh.active_cell_iterators())
+    for (const auto &cell : tria->active_cell_iterators())
       out << "Cell with index: " << cell->active_cell_index()
           << " has associated value: "
           << master_slave_relationships[cell->global_active_cell_index()]
@@ -467,11 +471,7 @@ public:
    */
   DoFHandler<dim, spacedim> output_dh;
 
-
-  std::unique_ptr<
-    MappingFEField<dim, spacedim, LinearAlgebra::distributed::Vector<double>>>
-    euler_mapping;
-
+  std::unique_ptr<MappingBox<dim>> box_mapping;
 
   /**
    * This function stores the information needed to identify which polytopes are
@@ -535,6 +535,12 @@ private:
   initialize_agglomeration_data(
     const std::unique_ptr<GridTools::Cache<dim, spacedim>> &cache_tria);
 
+  void
+  update_agglomerate(
+    AgglomerationContainer &polytope,
+    const typename Triangulation<dim, spacedim>::active_cell_iterator
+      &master_cell);
+
   /**
    * Reinitialize the agglomeration data.
    */
@@ -562,8 +568,7 @@ private:
    * cells. This fills also the euler vector
    */
   void
-  create_bounding_box(const AgglomerationContainer  &polytope,
-                      const types::global_cell_index master_idx);
+  create_bounding_box(const AgglomerationContainer &polytope);
 
 
   inline types::global_cell_index
@@ -759,8 +764,6 @@ private:
 
   ObserverPointer<const Mapping<dim, spacedim>> mapping;
 
-  std::unique_ptr<FESystem<dim, spacedim>> euler_fe;
-
   std::unique_ptr<GridTools::Cache<dim, spacedim>> cached_tria;
 
   const MPI_Comm communicator;
@@ -770,11 +773,6 @@ private:
   std::unique_ptr<FiniteElement<dim>> fe;
 
   hp::FECollection<dim, spacedim> fe_collection;
-
-  /**
-   * DoFHandler for the physical space
-   */
-  DoFHandler<dim, spacedim> euler_dh;
 
   /**
    * Eulerian vector describing the new cells obtained by the bounding boxes
@@ -893,6 +891,15 @@ inline const Mapping<dim> &
 AgglomerationHandler<dim, spacedim>::get_mapping() const
 {
   return *mapping;
+}
+
+
+
+template <int dim, int spacedim>
+inline const MappingBox<dim> &
+AgglomerationHandler<dim, spacedim>::get_agglomeration_mapping() const
+{
+  return *box_mapping;
 }
 
 

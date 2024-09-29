@@ -96,7 +96,7 @@ AgglomerationHandler<dim, spacedim>::define_agglomerate(
 
   ++n_agglomerations; // an agglomeration has been performed, record it
 
-  create_bounding_box(cells, master_idx); // fill the vector of bboxes
+  create_bounding_box(cells); // fill the vector of bboxes
 
   // Finally, return a polygonal iterator to the polytope just constructed.
   return {cells[0], this};
@@ -202,10 +202,6 @@ AgglomerationHandler<dim, spacedim>::initialize_agglomeration_data(
   mapping = &cache_tria->get_mapping();
 
   agglo_dh.reinit(*tria);
-  FE_DGQ<dim, spacedim> dummy_dg(1);
-  euler_fe = std::make_unique<FESystem<dim, spacedim>>(dummy_dg, spacedim);
-  euler_dh.reinit(*tria);
-  euler_dh.distribute_dofs(*euler_fe);
 
   if (const auto parallel_tria = dynamic_cast<
         const dealii::parallel::TriangulationBase<dim, spacedim> *>(&*tria))
@@ -214,14 +210,10 @@ AgglomerationHandler<dim, spacedim>::initialize_agglomeration_data(
         parallel_tria->global_active_cell_index_partitioner();
       master_slave_relationships.reinit(
         cells_partitioner.lock()->locally_owned_range(), communicator);
-
-      const IndexSet &local_eulerian_index_set = euler_dh.locally_owned_dofs();
-      euler_vector.reinit(local_eulerian_index_set, communicator);
     }
   else
     {
       master_slave_relationships.reinit(tria->n_active_cells(), MPI_COMM_SELF);
-      euler_vector.reinit(euler_dh.n_dofs());
     }
 
   polytope_cache.clear();
@@ -254,6 +246,9 @@ AgglomerationHandler<dim, spacedim>::distribute_agglomerated_dofs(
       ExcNotImplemented(
         "Currently, this interface supports only DGQ and DGP bases."));
 
+  box_mapping = std::make_unique<MappingBox<dim>>(
+    bboxes,
+    master2polygon); // construct bounding box mapping
 
   if (hybrid_mesh)
     {
@@ -269,8 +264,9 @@ AgglomerationHandler<dim, spacedim>::distribute_agglomerated_dofs(
     }
 
 
-  fe_collection.push_back(*fe);                         // master
-  fe_collection.push_back(FE_Nothing<dim, spacedim>()); // slave
+  fe_collection.push_back(*fe); // master
+  fe_collection.push_back(
+    FE_Nothing<dim, spacedim>(fe->reference_cell())); // slave
 
   initialize_hp_structure();
 
@@ -293,94 +289,18 @@ AgglomerationHandler<dim, spacedim>::distribute_agglomerated_dofs(
 template <int dim, int spacedim>
 void
 AgglomerationHandler<dim, spacedim>::create_bounding_box(
-  const AgglomerationContainer  &polytope,
-  const types::global_cell_index master_idx)
+  const AgglomerationContainer &polytope)
 {
   Assert(n_agglomerations > 0,
          ExcMessage("No agglomeration has been performed."));
   Assert(dim > 1, ExcNotImplemented());
 
-  std::vector<types::global_dof_index> dof_indices(euler_fe->dofs_per_cell);
-  std::vector<Point<spacedim>>         pts; // store all the vertices
+  std::vector<Point<spacedim>> pts; // store all the vertices
   for (const auto &cell : polytope)
     for (const auto i : cell->vertex_indices())
       pts.push_back(cell->vertex(i));
 
   bboxes.emplace_back(pts);
-
-  typename DoFHandler<dim, spacedim>::cell_iterator polytope_dh(*polytope[0],
-                                                                &euler_dh);
-  polytope_dh->get_dof_indices(dof_indices);
-
-
-  const auto &p0 =
-    bboxes[master2polygon.at(master_idx)].get_boundary_points().first;
-  const auto &p1 =
-    bboxes[master2polygon.at(master_idx)].get_boundary_points().second;
-  if constexpr (dim == 2)
-    {
-      euler_vector[dof_indices[0]] = p0[0];
-      euler_vector[dof_indices[4]] = p0[1];
-      // Lower right
-      euler_vector[dof_indices[1]] = p1[0];
-      euler_vector[dof_indices[5]] = p0[1];
-      // Upper left
-      euler_vector[dof_indices[2]] = p0[0];
-      euler_vector[dof_indices[6]] = p1[1];
-      // Upper right
-      euler_vector[dof_indices[3]] = p1[0];
-      euler_vector[dof_indices[7]] = p1[1];
-    }
-  else if constexpr (dim == 3)
-    {
-      // Lowers
-
-      // left
-      euler_vector[dof_indices[0]]  = p0[0];
-      euler_vector[dof_indices[8]]  = p0[1];
-      euler_vector[dof_indices[16]] = p0[2];
-
-      // right
-      euler_vector[dof_indices[1]]  = p1[0];
-      euler_vector[dof_indices[9]]  = p0[1];
-      euler_vector[dof_indices[17]] = p0[2];
-
-      // left
-      euler_vector[dof_indices[2]]  = p0[0];
-      euler_vector[dof_indices[10]] = p1[1];
-      euler_vector[dof_indices[18]] = p0[2];
-
-      // right
-      euler_vector[dof_indices[3]]  = p1[0];
-      euler_vector[dof_indices[11]] = p1[1];
-      euler_vector[dof_indices[19]] = p0[2];
-
-      // Uppers
-
-      // left
-      euler_vector[dof_indices[4]]  = p0[0];
-      euler_vector[dof_indices[12]] = p0[1];
-      euler_vector[dof_indices[20]] = p1[2];
-
-      // right
-      euler_vector[dof_indices[5]]  = p1[0];
-      euler_vector[dof_indices[13]] = p0[1];
-      euler_vector[dof_indices[21]] = p1[2];
-
-      // left
-      euler_vector[dof_indices[6]]  = p0[0];
-      euler_vector[dof_indices[14]] = p1[1];
-      euler_vector[dof_indices[22]] = p1[2];
-
-      // right
-      euler_vector[dof_indices[7]]  = p1[0];
-      euler_vector[dof_indices[15]] = p1[1];
-      euler_vector[dof_indices[23]] = p1[2];
-    }
-  else
-    {
-      Assert(false, ExcNotImplemented());
-    }
 }
 
 
@@ -567,9 +487,9 @@ AgglomerationHandler<dim, spacedim>::initialize_hp_structure()
          ExcMessage("No agglomeration has been performed."));
 
   agglo_dh.distribute_dofs(fe_collection);
-  euler_mapping = std::make_unique<
-    MappingFEField<dim, spacedim, LinearAlgebra::distributed::Vector<double>>>(
-    euler_dh, euler_vector);
+  // euler_mapping = std::make_unique<
+  //   MappingFEField<dim, spacedim,
+  //   LinearAlgebra::distributed::Vector<double>>>( euler_dh, euler_vector);
 }
 
 
@@ -579,9 +499,10 @@ const FEValues<dim, spacedim> &
 AgglomerationHandler<dim, spacedim>::reinit(
   const AgglomerationIterator<dim, spacedim> &polytope) const
 {
-  Assert(euler_mapping,
-         ExcMessage("The mapping describing the physical element stemming from "
-                    "agglomeration has not been set up."));
+  // Assert(euler_mapping,
+  //        ExcMessage("The mapping describing the physical element stemming
+  //        from "
+  //                   "agglomeration has not been set up."));
 
   const auto &deal_cell = polytope->as_dof_handler_iterator(agglo_dh);
 
@@ -594,22 +515,9 @@ AgglomerationHandler<dim, spacedim>::reinit(
 
   Quadrature<dim> agglo_quad = agglomerated_quadrature(agglo_cells, deal_cell);
 
-  const double bbox_measure =
-    bboxes[master2polygon.at(deal_cell->active_cell_index())].volume();
-
-  // Scale weights with the volume of the BBox. This way, the euler_mapping
-  // defining the BBOx doesn't alter them.
-  std::vector<double> scaled_weights;
-  std::transform(agglo_quad.get_weights().begin(),
-                 agglo_quad.get_weights().end(),
-                 std::back_inserter(scaled_weights),
-                 [&bbox_measure](const double w) { return w / bbox_measure; });
-
-  Quadrature<dim> scaled_quad(agglo_quad.get_points(), scaled_weights);
-
-  agglomerated_scratch = std::make_unique<ScratchData>(*euler_mapping,
+  agglomerated_scratch = std::make_unique<ScratchData>(*box_mapping,
                                                        fe_collection[0],
-                                                       scaled_quad,
+                                                       agglo_quad,
                                                        agglomeration_flags);
   return agglomerated_scratch->reinit(deal_cell);
 }
@@ -636,9 +544,10 @@ AgglomerationHandler<dim, spacedim>::reinit(
   const AgglomerationIterator<dim, spacedim> &polytope,
   const unsigned int                          face_index) const
 {
-  Assert(euler_mapping,
-         ExcMessage("The mapping describing the physical element stemming from "
-                    "agglomeration has not been set up."));
+  // Assert(euler_mapping,
+  //        ExcMessage("The mapping describing the physical element stemming
+  //        from "
+  //                   "agglomeration has not been set up."));
 
   const auto &deal_cell = polytope->as_dof_handler_iterator(agglo_dh);
   Assert(is_master_cell(deal_cell), ExcMessage("This should be true."));
@@ -685,9 +594,9 @@ AgglomerationHandler<dim, spacedim>::reinit_interface(
               !neigh_polytope->is_locally_owned()),
              ExcInternalError());
 
-      const auto  &cell = polytope_in->as_dof_handler_iterator(agglo_dh);
-      const auto  &bbox = bboxes[master2polygon.at(cell->active_cell_index())];
-      const double bbox_measure = bbox.volume();
+      const auto &cell = polytope_in->as_dof_handler_iterator(agglo_dh);
+      const auto &bbox = bboxes[master2polygon.at(cell->active_cell_index())];
+      // const double bbox_measure = bbox.volume();
 
       const unsigned int neigh_rank = neigh_polytope->subdomain_id();
       const CellId      &neigh_id   = neigh_polytope->id();
@@ -699,7 +608,7 @@ AgglomerationHandler<dim, spacedim>::reinit_interface(
 
       const auto &JxWs = recv_jxws.at(neigh_rank).at({neigh_id, local_neigh});
 
-      const std::vector<Tensor<1, spacedim>> &normals =
+      std::vector<Tensor<1, spacedim>> &normals =
         recv_normals.at(neigh_rank).at({neigh_id, local_neigh});
 
       // Apply the necessary scalings due to the bbox.
@@ -711,31 +620,35 @@ AgglomerationHandler<dim, spacedim>::reinit_interface(
                        return bbox.real_to_unit(p);
                      });
 
-      std::vector<double>         scale_factors(final_unit_q_points.size());
-      std::vector<double>         scaled_weights(final_unit_q_points.size());
-      std::vector<Tensor<1, dim>> scaled_normals(final_unit_q_points.size());
+      // std::vector<double>         scale_factors(final_unit_q_points.size());
+      // std::vector<double>         scaled_weights(final_unit_q_points.size());
+      // std::vector<Tensor<1, dim>> scaled_normals(final_unit_q_points.size());
 
-      // Since we received normal vectors from a neighbor, we have to swap the
-      // sign of the vector in order to have outward normals.
+      // Since we received normal vectors from a neighbor, we have to swap
+      // the
+      // // sign of the vector in order to have outward normals.
+      // for (unsigned int q = 0; q < final_unit_q_points.size(); ++q)
+      //   {
+      //     for (unsigned int direction = 0; direction < spacedim; ++direction)
+      //       scaled_normals[q][direction] =
+      //         normals[q][direction] * (bbox.side_length(direction));
+
+      //     scaled_normals[q] *= -1;
+
+      //     scaled_weights[q] =
+      //       (JxWs[q] * scaled_normals[q].norm()) / bbox_measure;
+      //     scaled_normals[q] /= scaled_normals[q].norm();
+      //   }
       for (unsigned int q = 0; q < final_unit_q_points.size(); ++q)
-        {
-          for (unsigned int direction = 0; direction < spacedim; ++direction)
-            scaled_normals[q][direction] =
-              normals[q][direction] * (bbox.side_length(direction));
+        normals[q] *= -1;
 
-          scaled_normals[q] *= -1;
-
-          scaled_weights[q] =
-            (JxWs[q] * scaled_normals[q].norm()) / bbox_measure;
-          scaled_normals[q] /= scaled_normals[q].norm();
-        }
 
       NonMatching::ImmersedSurfaceQuadrature<dim, spacedim> surface_quad(
-        final_unit_q_points, scaled_weights, scaled_normals);
+        final_unit_q_points, JxWs, normals);
 
       agglomerated_isv =
         std::make_unique<NonMatching::FEImmersedSurfaceValues<spacedim>>(
-          *euler_mapping, *fe, surface_quad, agglomeration_face_flags);
+          *box_mapping, *fe, surface_quad, agglomeration_face_flags);
 
 
       agglomerated_isv->reinit(cell);
@@ -919,8 +832,6 @@ namespace dealii
         const auto &bbox =
           handler.bboxes[handler.master2polygon.at(cell->active_cell_index())];
 
-        const double bbox_measure = bbox.volume();
-
         CellId polytope_out_id;
         if (neigh_polytope.state() == IteratorState::valid)
           polytope_out_id = neigh_polytope->id();
@@ -934,53 +845,30 @@ namespace dealii
         std::vector<double>          final_weights;
         std::vector<Tensor<1, dim>>  final_normals;
 
+        const unsigned int expected_qpoints =
+          common_face.size() * handler.agglomeration_face_quad.size();
+        final_unit_q_points.reserve(expected_qpoints);
+        final_weights.reserve(expected_qpoints);
+        final_normals.reserve(expected_qpoints);
+
 
         for (const auto &[deal_cell, local_face_idx] : common_face)
           {
             handler.no_face_values->reinit(deal_cell, local_face_idx);
 
-            auto q_points    = handler.no_face_values->get_quadrature_points();
-            const auto &JxWs = handler.no_face_values->get_JxW_values();
+            const auto &q_points =
+              handler.no_face_values->get_quadrature_points();
+            const auto &JxWs    = handler.no_face_values->get_JxW_values();
             const auto &normals = handler.no_face_values->get_normal_vectors();
 
-            std::vector<Point<spacedim>> unit_q_points;
-            std::transform(q_points.begin(),
-                           q_points.end(),
-                           std::back_inserter(unit_q_points),
-                           [&](const Point<spacedim> &p) {
-                             return bbox.real_to_unit(p);
-                           });
+            const unsigned int n_qpoints_agglo = q_points.size();
 
-            // Weights must be scaled with det(J)*|J^-t n| for each
-            // quadrature point. Use the fact that we are using a BBox, so
-            // the jacobi entries are the side_length in each direction.
-            // Unfortunately, normal vectors will be scaled internally by
-            // deal.II by using a covariant transformation. In order not to
-            // change the normals, we multiply by the correct factors in
-            // order to obtain the original normal after the call to
-            // `reinit(cell)`.
-            std::vector<double>         scale_factors(q_points.size());
-            std::vector<double>         scaled_weights(q_points.size());
-            std::vector<Tensor<1, dim>> scaled_normals(q_points.size());
-
-            for (unsigned int q = 0; q < q_points.size(); ++q)
+            for (unsigned int q = 0; q < n_qpoints_agglo; ++q)
               {
-                for (unsigned int direction = 0; direction < spacedim;
-                     ++direction)
-                  scaled_normals[q][direction] =
-                    normals[q][direction] * (bbox.side_length(direction));
-
-                scaled_weights[q] =
-                  (JxWs[q] * scaled_normals[q].norm()) / bbox_measure;
-                scaled_normals[q] /= scaled_normals[q].norm();
+                final_unit_q_points.push_back(bbox.real_to_unit(q_points[q]));
+                final_weights.push_back(JxWs[q]);
+                final_normals.push_back(normals[q]);
               }
-
-            for (const auto &point : unit_q_points)
-              final_unit_q_points.push_back(point);
-            for (const auto &weight : scaled_weights)
-              final_weights.push_back(weight);
-            for (const auto &normal : scaled_normals)
-              final_normals.push_back(normal);
           }
 
         NonMatching::ImmersedSurfaceQuadrature<dim, spacedim> surface_quad(
@@ -988,7 +876,7 @@ namespace dealii
 
         agglo_isv_ptr =
           std::make_unique<NonMatching::FEImmersedSurfaceValues<spacedim>>(
-            *(handler.euler_mapping),
+            *(handler.box_mapping),
             *(handler.fe),
             surface_quad,
             handler.agglomeration_face_flags);
