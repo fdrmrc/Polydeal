@@ -15,6 +15,7 @@
 #include <deal.II/lac/sparsity_tools.h>
 
 #include <agglomeration_handler.h>
+#include <fe_agglodgp.h>
 
 template <int dim, int spacedim>
 AgglomerationHandler<dim, spacedim>::AgglomerationHandler(
@@ -148,22 +149,26 @@ AgglomerationHandler<dim, spacedim>::initialize_fe_values(
   const Quadrature<dim>     &cell_quadrature,
   const UpdateFlags         &flags,
   const Quadrature<dim - 1> &face_quadrature,
-  const UpdateFlags         &face_flags) agglomeration_quad = cell_quadrature;
-agglomeration_face_flags = face_flags | internal_agglomeration_face_flags;
+  const UpdateFlags         &face_flags)
+{
+  agglomeration_quad       = cell_quadrature;
+  agglomeration_flags      = flags;
+  agglomeration_face_quad  = face_quadrature;
+  agglomeration_face_flags = face_flags | internal_agglomeration_face_flags;
 
 
-no_values =
-  std::make_unique<FEValues<dim>>(*mapping,
-                                  dummy_fe,
-                                  agglomeration_quad,
-                                  update_quadrature_points |
-                                    update_JxW_values); // only for quadrature
-no_face_values = std::make_unique<FEFaceValues<dim>>(
-  *mapping,
-  dummy_fe,
-  agglomeration_face_quad,
-  update_quadrature_points | update_JxW_values |
-    update_normal_vectors); // only for quadrature
+  no_values =
+    std::make_unique<FEValues<dim>>(*mapping,
+                                    dummy_fe,
+                                    agglomeration_quad,
+                                    update_quadrature_points |
+                                      update_JxW_values); // only for quadrature
+  no_face_values = std::make_unique<FEFaceValues<dim>>(
+    *mapping,
+    dummy_fe,
+    agglomeration_face_quad,
+    update_quadrature_points | update_JxW_values |
+      update_normal_vectors); // only for quadrature
 }
 
 

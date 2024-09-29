@@ -26,6 +26,7 @@
 #include <deal.II/numerics/data_out.h>
 
 #include <agglomeration_handler.h>
+#include <fe_agglodgp.h>
 #include <poly_utils.h>
 
 #include <algorithm>

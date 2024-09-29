@@ -22,6 +22,7 @@
 #include <deal.II/dofs/dof_handler.h>
 #include <deal.II/dofs/dof_tools.h>
 
+#include <deal.II/fe/fe_dgp.h>
 #include <deal.II/fe/fe_dgq.h>
 #include <deal.II/fe/fe_nothing.h>
 #include <deal.II/fe/fe_simplex_p.h>
@@ -49,7 +50,6 @@
 
 #include <agglomeration_iterator.h>
 #include <agglomerator.h>
-#include <fe_agglodgp.h>
 #include <mapping_box.h>
 #include <utils.h>
 
@@ -762,11 +762,7 @@ private:
 
   ObserverPointer<const Triangulation<dim, spacedim>> tria;
 
-<<<<<<< HEAD
   ObserverPointer<const Mapping<dim, spacedim>> mapping;
-=======
-  SmartPointer<const Mapping<dim, spacedim>> mapping;
->>>>>>> 49f3083 (Add new class MappingBox, implementing bbox mapping on general (hex or tet) cells)
 
   std::unique_ptr<GridTools::Cache<dim, spacedim>> cached_tria;
 
