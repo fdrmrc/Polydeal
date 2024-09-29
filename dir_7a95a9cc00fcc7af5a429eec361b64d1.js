@@ -4,6 +4,7 @@ var dir_7a95a9cc00fcc7af5a429eec361b64d1 =
     [ "agglomeration_handler.h", "agglomeration__handler_8h.html", "agglomeration__handler_8h" ],
     [ "agglomeration_iterator.h", "agglomeration__iterator_8h.html", "agglomeration__iterator_8h" ],
     [ "agglomerator.h", "agglomerator_8h.html", "agglomerator_8h" ],
+    [ "fe_agglodgp.h", "fe__agglodgp_8h.html", null ],
     [ "linear_operator_for_mg.h", "linear__operator__for__mg_8h.html", "linear__operator__for__mg_8h" ],
     [ "mapping_box.h", "mapping__box_8h.html", "mapping__box_8h" ],
     [ "multigrid_amg.h", "multigrid__amg_8h.html", "multigrid__amg_8h" ],

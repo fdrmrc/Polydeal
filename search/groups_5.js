@@ -4,7 +4,7 @@ var searchData=
   ['fevalues_20classes_1',['Finite element access/FEValues classes',['http://www.dealii.org/developer/doxygen/deal.II/group__feaccess.html',1,'']]],
   ['fevalues_20work_20together_2',['How Mapping, FiniteElement, and FEValues work together',['http://www.dealii.org/developer/doxygen/deal.II/group__FE__vs__Mapping__vs__FEValues.html',1,'']]],
   ['finite_20element_20access_20fevalues_20classes_3',['Finite element access/FEValues classes',['http://www.dealii.org/developer/doxygen/deal.II/group__feaccess.html',1,'']]],
-  ['finite_20element_20space_20descriptions_4',['Finite element space descriptions',['http://www.dealii.org/developer/doxygen/deal.II/group__fe.html',1,'']]],
+  ['finite_20element_20space_20descriptions_4',['Finite element space descriptions',['../group__fe.html',1,'']]],
   ['finite_20element_20support_5',['hp-finite element support',['http://www.dealii.org/developer/doxygen/deal.II/group__hp.html',1,'']]],
   ['finite_20elements_6',['Finite elements',['http://www.dealii.org/developer/doxygen/deal.II/group__feall.html',1,'']]],
   ['finiteelement_20and_20fevalues_20work_20together_7',['How Mapping, FiniteElement, and FEValues work together',['http://www.dealii.org/developer/doxygen/deal.II/group__FE__vs__Mapping__vs__FEValues.html',1,'']]],

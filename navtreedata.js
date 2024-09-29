@@ -60,17 +60,18 @@ var NAVTREE =
 var NAVTREEINDEX =
 [
 "agglomeration__accessor_8h.html",
-"class_mapping_box.html#ab35a10673693e2c7b013a66817344be0",
-"functions.html",
-"group__matrixfree.html#ggaee4d2d09d3fd284528a8a9c4a3e36979ad7ff83e1873dda740e03ef726c106a5d",
-"namespaceDoFRenumbering_1_1internal.html",
-"namespaceGridGenerator.html#acc920b19e79502facbffa861528b71d4",
-"namespaceLinearAlgebra_1_1TpetraWrappers_1_1SparseMatrixIterators.html",
-"namespacePatterns_1_1Tools.html#a72743302dcb1a0fb1f2f8dc5122d299e",
-"namespaceUtilities_1_1MPI.html#a6c65825ffdad8e9ad83631d6eed7d441",
-"namespace_utils.html#a8d004aa1fdf7d5f8ac389737cf3aa8c3",
-"namespaceinternal_1_1MGTransfer.html#a9d29e1e4ec29c1db4355627a690a318e",
-"namespaceparallel.html#afd3f1dc43e8e5771603bd5c0c5895f61"
+"class_mapping_box.html#a492a698486ea16a66ef96e55d959096d",
+"classinternal_1_1_linear_operator_m_g_implementation_1_1_reinit_helper.html#a9d7fc85cfc7de507bb82f1f9f59522e3",
+"group__mapping.html#ggac6eaf900d562c52002dbccc6bdd89275a7102924e4ddcdc9bd3c133e3e153e0c4",
+"namespaceDoFRenumbering.html#ac0fc02412874d5f7ed86c731d7d83980",
+"namespaceGridGenerator.html#a6f31aa1d176dd99c2183efdb4b9cb5f5",
+"namespaceLinearAlgebraPETSc_1_1MPI.html#a8d8a6b85124838cb4998151c0a2cb60f",
+"namespacePETScWrappers.html#a956893cad9432599da42a8e9ad9a3268",
+"namespaceUtilities_1_1MPI.html",
+"namespaceVectorTools.html#aff3a34b2d2d46fef05df4ab9f72dc5f2",
+"namespaceinternal_1_1FunctionParser.html#adb74abbf6e1e78a1fcaa68a723c3dd32",
+"namespacenumbers.html#a9c39a5de95e4d11173378431dc2131fe",
+"utils_8h.html#a74330b13809db47dcaf6b0cbb9a93ca5"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

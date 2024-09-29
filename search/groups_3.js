@@ -7,7 +7,7 @@ var searchData=
   ['demonstration_20suite_4',['The geodynamics demonstration suite',['http://www.dealii.org/developer/doxygen/deal.II/group__geodynamics.html',1,'']]],
   ['derived_20matrices_5',['Derived matrices',['http://www.dealii.org/developer/doxygen/deal.II/group__Matrix2.html',1,'']]],
   ['description_20for_20triangulations_6',['Manifold description for triangulations',['http://www.dealii.org/developer/doxygen/deal.II/group__manifold.html',1,'']]],
-  ['descriptions_7',['Finite element space descriptions',['http://www.dealii.org/developer/doxygen/deal.II/group__fe.html',1,'']]],
+  ['descriptions_7',['Finite element space descriptions',['../group__fe.html',1,'']]],
   ['differentiation_8',['Automatic and symbolic differentiation',['http://www.dealii.org/developer/doxygen/deal.II/group__auto__symb__diff.html',1,'']]],
   ['distributed_20memory_9',['Parallel computing with multiple processors using distributed memory',['http://www.dealii.org/developer/doxygen/deal.II/group__distributed.html',1,'']]]
 ];

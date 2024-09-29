@@ -8,6 +8,13 @@ var hierarchy =
     [ "dealii::AmgProjector< dim, MatrixType, Number >", "classdealii_1_1_amg_projector.html", null ],
     [ "dealii::CellsAgglomerator< dim, RtreeType >", "classdealii_1_1_cells_agglomerator.html", null ],
     [ "internal::LinearOperatorMGImplementation::EmptyPayload", "classinternal_1_1_linear_operator_m_g_implementation_1_1_empty_payload.html", null ],
+    [ "FiniteElementData< int dim >", "http://www.dealii.org/developer/doxygen/deal.II/classFiniteElementData.html", [
+      [ "FiniteElement< int dim, int spacedim >", "http://www.dealii.org/developer/doxygen/deal.II/classFiniteElement.html", [
+        [ "FE_Poly< dim, dim >", "http://www.dealii.org/developer/doxygen/deal.II/classFE__Poly.html", [
+          [ "FE_AggloDGP< dim, spacedim >", "class_f_e___agglo_d_g_p.html", null ]
+        ] ]
+      ] ]
+    ] ],
     [ "FunctionTime< typename Number >", "http://www.dealii.org/developer/doxygen/deal.II/classFunctionTime.html", [
       [ "Function< dim >", "http://www.dealii.org/developer/doxygen/deal.II/classFunction.html", [
         [ "RightHandSide< dim >", "class_right_hand_side.html", null ]
@@ -44,6 +51,7 @@ var hierarchy =
         [ "MappingBox< dim, spacedim >", "class_mapping_box.html", null ]
       ] ],
       [ "AgglomerationHandler< dim, spacedim >", "class_agglomeration_handler.html", null ],
+      [ "FiniteElement< int dim, int spacedim >", "http://www.dealii.org/developer/doxygen/deal.II/classFiniteElement.html", null ],
       [ "LinearOperatorMG< Range, Domain, Payload >", "class_linear_operator_m_g.html", null ],
       [ "Utils::LaplaceOperatorDG< dim, degree, n_qpoints, n_components, number >", "class_utils_1_1_laplace_operator_d_g.html", null ]
     ] ],
