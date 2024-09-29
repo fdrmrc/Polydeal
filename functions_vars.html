@@ -133,11 +133,14 @@ $(function(){initNavTree('functions_vars.html',''); initResizable(true); });
 
 <h3><a id="index_b" name="index_b"></a>- b -</h3><ul>
 <li>bboxes&#160;:&#160;<a class="el" href="class_agglomeration_handler.html#a486e00dc74eec602103127340837a302">AgglomerationHandler&lt; dim, spacedim &gt;</a></li>
+<li>box_mapping&#160;:&#160;<a class="el" href="class_agglomeration_handler.html#ae1c1fa0caff1d95654ade8363ec47a2f">AgglomerationHandler&lt; dim, spacedim &gt;</a></li>
+<li>boxes&#160;:&#160;<a class="el" href="class_mapping_box.html#aa15ec315d200a30fcbc98158cca0787b">MappingBox&lt; dim, spacedim &gt;</a></li>
 </ul>
 
 
 <h3><a id="index_c" name="index_c"></a>- c -</h3><ul>
 <li>cached_tria&#160;:&#160;<a class="el" href="class_agglomeration_handler.html#a0f17801149c42a7959a8cf2aa9b4528d">AgglomerationHandler&lt; dim, spacedim &gt;</a>, <a class="el" href="class_poisson.html#ab48803a108464364c113e6b33597fae7">Poisson&lt; dim &gt;</a></li>
+<li>cell_extents&#160;:&#160;<a class="el" href="class_mapping_box_1_1_internal_data.html#a318876bda98a59cb31d10acaeab786cb">MappingBox&lt; dim, spacedim &gt;::InternalData</a></li>
 <li>cell_face_at_boundary&#160;:&#160;<a class="el" href="classdealii_1_1internal_1_1_polytope_cache.html#a0dc6bc0c357428ba120112bab6d11f96">dealii::internal::PolytopeCache&lt; dim, spacedim &gt;</a></li>
 <li>classical_dh&#160;:&#160;<a class="el" href="class_poisson.html#aa138a06e52819e30c56c915176a7472b">Poisson&lt; dim &gt;</a></li>
 <li>coarse_matrix&#160;:&#160;<a class="el" href="class_utils_1_1_m_g_coarse_direct.html#a6be28a1579a332118e53b7084b88684e">Utils::MGCoarseDirect&lt; VectorType, MatrixType, SolverType &gt;</a></li>
@@ -157,9 +160,6 @@ $(function(){initNavTree('functions_vars.html',''); initResizable(true); });
 
 <h3><a id="index_e" name="index_e"></a>- e -</h3><ul>
 <li>el&#160;:&#160;<a class="el" href="class_linear_operator_m_g.html#acb69847ea16fc041e832b995fa005ac8">LinearOperatorMG&lt; Range, Domain, Payload &gt;</a></li>
-<li>euler_dh&#160;:&#160;<a class="el" href="class_agglomeration_handler.html#a8a1fae226ba0f03b36f295bfdf5de367">AgglomerationHandler&lt; dim, spacedim &gt;</a></li>
-<li>euler_fe&#160;:&#160;<a class="el" href="class_agglomeration_handler.html#a538cbaa12ccdcbae57cb05149488fbcb">AgglomerationHandler&lt; dim, spacedim &gt;</a></li>
-<li>euler_mapping&#160;:&#160;<a class="el" href="class_agglomeration_handler.html#ad891ea996b10219a8270f420c8cd01ae">AgglomerationHandler&lt; dim, spacedim &gt;</a></li>
 <li>euler_vector&#160;:&#160;<a class="el" href="class_agglomeration_handler.html#a273dbd6c007b7bee14a2e57235c399de">AgglomerationHandler&lt; dim, spacedim &gt;</a></li>
 <li>extraction_level&#160;:&#160;<a class="el" href="classdealii_1_1_cells_agglomerator.html#a3f5e83c21f0a4c09db4e8068066640e1">dealii::CellsAgglomerator&lt; dim, RtreeType &gt;</a></li>
 </ul>
@@ -187,6 +187,7 @@ $(function(){initNavTree('functions_vars.html',''); initResizable(true); });
 <li>interface&#160;:&#160;<a class="el" href="classdealii_1_1internal_1_1_polytope_cache.html#a9a8b61a997c0b0c015e471612ca80683">dealii::internal::PolytopeCache&lt; dim, spacedim &gt;</a></li>
 <li>internal_agglomeration_face_flags&#160;:&#160;<a class="el" href="class_agglomeration_handler.html#a8d744eec6c34cc61248767e650f741ab">AgglomerationHandler&lt; dim, spacedim &gt;</a></li>
 <li>internal_agglomeration_flags&#160;:&#160;<a class="el" href="class_agglomeration_handler.html#a9e637db14cfc298724c52d00e1a9156f">AgglomerationHandler&lt; dim, spacedim &gt;</a></li>
+<li>inverse_cell_extents&#160;:&#160;<a class="el" href="class_mapping_box_1_1_internal_data.html#ae854a19f952ccb0f94826124ac2060db">MappingBox&lt; dim, spacedim &gt;::InternalData</a></li>
 <li>inverse_diagonal_entries&#160;:&#160;<a class="el" href="class_utils_1_1_laplace_operator_d_g.html#a69baf23b6bf76bb8b4b1d36715d5ab01">Utils::LaplaceOperatorDG&lt; dim, degree, n_qpoints, n_components, number &gt;</a></li>
 <li>is_null_operator&#160;:&#160;<a class="el" href="class_linear_operator_m_g.html#a5b31f8b25f1fc88b6e2afbe3cc57e85b">LinearOperatorMG&lt; Range, Domain, Payload &gt;</a></li>
 </ul>
@@ -248,10 +249,16 @@ $(function(){initNavTree('functions_vars.html',''); initResizable(true); });
 <li>penalty&#160;:&#160;<a class="el" href="class_poisson.html#af1251e788d06d4af73485717ae978af2">Poisson&lt; dim &gt;</a></li>
 <li>polygon_boundary&#160;:&#160;<a class="el" href="class_agglomeration_handler.html#a55016eeb925c160cde640d105e9ab717">AgglomerationHandler&lt; dim, spacedim &gt;</a></li>
 <li>polytope_cache&#160;:&#160;<a class="el" href="class_agglomeration_handler.html#af91ee155e9c52b0b704688b5cdd332f2">AgglomerationHandler&lt; dim, spacedim &gt;</a></li>
+<li>polytope_translator&#160;:&#160;<a class="el" href="class_mapping_box.html#adf3870b67413feb324c684b42f11e475">MappingBox&lt; dim, spacedim &gt;</a></li>
 <li>present_extraction_level&#160;:&#160;<a class="el" href="class_agglomeration_handler.html#a4bb9e255b36c3aafafab318711d462eb">AgglomerationHandler&lt; dim, spacedim &gt;</a></li>
 <li>present_id&#160;:&#160;<a class="el" href="class_agglomeration_accessor.html#ab0401be847e2548817a68118198bae04">AgglomerationAccessor&lt; dim, spacedim &gt;</a></li>
 <li>present_index&#160;:&#160;<a class="el" href="class_agglomeration_accessor.html#ac0c2e052e67083a722f22392b6fd3c23">AgglomerationAccessor&lt; dim, spacedim &gt;</a></li>
 <li>present_subdomain_id&#160;:&#160;<a class="el" href="class_agglomeration_accessor.html#afaead53ea128569c391746ffd978faa0">AgglomerationAccessor&lt; dim, spacedim &gt;</a></li>
+</ul>
+
+
+<h3><a id="index_q" name="index_q"></a>- q -</h3><ul>
+<li>quadrature_points&#160;:&#160;<a class="el" href="class_mapping_box_1_1_internal_data.html#a4ef0d96affad938f3f785a629f056b4a">MappingBox&lt; dim, spacedim &gt;::InternalData</a></li>
 </ul>
 
 
@@ -289,6 +296,7 @@ $(function(){initNavTree('functions_vars.html',''); initResizable(true); });
 <li>target_level&#160;:&#160;<a class="el" href="structdealii_1_1internal_1_1_rtree__visitor.html#a27f4532dcaa7ce4fff75a2d2f4666190">dealii::internal::Rtree_visitor&lt; Value, Options, Translator, Box, Allocators &gt;</a>, <a class="el" href="structdealii_1_1_poly_utils_1_1_rtree__visitor.html#a8bc4ee9efd555dd38ed509a851d01c3b">dealii::PolyUtils::Rtree_visitor&lt; Value, Options, Translator, Box, Allocators &gt;</a></li>
 <li>transfer_matrices&#160;:&#160;<a class="el" href="classdealii_1_1_amg_projector.html#a3cfb4360311cc0f55c284f6391996fc8">dealii::AmgProjector&lt; dim, MatrixType, Number &gt;</a>, <a class="el" href="classdealii_1_1_matrix_free_projector.html#a1ee2a7bd0d461758aae48fd3645ca8f4">dealii::MatrixFreeProjector&lt; dim, OperatorType, Number &gt;</a>, <a class="el" href="classdealii_1_1_m_g_transfer_agglomeration.html#abccbd5d12072fb5a1e112e1d9a6bd6d0">dealii::MGTransferAgglomeration&lt; dim, VectorType &gt;</a></li>
 <li>translator&#160;:&#160;<a class="el" href="structdealii_1_1internal_1_1_rtree__visitor.html#a4652dd6bf2a30645c568d4cbbac20fdd">dealii::internal::Rtree_visitor&lt; Value, Options, Translator, Box, Allocators &gt;</a>, <a class="el" href="structdealii_1_1_poly_utils_1_1_rtree__visitor.html#a1a98c627d373cbaaf73c26a177c36bf5">dealii::PolyUtils::Rtree_visitor&lt; Value, Options, Translator, Box, Allocators &gt;</a></li>
+<li>traslation&#160;:&#160;<a class="el" href="class_mapping_box_1_1_internal_data.html#a16733329fd92289cbe8d44c5633cf31c">MappingBox&lt; dim, spacedim &gt;::InternalData</a></li>
 <li>tria&#160;:&#160;<a class="el" href="class_agglomeration_handler.html#a5545e68c330633358d003d6f915f8415">AgglomerationHandler&lt; dim, spacedim &gt;</a>, <a class="el" href="class_poisson.html#ab5ae031c50c18892e2e79368868698ce">Poisson&lt; dim &gt;</a></li>
 <li>tria_listener&#160;:&#160;<a class="el" href="class_agglomeration_handler.html#a0f1ac8f3058caccfc9163d53c97c0c3a">AgglomerationHandler&lt; dim, spacedim &gt;</a></li>
 <li>Tvmult&#160;:&#160;<a class="el" href="class_linear_operator_m_g.html#af0eddb5388fe5dbb12943835f0dc3e56">LinearOperatorMG&lt; Range, Domain, Payload &gt;</a></li>
@@ -301,13 +309,14 @@ $(function(){initNavTree('functions_vars.html',''); initResizable(true); });
 <li>visited_cell_and_faces_id&#160;:&#160;<a class="el" href="classdealii_1_1internal_1_1_polytope_cache.html#a8717a09709c453d676756075e36df267">dealii::internal::PolytopeCache&lt; dim, spacedim &gt;</a></li>
 <li>vmult&#160;:&#160;<a class="el" href="class_linear_operator_m_g.html#afa215eed4360993a594c8004683b8aba">LinearOperatorMG&lt; Range, Domain, Payload &gt;</a></li>
 <li>vmult_add&#160;:&#160;<a class="el" href="class_linear_operator_m_g.html#a39267a9b2155ee71e61e6a2c81dc8032">LinearOperatorMG&lt; Range, Domain, Payload &gt;</a></li>
+<li>volume_element&#160;:&#160;<a class="el" href="class_mapping_box_1_1_internal_data.html#a3e75a416b4006e58394112e22ef36d8f">MappingBox&lt; dim, spacedim &gt;::InternalData</a></li>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Fri Sep 20 2024 11:59:20 for PolyDEAL by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.12.0 </li>
+    <li class="footer">Generated on Sun Sep 29 2024 11:58:40 for PolyDEAL by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.12.0 </li>
   </ul>
 </div>
 </body>

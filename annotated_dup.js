@@ -33,6 +33,7 @@ var annotated_dup =
     [ "AgglomerationIterator", "class_agglomeration_iterator.html", "class_agglomeration_iterator" ],
     [ "Agglomerator", "class_agglomerator.html", null ],
     [ "LinearOperatorMG", "class_linear_operator_m_g.html", "class_linear_operator_m_g" ],
+    [ "MappingBox", "class_mapping_box.html", "class_mapping_box" ],
     [ "PackagedOperationMG", "class_packaged_operation_m_g.html", "class_packaged_operation_m_g" ],
     [ "Poisson", "class_poisson.html", "class_poisson" ],
     [ "RightHandSide", "class_right_hand_side.html", "class_right_hand_side" ]

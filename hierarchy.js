@@ -15,6 +15,9 @@ var hierarchy =
     ] ],
     [ "Utils::Graph", "struct_utils_1_1_graph.html", null ],
     [ "internal::LinearOperatorMGImplementation::has_vmult_add_and_Tvmult_add< Range, Domain, T >", "classinternal_1_1_linear_operator_m_g_implementation_1_1has__vmult__add__and___tvmult__add.html", null ],
+    [ "Mapping::InternalDataBase", "http://www.dealii.org/developer/doxygen/deal.II/classMapping_1_1InternalDataBase.html", [
+      [ "MappingBox< dim, spacedim >::InternalData", "class_mapping_box_1_1_internal_data.html", null ]
+    ] ],
     [ "dealii::MatrixFreeProjector< dim, OperatorType, Number >", "classdealii_1_1_matrix_free_projector.html", null ],
     [ "internal::LinearOperatorMGImplementation::MatrixInterfaceWithoutVmultAdd< Range, Domain, Payload >", "classinternal_1_1_linear_operator_m_g_implementation_1_1_matrix_interface_without_vmult_add.html", null ],
     [ "internal::LinearOperatorMGImplementation::MatrixInterfaceWithVmultAdd< Range, Domain, Payload >", "classinternal_1_1_linear_operator_m_g_implementation_1_1_matrix_interface_with_vmult_add.html", null ],
@@ -36,6 +39,9 @@ var hierarchy =
       ] ],
       [ "MGTransferBase< VectorType >", "http://www.dealii.org/developer/doxygen/deal.II/classMGTransferBase.html", [
         [ "dealii::MGTransferAgglomeration< dim, VectorType >", "classdealii_1_1_m_g_transfer_agglomeration.html", null ]
+      ] ],
+      [ "Mapping< dim, dim >", "http://www.dealii.org/developer/doxygen/deal.II/classMapping.html", [
+        [ "MappingBox< dim, spacedim >", "class_mapping_box.html", null ]
       ] ],
       [ "AgglomerationHandler< dim, spacedim >", "class_agglomeration_handler.html", null ],
       [ "LinearOperatorMG< Range, Domain, Payload >", "class_linear_operator_m_g.html", null ],

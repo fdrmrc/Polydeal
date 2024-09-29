@@ -13,7 +13,7 @@ var searchData=
   ['and_20modern_20c_20standards_10',['deal.II and Modern C++ standards',['http://www.dealii.org/developer/doxygen/deal.II/group__CPP11.html',1,'']]],
   ['and_20other_20primitives_11',['Geometric and other primitives',['http://www.dealii.org/developer/doxygen/deal.II/group__geomprimitives.html',1,'']]],
   ['and_20polynomial_20spaces_12',['Polynomials and polynomial spaces',['http://www.dealii.org/developer/doxygen/deal.II/group__Polynomials.html',1,'']]],
-  ['and_20real_20cell_13',['Mappings between reference and real cell',['http://www.dealii.org/developer/doxygen/deal.II/group__mapping.html',1,'']]],
+  ['and_20real_20cell_13',['Mappings between reference and real cell',['../group__mapping.html',1,'']]],
   ['and_20relaxation_20operators_14',['Preconditioners and Relaxation Operators',['http://www.dealii.org/developer/doxygen/deal.II/group__Preconditioners.html',1,'']]],
   ['and_20symbolic_20differentiation_15',['Automatic and symbolic differentiation',['http://www.dealii.org/developer/doxygen/deal.II/group__auto__symb__diff.html',1,'']]],
   ['and_20triangulations_16',['Grids and Triangulations',['http://www.dealii.org/developer/doxygen/deal.II/group__grid.html',1,'']]],

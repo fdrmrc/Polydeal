@@ -25,6 +25,7 @@
 var NAVTREE =
 [
   [ "PolyDEAL", "index.html", [
+    [ "Topics", "topics.html", "topics" ],
     [ "Namespaces", "namespaces.html", [
       [ "Namespace List", "namespaces.html", "namespaces_dup" ],
       [ "Namespace Members", "namespacemembers.html", [
@@ -38,7 +39,7 @@ var NAVTREE =
       [ "Class Hierarchy", "hierarchy.html", "hierarchy" ],
       [ "Class Members", "functions.html", [
         [ "All", "functions.html", "functions_dup" ],
-        [ "Functions", "functions_func.html", null ],
+        [ "Functions", "functions_func.html", "functions_func" ],
         [ "Variables", "functions_vars.html", null ],
         [ "Typedefs", "functions_type.html", null ],
         [ "Enumerations", "functions_enum.html", null ],
@@ -59,17 +60,17 @@ var NAVTREE =
 var NAVTREEINDEX =
 [
 "agglomeration__accessor_8h.html",
-"class_right_hand_side.html#a40b0328af2e35b605e3daa57fd779bb6",
-"group__Exceptions.html#ga1af054329605166c3f8c8cb15ee13d93",
-"namespaceCGALWrappers.html#ab217c479619d0c8e5868636bdf720fdb",
-"namespaceDoFTools_1_1internal.html#ad2ef140f5d6f248aa4eebdac221fa94c",
-"namespaceGridTools.html#a83d12f8567a8a310620f2326942e4ce8",
-"namespaceMatrixCreator.html#ab72d5dae987001231e3c4ccb1bb55913",
-"namespaceThreads_1_1internal.html",
-"namespaceUtilities_1_1MPI_1_1internal_1_1Tags.html#a1c190e50dabbd9b60e230b843c6caa44a378386a9f53a28eac3a4a18310ecbd25",
-"namespaceinternal.html#a25a7f9b1778dd3bc0ffb7bf521fd46f9",
-"namespaceinternal_1_1QGaussRadau.html",
-"structEigenInverse_1_1AdditionalData.html"
+"class_mapping_box.html#ab35a10673693e2c7b013a66817344be0",
+"functions.html",
+"group__matrixfree.html#ggaee4d2d09d3fd284528a8a9c4a3e36979ad7ff83e1873dda740e03ef726c106a5d",
+"namespaceDoFRenumbering_1_1internal.html",
+"namespaceGridGenerator.html#acc920b19e79502facbffa861528b71d4",
+"namespaceLinearAlgebra_1_1TpetraWrappers_1_1SparseMatrixIterators.html",
+"namespacePatterns_1_1Tools.html#a72743302dcb1a0fb1f2f8dc5122d299e",
+"namespaceUtilities_1_1MPI.html#a6c65825ffdad8e9ad83631d6eed7d441",
+"namespace_utils.html#a8d004aa1fdf7d5f8ac389737cf3aa8c3",
+"namespaceinternal_1_1MGTransfer.html#a9d29e1e4ec29c1db4355627a690a318e",
+"namespaceparallel.html#afd3f1dc43e8e5771603bd5c0c5895f61"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';
