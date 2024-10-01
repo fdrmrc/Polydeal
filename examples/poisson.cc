@@ -507,7 +507,7 @@ Poisson<dim>::make_grid()
                                                         // made by triangles
 #endif
           grid_in.read_msh(gmsh_file);
-          tria.refine_global(2); // 4
+          tria.refine_global(7); // 4
         }
       else if constexpr (dim == 3)
         {
@@ -663,11 +663,13 @@ Poisson<dim>::setup_agglomeration()
           ah->define_agglomerate({cell});
         }
     }
+  std::cout << "Defined agglomerates" << std::endl;
 
   ah->distribute_agglomerated_dofs(dg_fe);
   ah->create_agglomeration_sparsity_pattern(dsp);
   sparsity.copy_from(dsp);
 
+#ifdef DEBUG
   {
     std::string partitioner;
     if (partitioner_type == PartitionerType::metis)
@@ -701,6 +703,7 @@ Poisson<dim>::setup_agglomeration()
     data_out.build_patches(mapping);
     data_out.write_vtu(output);
   }
+#endif
 }
 
 
@@ -1123,24 +1126,53 @@ main()
   std::cout << "Testing p-convergence" << std::endl;
   {
 #ifdef HEX
-    for (unsigned int fe_degree : {1, 2, 3, 4})
+    for (unsigned int fe_degree : {1, 2, 3})
 #else
     for (unsigned int fe_degree : {1, 2, 3})
 #endif
       {
-        std::cout << "Fe degree: " << fe_degree << std::endl;
-        Poisson<2> poisson_problem{GridType::unstructured,
-                                   PartitionerType::metis,
-                                   SolutionType::product_sine,
-                                   0 /*extraction_level*/,
-                                   364,
-                                   fe_degree};
-        poisson_problem.run();
-        convergence_info.add(
-          std::make_pair<types::global_dof_index, std::pair<double, double>>(
-            poisson_problem.get_n_dofs(), poisson_problem.get_error()));
+        for (const unsigned int level : {3, 4, 5, 6, 7})
+          {
+            std::cout << "Fe degree: " << fe_degree << std::endl;
+            Poisson<2> poisson_problem{GridType::unstructured,
+                                       PartitionerType::rtree,
+                                       SolutionType::product_sine,
+                                       level /*extraction_level*/,
+                                       0,
+                                       fe_degree};
+            poisson_problem.run();
+            convergence_info.add(std::make_pair<types::global_dof_index,
+                                                std::pair<double, double>>(
+              poisson_problem.get_n_dofs(), poisson_problem.get_error()));
+          }
       }
   }
+  std::cout << "Convergence info for R-tree:" << std::endl;
+  convergence_info.print();
+
+
+  {
+#ifdef HEX
+    for (unsigned int fe_degree : {1, 2, 3})
+#else
+    for (unsigned int fe_degree : {1, 2, 3})
+#endif
+      for (const unsigned int n_agglomerates : {23, 91, 364, 1456, 5824})
+        {
+          std::cout << "Fe degree: " << fe_degree << std::endl;
+          Poisson<2> poisson_problem{GridType::unstructured,
+                                     PartitionerType::metis,
+                                     SolutionType::product_sine,
+                                     0 /*extraction_level*/,
+                                     n_agglomerates,
+                                     fe_degree};
+          poisson_problem.run();
+          convergence_info.add(
+            std::make_pair<types::global_dof_index, std::pair<double, double>>(
+              poisson_problem.get_n_dofs(), poisson_problem.get_error()));
+        }
+  }
+  std::cout << "Convergence info for METIS:" << std::endl;
   convergence_info.print();
 
 

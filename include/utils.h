@@ -169,12 +169,15 @@ namespace Utils
     for (const auto &polytope : coarse_ah.polytope_iterators())
       if (polytope->is_locally_owned())
         {
+          std::cout << "Coarse polytope index: " << polytope->index()
+                    << std::endl;
           polytope->get_dof_indices(local_dof_indices_coarse);
 
           // Get local children and their DoFs
           const auto &children_polytopes = polytope->children();
           for (const types::global_cell_index child_idx : children_polytopes)
             {
+              std::cout << "Fine polytope index: " << child_idx << std::endl;
               const typename DoFHandler<dim>::active_cell_iterator &child_dh =
                 fine_ah.polytope_to_dh_iterator(child_idx);
               child_dh->get_dof_indices(local_dof_indices_child);
@@ -183,6 +186,7 @@ namespace Utils
                                 local_dof_indices_coarse.begin(),
                                 local_dof_indices_coarse.end());
             }
+          std::cout << std::endl;
         }
 
     const auto assemble_injection_matrix = [&]() {

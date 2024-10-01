@@ -107,9 +107,11 @@ AgglomerationBenchmark<dim>::make_grid()
           //   mesh grid_in.read_abaqus(gmsh_file); tria.refine_global(1);
           // }
           grid_in.attach_triangulation(tria);
-          std::ifstream mesh_file(
-            "../../meshes/gray_level_image1.vtk"); // liver mesh
-          grid_in.read_vtk(mesh_file);
+          // std::ifstream mesh_file(
+          //   "../../meshes/gray_level_image1.vtk"); // liver mesh
+          // grid_in.read_vtk(mesh_file);
+          std::ifstream mesh_file("../../meshes/ernie.msh"); // brain mesh
+          grid_in.read_msh(mesh_file);
           // grid_in.read_ucd(mesh_file);
           // "../../meshes/csf_brain_filled_centered_UCD.inp"); // brain mesh
           // tria.refine_global(1);
@@ -263,7 +265,8 @@ main()
   // for (const unsigned int target_partitions : {47, 372, 2976, 23804}) //
   // brain
   for (const unsigned int target_partitions :
-       {9, 70, 556, 4441, 29000}) // liver
+       //  {9, 70, 556, 4441, 29000}) // liver
+       {17, 126, 1088, 8703, 69662}) // brain
     {
       AgglomerationBenchmark<3> poisson_problem{GridType::unstructured,
                                                 PartitionerType::metis,
