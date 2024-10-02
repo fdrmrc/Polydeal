@@ -56,9 +56,11 @@
 
 using namespace dealii;
 
-static constexpr unsigned int degree_finite_element = 1;
+static constexpr unsigned int degree_finite_element = 3;
 static constexpr unsigned int n_components          = 1;
-static constexpr bool         CHECK_AMG             = true;
+static constexpr bool         CHECK_AMG             = false;
+
+#define GEOMETRIC_APPROACH true
 
 
 
@@ -1101,9 +1103,6 @@ TestMGMatrix<dim>::agglomerate_and_compute_level_matrices()
   LaplaceOperatorDGSystemMatrix<dim, degree_finite_element, n_qpoints, double>
     system_matrix_dg;
   system_matrix_dg.reinit(mapping, dof_handler);
-  const TrilinosWrappers::SparseMatrix &fine_matrix =
-    system_matrix_dg.get_system_matrix();
-  pcout << "Built finest operator" << std::endl;
 
 
   // Start building R-tree
@@ -1221,11 +1220,9 @@ TestMGMatrix<dim>::agglomerate_and_compute_level_matrices()
   pcout << injection_matrices_two_level.back().m() << " and "
         << injection_matrices_two_level.back().n() << std::endl;
 
-  AmgProjector<dim, TrilinosWrappers::SparseMatrix, double> amg_projector(
-    injection_matrices_two_level);
-  pcout << "Initialized projector" << std::endl;
 
-
+  VectorType system_rhs;
+  system_matrix_dg.initialize_dof_vector(system_rhs);
 
   MGLevelObject<std::unique_ptr<TrilinosWrappers::SparseMatrix>>
     multigrid_matrices(0, total_tree_levels);
@@ -1233,33 +1230,34 @@ TestMGMatrix<dim>::agglomerate_and_compute_level_matrices()
   multigrid_matrices[multigrid_matrices.max_level()] =
     std::make_unique<TrilinosWrappers::SparseMatrix>();
 
-  Utilities::System::MemoryStats stats;
-  Utilities::System::get_memory_stats(stats);
-  const auto print = [this](const double value) {
-    const auto min_max_avg =
-      dealii::Utilities::MPI::min_max_avg(value / 1e6, MPI_COMM_WORLD);
-
-    pcout << min_max_avg.min << " " << min_max_avg.max << " " << min_max_avg.avg
-          << " " << min_max_avg.sum << " ";
-  };
-
-  print(stats.VmPeak);
-  print(stats.VmSize);
-  print(stats.VmHWM);
-  print(stats.VmRSS);
-  pcout << "Building finest operator" << std::endl;
   system_matrix_dg.get_system_matrix(
     *multigrid_matrices[multigrid_matrices.max_level()]);
   pcout << "Built finest operator" << std::endl;
-  Utilities::System::get_memory_stats(stats);
-  print(stats.VmPeak);
-  print(stats.VmSize);
-  print(stats.VmHWM);
-  print(stats.VmRSS);
 
+#ifdef ALGEBRAIC_APPROACH
+  AmgProjector<dim, TrilinosWrappers::SparseMatrix, double> amg_projector(
+    injection_matrices_two_level);
+  pcout << "Initialized projector" << std::endl;
   amg_projector.compute_level_matrices(multigrid_matrices);
-
   pcout << "Projected using transfer_matrices:" << std::endl;
+
+#elif GEOMETRIC_APPROACH
+  const unsigned int max_level = multigrid_matrices.max_level();
+  // assemble level matrices on each level
+  for (unsigned int level = max_level;
+       level-- > multigrid_matrices.min_level();)
+    {
+      multigrid_matrices[level] =
+        std::make_unique<TrilinosWrappers::SparseMatrix>();
+      pcout << "Assemble matrix on level " << level << std::endl;
+      PolyUtils::assemble_dg_matrix(*multigrid_matrices[level],
+                                    fe_dg,
+                                    *agglomeration_handlers[level]);
+    }
+
+
+
+#endif
 
   pcout << "Check dimensions of level operators" << std::endl;
   for (unsigned int l = 0; l < total_tree_levels + 1; ++l)
@@ -1329,7 +1327,7 @@ TestMGMatrix<dim>::agglomerate_and_compute_level_matrices()
         }
     }
 
-  mg_smoother.set_steps(5);
+  mg_smoother.set_steps(10);
   mg_smoother.initialize(multigrid_matrices, smoother_data);
 
   pcout << "Smoothers initialized" << std::endl;
@@ -1378,8 +1376,6 @@ TestMGMatrix<dim>::agglomerate_and_compute_level_matrices()
 
 
   // Assemble system rhs
-  VectorType system_rhs;
-  system_matrix_dg.initialize_dof_vector(system_rhs);
 
   system_rhs = 0;
   FEEvaluation<dim, degree_finite_element> phi(
@@ -1401,7 +1397,7 @@ TestMGMatrix<dim>::agglomerate_and_compute_level_matrices()
 
   VectorType solution;
   system_matrix_dg.initialize_dof_vector(solution);
-  ReductionControl     solver_control(10000, 1e-9, 1e-6);
+  ReductionControl     solver_control(10000, 1e-12, 1e-9);
   SolverCG<VectorType> cg(solver_control);
   double               start, stop;
   pcout << "Start solver" << std::endl;
@@ -1487,13 +1483,13 @@ TestMGMatrix<dim>::agglomerate_and_compute_level_matrices()
           if (degree_finite_element > 1)
             amg_data.higher_order_elements = true;
           pcout << "Initialized AMG prec matrix" << std::endl;
-          prec_amg.initialize(fine_matrix, amg_data);
+          prec_amg.initialize(*multigrid_matrices[max_level], amg_data);
 
           solution = 0.;
           SolverCG<VectorType> cg_check(solver_control);
           double               start_cg, stop_cg;
           start_cg = MPI_Wtime();
-          cg_check.solve(fine_matrix,
+          cg_check.solve(*multigrid_matrices[max_level],
                          solution,
                          system_rhs,
                          prec_amg); // with id
@@ -1551,14 +1547,14 @@ main(int argc, char *argv[])
 {
   Utilities::MPI::MPI_InitFinalize mpi_initialization(argc, argv, 1);
   const MPI_Comm                   comm = MPI_COMM_WORLD;
-  static constexpr unsigned int    dim  = 2;
+  static constexpr unsigned int    dim  = 3;
 
   if (Utilities::MPI::this_mpi_process(comm) == 0)
     std::cout << "Degree: " << degree_finite_element << std::endl;
 
-  for (unsigned int starting_level = 0; starting_level < 3; ++starting_level)
+  for (unsigned int starting_level = 0; starting_level < 4; ++starting_level)
     {
-      TestMGMatrix<dim> problem(GridType::grid_generator,
+      TestMGMatrix<dim> problem(GridType::unstructured,
                                 degree_finite_element,
                                 starting_level,
                                 comm);
