@@ -24,6 +24,7 @@
 
 #include <deal.II/grid/grid_generator.h>
 #include <deal.II/grid/grid_in.h>
+#include <deal.II/grid/grid_out.h>
 
 #include <deal.II/lac/la_parallel_vector.h>
 #include <deal.II/lac/linear_operator_tools.h>
@@ -56,9 +57,10 @@
 
 using namespace dealii;
 
-static constexpr unsigned int degree_finite_element = 3;
+static constexpr unsigned int degree_finite_element = 1;
 static constexpr unsigned int n_components          = 1;
 static constexpr bool         CHECK_AMG             = false;
+static constexpr bool         CHECK_PLAIN_CG        = true;
 
 #define GEOMETRIC_APPROACH true
 
@@ -931,8 +933,9 @@ fill_interpolation_matrix(
 
 enum class GridType
 {
-  grid_generator, // hyper_cube or hyper_ball
-  unstructured    // square generated with gmsh, unstructured
+  grid_generator,      // hyper_cube
+  grid_generator_ball, //  hyper_ball
+  unstructured         // square generated with gmsh, unstructured
 };
 
 
@@ -1021,7 +1024,8 @@ TestMGMatrix<dim>::TestMGMatrix(const GridType    &grid_type_,
   pcout << "Running with " << n_ranks << " MPI ranks." << std::endl;
   pcout << "Grid type:";
   starting_level = starting_tree_level;
-  grid_type == GridType::grid_generator ?
+  (grid_type == GridType::grid_generator) ||
+      (grid_type == GridType::grid_generator_ball) ?
     pcout << " Structured mesh" << std::endl :
     pcout << " Unstructured mesh" << std::endl;
 }
@@ -1062,6 +1066,11 @@ TestMGMatrix<dim>::make_fine_grid(const unsigned int n_global_refinements)
   else if (grid_type == GridType::grid_generator)
     {
       GridGenerator::hyper_cube(tria, 0., 1.);
+      tria.refine_global(n_global_refinements);
+    }
+  else if (grid_type == GridType::grid_generator_ball)
+    {
+      GridGenerator::hyper_ball(tria, {}, 1., true);
       tria.refine_global(n_global_refinements);
     }
   else
@@ -1402,9 +1411,17 @@ TestMGMatrix<dim>::agglomerate_and_compute_level_matrices()
   double               start, stop;
   pcout << "Start solver" << std::endl;
   start = MPI_Wtime();
-  cg.solve(system_matrix_dg, solution, system_rhs, preconditioner);
+  if constexpr (CHECK_PLAIN_CG)
+    cg.solve(system_matrix_dg, solution, system_rhs, PreconditionIdentity());
+  else
+    cg.solve(system_matrix_dg, solution, system_rhs, preconditioner);
+
   stop = MPI_Wtime();
-  pcout << "Agglo AMG elapsed time: " << stop - start << "[s]" << std::endl;
+  if constexpr (CHECK_PLAIN_CG)
+    pcout << "CG elapsed time: " << stop - start << "[s]" << std::endl;
+  else
+    pcout << "Agglomerated MultiGrid elapsed time: " << stop - start << "[s]"
+          << std::endl;
 
   pcout << "Initial value: " << solver_control.initial_value() << std::endl;
   pcout << "Converged in " << solver_control.last_step()
@@ -1535,7 +1552,35 @@ TestMGMatrix<dim>::run()
         << " doubles = " << n_vect_bits << " bits ("
         << Utilities::System::get_current_vectorization_level() << ')'
         << std::endl;
-  make_fine_grid(3); // 6 global refinements of unit cube
+  if constexpr (dim == 2)
+    if (grid_type == GridType::grid_generator)
+      {
+        make_fine_grid(6); // 2: 6 global refinements of unit cube, 5 for ball,
+                           // 3 for unstructured square
+      }
+    else if (grid_type == GridType::grid_generator_ball)
+      {
+        make_fine_grid(5); // 2: 6 global refinements of unit cube, 5 for ball,
+                           // 3 for unstructured square
+      }
+    else if (grid_type == GridType::unstructured)
+      {
+        make_fine_grid(3); // 2: 6 global refinements of unit cube, 5 for ball,
+                           // 3 for unstructured square
+      }
+    else
+      {
+        AssertThrow(false, ExcNotImplemented());
+      }
+  else if constexpr (dim == 3)
+    {
+      if (grid_type == GridType::grid_generator)
+        make_fine_grid(4); // unit cube
+    }
+  else
+    {
+      AssertThrow(false, ExcInternalError());
+    }
   agglomerate_and_compute_level_matrices();
   pcout << std::endl;
 }
@@ -1547,17 +1592,22 @@ main(int argc, char *argv[])
 {
   Utilities::MPI::MPI_InitFinalize mpi_initialization(argc, argv, 1);
   const MPI_Comm                   comm = MPI_COMM_WORLD;
-  static constexpr unsigned int    dim  = 3;
+  static constexpr unsigned int    dim  = 2;
 
   if (Utilities::MPI::this_mpi_process(comm) == 0)
     std::cout << "Degree: " << degree_finite_element << std::endl;
 
   for (unsigned int starting_level = 0; starting_level < 4; ++starting_level)
     {
-      TestMGMatrix<dim> problem(GridType::unstructured,
-                                degree_finite_element,
-                                starting_level,
-                                comm);
-      problem.run();
+      if constexpr (CHECK_PLAIN_CG)
+        {
+          TestMGMatrix<dim> problem(GridType::grid_generator_ball,
+                                    degree_finite_element,
+                                    starting_level,
+                                    comm);
+          problem.run();
+          break;
+          ;
+        }
     }
 }
