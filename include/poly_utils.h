@@ -1932,7 +1932,8 @@ namespace dealii::PolyUtils
                       SparseMatrix<typename MatrixType::value_type>>));
 
     Assert((dynamic_cast<const FE_SimplexDGP<dim> *>(&fe_dg) != nullptr),
-           DEAL_II_NOT_IMPLEMENTED());
+           ExcNotImplemented(
+             "Implemented only for simplex meshes for the time being."));
 
     Assert(dof_handler.get_triangulation().all_reference_cells_are_simplex(),
            ExcNotImplemented());
