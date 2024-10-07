@@ -125,7 +125,15 @@ namespace dealii
         dst[level].reinit(dof_handlers[level]->locally_owned_dofs(),
                           dof_handlers[level]->get_communicator());
       }
-    dst[dst.max_level()].copy_locally_owned_data_from(src);
+
+    if constexpr (std::is_same_v<VectorType, TrilinosWrappers::MPI::Vector>)
+      dst[dst.max_level()] = src;
+    else if constexpr (std::is_same_v<
+                         VectorType,
+                         LinearAlgebra::distributed::Vector<double>>)
+      dst[dst.max_level()].copy_locally_owned_data_from(src);
+    else
+      DEAL_II_NOT_IMPLEMENTED();
   }
 
 
@@ -138,7 +146,14 @@ namespace dealii
     const MGLevelObject<VectorType> &src) const
   {
     (void)dof_handler;
-    dst.copy_locally_owned_data_from(src[src.max_level()]);
+    if constexpr (std::is_same_v<VectorType, TrilinosWrappers::MPI::Vector>)
+      dst = src[src.max_level()];
+    else if constexpr (std::is_same_v<
+                         VectorType,
+                         LinearAlgebra::distributed::Vector<double>>)
+      dst.copy_locally_owned_data_from(src[src.max_level()]);
+    else
+      DEAL_II_NOT_IMPLEMENTED();
   }
 
 
@@ -157,4 +172,9 @@ namespace dealii
   template class MGTransferAgglomeration<
     3,
     LinearAlgebra::distributed::Vector<double>>;
+
+  // Trilinos vectors instantiations
+  template class MGTransferAgglomeration<1, TrilinosWrappers::MPI::Vector>;
+  template class MGTransferAgglomeration<2, TrilinosWrappers::MPI::Vector>;
+  template class MGTransferAgglomeration<3, TrilinosWrappers::MPI::Vector>;
 } // namespace dealii

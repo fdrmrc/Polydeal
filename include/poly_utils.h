@@ -1178,10 +1178,10 @@ namespace dealii::PolyUtils
 
   /**
    * Construct the interpolation matrix from the DG space defined the
-   * polytopic elements
-   * defined in @p agglomeration_handler to the DG space defined on the DoFHandler associated
-   * to standard shapes. The interpolation matrix is assumed to be
-   * default-constructed and is filled inside this function.
+   * polytopic elements defined in @p agglomeration_handler to the DG space
+   * defined on the @p DoFHandler associated to standard shapes. The
+   * interpolation matrix is assumed to be default-constructed and is filled
+   * inside this function.
    */
   template <int dim, int spacedim, typename MatrixType>
   void
@@ -1204,6 +1204,7 @@ namespace dealii::PolyUtils
 
     DoFHandler<dim, spacedim> *output_dh =
       const_cast<DoFHandler<dim, spacedim> *>(&agglomeration_handler.output_dh);
+    const Mapping<dim, spacedim> &mapping = agglomeration_handler.get_mapping();
     const FiniteElement<dim, spacedim> &fe = agglomeration_handler.get_fe();
     const Triangulation<dim, spacedim> &tria =
       agglomeration_handler.get_triangulation();
@@ -1229,7 +1230,8 @@ namespace dealii::PolyUtils
     std::vector<types::global_dof_index> output_dof_indices(fe.dofs_per_cell);
 
     Quadrature<dim>         quad(fe.get_unit_support_points());
-    FEValues<dim, spacedim> output_fe_values(fe,
+    FEValues<dim, spacedim> output_fe_values(mapping,
+                                             fe,
                                              quad,
                                              update_quadrature_points);
 
@@ -1574,6 +1576,606 @@ namespace dealii::PolyUtils
       }
 
     return total_tree_levels;
+  }
+
+
+
+  /**
+   * Utility to compute jump terms when the interface is locally owned, i.e.
+   * both elements are locally owned.
+   */
+  template <int dim>
+  void
+  assemble_local_jumps_and_averages(FullMatrix<double>      &M11,
+                                    FullMatrix<double>      &M12,
+                                    FullMatrix<double>      &M21,
+                                    FullMatrix<double>      &M22,
+                                    const FEValuesBase<dim> &fe_faces0,
+                                    const FEValuesBase<dim> &fe_faces1,
+                                    const double             penalty_constant,
+                                    const double             h_f)
+  {
+    const std::vector<Tensor<1, dim>> &normals = fe_faces0.get_normal_vectors();
+    const unsigned int                 dofs_per_cell =
+      M11.m(); // size of local matrices equals the #DoFs
+    for (unsigned int q_index : fe_faces0.quadrature_point_indices())
+      {
+        const Tensor<1, dim> &normal = normals[q_index];
+        for (unsigned int i = 0; i < dofs_per_cell; ++i)
+          {
+            for (unsigned int j = 0; j < dofs_per_cell; ++j)
+              {
+                M11(i, j) += (-0.5 * fe_faces0.shape_grad(i, q_index) * normal *
+                                fe_faces0.shape_value(j, q_index) -
+                              0.5 * fe_faces0.shape_grad(j, q_index) * normal *
+                                fe_faces0.shape_value(i, q_index) +
+                              (penalty_constant / h_f) *
+                                fe_faces0.shape_value(i, q_index) *
+                                fe_faces0.shape_value(j, q_index)) *
+                             fe_faces0.JxW(q_index);
+                M12(i, j) += (0.5 * fe_faces0.shape_grad(i, q_index) * normal *
+                                fe_faces1.shape_value(j, q_index) -
+                              0.5 * fe_faces1.shape_grad(j, q_index) * normal *
+                                fe_faces0.shape_value(i, q_index) -
+                              (penalty_constant / h_f) *
+                                fe_faces0.shape_value(i, q_index) *
+                                fe_faces1.shape_value(j, q_index)) *
+                             fe_faces1.JxW(q_index);
+                M21(i, j) += (-0.5 * fe_faces1.shape_grad(i, q_index) * normal *
+                                fe_faces0.shape_value(j, q_index) +
+                              0.5 * fe_faces0.shape_grad(j, q_index) * normal *
+                                fe_faces1.shape_value(i, q_index) -
+                              (penalty_constant / h_f) *
+                                fe_faces1.shape_value(i, q_index) *
+                                fe_faces0.shape_value(j, q_index)) *
+                             fe_faces1.JxW(q_index);
+                M22(i, j) += (0.5 * fe_faces1.shape_grad(i, q_index) * normal *
+                                fe_faces1.shape_value(j, q_index) +
+                              0.5 * fe_faces1.shape_grad(j, q_index) * normal *
+                                fe_faces1.shape_value(i, q_index) +
+                              (penalty_constant / h_f) *
+                                fe_faces1.shape_value(i, q_index) *
+                                fe_faces1.shape_value(j, q_index)) *
+                             fe_faces1.JxW(q_index);
+              }
+          }
+      }
+  }
+  /**
+   * Same as above, but for a ghosted neighbor.
+   */
+  template <int dim>
+  void
+  assemble_local_jumps_and_averages_ghost(
+    FullMatrix<double>                             &M11,
+    FullMatrix<double>                             &M12,
+    FullMatrix<double>                             &M21,
+    FullMatrix<double>                             &M22,
+    const FEValuesBase<dim>                        &fe_faces0,
+    const std::vector<std::vector<double>>         &recv_values,
+    const std::vector<std::vector<Tensor<1, dim>>> &recv_gradients,
+    const std::vector<double>                      &recv_jxws,
+    const double                                    penalty_constant,
+    const double                                    h_f)
+  {
+    Assert(
+      (recv_values.size() > 0 && recv_gradients.size() && recv_jxws.size()),
+      ExcMessage(
+        "Not possible to assemble jumps and averages at a ghosted interface."));
+    const unsigned int                 dofs_per_cell = M11.m();
+    const std::vector<Tensor<1, dim>> &normals = fe_faces0.get_normal_vectors();
+    for (unsigned int q_index : fe_faces0.quadrature_point_indices())
+      {
+        const Tensor<1, dim> &normal = normals[q_index];
+        for (unsigned int i = 0; i < dofs_per_cell; ++i)
+          {
+            for (unsigned int j = 0; j < dofs_per_cell; ++j)
+              {
+                M11(i, j) += (-0.5 * fe_faces0.shape_grad(i, q_index) * normal *
+                                fe_faces0.shape_value(j, q_index) -
+                              0.5 * fe_faces0.shape_grad(j, q_index) * normal *
+                                fe_faces0.shape_value(i, q_index) +
+                              (penalty_constant / h_f) *
+                                fe_faces0.shape_value(i, q_index) *
+                                fe_faces0.shape_value(j, q_index)) *
+                             fe_faces0.JxW(q_index);
+                M12(i, j) += (0.5 * fe_faces0.shape_grad(i, q_index) * normal *
+                                recv_values[j][q_index] -
+                              0.5 * recv_gradients[j][q_index] * normal *
+                                fe_faces0.shape_value(i, q_index) -
+                              (penalty_constant / h_f) *
+                                fe_faces0.shape_value(i, q_index) *
+                                recv_values[j][q_index]) *
+                             recv_jxws[q_index];
+                M21(i, j) +=
+                  (-0.5 * recv_gradients[i][q_index] * normal *
+                     fe_faces0.shape_value(j, q_index) +
+                   0.5 * fe_faces0.shape_grad(j, q_index) * normal *
+                     recv_values[i][q_index] -
+                   (penalty_constant / h_f) * recv_values[i][q_index] *
+                     fe_faces0.shape_value(j, q_index)) *
+                  recv_jxws[q_index];
+                M22(i, j) +=
+                  (0.5 * recv_gradients[i][q_index] * normal *
+                     recv_values[j][q_index] +
+                   0.5 * recv_gradients[j][q_index] * normal *
+                     recv_values[i][q_index] +
+                   (penalty_constant / h_f) * recv_values[i][q_index] *
+                     recv_values[j][q_index]) *
+                  recv_jxws[q_index];
+              }
+          }
+      }
+  }
+
+
+  /**
+   * Utility function to assemble the SIPDG Laplace matrix.
+   * @note Supported matrix types are Trilinos types and native SparseMatrix
+   * objects provided by deal.II.
+   */
+  template <int dim, typename MatrixType>
+  void
+  assemble_dg_matrix(MatrixType                      &system_matrix,
+                     const FiniteElement<dim>        &fe_dg,
+                     const AgglomerationHandler<dim> &ah)
+  {
+    static_assert(
+      (std::is_same_v<MatrixType, TrilinosWrappers::SparseMatrix> ||
+       std::is_same_v<MatrixType,
+                      SparseMatrix<typename MatrixType::value_type>>));
+
+    Assert((dynamic_cast<const FE_DGQ<dim> *>(&fe_dg) ||
+            dynamic_cast<const FE_DGP<dim> *>(&fe_dg) ||
+            dynamic_cast<const FE_SimplexDGP<dim> *>(&fe_dg)),
+           ExcMessage("FE type not supported."));
+
+    AffineConstraints constraints;
+    constraints.close();
+    const double penalty_constant =
+      10 * (fe_dg.degree + dim) * (fe_dg.degree + 1);
+    TrilinosWrappers::SparsityPattern dsp;
+    const_cast<AgglomerationHandler<dim> &>(ah)
+      .create_agglomeration_sparsity_pattern(dsp);
+    system_matrix.reinit(dsp);
+    const unsigned int dofs_per_cell = fe_dg.n_dofs_per_cell();
+    FullMatrix<double> cell_matrix(dofs_per_cell, dofs_per_cell);
+    FullMatrix<double> M11(dofs_per_cell, dofs_per_cell);
+    FullMatrix<double> M12(dofs_per_cell, dofs_per_cell);
+    FullMatrix<double> M21(dofs_per_cell, dofs_per_cell);
+    FullMatrix<double> M22(dofs_per_cell, dofs_per_cell);
+    std::vector<types::global_dof_index> local_dof_indices(dofs_per_cell);
+    std::vector<types::global_dof_index> local_dof_indices_neighbor(
+      dofs_per_cell);
+
+    for (const auto &polytope : ah.polytope_iterators())
+      {
+        if (polytope->is_locally_owned())
+          {
+            cell_matrix              = 0.;
+            const auto &agglo_values = ah.reinit(polytope);
+            for (unsigned int q_index : agglo_values.quadrature_point_indices())
+              {
+                for (unsigned int i = 0; i < dofs_per_cell; ++i)
+                  {
+                    for (unsigned int j = 0; j < dofs_per_cell; ++j)
+                      {
+                        cell_matrix(i, j) +=
+                          agglo_values.shape_grad(i, q_index) *
+                          agglo_values.shape_grad(j, q_index) *
+                          agglo_values.JxW(q_index);
+                      }
+                  }
+              }
+            // get volumetric DoFs
+            polytope->get_dof_indices(local_dof_indices);
+            // Assemble face terms
+            unsigned int n_faces = polytope->n_faces();
+            const double h_f     = polytope->diameter();
+            for (unsigned int f = 0; f < n_faces; ++f)
+              {
+                if (polytope->at_boundary(f))
+                  {
+                    // Get normal vectors seen from each agglomeration.
+                    const auto &fe_face = ah.reinit(polytope, f);
+                    const auto &normals = fe_face.get_normal_vectors();
+                    for (unsigned int q_index :
+                         fe_face.quadrature_point_indices())
+                      {
+                        const Tensor<1, dim> &normal = normals[q_index];
+                        for (unsigned int i = 0; i < dofs_per_cell; ++i)
+                          {
+                            for (unsigned int j = 0; j < dofs_per_cell; ++j)
+                              {
+                                cell_matrix(i, j) +=
+                                  (-fe_face.shape_value(i, q_index) *
+                                     fe_face.shape_grad(j, q_index) * normal -
+                                   fe_face.shape_grad(i, q_index) * normal *
+                                     fe_face.shape_value(j, q_index) +
+                                   (penalty_constant / h_f) *
+                                     fe_face.shape_value(i, q_index) *
+                                     fe_face.shape_value(j, q_index)) *
+                                  fe_face.JxW(q_index);
+                              }
+                          }
+                      }
+                  }
+                else
+                  {
+                    const auto &neigh_polytope = polytope->neighbor(f);
+                    if (polytope->id() < neigh_polytope->id())
+                      {
+                        unsigned int nofn =
+                          polytope->neighbor_of_agglomerated_neighbor(f);
+                        Assert(neigh_polytope->neighbor(nofn)->id() ==
+                                 polytope->id(),
+                               ExcMessage("Mismatch."));
+                        const auto &fe_faces = ah.reinit_interface(
+                          polytope, neigh_polytope, f, nofn);
+                        const auto &fe_faces0 = fe_faces.first;
+                        if (neigh_polytope->is_locally_owned())
+                          {
+                            // use both fevalues
+                            const auto &fe_faces1 = fe_faces.second;
+                            M11                   = 0.;
+                            M12                   = 0.;
+                            M21                   = 0.;
+                            M22                   = 0.;
+                            assemble_local_jumps_and_averages(M11,
+                                                              M12,
+                                                              M21,
+                                                              M22,
+                                                              fe_faces0,
+                                                              fe_faces1,
+                                                              penalty_constant,
+                                                              h_f);
+                            // distribute DoFs accordingly
+                            // fluxes
+                            neigh_polytope->get_dof_indices(
+                              local_dof_indices_neighbor);
+                            constraints.distribute_local_to_global(
+                              M11, local_dof_indices, system_matrix);
+                            constraints.distribute_local_to_global(
+                              M12,
+                              local_dof_indices,
+                              local_dof_indices_neighbor,
+                              system_matrix);
+                            constraints.distribute_local_to_global(
+                              M21,
+                              local_dof_indices_neighbor,
+                              local_dof_indices,
+                              system_matrix);
+                            constraints.distribute_local_to_global(
+                              M22, local_dof_indices_neighbor, system_matrix);
+                          }
+                        else
+                          {
+                            // neigh polytope is ghosted, so retrieve necessary
+                            // metadata.
+                            types::subdomain_id neigh_rank =
+                              neigh_polytope->subdomain_id();
+                            const auto &recv_jxws =
+                              ah.recv_jxws.at(neigh_rank)
+                                .at({neigh_polytope->id(), nofn});
+                            const auto &recv_values =
+                              ah.recv_values.at(neigh_rank)
+                                .at({neigh_polytope->id(), nofn});
+                            const auto &recv_gradients =
+                              ah.recv_gradients.at(neigh_rank)
+                                .at({neigh_polytope->id(), nofn});
+                            M11 = 0.;
+                            M12 = 0.;
+                            M21 = 0.;
+                            M22 = 0.;
+                            // there's no FEFaceValues on the other side (it's
+                            // ghosted), so we just pass the actual data we have
+                            // recevied from the neighboring ghosted polytope
+                            assemble_local_jumps_and_averages_ghost(
+                              M11,
+                              M12,
+                              M21,
+                              M22,
+                              fe_faces0,
+                              recv_values,
+                              recv_gradients,
+                              recv_jxws,
+                              penalty_constant,
+                              h_f);
+                            // distribute DoFs accordingly
+                            // fluxes
+                            neigh_polytope->get_dof_indices(
+                              local_dof_indices_neighbor);
+                            constraints.distribute_local_to_global(
+                              M11, local_dof_indices, system_matrix);
+                            constraints.distribute_local_to_global(
+                              M12,
+                              local_dof_indices,
+                              local_dof_indices_neighbor,
+                              system_matrix);
+                            constraints.distribute_local_to_global(
+                              M21,
+                              local_dof_indices_neighbor,
+                              local_dof_indices,
+                              system_matrix);
+                            constraints.distribute_local_to_global(
+                              M22, local_dof_indices_neighbor, system_matrix);
+                          } // ghosted polytope case
+                      }     // only once
+                  }         // internal face
+              }             // face loop
+            constraints.distribute_local_to_global(cell_matrix,
+                                                   local_dof_indices,
+                                                   system_matrix);
+          } // locally owned polytopes
+      }
+    system_matrix.compress(VectorOperation::add);
+  }
+
+
+
+  /**
+   * Compute SIPDG matrix as well as rhs vector.
+   * @note Hardcoded for $f=1$ and simplex elements.
+   * TODO: Pass Function object for boundary conditions and forcing term.
+   */
+  template <int dim, typename MatrixType, typename VectorType>
+  void
+  assemble_dg_matrix_on_standard_mesh(MatrixType               &system_matrix,
+                                      VectorType               &system_rhs,
+                                      const Mapping<dim>       &mapping,
+                                      const FiniteElement<dim> &fe_dg,
+                                      const DoFHandler<dim>    &dof_handler)
+  {
+    static_assert(
+      (std::is_same_v<MatrixType, TrilinosWrappers::SparseMatrix> ||
+       std::is_same_v<MatrixType,
+                      SparseMatrix<typename MatrixType::value_type>>));
+
+    Assert((dynamic_cast<const FE_SimplexDGP<dim> *>(&fe_dg) != nullptr),
+           DEAL_II_NOT_IMPLEMENTED());
+
+    Assert(dof_handler.get_triangulation().all_reference_cells_are_simplex(),
+           ExcNotImplemented());
+
+    const double penalty_constant = .5 * fe_dg.degree * (fe_dg.degree + 1);
+    AffineConstraints<typename MatrixType::value_type> constraints;
+    constraints.close();
+
+    const IndexSet &locally_owned_dofs = dof_handler.locally_owned_dofs();
+    const IndexSet  locally_relevant_dofs =
+      DoFTools::extract_locally_relevant_dofs(dof_handler);
+
+    DynamicSparsityPattern dsp(locally_relevant_dofs);
+    DoFTools::make_flux_sparsity_pattern(dof_handler, dsp);
+    SparsityTools::distribute_sparsity_pattern(
+      dsp,
+      dof_handler.locally_owned_dofs(),
+      dof_handler.get_mpi_communicator(),
+      locally_relevant_dofs);
+
+    system_matrix.reinit(locally_owned_dofs,
+                         locally_owned_dofs,
+                         dsp,
+                         dof_handler.get_communicator());
+
+    system_rhs.reinit(locally_owned_dofs, dof_handler.get_communicator());
+
+    const unsigned int quadrature_degree = fe_dg.degree + 1;
+    FEFaceValues<dim>  fe_faces0(mapping,
+                                fe_dg,
+                                QGaussSimplex<dim - 1>(quadrature_degree),
+                                update_values | update_JxW_values |
+                                  update_gradients | update_quadrature_points |
+                                  update_normal_vectors);
+
+
+    FEValues<dim> fe_values(mapping,
+                            fe_dg,
+                            QGaussSimplex<dim>(quadrature_degree),
+                            update_values | update_JxW_values |
+                              update_gradients | update_quadrature_points);
+
+    FEFaceValues<dim>  fe_faces1(mapping,
+                                fe_dg,
+                                QGaussSimplex<dim - 1>(quadrature_degree),
+                                update_values | update_JxW_values |
+                                  update_gradients | update_quadrature_points |
+                                  update_normal_vectors);
+    const unsigned int dofs_per_cell = fe_dg.n_dofs_per_cell();
+
+    FullMatrix<double> cell_matrix(dofs_per_cell, dofs_per_cell);
+    Vector<double>     cell_rhs(dofs_per_cell);
+
+    FullMatrix<double> M11(dofs_per_cell, dofs_per_cell);
+    FullMatrix<double> M12(dofs_per_cell, dofs_per_cell);
+    FullMatrix<double> M21(dofs_per_cell, dofs_per_cell);
+    FullMatrix<double> M22(dofs_per_cell, dofs_per_cell);
+
+    std::vector<types::global_dof_index> local_dof_indices(dofs_per_cell);
+
+    // Loop over standard deal.II cells
+    for (const auto &cell : dof_handler.active_cell_iterators())
+      {
+        if (cell->is_locally_owned())
+          {
+            cell_matrix = 0.;
+            cell_rhs    = 0.;
+
+            fe_values.reinit(cell);
+
+            // const auto &q_points = fe_values.get_quadrature_points();
+            // const unsigned int n_qpoints = q_points.size();
+
+            for (unsigned int q_index : fe_values.quadrature_point_indices())
+              {
+                for (unsigned int i = 0; i < dofs_per_cell; ++i)
+                  {
+                    for (unsigned int j = 0; j < dofs_per_cell; ++j)
+                      {
+                        cell_matrix(i, j) += fe_values.shape_grad(i, q_index) *
+                                             fe_values.shape_grad(j, q_index) *
+                                             fe_values.JxW(q_index);
+                      }
+                    cell_rhs(i) +=
+                      fe_values.shape_value(i, q_index) * 1. *
+                      fe_values.JxW(q_index); // TODO: pass functional
+                  }
+              }
+
+            // distribute volumetric DoFs
+            cell->get_dof_indices(local_dof_indices);
+            double hf = 0.;
+            for (const auto f : cell->face_indices())
+              {
+                const double extent1 =
+                  cell->measure() / cell->face(f)->measure();
+
+                if (cell->face(f)->at_boundary())
+                  {
+                    hf = (1. / extent1 + 1. / extent1);
+                    fe_faces0.reinit(cell, f);
+
+                    const auto &normals = fe_faces0.get_normal_vectors();
+                    for (unsigned int q_index :
+                         fe_faces0.quadrature_point_indices())
+                      {
+                        for (unsigned int i = 0; i < dofs_per_cell; ++i)
+                          {
+                            for (unsigned int j = 0; j < dofs_per_cell; ++j)
+                              {
+                                cell_matrix(i, j) +=
+                                  (-fe_faces0.shape_value(i, q_index) *
+                                     fe_faces0.shape_grad(j, q_index) *
+                                     normals[q_index] -
+                                   fe_faces0.shape_grad(i, q_index) *
+                                     normals[q_index] *
+                                     fe_faces0.shape_value(j, q_index) +
+                                   (penalty_constant * hf) *
+                                     fe_faces0.shape_value(i, q_index) *
+                                     fe_faces0.shape_value(j, q_index)) *
+                                  fe_faces0.JxW(q_index);
+                              }
+                            cell_rhs(i) +=
+                              0.; // TODO: add bdary conditions functional
+                          }
+                      }
+                  }
+                else
+                  {
+                    const auto &neigh_cell = cell->neighbor(f);
+                    if (cell->global_active_cell_index() <
+                        neigh_cell->global_active_cell_index())
+                      {
+                        const double extent2 =
+                          neigh_cell->measure() /
+                          neigh_cell->face(cell->neighbor_of_neighbor(f))
+                            ->measure();
+                        hf = (1. / extent1 + 1. / extent2);
+                        fe_faces0.reinit(cell, f);
+                        fe_faces1.reinit(neigh_cell,
+                                         cell->neighbor_of_neighbor(f));
+
+                        std::vector<types::global_dof_index>
+                          local_dof_indices_neighbor(dofs_per_cell);
+
+                        M11 = 0.;
+                        M12 = 0.;
+                        M21 = 0.;
+                        M22 = 0.;
+
+                        const auto &normals = fe_faces0.get_normal_vectors();
+                        // M11
+                        for (unsigned int q_index :
+                             fe_faces0.quadrature_point_indices())
+                          {
+                            for (unsigned int i = 0; i < dofs_per_cell; ++i)
+                              {
+                                for (unsigned int j = 0; j < dofs_per_cell; ++j)
+                                  {
+                                    M11(i, j) +=
+                                      (-0.5 * fe_faces0.shape_grad(i, q_index) *
+                                         normals[q_index] *
+                                         fe_faces0.shape_value(j, q_index) -
+                                       0.5 * fe_faces0.shape_grad(j, q_index) *
+                                         normals[q_index] *
+                                         fe_faces0.shape_value(i, q_index) +
+                                       (penalty_constant * hf) *
+                                         fe_faces0.shape_value(i, q_index) *
+                                         fe_faces0.shape_value(j, q_index)) *
+                                      fe_faces0.JxW(q_index);
+
+                                    M12(i, j) +=
+                                      (0.5 * fe_faces0.shape_grad(i, q_index) *
+                                         normals[q_index] *
+                                         fe_faces1.shape_value(j, q_index) -
+                                       0.5 * fe_faces1.shape_grad(j, q_index) *
+                                         normals[q_index] *
+                                         fe_faces0.shape_value(i, q_index) -
+                                       (penalty_constant * hf) *
+                                         fe_faces0.shape_value(i, q_index) *
+                                         fe_faces1.shape_value(j, q_index)) *
+                                      fe_faces1.JxW(q_index);
+
+                                    // A10
+                                    M21(i, j) +=
+                                      (-0.5 * fe_faces1.shape_grad(i, q_index) *
+                                         normals[q_index] *
+                                         fe_faces0.shape_value(j, q_index) +
+                                       0.5 * fe_faces0.shape_grad(j, q_index) *
+                                         normals[q_index] *
+                                         fe_faces1.shape_value(i, q_index) -
+                                       (penalty_constant * hf) *
+                                         fe_faces1.shape_value(i, q_index) *
+                                         fe_faces0.shape_value(j, q_index)) *
+                                      fe_faces1.JxW(q_index);
+
+                                    // A11
+                                    M22(i, j) +=
+                                      (0.5 * fe_faces1.shape_grad(i, q_index) *
+                                         normals[q_index] *
+                                         fe_faces1.shape_value(j, q_index) +
+                                       0.5 * fe_faces1.shape_grad(j, q_index) *
+                                         normals[q_index] *
+                                         fe_faces1.shape_value(i, q_index) +
+                                       (penalty_constant * hf) *
+                                         fe_faces1.shape_value(i, q_index) *
+                                         fe_faces1.shape_value(j, q_index)) *
+                                      fe_faces1.JxW(q_index);
+                                  }
+                              }
+                          }
+
+                        // distribute DoFs accordingly
+
+                        neigh_cell->get_dof_indices(local_dof_indices_neighbor);
+
+                        constraints.distribute_local_to_global(
+                          M11, local_dof_indices, system_matrix);
+                        constraints.distribute_local_to_global(
+                          M12,
+                          local_dof_indices,
+                          local_dof_indices_neighbor,
+                          system_matrix);
+                        constraints.distribute_local_to_global(
+                          M21,
+                          local_dof_indices_neighbor,
+                          local_dof_indices,
+                          system_matrix);
+                        constraints.distribute_local_to_global(
+                          M22, local_dof_indices_neighbor, system_matrix);
+
+                      } // check idx neighbors
+                  }     // over faces
+              }
+            constraints.distribute_local_to_global(cell_matrix,
+                                                   cell_rhs,
+                                                   local_dof_indices,
+                                                   system_matrix,
+                                                   system_rhs);
+          }
+      }
+    system_matrix.compress(VectorOperation::add);
+    system_rhs.compress(VectorOperation::add);
   }
 
 
