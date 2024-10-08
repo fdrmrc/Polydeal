@@ -71,8 +71,6 @@ template <typename VectorType, typename MatrixType, typename SolverType>
 class MGCoarseDirect : public MGCoarseGridBase<VectorType>
 {
 public:
-  // using  = typename
-  // LinearAlgebra::distributed::Vector<MatrixType::value_type>;
   MGCoarseDirect(const MatrixType &matrix)
   {
     coarse_matrix = &matrix;
@@ -224,7 +222,8 @@ template <int dim>
 void
 AgglomeratedMultigridSimplex<dim>::agglomerate_and_compute_level_matrices()
 {
-  using VectorType = TrilinosWrappers::MPI::Vector;
+  using VectorType = LinearAlgebra::distributed::Vector<
+    double>; // TrilinosWrappers::MPI::Vector;
   GridTools::Cache<dim> cached_tria(tria_pft, mapping);
 
   // Define matrix free operator
@@ -349,7 +348,7 @@ AgglomeratedMultigridSimplex<dim>::agglomerate_and_compute_level_matrices()
         << injection_matrices_two_level.back().n() << std::endl;
 
 
-  TrilinosWrappers::MPI::Vector system_rhs;
+  VectorType      system_rhs;
   const IndexSet &locally_owned_dofs = dof_handler.locally_owned_dofs();
   system_rhs.reinit(locally_owned_dofs, comm);
 
@@ -413,10 +412,8 @@ AgglomeratedMultigridSimplex<dim>::agglomerate_and_compute_level_matrices()
   smoother_data.resize(0, total_tree_levels + 1);
 
   // Fine level
-  std::vector<TrilinosWrappers::MPI::Vector> diag_inverses(total_tree_levels +
-                                                           1);
-  diag_inverses[total_tree_levels].reinit(dof_handler.locally_owned_dofs(),
-                                          comm);
+  std::vector<VectorType> diag_inverses(total_tree_levels + 1);
+  diag_inverses[total_tree_levels].reinit(locally_owned_dofs, comm);
 
   // Set exact diagonal for each operator
   for (unsigned int i =
@@ -518,7 +515,13 @@ AgglomeratedMultigridSimplex<dim>::agglomerate_and_compute_level_matrices()
   // Finally, solve.
 
   VectorType solution;
-  solution.reinit(system_rhs.locally_owned_elements());
+  if constexpr (std::is_same_v<VectorType,
+                               LinearAlgebra::distributed::Vector<double>>)
+    solution.reinit(locally_owned_dofs, comm);
+  else if constexpr (std::is_same_v<VectorType, TrilinosWrappers::MPI::Vector>)
+    solution.reinit(system_rhs.locally_owned_elements(), comm);
+  else
+    DEAL_II_NOT_IMPLEMENTED();
 
   ReductionControl     solver_control(10000, 1e-12, 1e-9);
   SolverCG<VectorType> cg(solver_control);
@@ -647,7 +650,7 @@ template <int dim>
 void
 AgglomeratedMultigridSimplex<dim>::run()
 {
-  make_fine_grid(3);
+  make_fine_grid(4);
   agglomerate_and_compute_level_matrices();
   pcout << std::endl;
 }
