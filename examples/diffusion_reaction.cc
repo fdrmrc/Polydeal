@@ -17,12 +17,16 @@
 // where Omega = [0,1]^3
 //
 
+#define HEX
+
 #include <deal.II/base/conditional_ostream.h>
 #include <deal.II/base/mpi.h>
 #include <deal.II/base/utilities.h>
 
 #include <deal.II/distributed/fully_distributed_tria.h>
 #include <deal.II/distributed/tria.h>
+
+#include <deal.II/fe/mapping_fe.h>
 
 #include <deal.II/grid/grid_generator.h>
 #include <deal.II/grid/grid_tools.h>
@@ -307,9 +311,16 @@ private:
   void
   output_results() const;
 
-  const MPI_Comm                                 comm;
-  const unsigned int                             n_ranks;
-  FE_DGQ<dim>                                    fe_dg;
+  const MPI_Comm comm;
+#ifdef HEX
+  MappingQ1<dim> mapping;
+  FE_DGQ<dim>    fe_dg;
+#else
+  MappingFE<dim>     mapping;
+  FE_SimplexDGP<dim> fe_dg;
+#endif
+  const unsigned int n_ranks;
+
   const unsigned int                             n_local_agglomerates;
   const double                                   reaction_coefficient;
   parallel::fullydistributed::Triangulation<dim> tria_pft;
@@ -340,8 +351,13 @@ DiffusionReactionProblem<dim>::DiffusionReactionProblem(
   const double       reaction_coefficient,
   const MPI_Comm     communicator)
   : comm(communicator)
-  , n_ranks(Utilities::MPI::n_mpi_processes(comm))
+#ifdef HEX
+  , mapping()
+#else
+  , mapping(FE_SimplexP<dim>{1})
+#endif
   , fe_dg(degree)
+  , n_ranks(Utilities::MPI::n_mpi_processes(comm))
   , n_local_agglomerates(n_local_agglomerates)
   , reaction_coefficient(reaction_coefficient)
   , tria_pft(comm)
@@ -359,8 +375,15 @@ DiffusionReactionProblem<dim>::make_fine_grid(
   const unsigned int n_global_refinements)
 {
   Triangulation<dim> tria;
+#ifdef HEX
   GridGenerator::hyper_cube(tria);
   tria.refine_global(n_global_refinements);
+#else
+  Triangulation<dim> tria_hex;
+  GridGenerator::hyper_cube(tria_hex, 0., 1.);
+  tria_hex.refine_global(n_global_refinements - 1);
+  GridGenerator::convert_hypercube_to_simplex_mesh(tria_hex, tria);
+#endif
 
   // Partition serial triangulation:
   GridTools::partition_triangulation(n_ranks, tria);
@@ -384,26 +407,12 @@ DiffusionReactionProblem<dim>::setup_agglomerated_problem(
 
   ah = std::make_unique<AgglomerationHandler<dim>>(cached_tria);
 
-  //   pcout << "Rank " << my_rank << " has "
-  //         << tria_pft.n_locally_owned_active_cells() << std::endl;
-
   // Call the METIS partitioner to agglomerate within each processor.
-  PolyUtils::partition_locally_owned_regions(n_local_agglomerates,
+  PolyUtils::partition_locally_owned_regions(*ah,
+                                             n_local_agglomerates,
                                              tria_pft,
                                              SparsityTools::Partitioner::metis);
   pcout << "Number of cells: " << tria_pft.n_global_active_cells() << std::endl;
-
-  // Agglomerate cells together based on their material id
-  std::vector<std::vector<typename Triangulation<dim>::active_cell_iterator>>
-    cells_per_material_id(n_local_agglomerates);
-  for (const auto &cell : tria_pft.active_cell_iterators())
-    if (cell->is_locally_owned())
-      cells_per_material_id[cell->material_id()].push_back(cell);
-
-
-  // Agglomerate elements with same id
-  for (std::size_t i = 0; i < cells_per_material_id.size(); ++i)
-    ah->define_agglomerate(cells_per_material_id[i]);
 }
 
 
@@ -414,13 +423,21 @@ DiffusionReactionProblem<dim>::assemble_system()
 {
   constraints.close();
 
-  const unsigned int quadrature_degree      = 2 * fe_dg.get_degree() + 1;
-  const unsigned int face_quadrature_degree = 2 * fe_dg.get_degree() + 1;
+  const unsigned int quadrature_degree      = fe_dg.get_degree() + 1;
+  const unsigned int face_quadrature_degree = fe_dg.get_degree() + 1;
+#ifdef HEX
   ah->initialize_fe_values(QGauss<dim>(quadrature_degree),
-                           update_values | update_gradients |
-                             update_JxW_values | update_quadrature_points,
-                           QGauss<dim - 1>(face_quadrature_degree),
-                           update_JxW_values);
+                           update_gradients | update_JxW_values |
+                             update_quadrature_points | update_JxW_values |
+                             update_values,
+                           QGauss<dim - 1>(face_quadrature_degree));
+#else
+  ah->initialize_fe_values(QGaussSimplex<dim>(quadrature_degree),
+                           update_gradients | update_JxW_values |
+                             update_quadrature_points | update_JxW_values |
+                             update_values,
+                           QGaussSimplex<dim - 1>(face_quadrature_degree));
+#endif
 
   ah->distribute_agglomerated_dofs(fe_dg);
 
@@ -834,7 +851,11 @@ main(int argc, char *argv[])
   // number of agglomerates in each local subdomain
   const unsigned int n_local_agglomerates = 10;
   const double       reaction_coefficient = .5;
+#ifdef HEX
   for (unsigned int degree : {1, 2, 3, 4})
+#else
+  for (unsigned int degree : {1, 2, 3}) // degree > 4 not implemented
+#endif
     {
       DiffusionReactionProblem<dim> problem(n_local_agglomerates,
                                             degree,
