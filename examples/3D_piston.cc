@@ -895,7 +895,7 @@ main(int argc, char *argv[])
   // Setup agglomeration data for rtree and METIS
   AgglomerationData rtree_data;
   rtree_data.partitioning_strategy   = PartitionerType::rtree;
-  rtree_data.agglomeration_parameter = 3; // extraction level
+  rtree_data.agglomeration_parameter = 2; // extraction level
 
   AgglomerationData metis_data;
   metis_data.partitioning_strategy = PartitionerType::metis;
@@ -904,8 +904,9 @@ main(int argc, char *argv[])
                                        comm)); // number of local agglomerates
 
   const unsigned int reaction_coefficient = 0.;
-  for (const AgglomerationData &agglomeration_strategy : {metis_data})
-    for (unsigned int degree : {1, 1, 1, 1})
+  for (const AgglomerationData &agglomeration_strategy :
+       {rtree_data, metis_data})
+    for (unsigned int degree : {1, 2, 3, 4, 5, 6})
       {
         DiffusionReactionProblem<dim> problem(agglomeration_strategy,
                                               degree,
