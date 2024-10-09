@@ -1,6 +1,5 @@
 var NAVTREEINDEX11 =
 {
-"namespacenumbers.html#a9b7cf507f7010dde825c4baae64281ad":[1,0,93,17],
 "namespacenumbers.html#a9c39a5de95e4d11173378431dc2131fe":[1,0,93,22],
 "namespacenumbers.html#a9d8a06c48390b73768e88e1c6d4d5323":[1,0,93,18],
 "namespacenumbers.html#aa176b80c6b694da8e78d61504bce9a64":[1,0,93,6],
@@ -86,7 +85,7 @@ var NAVTREEINDEX11 =
 "packaged__operation__for__mg_8h_source.html":[3,0,0,0,0,8],
 "pages.html":[],
 "poly__utils_8h.html":[3,0,0,0,0,9],
-"poly__utils_8h.html#a03c416000585c023db89c43a3bca9b6c":[3,0,0,0,0,9,15],
+"poly__utils_8h.html#a03c416000585c023db89c43a3bca9b6c":[3,0,0,0,0,9,14],
 "poly__utils_8h.html#a168e98040c43aa123c04ef5de5ffd359":[3,0,0,0,0,9,10],
 "poly__utils_8h.html#a1a82a5c9715de902af2b6cf4ae63c17f":[3,0,0,0,0,9,9],
 "poly__utils_8h.html#a36f50c815c9532815b4fc1c11a14f5b1":[3,0,0,0,0,9,8],
@@ -97,8 +96,7 @@ var NAVTREEINDEX11 =
 "poly__utils_8h.html#a89da96594fcfe50937b5bd5da3a376e7":[3,0,0,0,0,9,5],
 "poly__utils_8h.html#a9b1f017e9d2cedf0e4362bf8a7d62419":[3,0,0,0,0,9,1],
 "poly__utils_8h.html#ac329601a2032214e06afc75f5a983bab":[3,0,0,0,0,9,4],
-"poly__utils_8h.html#ad6f1fca872412757fc04040515e032c1":[3,0,0,0,0,9,14],
-"poly__utils_8h.html#ad94a7dc5014ab8ac5b88867735515976":[3,0,0,0,0,9,16],
+"poly__utils_8h.html#ad94a7dc5014ab8ac5b88867735515976":[3,0,0,0,0,9,15],
 "poly__utils_8h.html#adaa85317847a77d75fa0144435cde0ae":[3,0,0,0,0,9,7],
 "poly__utils_8h.html#ae3f565fb628b75fe8a7d15ea427a16fe":[3,0,0,0,0,9,12],
 "poly__utils_8h.html#af3f69f2eb83fd6281070f540543c1207":[3,0,0,0,0,9,11],
@@ -249,5 +247,7 @@ var NAVTREEINDEX11 =
 "structinternal_1_1TriangulationImplementation_1_1TriaObjects_1_1BoundaryOrMaterialId.html":[1,0,56,65,0],
 "structparallel_1_1TriangulationBase_1_1NumberCache.html":[1,0,95,4],
 "topics.html":[0],
-"utils_8h.html":[3,0,0,0,0,10]
+"utils_8h.html":[3,0,0,0,0,10],
+"utils_8h.html#a3e561fe27b3225c8c9b1c40e024d0feb":[3,0,0,0,0,10,5],
+"utils_8h.html#a58bea36407f8872592c4b3ac0f7111c3":[3,0,0,0,0,10,6]
 };

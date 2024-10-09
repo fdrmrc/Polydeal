@@ -14,7 +14,6 @@ var poly__utils_8h =
     [ "get_index", "poly__utils_8h.html#af3f69f2eb83fd6281070f540543c1207", null ],
     [ "interpolate_to_fine_grid", "poly__utils_8h.html#ae3f565fb628b75fe8a7d15ea427a16fe", null ],
     [ "interpolate_to_fine_grid", "poly__utils_8h.html#a3a2d6c62e29956de180bcf696b13734b", null ],
-    [ "partition_locally_owned_regions", "poly__utils_8h.html#ad6f1fca872412757fc04040515e032c1", null ],
     [ "partition_locally_owned_regions", "poly__utils_8h.html#a03c416000585c023db89c43a3bca9b6c", null ],
     [ "write_to_matrix_market_format", "poly__utils_8h.html#ad94a7dc5014ab8ac5b88867735515976", null ]
 ];
