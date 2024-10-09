@@ -486,6 +486,7 @@ Poisson<dim>::Poisson(const GridType        &grid_type,
     analytical_solution = std::make_unique<SolutionProductSine<dim>>();
 
   rhs_function = std::make_unique<const RightHandSide<dim>>(solution_type);
+  constraints.close();
 }
 
 template <int dim>
@@ -546,11 +547,22 @@ Poisson<dim>::make_grid()
       GridTools::partition_triangulation(n_subdomains,
                                          tria,
                                          SparsityTools::Partitioner::metis);
+
+      std::vector<
+        std::vector<typename Triangulation<dim>::active_cell_iterator>>
+        cells_per_subdomain(n_subdomains);
+      for (const auto &cell : tria.active_cell_iterators())
+        cells_per_subdomain[cell->subdomain_id()].push_back(cell);
+
+      // For every subdomain, agglomerate elements together
+      for (std::size_t i = 0; i < n_subdomains; ++i)
+        ah->define_agglomerate(cells_per_subdomain[i]);
+
+
       std::chrono::duration<double> wctduration =
         (std::chrono::system_clock::now() - start);
       std::cout << "METIS built in " << wctduration.count()
                 << " seconds [Wall Clock]" << std::endl;
-      std::cout << "N subdomains: " << n_subdomains << std::endl;
     }
   else if (partitioner_type == PartitionerType::rtree)
     {
@@ -580,28 +592,17 @@ Poisson<dim>::make_grid()
 
       CellsAgglomerator<dim, decltype(tree)> agglomerator{tree,
                                                           extraction_level};
-      const auto agglomerates = agglomerator.extract_agglomerates();
+      const auto vec_agglomerates = agglomerator.extract_agglomerates();
       // ah->connect_hierarchy(agglomerator);
 
       // Flag elements for agglomeration
-      unsigned int agglo_index = 0;
-      for (unsigned int i = 0; i < agglomerates.size(); ++i)
-        {
-          const auto &agglo = agglomerates[i]; // i-th agglomerate
-          for (const auto &el : agglo)
-            {
-              el->set_subdomain_id(agglo_index);
-            }
-          ++agglo_index;
-        }
+      for (const auto &agglo : vec_agglomerates)
+        ah->define_agglomerate(agglo);
 
       std::chrono::duration<double> wctduration =
         (std::chrono::system_clock::now() - start);
       std::cout << "R-tree agglomerates built in " << wctduration.count()
                 << " seconds [Wall Clock]" << std::endl;
-      n_subdomains = agglo_index;
-
-      std::cout << "N subdomains = " << n_subdomains << std::endl;
 
       // Check number of agglomerates
       if constexpr (dim == 2)
@@ -634,34 +635,19 @@ Poisson<dim>::make_grid()
     {
       Assert(false, ExcMessage("Wrong partitioning."));
     }
-
-
-  constraints.close();
+  n_subdomains = ah->n_agglomerates();
+  std::cout << "N subdomains = " << n_subdomains << std::endl;
 }
 
 template <int dim>
 void
 Poisson<dim>::setup_agglomeration()
 {
-  if (partitioner_type != PartitionerType::no_partition)
-    {
-      std::vector<
-        std::vector<typename Triangulation<dim>::active_cell_iterator>>
-        cells_per_subdomain(n_subdomains);
-      for (const auto &cell : tria.active_cell_iterators())
-        cells_per_subdomain[cell->subdomain_id()].push_back(cell);
-
-      // For every subdomain, agglomerate elements together
-      for (std::size_t i = 0; i < cells_per_subdomain.size(); ++i)
-        ah->define_agglomerate(cells_per_subdomain[i]);
-    }
-  else
+  if (partitioner_type == PartitionerType::no_partition)
     {
       // No partitioning means that each cell is a master cell
       for (const auto &cell : tria.active_cell_iterators())
-        {
-          ah->define_agglomerate({cell});
-        }
+        ah->define_agglomerate({cell});
     }
 
   ah->distribute_agglomerated_dofs(dg_fe);
@@ -1036,23 +1022,32 @@ Poisson<dim>::output_results()
     PolyUtils::interpolate_to_fine_grid(*ah,
                                         interpolated_solution,
                                         solution,
-                                        true /*no_the_fly*/);
+                                        true /*on_the_fly*/);
     data_out.attach_dof_handler(ah->output_dh);
     data_out.add_data_vector(interpolated_solution,
                              "u",
                              DataOut<dim>::type_dof_data);
 
-    Vector<float> agglomerated(tria.n_active_cells());
     Vector<float> agglo_idx(tria.n_active_cells());
-    for (const auto &cell : tria.active_cell_iterators())
+
+    // Mark fine cells belonging to the same agglomerate.
+    for (const auto &polytope : ah->polytope_iterators())
       {
-        agglomerated[cell->active_cell_index()] =
-          ah->get_relationships()[cell->active_cell_index()];
-        agglo_idx[cell->active_cell_index()] = cell->subdomain_id();
+        const types::global_cell_index polytope_index = polytope->index();
+        const auto &patch_of_cells = polytope->get_agglomerate(); // fine cells
+        // Flag them
+        for (const auto &cell : patch_of_cells)
+          agglo_idx[cell->active_cell_index()] = polytope_index;
       }
-    data_out.add_data_vector(agglomerated,
-                             "agglo_relationships",
-                             DataOut<dim>::type_cell_data);
+
+    // Old way, here just for completeness
+    // for (const auto &cell : tria.active_cell_iterators())
+    // {
+    //   agglomerated[cell->active_cell_index()] =
+    //     ah->get_relationships()[cell->active_cell_index()];
+    //   agglo_idx[cell->active_cell_index()] = cell->subdomain_id();
+    // }
+
     data_out.add_data_vector(agglo_idx,
                              "agglo_idx",
                              DataOut<dim>::type_cell_data);

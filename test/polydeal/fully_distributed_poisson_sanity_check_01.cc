@@ -166,25 +166,15 @@ main(int argc, char *argv[])
   const unsigned int n_local_agglomerates =
     10; // number of agglomerates in each local subdomain
 
-  // Call the METIS partitioner to agglomerate within each processor.
-  PolyUtils::partition_locally_owned_regions(n_local_agglomerates,
-                                             tria_pft,
-                                             SparsityTools::Partitioner::metis);
-
   // Setup the agglomeration handler.
   GridTools::Cache<dim>     cached_tria(tria_pft);
   AgglomerationHandler<dim> ah(cached_tria);
 
-  // Agglomerate cells together based on their material id
-  std::vector<std::vector<typename Triangulation<dim>::active_cell_iterator>>
-    cells_per_subdomain(n_local_agglomerates);
-  for (const auto &cell : tria_pft.active_cell_iterators())
-    if (cell->is_locally_owned())
-      cells_per_subdomain[cell->material_id()].push_back(cell);
-
-  // Agglomerate elements with same id
-  for (std::size_t i = 0; i < cells_per_subdomain.size(); ++i)
-    ah.define_agglomerate(cells_per_subdomain[i]);
+  // Call the METIS partitioner to agglomerate within each processor.
+  PolyUtils::partition_locally_owned_regions(ah,
+                                             n_local_agglomerates,
+                                             tria_pft,
+                                             SparsityTools::Partitioner::metis);
 
 
   FE_DGQ<2> fe_dg(1);
