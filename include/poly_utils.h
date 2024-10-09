@@ -650,8 +650,8 @@ namespace dealii::PolyUtils
       (parallel_triangulation != nullptr),
       ExcMessage(
         "Only fully distributed triangulations are supported. If you are using"
-        "a parallel::distributed::triangulation, you must convert it to a fully"
-        "distributed as explained in the documentation."));
+        "a parallel::distributed::triangulation, you must convert it to a"
+        "fully distributed as explained in the documentation."));
 
     // check for an easy return
     if (n_partitions == 1)

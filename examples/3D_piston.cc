@@ -423,18 +423,13 @@ DiffusionReactionProblem<dim>::setup_agglomerated_problem()
 
   ah = std::make_unique<AgglomerationHandler<dim>>(cached_tria);
 
-  // Agglomerate cells together based on their material id.
-  //   The following vector stores cells with same material id, i.e.:
-  //   v[material_id] = {cells with same id}
-  std::vector<std::vector<typename Triangulation<dim>::active_cell_iterator>>
-    cells_per_material_id;
-
+  double start, stop;
+  start = MPI_Wtime();
   if (agglomeration_data.partitioning_strategy == PartitionerType::metis)
     {
-      cells_per_material_id.resize(agglomeration_data.agglomeration_parameter);
-
       // Call the METIS partitioner to agglomerate within each processor.
       PolyUtils::partition_locally_owned_regions(
+        *ah,
         agglomeration_data.agglomeration_parameter,
         tria_pft,
         SparsityTools::Partitioner::metis);
@@ -466,18 +461,8 @@ DiffusionReactionProblem<dim>::setup_agglomerated_problem()
         tree, agglomeration_data.agglomeration_parameter);
       const auto &agglomerates = csr_and_agglomerates.second; // vec<vec<>>
 
-      std::size_t agglo_index = 0;
-      for (std::size_t i = 0; i < agglomerates.size(); ++i)
-        {
-          const auto &agglo = agglomerates[i];
-          for (const auto &el : agglo)
-            el->set_material_id(agglo_index);
-
-          ++agglo_index; // one agglomerate has been processed, increment
-                         // counter
-        }
-
-      cells_per_material_id.resize(agglo_index);
+      for (const auto &agglo : agglomerates)
+        ah->define_agglomerate(agglo);
 
 #ifdef AGGLO_DEBUG
       std::cout << "N agglomerates in process "
@@ -492,22 +477,10 @@ DiffusionReactionProblem<dim>::setup_agglomerated_problem()
 
   // Irrespective of the partitioner strategy, define agglomerates based on the
   // material_id(s) attached to each cell.
-
-  for (const auto &cell : tria_pft.active_cell_iterators())
-    if (cell->is_locally_owned())
-      cells_per_material_id[cell->material_id()].push_back(cell);
-
-  // Agglomerate elements with same id
-  for (std::size_t i = 0; i < cells_per_material_id.size(); ++i)
-    ah->define_agglomerate(cells_per_material_id[i]);
-
-  const unsigned int n_agglomerates =
-    agglomeration_data.partitioning_strategy == PartitionerType::rtree ?
-      Utilities::MPI::sum(cells_per_material_id.size(), comm) :
-      Utilities::MPI::n_mpi_processes(comm) *
-        agglomeration_data.agglomeration_parameter;
-
-  pcout << "Total number of agglomerates: " << n_agglomerates << std::endl;
+  stop = MPI_Wtime();
+  pcout << "Total number of agglomerates: " << ah->n_agglomerates()
+        << std::endl;
+  pcout << "Agglomeration performed in " << stop - start << "[s]" << std::endl;
 }
 
 
@@ -922,7 +895,7 @@ main(int argc, char *argv[])
   // Setup agglomeration data for rtree and METIS
   AgglomerationData rtree_data;
   rtree_data.partitioning_strategy   = PartitionerType::rtree;
-  rtree_data.agglomeration_parameter = 2; // extraction level
+  rtree_data.agglomeration_parameter = 3; // extraction level
 
   AgglomerationData metis_data;
   metis_data.partitioning_strategy = PartitionerType::metis;
@@ -931,9 +904,8 @@ main(int argc, char *argv[])
                                        comm)); // number of local agglomerates
 
   const unsigned int reaction_coefficient = 0.;
-  for (const AgglomerationData &agglomeration_strategy :
-       {rtree_data, metis_data})
-    for (unsigned int degree : {1, 2, 3, 4, 5, 6})
+  for (const AgglomerationData &agglomeration_strategy : {metis_data})
+    for (unsigned int degree : {1, 1, 1, 1})
       {
         DiffusionReactionProblem<dim> problem(agglomeration_strategy,
                                               degree,
