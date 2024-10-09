@@ -16,6 +16,7 @@ var namespacedealii_1_1_poly_utils =
     [ "extract_children_of_level", "namespacedealii_1_1_poly_utils.html#a36f50c815c9532815b4fc1c11a14f5b1", null ],
     [ "fill_interpolation_matrix", "namespacedealii_1_1_poly_utils.html#a1a82a5c9715de902af2b6cf4ae63c17f", null ],
     [ "interpolate_to_fine_grid", "namespacedealii_1_1_poly_utils.html#a3a2d6c62e29956de180bcf696b13734b", null ],
+    [ "partition_locally_owned_regions", "namespacedealii_1_1_poly_utils.html#ad6f1fca872412757fc04040515e032c1", null ],
     [ "partition_locally_owned_regions", "namespacedealii_1_1_poly_utils.html#a03c416000585c023db89c43a3bca9b6c", null ],
     [ "write_to_matrix_market_format", "namespacedealii_1_1_poly_utils.html#ad94a7dc5014ab8ac5b88867735515976", null ]
 ];
