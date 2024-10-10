@@ -123,10 +123,11 @@ namespace Utils
     const DoFHandler<dim, spacedim> &coarse_agglo_dh = coarse_ah.agglo_dh;
     const DoFHandler<dim, spacedim> &fine_agglo_dh   = fine_ah.agglo_dh;
 
-    const FiniteElement<dim, spacedim> &fe   = coarse_ah.get_fe();
-    const Triangulation<dim, spacedim> &tria = coarse_ah.get_triangulation();
-    const auto &fine_bboxes                  = fine_ah.get_local_bboxes();
-    const auto &coarse_bboxes                = coarse_ah.get_local_bboxes();
+    const Mapping<dim, spacedim>       &mapping = fine_ah.get_mapping();
+    const FiniteElement<dim, spacedim> &fe      = coarse_ah.get_fe();
+    const Triangulation<dim, spacedim> &tria    = coarse_ah.get_triangulation();
+    const auto &fine_bboxes                     = fine_ah.get_local_bboxes();
+    const auto &coarse_bboxes                   = coarse_ah.get_local_bboxes();
 
     const IndexSet &locally_owned_dofs_fine =
       fine_agglo_dh.locally_owned_dofs();
@@ -158,7 +159,8 @@ namespace Utils
     const std::vector<Point<dim>> &unit_support_points =
       fe.get_unit_support_points();
     Quadrature<dim>         quad(unit_support_points);
-    FEValues<dim, spacedim> output_fe_values(fe,
+    FEValues<dim, spacedim> output_fe_values(mapping,
+                                             fe,
                                              quad,
                                              update_quadrature_points);
 
