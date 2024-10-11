@@ -1,5 +1,6 @@
 var NAVTREEINDEX7 =
 {
+"namespacePETScWrappers.html#a94003e9313ce836dd13031ae6f952021":[1,0,99,38],
 "namespacePETScWrappers.html#a956893cad9432599da42a8e9ad9a3268":[1,0,99,41],
 "namespacePETScWrappers.html#a9d33413928ade4a309ced69ea3a16f02":[1,0,99,39],
 "namespacePETScWrappers.html#aa754466358da3761f5d1384817c352a2":[1,0,99,43],
@@ -248,6 +249,5 @@ var NAVTREEINDEX7 =
 "namespaceUtilities_1_1LinearAlgebra.html":[1,0,159,1],
 "namespaceUtilities_1_1LinearAlgebra.html#a19ce01cf01ee57e2b1237944154646e6":[1,0,159,1,0],
 "namespaceUtilities_1_1LinearAlgebra.html#a33aa7919799a8f798916c463aa88096a":[1,0,159,1,1],
-"namespaceUtilities_1_1LinearAlgebra.html#a69997c210f5555324bfa16cf09edf389":[1,0,159,1,2],
-"namespaceUtilities_1_1LinearAlgebra.html#adb6a07778a777bcebaed91b93803fc52":[1,0,159,1,3]
+"namespaceUtilities_1_1LinearAlgebra.html#a69997c210f5555324bfa16cf09edf389":[1,0,159,1,2]
 };

@@ -1,6 +1,10 @@
 var poly__utils_8h =
 [
     [ "dealii::PolyUtils::Rtree_visitor< Value, Options, Translator, Box, Allocators >", "structdealii_1_1_poly_utils_1_1_rtree__visitor.html", "structdealii_1_1_poly_utils_1_1_rtree__visitor" ],
+    [ "assemble_dg_matrix", "poly__utils_8h.html#a8fc58c58eacf627d5278ac9f8bd78e5a", null ],
+    [ "assemble_dg_matrix_on_standard_mesh", "poly__utils_8h.html#ac9696906f5e8165f2e16ff98b1525e3c", null ],
+    [ "assemble_local_jumps_and_averages", "poly__utils_8h.html#a1d4e82d54ac3a718686f9ba3981ff09b", null ],
+    [ "assemble_local_jumps_and_averages_ghost", "poly__utils_8h.html#aa70d1820d1294f9d8359390f7364cf68", null ],
     [ "collect_cells_for_agglomeration", "poly__utils_8h.html#a9b1f017e9d2cedf0e4362bf8a7d62419", null ],
     [ "compute_global_error", "poly__utils_8h.html#a51fbc401a4fa9fbca80447e90f8e833d", null ],
     [ "compute_h_orthogonal", "poly__utils_8h.html#a692c4e431675a877af2ebcdfa416129b", null ],

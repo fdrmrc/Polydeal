@@ -223,7 +223,7 @@ Additional Inherited Members</h2></td></tr>
 class Utils::MGCoarseDirect&lt; VectorType, MatrixType, SolverType &gt;</div><p>This class implements the interface required by <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classMGCoarseGridBase.html">MGCoarseGridBase</a> and allows a direct to be used as coarse grid solver in the <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classMultigrid.html">Multigrid</a> framework. The SolverType is provided as template parameter.</p>
 <dl class="section note"><dt>Note</dt><dd>Supported direct solver types are: <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classSparseDirectUMFPACK.html">SparseDirectUMFPACK</a> and <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classTrilinosWrappers_1_1SolverDirect.html">TrilinosWrappers::SolverDirect</a>. Available vector types are the ones supported by the respective solve() (or vmult()) interfaces by such types. This means that <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classSparseDirectUMFPACK.html">SparseDirectUMFPACK</a> supports only serial deal.II vectors, while <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classTrilinosWrappers_1_1SolverDirect.html">TrilinosWrappers::SolverDirect</a> supports as parallel vector types: <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classLinearAlgebra_1_1distributed_1_1Vector.html">LinearAlgebra::distributed::Vector</a> and <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classTrilinosWrappers_1_1MPI_1_1Vector.html">TrilinosWrappers::MPI::Vector</a>. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="utils_8h_source.html#l00285">285</a> of file <a class="el" href="utils_8h_source.html">utils.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="utils_8h_source.html#l00287">287</a> of file <a class="el" href="utils_8h_source.html">utils.h</a>.</p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a7c5ba75efdcfd482588f6051de493795" name="a7c5ba75efdcfd482588f6051de493795"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a7c5ba75efdcfd482588f6051de493795">&#9670;&#160;</a></span>MGCoarseDirect()</h2>
@@ -250,9 +250,9 @@ template&lt;typename VectorType , typename MatrixType , typename SolverType &gt;
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="utils_8h_source.html#l00288">288</a> of file <a class="el" href="utils_8h_source.html">utils.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="utils_8h_source.html#l00290">290</a> of file <a class="el" href="utils_8h_source.html">utils.h</a>.</p>
 
-<p class="reference">References <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/group__Exceptions.html#ga70a0bb353656e704acf927945277bbc6">Assert</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/group__Exceptions.html#gafc0ca7ad85b3ebd64e8e51689ac85caf">AssertThrow</a>, <a class="el" href="utils_8h_source.html#l00347">Utils::MGCoarseDirect&lt; VectorType, MatrixType, SolverType &gt;::coarse_matrix</a>, and <a class="el" href="utils_8h_source.html#l00346">Utils::MGCoarseDirect&lt; VectorType, MatrixType, SolverType &gt;::direct_solver</a>.</p>
+<p class="reference">References <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/group__Exceptions.html#ga70a0bb353656e704acf927945277bbc6">Assert</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/group__Exceptions.html#gafc0ca7ad85b3ebd64e8e51689ac85caf">AssertThrow</a>, <a class="el" href="utils_8h_source.html#l00349">Utils::MGCoarseDirect&lt; VectorType, MatrixType, SolverType &gt;::coarse_matrix</a>, and <a class="el" href="utils_8h_source.html#l00348">Utils::MGCoarseDirect&lt; VectorType, MatrixType, SolverType &gt;::direct_solver</a>.</p>
 
 </div>
 </div>
@@ -320,9 +320,9 @@ template&lt;typename VectorType , typename MatrixType , typename SolverType &gt;
 
 <p>Implements <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classMGCoarseGridBase.html#a13586c0a904fa67d6a18639cec23e1d8">MGCoarseGridBase&lt; VectorType &gt;</a>.</p>
 
-<p class="definition">Definition at line <a class="el" href="utils_8h_source.html#l00333">333</a> of file <a class="el" href="utils_8h_source.html">utils.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="utils_8h_source.html#l00335">335</a> of file <a class="el" href="utils_8h_source.html">utils.h</a>.</p>
 
-<p class="reference">References <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/group__Exceptions.html#ga9442b63275c9ef3fab29bc222831c49c">AssertDimension</a>, <a class="el" href="utils_8h_source.html#l00347">Utils::MGCoarseDirect&lt; VectorType, MatrixType, SolverType &gt;::coarse_matrix</a>, and <a class="el" href="utils_8h_source.html#l00346">Utils::MGCoarseDirect&lt; VectorType, MatrixType, SolverType &gt;::direct_solver</a>.</p>
+<p class="reference">References <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/group__Exceptions.html#ga9442b63275c9ef3fab29bc222831c49c">AssertDimension</a>, <a class="el" href="utils_8h_source.html#l00349">Utils::MGCoarseDirect&lt; VectorType, MatrixType, SolverType &gt;::coarse_matrix</a>, and <a class="el" href="utils_8h_source.html#l00348">Utils::MGCoarseDirect&lt; VectorType, MatrixType, SolverType &gt;::direct_solver</a>.</p>
 
 </div>
 </div>
@@ -349,9 +349,9 @@ template&lt;typename VectorType , typename MatrixType , typename SolverType &gt;
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="utils_8h_source.html#l00347">347</a> of file <a class="el" href="utils_8h_source.html">utils.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="utils_8h_source.html#l00349">349</a> of file <a class="el" href="utils_8h_source.html">utils.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="utils_8h_source.html#l00288">Utils::MGCoarseDirect&lt; VectorType, MatrixType, SolverType &gt;::MGCoarseDirect()</a>, and <a class="el" href="utils_8h_source.html#l00333">Utils::MGCoarseDirect&lt; VectorType, MatrixType, SolverType &gt;::operator()()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="utils_8h_source.html#l00290">Utils::MGCoarseDirect&lt; VectorType, MatrixType, SolverType &gt;::MGCoarseDirect()</a>, and <a class="el" href="utils_8h_source.html#l00335">Utils::MGCoarseDirect&lt; VectorType, MatrixType, SolverType &gt;::operator()()</a>.</p>
 
 </div>
 </div>
@@ -377,9 +377,9 @@ template&lt;typename VectorType , typename MatrixType , typename SolverType &gt;
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="utils_8h_source.html#l00346">346</a> of file <a class="el" href="utils_8h_source.html">utils.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="utils_8h_source.html#l00348">348</a> of file <a class="el" href="utils_8h_source.html">utils.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="utils_8h_source.html#l00288">Utils::MGCoarseDirect&lt; VectorType, MatrixType, SolverType &gt;::MGCoarseDirect()</a>, and <a class="el" href="utils_8h_source.html#l00333">Utils::MGCoarseDirect&lt; VectorType, MatrixType, SolverType &gt;::operator()()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="utils_8h_source.html#l00290">Utils::MGCoarseDirect&lt; VectorType, MatrixType, SolverType &gt;::MGCoarseDirect()</a>, and <a class="el" href="utils_8h_source.html#l00335">Utils::MGCoarseDirect&lt; VectorType, MatrixType, SolverType &gt;::operator()()</a>.</p>
 
 </div>
 </div>
@@ -392,7 +392,7 @@ template&lt;typename VectorType , typename MatrixType , typename SolverType &gt;
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="namespace_utils.html">Utils</a></li><li class="navelem"><a class="el" href="class_utils_1_1_m_g_coarse_direct.html">MGCoarseDirect</a></li>
-    <li class="footer">Generated on Wed Oct 9 2024 23:51:57 for PolyDEAL by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.12.0 </li>
+    <li class="footer">Generated on Fri Oct 11 2024 13:38:37 for PolyDEAL by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.12.0 </li>
   </ul>
 </div>
 </body>

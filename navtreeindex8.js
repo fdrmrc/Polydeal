@@ -1,5 +1,6 @@
 var NAVTREEINDEX8 =
 {
+"namespaceUtilities_1_1LinearAlgebra.html#adb6a07778a777bcebaed91b93803fc52":[1,0,159,1,3],
 "namespaceUtilities_1_1MPI.html":[1,0,159,2],
 "namespaceUtilities_1_1MPI.html#a0428ea9ec9654d2915b191ea4a16df7c":[1,0,159,2,13],
 "namespaceUtilities_1_1MPI.html#a0f63877dd733054770ef0d0dcdac11a1":[1,0,159,2,25],
@@ -248,6 +249,5 @@ var NAVTREEINDEX8 =
 "namespaceVectorTools.html#af32b7918d1e58b6a86d10ec1e67e1d9e":[1,0,162,65],
 "namespaceVectorTools.html#af3cddbcbf0e162ab79a605827d39ddfb":[1,0,162,23],
 "namespaceVectorTools.html#af4ad38096beaa86b74afdb4685e497fe":[1,0,162,94],
-"namespaceVectorTools.html#af640cf368b1ff7317f29af9ab9382ebf":[1,0,162,90],
-"namespaceVectorTools.html#af684d35718b1cebe33e435c3c6529db9":[1,0,162,68]
+"namespaceVectorTools.html#af640cf368b1ff7317f29af9ab9382ebf":[1,0,162,90]
 };

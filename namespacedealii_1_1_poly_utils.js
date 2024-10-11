@@ -6,6 +6,10 @@ var namespacedealii_1_1_poly_utils =
       [ "interpolate_to_fine_grid", "namespacedealii_1_1_poly_utils_1_1internal.html#ae3f565fb628b75fe8a7d15ea427a16fe", null ]
     ] ],
     [ "Rtree_visitor", "structdealii_1_1_poly_utils_1_1_rtree__visitor.html", "structdealii_1_1_poly_utils_1_1_rtree__visitor" ],
+    [ "assemble_dg_matrix", "namespacedealii_1_1_poly_utils.html#a8fc58c58eacf627d5278ac9f8bd78e5a", null ],
+    [ "assemble_dg_matrix_on_standard_mesh", "namespacedealii_1_1_poly_utils.html#ac9696906f5e8165f2e16ff98b1525e3c", null ],
+    [ "assemble_local_jumps_and_averages", "namespacedealii_1_1_poly_utils.html#a1d4e82d54ac3a718686f9ba3981ff09b", null ],
+    [ "assemble_local_jumps_and_averages_ghost", "namespacedealii_1_1_poly_utils.html#aa70d1820d1294f9d8359390f7364cf68", null ],
     [ "collect_cells_for_agglomeration", "namespacedealii_1_1_poly_utils.html#a9b1f017e9d2cedf0e4362bf8a7d62419", null ],
     [ "compute_global_error", "namespacedealii_1_1_poly_utils.html#a51fbc401a4fa9fbca80447e90f8e833d", null ],
     [ "compute_h_orthogonal", "namespacedealii_1_1_poly_utils.html#a692c4e431675a877af2ebcdfa416129b", null ],

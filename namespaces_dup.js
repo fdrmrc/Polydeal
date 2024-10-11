@@ -1110,6 +1110,7 @@ var namespaces_dup =
     [ "MatrixFreeTools", "http://www.dealii.org/developer/doxygen/deal.II/namespaceMatrixFreeTools.html", [
       [ "ElementActivationAndDeactivationMatrixFree", "http://www.dealii.org/developer/doxygen/deal.II/structMatrixFreeTools_1_1ElementActivationAndDeactivationMatrixFree_1_1AdditionalData.html", null ],
       [ "internal", "http://www.dealii.org/developer/doxygen/deal.II/namespaceMatrixFreeTools_1_1internal.html", [
+        [ "compute_diagonal", "http://www.dealii.org/developer/doxygen/deal.II/namespaceMatrixFreeTools_1_1internal.html#a85753f2bb2be6aec0ea16a6dc02af2a4", null ],
         [ "compute_matrix", "http://www.dealii.org/developer/doxygen/deal.II/namespaceMatrixFreeTools_1_1internal.html#acb78c45fcc59ccad0f4f9e46940e1d67", null ]
       ] ],
       [ "categorize_by_boundary_ids", "http://www.dealii.org/developer/doxygen/deal.II/namespaceMatrixFreeTools.html#ae034b98c0db11285fae23a08ef3f197f", null ],

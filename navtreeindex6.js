@@ -124,7 +124,8 @@ var NAVTREEINDEX6 =
 "namespaceMatrixFreeTools.html#ab99c72c701d4186b777d596c3c9aeca3":[1,0,79,11],
 "namespaceMatrixFreeTools.html#ae034b98c0db11285fae23a08ef3f197f":[1,0,79,2],
 "namespaceMatrixFreeTools_1_1internal.html":[1,0,79,1],
-"namespaceMatrixFreeTools_1_1internal.html#acb78c45fcc59ccad0f4f9e46940e1d67":[1,0,79,1,0],
+"namespaceMatrixFreeTools_1_1internal.html#a85753f2bb2be6aec0ea16a6dc02af2a4":[1,0,79,1,0],
+"namespaceMatrixFreeTools_1_1internal.html#acb78c45fcc59ccad0f4f9e46940e1d67":[1,0,79,1,1],
 "namespaceMatrixTableIterators.html":[1,0,80],
 "namespaceMatrixTableIterators.html#a071affcab0c2e4302df96f2d1540bd08":[1,0,80,0],
 "namespaceMatrixTools.html":[1,0,81],
@@ -248,6 +249,5 @@ var NAVTREEINDEX6 =
 "namespacePETScWrappers.html#a6645c531402dea1261df31b70460241f":[1,0,99,44],
 "namespacePETScWrappers.html#a6e4de5043f4a8fce572e9271f08bf21e":[1,0,99,37],
 "namespacePETScWrappers.html#a7dbfbf49ec7ca7b75e85ec45480f3097":[1,0,99,33],
-"namespacePETScWrappers.html#a93e3a16c124f4ef1a9b1ec47bfa851a4":[1,0,99,30],
-"namespacePETScWrappers.html#a94003e9313ce836dd13031ae6f952021":[1,0,99,38]
+"namespacePETScWrappers.html#a93e3a16c124f4ef1a9b1ec47bfa851a4":[1,0,99,30]
 };
