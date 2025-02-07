@@ -2037,11 +2037,10 @@ namespace dealii::PolyUtils
 
     DynamicSparsityPattern dsp(locally_relevant_dofs);
     DoFTools::make_flux_sparsity_pattern(dof_handler, dsp);
-    SparsityTools::distribute_sparsity_pattern(
-      dsp,
-      dof_handler.locally_owned_dofs(),
-      dof_handler.get_communicator(),
-      locally_relevant_dofs);
+    SparsityTools::distribute_sparsity_pattern(dsp,
+                                               dof_handler.locally_owned_dofs(),
+                                               dof_handler.get_communicator(),
+                                               locally_relevant_dofs);
 
     system_matrix.reinit(locally_owned_dofs,
                          locally_owned_dofs,

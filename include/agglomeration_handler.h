@@ -14,8 +14,8 @@
 
 #include <deal.II/base/mpi.h>
 #include <deal.II/base/quadrature.h>
-#include <deal.II/base/subscriptor.h>
 #include <deal.II/base/smartpointer.h>
+#include <deal.II/base/subscriptor.h>
 
 #include <deal.II/distributed/shared_tria.h>
 #include <deal.II/distributed/tria.h>
