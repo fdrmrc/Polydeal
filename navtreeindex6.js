@@ -1,8 +1,5 @@
 var NAVTREEINDEX6 =
 {
-"namespaceLinearAlgebraPETSc_1_1MPI.html#a8d8a6b85124838cb4998151c0a2cb60f":[1,0,65,0,9],
-"namespaceLinearAlgebraPETSc_1_1MPI.html#aad9d5a3f5f28412efdb2e8b8f31d4e6f":[1,0,65,0,8],
-"namespaceLinearAlgebraPETSc_1_1MPI.html#abee1d4aa6f0af5290aa7d51806bde982":[1,0,65,0,4],
 "namespaceLinearAlgebraPETSc_1_1MPI.html#ae89d4062649e06d66ca86c2d812a717c":[1,0,65,0,5],
 "namespaceLinearAlgebraTrilinos.html":[1,0,66],
 "namespaceLinearAlgebraTrilinos.html#a15dc1560501d6bec5adadd22d3401a12":[1,0,66,2],
@@ -249,5 +246,8 @@ var NAVTREEINDEX6 =
 "namespacePETScWrappers.html#a6645c531402dea1261df31b70460241f":[1,0,99,44],
 "namespacePETScWrappers.html#a6e4de5043f4a8fce572e9271f08bf21e":[1,0,99,37],
 "namespacePETScWrappers.html#a7dbfbf49ec7ca7b75e85ec45480f3097":[1,0,99,33],
-"namespacePETScWrappers.html#a93e3a16c124f4ef1a9b1ec47bfa851a4":[1,0,99,30]
+"namespacePETScWrappers.html#a93e3a16c124f4ef1a9b1ec47bfa851a4":[1,0,99,30],
+"namespacePETScWrappers.html#a94003e9313ce836dd13031ae6f952021":[1,0,99,38],
+"namespacePETScWrappers.html#a956893cad9432599da42a8e9ad9a3268":[1,0,99,41],
+"namespacePETScWrappers.html#a9d33413928ade4a309ced69ea3a16f02":[1,0,99,39]
 };

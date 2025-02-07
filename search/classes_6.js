@@ -17,11 +17,12 @@ var searchData=
   ['gnuplotflags_14',['GnuplotFlags',['http://www.dealii.org/developer/doxygen/deal.II/structDataOutBase_1_1GnuplotFlags.html',1,'DataOutBase']]],
   ['gnuplotpatch_15',['GnuplotPatch',['http://www.dealii.org/developer/doxygen/deal.II/classMeshWorker_1_1Assembler_1_1GnuplotPatch.html',1,'MeshWorker::Assembler']]],
   ['gradient_16',['Gradient',['http://www.dealii.org/developer/doxygen/deal.II/classDerivativeApproximation_1_1internal_1_1Gradient.html',1,'DerivativeApproximation::internal']]],
-  ['graph_17',['Graph',['../struct_utils_1_1_graph.html',1,'Utils']]],
-  ['gridin_18',['GridIn',['http://www.dealii.org/developer/doxygen/deal.II/classGridIn.html',1,'']]],
-  ['gridout_19',['GridOut',['http://www.dealii.org/developer/doxygen/deal.II/classGridOut.html',1,'']]],
-  ['group_20',['Group',['http://www.dealii.org/developer/doxygen/deal.II/classHDF5_1_1Group.html',1,'HDF5']]],
-  ['growingvectormemory_21',['GrowingVectorMemory',['http://www.dealii.org/developer/doxygen/deal.II/classGrowingVectorMemory.html',1,'']]],
-  ['growingvectormemory_3c_20blockvector_3c_20number_20_3e_20_3e_22',['GrowingVectorMemory&lt; BlockVector&lt; number &gt; &gt;',['http://www.dealii.org/developer/doxygen/deal.II/classGrowingVectorMemory.html',1,'']]],
-  ['growingvectormemory_3c_20vectortype_20_3e_23',['GrowingVectorMemory&lt; VectorType &gt;',['http://www.dealii.org/developer/doxygen/deal.II/classGrowingVectorMemory.html',1,'']]]
+  ['gradient_3c_20dim_20_3e_17',['Gradient&lt; dim &gt;',['http://www.dealii.org/developer/doxygen/deal.II/classDerivativeApproximation_1_1internal_1_1Gradient.html',1,'DerivativeApproximation::internal']]],
+  ['graph_18',['Graph',['../struct_utils_1_1_graph.html',1,'Utils']]],
+  ['gridin_19',['GridIn',['http://www.dealii.org/developer/doxygen/deal.II/classGridIn.html',1,'']]],
+  ['gridout_20',['GridOut',['http://www.dealii.org/developer/doxygen/deal.II/classGridOut.html',1,'']]],
+  ['group_21',['Group',['http://www.dealii.org/developer/doxygen/deal.II/classHDF5_1_1Group.html',1,'HDF5']]],
+  ['growingvectormemory_22',['GrowingVectorMemory',['http://www.dealii.org/developer/doxygen/deal.II/classGrowingVectorMemory.html',1,'']]],
+  ['growingvectormemory_3c_20blockvector_3c_20number_20_3e_20_3e_23',['GrowingVectorMemory&lt; BlockVector&lt; number &gt; &gt;',['http://www.dealii.org/developer/doxygen/deal.II/classGrowingVectorMemory.html',1,'']]],
+  ['growingvectormemory_3c_20vectortype_20_3e_24',['GrowingVectorMemory&lt; VectorType &gt;',['http://www.dealii.org/developer/doxygen/deal.II/classGrowingVectorMemory.html',1,'']]]
 ];

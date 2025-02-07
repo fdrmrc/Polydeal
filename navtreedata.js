@@ -63,16 +63,16 @@ var NAVTREEINDEX =
 "class_mapping_box.html#a492a698486ea16a66ef96e55d959096d",
 "classinternal_1_1_linear_operator_m_g_implementation_1_1_reinit_helper.html#a9d7fc85cfc7de507bb82f1f9f59522e3",
 "group__mapping.html#ggac6eaf900d562c52002dbccc6bdd89275a7102924e4ddcdc9bd3c133e3e153e0c4",
-"namespaceDoFRenumbering.html#ac0fc02412874d5f7ed86c731d7d83980",
-"namespaceGridGenerator.html#a6f31aa1d176dd99c2183efdb4b9cb5f5",
-"namespaceLinearAlgebraPETSc_1_1MPI.html#a8d8a6b85124838cb4998151c0a2cb60f",
-"namespacePETScWrappers.html#a94003e9313ce836dd13031ae6f952021",
-"namespaceUtilities_1_1LinearAlgebra.html#adb6a07778a777bcebaed91b93803fc52",
-"namespaceVectorTools.html#af684d35718b1cebe33e435c3c6529db9",
-"namespaceinternal_1_1FunctionParser.html#a70fdf0f80ad43d9c96dc955a40d8a2a4",
-"namespacenumbers.html#a8ae36952c7e0cc778b47b5371b3aeff1",
-"structdealii_1_1internal_1_1_rtree__visitor.html#ad9ee9486eeb6174b097e2b2ed297ddf6"
+"namespaceDoFRenumbering.html#ae4f7cfab2fb42abd2688222e5f22f168",
+"namespaceGridGenerator.html#a843fe2c5c77374c51fcd18f05690b902",
+"namespaceLinearAlgebraPETSc_1_1MPI.html#ae89d4062649e06d66ca86c2d812a717c",
+"namespacePETScWrappers.html#aa754466358da3761f5d1384817c352a2",
+"namespaceUtilities_1_1LinearAlgebra.html#a19ce01cf01ee57e2b1237944154646e6",
+"namespaceVectorTools.html#af32b7918d1e58b6a86d10ec1e67e1d9e",
+"namespaceinternal_1_1FilteredIteratorImplementation.html",
+"namespacenumbers.html#a3efb17e06723b8cc5948d7e4e9548c74",
+"structinternal_1_1DoFAccessorImplementation_1_1Implementation_1_1DoFIndexProcessor.html"
 ];
 
-var SYNCONMSG = 'click to disable panel synchronisation';
-var SYNCOFFMSG = 'click to enable panel synchronisation';
+var SYNCONMSG = 'click to disable panel synchronization';
+var SYNCOFFMSG = 'click to enable panel synchronization';

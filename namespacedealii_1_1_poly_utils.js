@@ -13,7 +13,7 @@ var namespacedealii_1_1_poly_utils =
     [ "collect_cells_for_agglomeration", "namespacedealii_1_1_poly_utils.html#a9b1f017e9d2cedf0e4362bf8a7d62419", null ],
     [ "compute_global_error", "namespacedealii_1_1_poly_utils.html#a51fbc401a4fa9fbca80447e90f8e833d", null ],
     [ "compute_h_orthogonal", "namespacedealii_1_1_poly_utils.html#a692c4e431675a877af2ebcdfa416129b", null ],
-    [ "compute_quality_metrics", "namespacedealii_1_1_poly_utils.html#ac329601a2032214e06afc75f5a983bab", null ],
+    [ "compute_quality_metrics", "namespacedealii_1_1_poly_utils.html#adb0b2d7bec9f878f1cc4580fafea738e", null ],
     [ "constexpr_pow", "namespacedealii_1_1_poly_utils.html#a89da96594fcfe50937b5bd5da3a376e7", null ],
     [ "construct_agglomerated_levels", "namespacedealii_1_1_poly_utils.html#a77f890d646c3d8fc496cc84e953747ed", null ],
     [ "export_polygon_to_csv_file", "namespacedealii_1_1_poly_utils.html#adaa85317847a77d75fa0144435cde0ae", null ],

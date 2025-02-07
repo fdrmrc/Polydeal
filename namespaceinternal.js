@@ -15,7 +15,15 @@ var namespaceinternal =
       [ "append_patch_to_list", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1DataOutRotationImplementation.html#ad148136c236f89348962324fc3ed0cf3", null ]
     ] ],
     [ "DoFAccessorImplementation", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1DoFAccessorImplementation.html", [
-      [ "get_cell_dof_indices", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1DoFAccessorImplementation.html#a08d8357939bbb47711415fcd7b5653f2", null ]
+      [ "Implementation", "http://www.dealii.org/developer/doxygen/deal.II/structinternal_1_1DoFAccessorImplementation_1_1Implementation_1_1DoFIndexProcessor.html", null ],
+      [ "get_cell_dof_indices", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1DoFAccessorImplementation.html#a08d8357939bbb47711415fcd7b5653f2", null ],
+      [ "get_cell_dof_indices", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1DoFAccessorImplementation.html#ae73b994e5a72a98aff466c6a4ca20637", null ],
+      [ "get_fe_index_or_default", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1DoFAccessorImplementation.html#a50a1fb03f13240c165dd9ead963cb99d", null ]
+    ] ],
+    [ "DoFCellAccessorImplementation", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1DoFCellAccessorImplementation.html", [
+      [ "get_face", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1DoFCellAccessorImplementation.html#a615adabc07319070c255cddd94a15edd", null ],
+      [ "get_face", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1DoFCellAccessorImplementation.html#a2f2983a0b59a5e0d642af585795473e1", null ],
+      [ "get_face", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1DoFCellAccessorImplementation.html#ac659aeea163384f01872d785ce978952", null ]
     ] ],
     [ "DoFHandlerImplementation", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1DoFHandlerImplementation.html", null ],
     [ "FE_BDM", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1FE__BDM.html", null ],
@@ -327,7 +335,7 @@ var namespaceinternal =
       [ "n_cells", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1TriangulationImplementation.html#af7741abe7d6d11f56b29a555f1afb2d5", null ],
       [ "n_cells", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1TriangulationImplementation.html#a26bf383b0f54799d7882a2867add1f02", null ],
       [ "reserve_space", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1TriangulationImplementation.html#ab1f99b23dabaeff541204830564738e5", null ],
-      [ "reserve_space", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1TriangulationImplementation.html#a47642220096d652aa888a031b1e702be", null ],
+      [ "reserve_space", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1TriangulationImplementation.html#a2766aebb7b6dade91477e908faa01aac", null ],
       [ "reserve_space", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1TriangulationImplementation.html#ab213fce4d07ee17bf0f964fc8b631e4b", null ]
     ] ],
     [ "UtilitiesImplementation", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1UtilitiesImplementation.html", [
@@ -341,6 +349,7 @@ var namespaceinternal =
       [ "minimum_parallel_grain_size", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1VectorImplementation.html#aedaab350c757f9f778a41582a3e0b88c", null ]
     ] ],
     [ "VectorOperations", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1VectorOperations.html", [
+      [ "size_type", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1VectorOperations.html#ad71ef0063bb4afbfaa39182f5f1f2fb3", null ],
       [ "accumulate_recursive", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1VectorOperations.html#a09a8df6b5702056952cbdfd8bf851a54", null ],
       [ "copy", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1VectorOperations.html#a6b2af57142650ac86095f27a444e0355", null ],
       [ "copy", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1VectorOperations.html#a78e5e292980a79ec673cfae898cbb443", null ],
@@ -368,10 +377,10 @@ var namespaceinternal =
     [ "apply_exponential_map", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal.html#ac6c3e902920900cb2da0a80d13350eea", null ],
     [ "apply_matrix_vector_product", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal.html#a86004cbfb8a3bbf52dd577fa85282adb", null ],
     [ "apply_matrix_vector_product", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal.html#a42cc0ff9eb1744ad8d54293d803be44c", null ],
-    [ "apply_matrix_vector_product", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal.html#a86553292dff47aabd16bce4ea8ab7568", null ],
+    [ "apply_matrix_vector_product", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal.html#ae164113bd6e1e214389584d27019b126", null ],
     [ "assemble", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal.html#a2b3d48efdf7c94da455dc6a3553bab79", null ],
     [ "check_vector_compatibility", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal.html#a34c5fb12892625b30ac573fd71f64686", null ],
-    [ "combined_face_orientation", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal.html#abb5603b277e8d328a1b10472d6931355", null ],
+    [ "combined_face_orientation", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal.html#a0621da6ae34683342f6ec3adbbf281f9", null ],
     [ "compute_normal", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal.html#a37e3a5916390514d6c6215a43ef1c53a", null ],
     [ "compute_normal", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal.html#af260bac749a242fb79ca87327cd3316d", null ],
     [ "compute_values_of_array", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal.html#a1342cd0ea919843d006ce30915370808", null ],
@@ -461,7 +470,7 @@ var namespaceinternal =
     [ "set_ghost_state", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal.html#aadf183992767fd4a10ab2c8c57f6ab31", null ],
     [ "setup_nonprimitive_offset_table", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal.html#a08f21fb8e3509ecdc2d01955772bbd30", null ],
     [ "setup_primitive_offset_table", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal.html#a183f33c8a3ae365e6763b5d58014a5c7", null ],
-    [ "split_face_orientation", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal.html#a25a5e1a80e523f468f2f8e0ee401ac71", null ],
+    [ "split_face_orientation", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal.html#a5df570792d8ead0848534e5780fa6c3c", null ],
     [ "use_collocation_evaluation", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal.html#a2879ea8e9c8ad1d99a234569c675f3fb", null ],
     [ "vector_access", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal.html#a94892fd51cb3142441d13590ac4bb477", null ],
     [ "vector_access", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal.html#ade9e7660cfdf806d6311b476acddaa6f", null ],

@@ -325,7 +325,7 @@ var namespaces_dup =
         [ "make_oldstyle_hanging_node_constraints", "http://www.dealii.org/developer/doxygen/deal.II/namespaceDoFTools_1_1internal.html#a20eb35b94e472ea7b5e338c0912860b6", null ],
         [ "resolve_components", "http://www.dealii.org/developer/doxygen/deal.II/namespaceDoFTools_1_1internal.html#ab5b1cacb8c5c131d5e0f86742c64e226", null ],
         [ "resolve_components", "http://www.dealii.org/developer/doxygen/deal.II/namespaceDoFTools_1_1internal.html#abe866825835bb267b66e0a7b6a3908b6", null ],
-        [ "set_periodicity_constraints", "http://www.dealii.org/developer/doxygen/deal.II/namespaceDoFTools_1_1internal.html#ae33b256a07de3cf804082e76115a8d6b", null ]
+        [ "set_periodicity_constraints", "http://www.dealii.org/developer/doxygen/deal.II/namespaceDoFTools_1_1internal.html#a5ad8b255537b48e40e516a36e1472eb8", null ]
       ] ],
       [ "Coupling", "http://www.dealii.org/developer/doxygen/deal.II/namespaceDoFTools.html#ad31df71a29dd76de9b4ab241b2527160", null ],
       [ "compute_intergrid_constraints", "http://www.dealii.org/developer/doxygen/deal.II/group__constraints.html#ga5e36bb13a3f65495540b70203d1becda", null ],
@@ -402,7 +402,7 @@ var namespaces_dup =
       [ "make_periodicity_constraints", "http://www.dealii.org/developer/doxygen/deal.II/namespaceDoFTools.html#a991edb28f2f03530d7c2dc0eaf743d93", null ],
       [ "make_periodicity_constraints", "http://www.dealii.org/developer/doxygen/deal.II/namespaceDoFTools.html#a730347c0582a281b1fbea079d7906e6a", null ],
       [ "make_periodicity_constraints", "http://www.dealii.org/developer/doxygen/deal.II/namespaceDoFTools.html#a18ce27fc25a90f90cb650801edadbf5c", null ],
-      [ "make_periodicity_constraints", "http://www.dealii.org/developer/doxygen/deal.II/namespaceDoFTools.html#a24f73bf11d571f9d518ae7c7d29b67dc", null ],
+      [ "make_periodicity_constraints", "http://www.dealii.org/developer/doxygen/deal.II/namespaceDoFTools.html#af2bdda829a7d9eb27bf5d1ff171d0eae", null ],
       [ "make_periodicity_constraints", "http://www.dealii.org/developer/doxygen/deal.II/namespaceDoFTools.html#ac661389855012136b6ec0f9cf7a64392", null ],
       [ "make_single_patch", "http://www.dealii.org/developer/doxygen/deal.II/namespaceDoFTools.html#ab270041c339a188ba4cb050f0c561737", null ],
       [ "make_sparsity_pattern", "http://www.dealii.org/developer/doxygen/deal.II/group__constraints.html#ga509a2d1dae74297f72a55ed43883be9c", null ],
@@ -504,7 +504,7 @@ var namespaces_dup =
       [ "compute_block_renumbering", "http://www.dealii.org/developer/doxygen/deal.II/namespaceFETools.html#ad7f8f27696c0adadc316996b7281f096", null ],
       [ "compute_component_wise", "http://www.dealii.org/developer/doxygen/deal.II/namespaceFETools.html#a4945a239d321d126dfccce60a73a4e67", null ],
       [ "compute_embedding_matrices", "http://www.dealii.org/developer/doxygen/deal.II/namespaceFETools.html#ab655f76abed08ac8040373bea77ea419", null ],
-      [ "compute_face_embedding_matrices", "http://www.dealii.org/developer/doxygen/deal.II/namespaceFETools.html#ac0fe5c7f55db091a4477af7c3989b83c", null ],
+      [ "compute_face_embedding_matrices", "http://www.dealii.org/developer/doxygen/deal.II/namespaceFETools.html#acbe2b3d9c2cef32a401b2fa547717b80", null ],
       [ "compute_interpolation_to_quadrature_points_matrix", "http://www.dealii.org/developer/doxygen/deal.II/namespaceFETools.html#a860d229b5510b389a562ed701ad83811", null ],
       [ "compute_nodal_quadrature", "http://www.dealii.org/developer/doxygen/deal.II/namespaceFETools.html#a8964cf2fc0e899cb89b59f6abb0816c0", null ],
       [ "compute_node_matrix", "http://www.dealii.org/developer/doxygen/deal.II/namespaceFETools.html#aec3d342cc4d853430f07ad49d8bf2eab", null ],
@@ -650,7 +650,7 @@ var namespaces_dup =
       [ "generate_from_name_and_arguments", "http://www.dealii.org/developer/doxygen/deal.II/namespaceGridGenerator.html#a1e6c4dcc63863449f08a78a22ec73747", null ],
       [ "half_hyper_ball", "http://www.dealii.org/developer/doxygen/deal.II/namespaceGridGenerator.html#af218d0939daf0732e3b507a27ea5d8e3", null ],
       [ "half_hyper_shell", "http://www.dealii.org/developer/doxygen/deal.II/namespaceGridGenerator.html#a6f31aa1d176dd99c2183efdb4b9cb5f5", null ],
-      [ "hyper_ball", "http://www.dealii.org/developer/doxygen/deal.II/namespaceGridGenerator.html#a533c4778cbc9bcbed365dcab42ca4418", null ],
+      [ "hyper_ball", "http://www.dealii.org/developer/doxygen/deal.II/namespaceGridGenerator.html#a85407673a122b94c34cb520c9a591c56", null ],
       [ "hyper_ball_balanced", "http://www.dealii.org/developer/doxygen/deal.II/namespaceGridGenerator.html#a1a07e4609d568267cab4a2f0414cd913", null ],
       [ "hyper_cross", "http://www.dealii.org/developer/doxygen/deal.II/namespaceGridGenerator.html#a04f98a456ca1942a071d3a20ef5b4dbe", null ],
       [ "hyper_cube", "http://www.dealii.org/developer/doxygen/deal.II/namespaceGridGenerator.html#acea0cbcd68e52ce8113d1134b87de403", null ],
@@ -845,7 +845,7 @@ var namespaces_dup =
       [ "operator|", "http://www.dealii.org/developer/doxygen/deal.II/namespaceGridTools.html#a10dd90fb8c8cd12d2d1215a4cc4f270d", null ],
       [ "operator|=", "http://www.dealii.org/developer/doxygen/deal.II/namespaceGridTools.html#a0cb3d72a001ae5c9adb7362dca6a9141", null ],
       [ "operator~", "http://www.dealii.org/developer/doxygen/deal.II/namespaceGridTools.html#ad16a1564283fb76f8dc55443b0e6ee53", null ],
-      [ "orthogonal_equality", "http://www.dealii.org/developer/doxygen/deal.II/namespaceGridTools.html#a7a60d9597ed7e8bab3d4a8f75ca5a8f1", null ],
+      [ "orthogonal_equality", "http://www.dealii.org/developer/doxygen/deal.II/namespaceGridTools.html#ad44863eb4cee7585a67573abeba312c6", null ],
       [ "orthogonal_equality", "http://www.dealii.org/developer/doxygen/deal.II/namespaceGridTools.html#aa7c03f9ee7f93cfe3094528052c30f47", null ],
       [ "partition_multigrid_levels", "http://www.dealii.org/developer/doxygen/deal.II/namespaceGridTools.html#a70d37431a097d36fb7152c41e0352b5e", null ],
       [ "partition_triangulation", "http://www.dealii.org/developer/doxygen/deal.II/namespaceGridTools.html#a3c475677bc29b764e9fa5978d4d41f77", null ],
@@ -1310,18 +1310,19 @@ var namespaces_dup =
       [ "values_are_equal", "http://www.dealii.org/developer/doxygen/deal.II/namespacenumbers.html#a9b7cf507f7010dde825c4baae64281ad", null ],
       [ "values_are_equal", "http://www.dealii.org/developer/doxygen/deal.II/namespacenumbers.html#a9d8a06c48390b73768e88e1c6d4d5323", null ],
       [ "values_are_not_equal", "http://www.dealii.org/developer/doxygen/deal.II/namespacenumbers.html#a5513b372cdf4e3ddcc564a24079b3993", null ],
-      [ "artificial_subdomain_id", "http://www.dealii.org/developer/doxygen/deal.II/namespacenumbers.html#a6d6c05e3ebc1b572aebac0eb5348fc86", null ],
+      [ "artificial_subdomain_id", "http://www.dealii.org/developer/doxygen/deal.II/namespacenumbers.html#aadbae533debcb790f3ff81bd7ed1bfac", null ],
+      [ "default_geometric_orientation", "http://www.dealii.org/developer/doxygen/deal.II/namespacenumbers.html#aeb1820262b97d3d0dfa5bf8bcddb280e", null ],
       [ "E", "http://www.dealii.org/developer/doxygen/deal.II/namespacenumbers.html#a3c7239f00d5e87dfcf6dd19cbc3ddc74", null ],
-      [ "flat_manifold_id", "http://www.dealii.org/developer/doxygen/deal.II/namespacenumbers.html#a9c39a5de95e4d11173378431dc2131fe", null ],
-      [ "internal_face_boundary_id", "http://www.dealii.org/developer/doxygen/deal.II/namespacenumbers.html#a4e5d3fa25689151c833ba46dcc96fa5b", null ],
-      [ "invalid_boundary_id", "http://www.dealii.org/developer/doxygen/deal.II/namespacenumbers.html#a1745778880e38cde9ef045471f4757fd", null ],
-      [ "invalid_coarse_cell_id", "http://www.dealii.org/developer/doxygen/deal.II/namespacenumbers.html#a66235d056dbb97cedc56a6764f3f9c4c", null ],
-      [ "invalid_dof_index", "http://www.dealii.org/developer/doxygen/deal.II/namespacenumbers.html#ae99f39edfc25decfbafd43b65e95860d", null ],
-      [ "invalid_fe_index", "http://www.dealii.org/developer/doxygen/deal.II/namespacenumbers.html#a68833f614e75335310483b7aada89f80", null ],
-      [ "invalid_material_id", "http://www.dealii.org/developer/doxygen/deal.II/namespacenumbers.html#a0057e26e840aa2b146bf44499754774d", null ],
-      [ "invalid_size_type", "http://www.dealii.org/developer/doxygen/deal.II/namespacenumbers.html#aed814969c852ea1a9aa050cf02b73b80", null ],
-      [ "invalid_subdomain_id", "http://www.dealii.org/developer/doxygen/deal.II/namespacenumbers.html#a6fe5acece133d890bee8cc49ccd8ebfb", null ],
-      [ "invalid_unsigned_int", "http://www.dealii.org/developer/doxygen/deal.II/namespacenumbers.html#a8ae36952c7e0cc778b47b5371b3aeff1", null ],
+      [ "flat_manifold_id", "http://www.dealii.org/developer/doxygen/deal.II/namespacenumbers.html#a8e4c4139776e7995ac6b582ff729983e", null ],
+      [ "internal_face_boundary_id", "http://www.dealii.org/developer/doxygen/deal.II/namespacenumbers.html#a5947e3090af373127c322cf0208eb274", null ],
+      [ "invalid_boundary_id", "http://www.dealii.org/developer/doxygen/deal.II/namespacenumbers.html#a6aeef8d2e106a311e0c91bbff9b491ab", null ],
+      [ "invalid_coarse_cell_id", "http://www.dealii.org/developer/doxygen/deal.II/namespacenumbers.html#ae344da9c71ecfc232e58676d12e38a18", null ],
+      [ "invalid_dof_index", "http://www.dealii.org/developer/doxygen/deal.II/namespacenumbers.html#a01e2d594089c59bf94a1c42ff23421fd", null ],
+      [ "invalid_fe_index", "http://www.dealii.org/developer/doxygen/deal.II/namespacenumbers.html#af587009f87af4195355fc2e938e1b378", null ],
+      [ "invalid_material_id", "http://www.dealii.org/developer/doxygen/deal.II/namespacenumbers.html#ab381f495dbcfcdbfe1556dbbf60146de", null ],
+      [ "invalid_size_type", "http://www.dealii.org/developer/doxygen/deal.II/namespacenumbers.html#a4578b802c11f37fe149b392b71e1045f", null ],
+      [ "invalid_subdomain_id", "http://www.dealii.org/developer/doxygen/deal.II/namespacenumbers.html#ad5bb1f6a05e155d791ba61e78644d76c", null ],
+      [ "invalid_unsigned_int", "http://www.dealii.org/developer/doxygen/deal.II/namespacenumbers.html#a467f5cb204969e195914273bd5a84e33", null ],
       [ "LN10", "http://www.dealii.org/developer/doxygen/deal.II/namespacenumbers.html#ad343999a80da8a83a7f43148d2aa0c4f", null ],
       [ "LN2", "http://www.dealii.org/developer/doxygen/deal.II/namespacenumbers.html#ad4ab39ac17bcd93f7d4fc0d29c5c8b64", null ],
       [ "LOG10E", "http://www.dealii.org/developer/doxygen/deal.II/namespacenumbers.html#a021c0c69056f3f30c05bc450df948315", null ],
@@ -1329,6 +1330,7 @@ var namespaces_dup =
       [ "PI", "http://www.dealii.org/developer/doxygen/deal.II/namespacenumbers.html#a3e24f194a9cb9b6ff4442b8a7a877d4a", null ],
       [ "PI_2", "http://www.dealii.org/developer/doxygen/deal.II/namespacenumbers.html#a05c8aa45b7cf3c1c746cdf79e44dcffe", null ],
       [ "PI_4", "http://www.dealii.org/developer/doxygen/deal.II/namespacenumbers.html#aa36e80e99e5c662879bd3f89c8b9f0e4", null ],
+      [ "reverse_line_orientation", "http://www.dealii.org/developer/doxygen/deal.II/namespacenumbers.html#aadd70f063719af84af415b675a800a2c", null ],
       [ "SQRT1_2", "http://www.dealii.org/developer/doxygen/deal.II/namespacenumbers.html#a926438804f37336fd9454dcea3b02314", null ],
       [ "SQRT2", "http://www.dealii.org/developer/doxygen/deal.II/namespacenumbers.html#a7f90588abd23542c3855a4a3e59766f1", null ]
     ] ],
@@ -1381,7 +1383,8 @@ var namespaces_dup =
       [ "internal", "http://www.dealii.org/developer/doxygen/deal.II/namespaceparallel_1_1internal.html", [
         [ "apply_to_subranges", "http://www.dealii.org/developer/doxygen/deal.II/namespaceparallel_1_1internal.html#ae09eafb8b44a415f69adb915ad8df23b", null ],
         [ "parallel_for", "http://www.dealii.org/developer/doxygen/deal.II/namespaceparallel_1_1internal.html#a0b19ea24332541752fdbd6880b641b25", null ],
-        [ "parallel_for", "http://www.dealii.org/developer/doxygen/deal.II/namespaceparallel_1_1internal.html#a163b2d6c280a6ea8b721a819fbb1520b", null ]
+        [ "parallel_for", "http://www.dealii.org/developer/doxygen/deal.II/namespaceparallel_1_1internal.html#a163b2d6c280a6ea8b721a819fbb1520b", null ],
+        [ "taskflow_parallel_for", "http://www.dealii.org/developer/doxygen/deal.II/namespaceparallel_1_1internal.html#a9be22a07b6209b3f1f936579372ae20c", null ]
       ] ],
       [ "shared", "http://www.dealii.org/developer/doxygen/deal.II/namespaceparallel_1_1shared.html", null ],
       [ "TriangulationBase", "http://www.dealii.org/developer/doxygen/deal.II/structparallel_1_1TriangulationBase_1_1NumberCache.html", [
@@ -1437,6 +1440,7 @@ var namespaces_dup =
       ] ],
       [ "MatrixIterators", "http://www.dealii.org/developer/doxygen/deal.II/namespacePETScWrappers_1_1MatrixIterators.html", null ],
       [ "MPI", "http://www.dealii.org/developer/doxygen/deal.II/namespacePETScWrappers_1_1MPI.html", [
+        [ "size_type", "http://www.dealii.org/developer/doxygen/deal.II/namespacePETScWrappers_1_1MPI.html#aa42c73b325c6bf80822a53b5f60465af", null ],
         [ "swap", "http://www.dealii.org/developer/doxygen/deal.II/namespacePETScWrappers_1_1MPI.html#a6eb740cb3974671940dc394f635e72dc", null ],
         [ "swap", "http://www.dealii.org/developer/doxygen/deal.II/namespacePETScWrappers_1_1MPI.html#ab68a5e695e0b01646a5178561372812d", null ]
       ] ],
@@ -1507,6 +1511,9 @@ var namespaces_dup =
     [ "ReferenceCells", "http://www.dealii.org/developer/doxygen/deal.II/namespaceReferenceCells.html", [
       [ "get_hypercube", "http://www.dealii.org/developer/doxygen/deal.II/namespaceReferenceCells.html#a6dcaf877381d5bc2639da69a586ee9d4", null ],
       [ "get_simplex", "http://www.dealii.org/developer/doxygen/deal.II/namespaceReferenceCells.html#ace7fb0fa0c1a98b17ae9c6f6d2eaa650", null ],
+      [ "max_n_faces", "http://www.dealii.org/developer/doxygen/deal.II/namespaceReferenceCells.html#a872b21cb45b09532ed8a4fde9326cb0f", null ],
+      [ "max_n_lines", "http://www.dealii.org/developer/doxygen/deal.II/namespaceReferenceCells.html#a657dc95a28b4fe17a8357d955ef67234", null ],
+      [ "max_n_vertices", "http://www.dealii.org/developer/doxygen/deal.II/namespaceReferenceCells.html#a78f7fa1cec8060181ba13f46abde2009", null ],
       [ "Hexahedron", "http://www.dealii.org/developer/doxygen/deal.II/namespaceReferenceCells.html#a4e8a1c53b7c500aa8f5f6076a48c2de2", null ],
       [ "Invalid", "http://www.dealii.org/developer/doxygen/deal.II/namespaceReferenceCells.html#a32ce1a7bd91dbfce6a50f6a0889b67cb", null ],
       [ "Line", "http://www.dealii.org/developer/doxygen/deal.II/namespaceReferenceCells.html#ac1fb4999821b349c80f18141ce203d19", null ],
@@ -1553,7 +1560,9 @@ var namespaces_dup =
       [ "ExcInvalidEntry", "http://www.dealii.org/developer/doxygen/deal.II/group__Exceptions.html#ga163f0cda0d10711dd390daf4852093d1", null ],
       [ "ExcNoDiagonal", "http://www.dealii.org/developer/doxygen/deal.II/group__Exceptions.html#ga666a6cc98b7f57645455382a661a0930", null ]
     ] ],
-    [ "SparseMatrixIterators", "http://www.dealii.org/developer/doxygen/deal.II/namespaceSparseMatrixIterators.html", null ],
+    [ "SparseMatrixIterators", "http://www.dealii.org/developer/doxygen/deal.II/namespaceSparseMatrixIterators.html", [
+      [ "size_type", "http://www.dealii.org/developer/doxygen/deal.II/namespaceSparseMatrixIterators.html#a846572ce6b159bf082ef29644df25b39", null ]
+    ] ],
     [ "SparseMatrixTools", "http://www.dealii.org/developer/doxygen/deal.II/namespaceSparseMatrixTools.html", [
       [ "restrict_to_cells", "http://www.dealii.org/developer/doxygen/deal.II/namespaceSparseMatrixTools.html#a0446080effd32c5b1a975b086a2ec63c", null ],
       [ "restrict_to_full_matrices", "http://www.dealii.org/developer/doxygen/deal.II/namespaceSparseMatrixTools.html#a7c68fa506dfdb7321d7db1c26885920b", null ],
@@ -1561,7 +1570,9 @@ var namespaces_dup =
       [ "restrict_to_serial_sparse_matrix", "http://www.dealii.org/developer/doxygen/deal.II/namespaceSparseMatrixTools.html#a52012e3037223f3367693ab9a8780d5e", null ]
     ] ],
     [ "SparseVanka", "http://www.dealii.org/developer/doxygen/deal.II/classSparseVanka_1_1AdditionalData.html", null ],
-    [ "SparsityPatternIterators", "http://www.dealii.org/developer/doxygen/deal.II/namespaceSparsityPatternIterators.html", null ],
+    [ "SparsityPatternIterators", "http://www.dealii.org/developer/doxygen/deal.II/namespaceSparsityPatternIterators.html", [
+      [ "size_type", "http://www.dealii.org/developer/doxygen/deal.II/namespaceSparsityPatternIterators.html#a60b8b8534c2b95e4fc84b89b585eeb2e", null ]
+    ] ],
     [ "SparsityTools", "http://www.dealii.org/developer/doxygen/deal.II/namespaceSparsityTools.html", [
       [ "internal", "http://www.dealii.org/developer/doxygen/deal.II/namespaceSparsityTools_1_1internal.html", [
         [ "find_unnumbered_starting_index", "http://www.dealii.org/developer/doxygen/deal.II/namespaceSparsityTools_1_1internal.html#a08af5e83076134bbf9dcfd33530dfe7a", null ],
@@ -1962,6 +1973,7 @@ var namespaces_dup =
       [ "coarse_cell_id", "http://www.dealii.org/developer/doxygen/deal.II/namespacetypes.html#a36be5a74b99dd3f4ab38a2c183250adf", null ],
       [ "fe_index", "http://www.dealii.org/developer/doxygen/deal.II/namespacetypes.html#a6349a42041132a6bc7e1e9ffb7e119b3", null ],
       [ "geometric_entity_type", "http://www.dealii.org/developer/doxygen/deal.II/namespacetypes.html#a3488a37f8b9d4cec5bfa723dddf7256e", null ],
+      [ "geometric_orientation", "http://www.dealii.org/developer/doxygen/deal.II/namespacetypes.html#a754c7ecb569c3fab01d825f6b740bfe7", null ],
       [ "global_cell_index", "http://www.dealii.org/developer/doxygen/deal.II/namespacetypes.html#a88f8129eb3e40ecc8022e92a1e15d70e", null ],
       [ "global_dof_index", "http://www.dealii.org/developer/doxygen/deal.II/namespacetypes.html#a3543786f7dc7c57385fc923a6afd5917", null ],
       [ "global_vertex_index", "http://www.dealii.org/developer/doxygen/deal.II/namespacetypes.html#a2510b6835b1ec4a277ef342b5db6aee0", null ],
@@ -1988,6 +2000,7 @@ var namespaces_dup =
         [ "lanczos_largest_eigenvalue", "http://www.dealii.org/developer/doxygen/deal.II/namespaceUtilities_1_1LinearAlgebra.html#adb6a07778a777bcebaed91b93803fc52", null ]
       ] ],
       [ "MPI", "http://www.dealii.org/developer/doxygen/deal.II/namespaceUtilities_1_1MPI.html", [
+        [ "ComputeIndexOwner", "http://www.dealii.org/developer/doxygen/deal.II/namespaceUtilities_1_1MPI_1_1ComputeIndexOwner.html", null ],
         [ "ConsensusAlgorithms", "http://www.dealii.org/developer/doxygen/deal.II/namespaceUtilities_1_1MPI_1_1ConsensusAlgorithms.html", [
           [ "nbx", "http://www.dealii.org/developer/doxygen/deal.II/namespaceUtilities_1_1MPI_1_1ConsensusAlgorithms.html#ad3bf6e85b24c8e9796ac784b4b0df2bf", null ],
           [ "nbx", "http://www.dealii.org/developer/doxygen/deal.II/namespaceUtilities_1_1MPI_1_1ConsensusAlgorithms.html#af57257adf3e176de2795484b0d8364cd", null ],
@@ -2002,7 +2015,6 @@ var namespaces_dup =
           [ "CollectiveMutexImplementation", "http://www.dealii.org/developer/doxygen/deal.II/namespaceUtilities_1_1MPI_1_1internal_1_1CollectiveMutexImplementation.html", [
             [ "check_exception", "http://www.dealii.org/developer/doxygen/deal.II/namespaceUtilities_1_1MPI_1_1internal_1_1CollectiveMutexImplementation.html#a2d8f92229e3fbe0bb4d6228ffd3e651d", null ]
           ] ],
-          [ "ComputeIndexOwner", "http://www.dealii.org/developer/doxygen/deal.II/namespaceUtilities_1_1MPI_1_1internal_1_1ComputeIndexOwner.html", null ],
           [ "MPIDataTypes", "http://www.dealii.org/developer/doxygen/deal.II/namespaceUtilities_1_1MPI_1_1internal_1_1MPIDataTypes.html", [
             [ "mpi_type_id", "http://www.dealii.org/developer/doxygen/deal.II/namespaceUtilities_1_1MPI_1_1internal_1_1MPIDataTypes.html#aa452acda75bca5731c56d0000eaa337a", null ],
             [ "mpi_type_id", "http://www.dealii.org/developer/doxygen/deal.II/namespaceUtilities_1_1MPI_1_1internal_1_1MPIDataTypes.html#adb1a0b21354abf5f92f46e1ca312c92e", null ],
@@ -2086,6 +2098,7 @@ var namespaces_dup =
         [ "broadcast", "http://www.dealii.org/developer/doxygen/deal.II/namespaceUtilities_1_1MPI.html#aff9d4e8408b03fff684bd70235cab259", null ],
         [ "broadcast", "http://www.dealii.org/developer/doxygen/deal.II/namespaceUtilities_1_1MPI.html#a5c579b5131d3e4d66076b7f3a3560d45", null ],
         [ "compute_index_owner", "http://www.dealii.org/developer/doxygen/deal.II/namespaceUtilities_1_1MPI.html#a6c65825ffdad8e9ad83631d6eed7d441", null ],
+        [ "compute_index_owner_and_requesters", "http://www.dealii.org/developer/doxygen/deal.II/namespaceUtilities_1_1MPI.html#a13679730e7616bf33f705c77058bb734", null ],
         [ "compute_n_point_to_point_communications", "http://www.dealii.org/developer/doxygen/deal.II/namespaceUtilities_1_1MPI.html#ae34c12b7f8c2f96e1e61618a466a36b6", null ],
         [ "compute_point_to_point_communication_pattern", "http://www.dealii.org/developer/doxygen/deal.II/namespaceUtilities_1_1MPI.html#a911685d1b8f2de53179f4b4c90d8718a", null ],
         [ "compute_set_union", "http://www.dealii.org/developer/doxygen/deal.II/namespaceUtilities_1_1MPI.html#a8aa6ef9ee54e0ac53eff2b9b5af0e224", null ],

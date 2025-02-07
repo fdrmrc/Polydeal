@@ -94,7 +94,7 @@ var class_agglomeration_handler =
     [ "local_normals", "class_agglomeration_handler.html#a195d461ac5432e5c93bc6cf4d69c1df9", null ],
     [ "local_qpoints", "class_agglomeration_handler.html#ac875de2f942bb50d10c9195d002b1aad", null ],
     [ "local_values", "class_agglomeration_handler.html#a278f23721bdee3123d9b14efbeb8db98", null ],
-    [ "mapping", "class_agglomeration_handler.html#aeb083bb6559ca41441f6ad228fdd8f19", null ],
+    [ "mapping", "class_agglomeration_handler.html#aecc69931ae6d071ff5fa61029e4a279a", null ],
     [ "master2polygon", "class_agglomeration_handler.html#a5cab788fa7aa258c88b5a777544ddbc0", null ],
     [ "master2slaves", "class_agglomeration_handler.html#a58a8e13314a10fa7ae09c7fa7daea120", null ],
     [ "master_cells_container", "class_agglomeration_handler.html#aa9f699a555ca6fce0bc1aa437e656208", null ],
@@ -122,6 +122,6 @@ var class_agglomeration_handler =
     [ "recv_qpoints", "class_agglomeration_handler.html#a6556fdaea66064156839588c1991792a", null ],
     [ "recv_values", "class_agglomeration_handler.html#ab0bcf50a8d2e928691c6ef901b9ba774", null ],
     [ "standard_scratch", "class_agglomeration_handler.html#a2b80ce9aa35430394362d93cfbb5eef2", null ],
-    [ "tria", "class_agglomeration_handler.html#a5545e68c330633358d003d6f915f8415", null ],
+    [ "tria", "class_agglomeration_handler.html#a4af2c4c5d927780b9f34a3879b680ffe", null ],
     [ "tria_listener", "class_agglomeration_handler.html#a0f1ac8f3058caccfc9163d53c97c0c3a", null ]
 ];
