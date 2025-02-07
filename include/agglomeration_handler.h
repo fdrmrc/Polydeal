@@ -15,6 +15,7 @@
 #include <deal.II/base/mpi.h>
 #include <deal.II/base/quadrature.h>
 #include <deal.II/base/subscriptor.h>
+#include <deal.II/base/smartpointer.h>
 
 #include <deal.II/distributed/shared_tria.h>
 #include <deal.II/distributed/tria.h>
@@ -760,9 +761,9 @@ private:
 
   ////////////////////////////////////////////////////////
 
-  ObserverPointer<const Triangulation<dim, spacedim>> tria;
+  SmartPointer<const Triangulation<dim, spacedim>> tria;
 
-  ObserverPointer<const Mapping<dim, spacedim>> mapping;
+  SmartPointer<const Mapping<dim, spacedim>> mapping;
 
   std::unique_ptr<GridTools::Cache<dim, spacedim>> cached_tria;
 

@@ -1540,7 +1540,7 @@ namespace dealii::PolyUtils
     // Perform reduction and take sqrt of each error
     global_errors[0] = Utilities::MPI::reduce<double>(
       local_errors[0],
-      agglomeration_handler.get_triangulation().get_mpi_communicator(),
+      agglomeration_handler.get_triangulation().get_communicator(),
       [](const double a, const double b) { return a + b; });
 
     global_errors[0] = std::sqrt(global_errors[0]);
@@ -1549,7 +1549,7 @@ namespace dealii::PolyUtils
       {
         global_errors[1] = Utilities::MPI::reduce<double>(
           local_errors[1],
-          agglomeration_handler.get_triangulation().get_mpi_communicator(),
+          agglomeration_handler.get_triangulation().get_communicator(),
           [](const double a, const double b) { return a + b; });
         global_errors[1] = std::sqrt(global_errors[1]);
       }
@@ -2040,7 +2040,7 @@ namespace dealii::PolyUtils
     SparsityTools::distribute_sparsity_pattern(
       dsp,
       dof_handler.locally_owned_dofs(),
-      dof_handler.get_mpi_communicator(),
+      dof_handler.get_communicator(),
       locally_relevant_dofs);
 
     system_matrix.reinit(locally_owned_dofs,
