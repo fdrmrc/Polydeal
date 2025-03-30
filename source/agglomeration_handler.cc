@@ -58,6 +58,7 @@ AgglomerationHandler<dim, spacedim>::define_agglomerate(
   const types::global_cell_index master_idx = cells[0]->active_cell_index();
   master_cells_container.push_back(cells[0]);
   master_slave_relationships[global_master_idx] = -1;
+  master_slave_relationships_local[master_idx]  = -1;
 
   const typename DoFHandler<dim>::active_cell_iterator cell_dh =
     cells[0]->as_dof_handler_iterator(agglo_dh);
@@ -71,6 +72,9 @@ AgglomerationHandler<dim, spacedim>::define_agglomerate(
   for (auto it = ++cells.begin(); it != cells.end(); ++it)
     {
       slaves.push_back(*it);
+      master_slave_relationships_local[(*it)->active_cell_index()] =
+        master_idx; // mark each slave
+
       master_slave_relationships[(*it)->global_active_cell_index()] =
         global_master_idx; // mark each slave
       master_slave_relationships_iterators[(*it)->active_cell_index()] =
@@ -110,36 +114,36 @@ void
 AgglomerationHandler<dim, spacedim>::define_agglomerate_with_check(
   const AgglomerationContainer &cells)
 {
-  Assert(cells.size() > 0, ExcMessage("No cells to be agglomerated."));
+  // Assert(cells.size() > 0, ExcMessage("No cells to be agglomerated."));
 
-  // Compute the graph associated to the agglomerate
-  Utils::Graph g;
-  Utils::create_graph_from_agglomerate<dim>(cells, g);
+  // // Compute the graph associated to the agglomerate
+  // Utils::Graph g;
+  // Utils::create_graph_from_agglomerate<dim>(cells, g);
 
-  // The following vector will be filled with connected components
-  std::vector<std::vector<types::global_cell_index>> connected_components;
-  Utils::compute_connected_components(g, connected_components);
+  // // The following vector will be filled with connected components
+  // std::vector<std::vector<types::global_cell_index>> connected_components;
+  // Utils::compute_connected_components(g, connected_components);
 
-  // Be verbose in debug mode
-#ifdef AGGLO_DEBUG
-  if (connected_components.size() > 1)
-    std::cout << "Disconnected elements. Connected components will be "
-                 "computed and agglomerated together."
-              << std::endl;
-#endif
+  //   // Be verbose in debug mode
+  // #ifdef AGGLO_DEBUG
+  //   if (connected_components.size() > 1)
+  //     std::cout << "Disconnected elements. Connected components will be "
+  //                  "computed and agglomerated together."
+  //               << std::endl;
+  // #endif
 
-  // Get connected components and define one agglomerate for each one of them.
-  std::vector<typename Triangulation<dim>::active_cell_iterator> agglomerate;
-  for (const auto &comp : connected_components)
-    {
-      agglomerate.reserve(comp.size());
-      for (const types::global_cell_index local_idx : comp)
-        agglomerate.push_back(cells[local_idx]);
+  //   // Get connected components and define one agglomerate for each one of
+  //   them. std::vector<typename Triangulation<dim>::active_cell_iterator>
+  //   agglomerate; for (const auto &comp : connected_components)
+  //     {
+  //       agglomerate.reserve(comp.size());
+  //       for (const types::global_cell_index local_idx : comp)
+  //         agglomerate.push_back(cells[local_idx]);
 
-      // Perform agglomeration
-      define_agglomerate(agglomerate);
-      agglomerate.clear();
-    }
+  //       // Perform agglomeration
+  //       define_agglomerate(agglomerate);
+  //       agglomerate.clear();
+  //     }
 }
 
 
@@ -211,10 +215,15 @@ AgglomerationHandler<dim, spacedim>::initialize_agglomeration_data(
         parallel_tria->global_active_cell_index_partitioner();
       master_slave_relationships.reinit(
         cells_partitioner.lock()->locally_owned_range(), communicator);
+
+      master_slave_relationships_local.resize(
+        parallel_tria->n_global_active_cells());
     }
   else
     {
       master_slave_relationships.reinit(tria->n_active_cells(), MPI_COMM_SELF);
+      master_slave_relationships_local.resize(
+        parallel_tria->n_global_active_cells());
     }
 
   polytope_cache.clear();

@@ -58,7 +58,7 @@ using namespace dealii;
 
 static constexpr unsigned int degree_finite_element = 1;
 static constexpr unsigned int n_components          = 1;
-static constexpr bool         CHECK_AMG             = true;
+static constexpr bool         CHECK_AMG             = false;
 
 
 
@@ -1233,29 +1233,10 @@ TestMGMatrix<dim>::agglomerate_and_compute_level_matrices()
   multigrid_matrices[multigrid_matrices.max_level()] =
     std::make_unique<TrilinosWrappers::SparseMatrix>();
 
-  Utilities::System::MemoryStats stats;
-  Utilities::System::get_memory_stats(stats);
-  const auto print = [this](const double value) {
-    const auto min_max_avg =
-      dealii::Utilities::MPI::min_max_avg(value / 1e6, MPI_COMM_WORLD);
 
-    pcout << min_max_avg.min << " " << min_max_avg.max << " " << min_max_avg.avg
-          << " " << min_max_avg.sum << " ";
-  };
-
-  print(stats.VmPeak);
-  print(stats.VmSize);
-  print(stats.VmHWM);
-  print(stats.VmRSS);
-  pcout << "Building finest operator" << std::endl;
   system_matrix_dg.get_system_matrix(
     *multigrid_matrices[multigrid_matrices.max_level()]);
   pcout << "Built finest operator" << std::endl;
-  Utilities::System::get_memory_stats(stats);
-  print(stats.VmPeak);
-  print(stats.VmSize);
-  print(stats.VmHWM);
-  print(stats.VmRSS);
 
   amg_projector.compute_level_matrices(multigrid_matrices);
 
@@ -1358,8 +1339,9 @@ TestMGMatrix<dim>::agglomerate_and_compute_level_matrices()
     pcout << "Number of DoFs in level " << lev++ << ": " << dh->n_dofs()
           << std::endl;
 
-  MGTransferAgglomeration<dim, VectorType> mg_transfer(mg_level_transfers,
-                                                       dof_handlers);
+
+  MGTransferAgglomeration<dim, VectorType> mg_transfer(dof_handler,
+                                                       agglomeration_handlers);
   pcout << "MG transfers initialized" << std::endl;
 
   // Define multigrid object and convert to preconditioner.

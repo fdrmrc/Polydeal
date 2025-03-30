@@ -27,7 +27,9 @@
 
 #include <deal.II/multigrid/mg_base.h>
 
+#include <agglomeration_handler.h>
 #include <linear_operator_for_mg.h>
+
 
 namespace dealii
 {
@@ -425,6 +427,10 @@ namespace dealii
       const MGLevelObject<TrilinosWrappers::SparseMatrix> &transfer_matrices,
       const std::vector<DoFHandler<dim> *>                &dof_handlers);
 
+    MGTransferAgglomeration(
+      const DoFHandler<dim> &fine_dof_handler,
+      const std::vector<std::unique_ptr<AgglomerationHandler<dim>>>
+        &coarse_handlers_);
 
     /**
      * Perform prolongation from a coarse level vector @p src to a fine one
@@ -444,6 +450,11 @@ namespace dealii
                        VectorType        &dst,
                        const VectorType  &src) const override;
 
+    void
+    prolongate_mf(const unsigned int to_level,
+                  VectorType        &dst,
+                  const VectorType  &src) const;
+
 
     /**
      * Perform restriction.
@@ -453,6 +464,10 @@ namespace dealii
                      VectorType        &dst,
                      const VectorType  &src) const override;
 
+    void
+    restrict_mf(const unsigned int to_level,
+                VectorType        &dst,
+                const VectorType  &src) const;
 
     /**
      * Transfer from a vector on the global grid to vectors defined on each of
@@ -483,9 +498,19 @@ namespace dealii
       transfer_matrices;
 
     /**
-     * Pointers to DoFHandler employe on the levels.
+     * Pointers to DoFHandler employed on the levels.
      */
     std::vector<const DoFHandler<dim> *> dof_handlers;
+    /**
+     *
+     * Pointers to DoFHandler employed on the levels.
+     */
+    const DoFHandler<dim> *fine_dof_handler;
+
+    /**
+     * Pointers to AgglomerationHandlers employed on the levels.
+     */
+    std::vector<AgglomerationHandler<dim> *> agglomeration_handlers;
   };
 
 } // namespace dealii

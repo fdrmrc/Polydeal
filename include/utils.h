@@ -30,9 +30,10 @@
 #include <deal.II/matrix_free/matrix_free.h>
 #include <deal.II/matrix_free/operators.h>
 
+#include <deal.II/multigrid/mg_base.h>
+#include <deal.II/multigrid/mg_coarse.h>
 #include <deal.II/multigrid/mg_tools.h>
-
-#include <multigrid_amg.h>
+// #include <multigrid_amg.h>
 
 
 
@@ -188,8 +189,7 @@ namespace Utils
         }
 
     const auto assemble_injection_matrix = [&]() {
-      FullMatrix<NumberType>  local_matrix(dofs_per_cell, dofs_per_cell);
-      std::vector<Point<dim>> reference_q_points(dofs_per_cell);
+      FullMatrix<NumberType> local_matrix(dofs_per_cell, dofs_per_cell);
 
       // Dummy AffineConstraints, only needed for loc2glb
       AffineConstraints<NumberType> c;

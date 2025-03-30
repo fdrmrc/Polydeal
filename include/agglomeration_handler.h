@@ -51,7 +51,6 @@
 #include <agglomeration_iterator.h>
 #include <agglomerator.h>
 #include <mapping_box.h>
-#include <utils.h>
 
 #include <fstream>
 
@@ -527,6 +526,20 @@ public:
   void
   connect_hierarchy(const CellsAgglomerator<dim, RtreeType> &agglomerator);
 
+  // Map the master cell index with the polytope index
+  std::map<types::global_cell_index, types::global_cell_index>
+    master2polygon; // TODO: write utility
+
+  inline types::global_cell_index
+  get_master_idx_of_cell(
+    const typename Triangulation<dim, spacedim>::active_cell_iterator &cell)
+    const;
+
+  inline types::global_cell_index
+  get_master_idx_of_cell_local(
+    const typename Triangulation<dim, spacedim>::active_cell_iterator &cell)
+    const;
+
 private:
   /**
    * Initialize connectivity informations
@@ -571,10 +584,6 @@ private:
   create_bounding_box(const AgglomerationContainer &polytope);
 
 
-  inline types::global_cell_index
-  get_master_idx_of_cell(
-    const typename Triangulation<dim, spacedim>::active_cell_iterator &cell)
-    const;
 
   /**
    * Returns true if the two given cells are agglomerated together.
@@ -639,6 +648,9 @@ private:
    * `cell` is a slave cell.
    */
   LinearAlgebra::distributed::Vector<float> master_slave_relationships;
+
+
+  std::vector<int> master_slave_relationships_local;
 
   /**
    *  Same as the one above, but storing cell iterators rather than indices.
@@ -827,8 +839,6 @@ private:
     std::vector<typename Triangulation<dim, spacedim>::active_cell_iterator>>
     master2slaves;
 
-  // Map the master cell index with the polytope index
-  std::map<types::global_cell_index, types::global_cell_index> master2polygon;
 
 
   std::vector<typename Triangulation<dim>::active_cell_iterator>
@@ -870,6 +880,12 @@ private:
   std::map<std::pair<types::global_cell_index, types::global_cell_index>,
            std::vector<types::global_cell_index>>
     parent_child_info;
+
+  /**
+   * Maps each children to the parent polytope
+   */
+  std::map<types::global_cell_index, types::global_cell_index>
+    children_to_parent_info;
 
   unsigned int present_extraction_level;
 };
@@ -1064,6 +1080,20 @@ AgglomerationHandler<dim, spacedim>::is_slave_cell_of(
 
 template <int dim, int spacedim>
 inline types::global_cell_index
+AgglomerationHandler<dim, spacedim>::get_master_idx_of_cell_local(
+  const typename Triangulation<dim, spacedim>::active_cell_iterator &cell) const
+{
+  auto idx = master_slave_relationships_local[cell->active_cell_index()];
+  if (idx == -1)
+    return cell->active_cell_index();
+  else
+    return static_cast<types::global_cell_index>(idx);
+}
+
+
+
+template <int dim, int spacedim>
+inline types::global_cell_index
 AgglomerationHandler<dim, spacedim>::get_master_idx_of_cell(
   const typename Triangulation<dim, spacedim>::active_cell_iterator &cell) const
 {
@@ -1184,6 +1214,7 @@ AgglomerationHandler<dim, spacedim>::connect_hierarchy(
   const CellsAgglomerator<dim, RtreeType> &agglomerator)
 {
   parent_child_info        = agglomerator.parent_node_to_children_nodes;
+  children_to_parent_info  = agglomerator.children_node_to_parent_node;
   present_extraction_level = agglomerator.extraction_level;
 }
 

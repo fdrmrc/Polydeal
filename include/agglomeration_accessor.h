@@ -178,6 +178,12 @@ public:
   inline const std::vector<types::global_cell_index> &
   children() const;
 
+  /**
+   * Returns a vector of indices identifying the children polytopes.
+   */
+  inline types::global_cell_index
+  parent() const;
+
 private:
   /**
    * Private default constructor. This is not supposed to be used and hence will
@@ -781,6 +787,16 @@ AgglomerationAccessor<dim, spacedim>::children() const
   Assert(!handler->parent_child_info.empty(), ExcInternalError());
   return handler->parent_child_info.at(
     {present_index, handler->present_extraction_level});
+}
+
+
+
+template <int dim, int spacedim>
+inline types::global_cell_index
+AgglomerationAccessor<dim, spacedim>::parent() const
+{
+  Assert(!handler->children_to_parent_info.empty(), ExcInternalError());
+  return handler->children_to_parent_info.at(present_index);
 }
 
 

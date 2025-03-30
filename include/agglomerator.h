@@ -52,7 +52,9 @@ namespace dealii
                                                         &agglomerates_,
         std::vector<types::global_cell_index>           &n_nodes_per_level,
         std::map<std::pair<types::global_cell_index, types::global_cell_index>,
-                 std::vector<types::global_cell_index>> &parent_to_children);
+                 std::vector<types::global_cell_index>> &parent_to_children,
+        std::map<types::global_cell_index, types::global_cell_index>
+          &children_to_parent);
 
       /**
        * An alias that identifies an InternalNode of the tree.
@@ -133,6 +135,14 @@ namespace dealii
       std::map<std::pair<types::global_cell_index, types::global_cell_index>,
                std::vector<types::global_cell_index>>
         &parent_node_to_children_nodes;
+
+      /**
+       * Map each children to its parent agglomerate
+       */
+      std::map<types::global_cell_index, types::global_cell_index>
+        &children_node_to_parent_node;
+
+      types::global_cell_index current_parent_idx;
     };
 
 
@@ -150,7 +160,9 @@ namespace dealii
                                                       &agglomerates_,
       std::vector<types::global_cell_index>           &n_nodes_per_level_,
       std::map<std::pair<types::global_cell_index, types::global_cell_index>,
-               std::vector<types::global_cell_index>> &parent_to_children)
+               std::vector<types::global_cell_index>> &parent_to_children,
+      std::map<types::global_cell_index, types::global_cell_index>
+        &children_to_parent)
       : translator(translator)
       , level(0)
       , node_counter(0)
@@ -158,6 +170,8 @@ namespace dealii
       , agglomerates(agglomerates_)
       , n_nodes_per_level(n_nodes_per_level_)
       , parent_node_to_children_nodes(parent_to_children)
+      , children_node_to_parent_node(children_to_parent)
+      , current_parent_idx(0)
     {}
 
 
@@ -178,18 +192,36 @@ namespace dealii
       const elements_type &elements =
         boost::geometry::index::detail::rtree::elements(node);
 
+      std::cout << "I am on level:" << level << std::endl;
+      std::cout << "target_level:" << target_level << std::endl;
+
       if (level < target_level)
         {
           size_t level_backup = level;
           ++level;
 
+          if (level_backup == target_level - 1)
+            {
+              ++current_parent_idx;
+              std::cout << "Parent index : " << current_parent_idx
+                        << ", level=" << level << std::endl;
+            }
+
           for (typename elements_type::const_iterator it = elements.begin();
                it != elements.end();
                ++it)
             {
+              // if (level == target_level)
+              //   {
+              //     ++current_parent_idx;
+              //     std::cout << "Parent index : " << current_parent_idx
+              //               << ", level=" << level << std::endl;
+              //   }
+
               boost::geometry::index::detail::rtree::apply_visitor(*this,
                                                                    *it->second);
             }
+
 
           level = level_backup;
         }
@@ -206,6 +238,7 @@ namespace dealii
                 *this, *entry.second);
             }
           // Done with node number 'node_counter' on level target_level.
+          children_node_to_parent_node[node_counter] = current_parent_idx - 1;
 
           ++node_counter; // visited all children of an internal node
           n_nodes_per_level[target_level]++;
@@ -258,6 +291,8 @@ namespace dealii
       const elements_type &elements =
         boost::geometry::index::detail::rtree::elements(leaf);
 
+
+
       if (level == target_level)
         {
           // If I want to extract from leaf node, i.e. the target_level is the
@@ -268,6 +303,10 @@ namespace dealii
           for (const auto &it : elements)
             agglomerates[node_counter].push_back(it.second);
 
+          children_node_to_parent_node[node_counter] = current_parent_idx - 1;
+          std::cout << "current parent idx = " << current_parent_idx - 1
+                    << std::endl;
+
           ++node_counter;
           n_nodes_per_level[target_level]++;
         }
@@ -276,6 +315,8 @@ namespace dealii
           for (const auto &it : elements)
             agglomerates[node_counter].push_back(it.second);
 
+          // children_node_to_parent_node[node_counter] =
+          //   n_nodes_per_level[level - 1];
 
           if (level == target_level + 1)
             {
@@ -284,6 +325,9 @@ namespace dealii
               parent_node_to_children_nodes[{n_nodes_per_level[level - 1],
                                              level - 1}]
                 .push_back(node_idx);
+
+              children_node_to_parent_node[node_idx] = current_parent_idx - 1;
+
               n_nodes_per_level[level]++;
             }
         }
@@ -370,6 +414,9 @@ namespace dealii
     std::map<std::pair<types::global_cell_index, types::global_cell_index>,
              std::vector<types::global_cell_index>>
       parent_node_to_children_nodes;
+
+    std::map<types::global_cell_index, types::global_cell_index>
+      children_node_to_parent_node;
   };
 
 
@@ -425,7 +472,8 @@ namespace dealii
                             target_level,
                             agglomerates_on_level,
                             n_nodes_per_level,
-                            parent_node_to_children_nodes);
+                            parent_node_to_children_nodes,
+                            children_node_to_parent_node);
 
 
         rtv.apply_visitor(extractor_visitor);
@@ -463,7 +511,8 @@ namespace dealii
     std::vector<types::global_cell_index>> &
   CellsAgglomerator<dim, RtreeType>::get_hierarchy() const
   {
-    Assert(parent_node_to_children_nodes.size(),
+    Assert((parent_node_to_children_nodes.size() > 0 ||
+            children_node_to_parent_node.size() > 0),
            ExcMessage(
              "The hierarchy has not been computed. Did you forget to call"
              " extract_agglomerates() first?"));
