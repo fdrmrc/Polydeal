@@ -798,10 +798,13 @@ namespace Utils
         {
           phi.reinit(cell);
           phi.read_dof_values(src);
-          phi.evaluate(EvaluationFlags::gradients);
+          phi.evaluate(EvaluationFlags::gradients | EvaluationFlags::values);
           for (unsigned int q = 0; q < phi.n_q_points; ++q)
-            phi.submit_gradient(phi.get_gradient(q), q);
-          phi.integrate(EvaluationFlags::gradients);
+            {
+              phi.submit_gradient(phi.get_gradient(q) * 1e-4, q);
+              phi.submit_value(phi.get_value(q) * 1e4, q);
+            }
+          phi.integrate(EvaluationFlags::gradients | EvaluationFlags::values);
           phi.distribute_local_to_global(dst);
         }
     }
@@ -844,10 +847,11 @@ namespace Utils
                 fe_eval_neighbor.get_normal_derivative(q);
               average_valgrad =
                 average_value * 2. * sigmaF - average_valgrad * 0.5;
-              fe_eval.submit_normal_derivative(-average_value, q);
-              fe_eval_neighbor.submit_normal_derivative(-average_value, q);
-              fe_eval.submit_value(average_valgrad, q);
-              fe_eval_neighbor.submit_value(-average_valgrad, q);
+              fe_eval.submit_normal_derivative(-1e-4 * average_value, q);
+              fe_eval_neighbor.submit_normal_derivative(-1e-4 * average_value,
+                                                        q);
+              fe_eval.submit_value(1e-4 * average_valgrad, q);
+              fe_eval_neighbor.submit_value(-1e-4 * average_valgrad, q);
             }
           fe_eval.integrate(EvaluationFlags::values |
                             EvaluationFlags::gradients);
