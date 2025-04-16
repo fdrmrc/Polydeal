@@ -761,9 +761,9 @@ private:
 
   ////////////////////////////////////////////////////////
 
-  SmartPointer<const Triangulation<dim, spacedim>> tria;
+  ObserverPointer<const Triangulation<dim, spacedim>> tria;
 
-  SmartPointer<const Mapping<dim, spacedim>> mapping;
+  ObserverPointer<const Mapping<dim, spacedim>> mapping;
 
   std::unique_ptr<GridTools::Cache<dim, spacedim>> cached_tria;
 
