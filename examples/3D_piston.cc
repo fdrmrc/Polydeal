@@ -461,8 +461,12 @@ DiffusionReactionProblem<dim>::setup_agglomerated_problem()
         tree, agglomeration_data.agglomeration_parameter);
       const auto &agglomerates = csr_and_agglomerates.second; // vec<vec<>>
 
+      unsigned int agglo_index = 0;
       for (const auto &agglo : agglomerates)
-        ah->define_agglomerate(agglo);
+        {
+          ah->define_agglomerate(agglo);
+          ++agglo_index;
+        }
 
 #ifdef AGGLO_DEBUG
       std::cout << "N agglomerates in process "
@@ -478,8 +482,8 @@ DiffusionReactionProblem<dim>::setup_agglomerated_problem()
   // Irrespective of the partitioner strategy, define agglomerates based on the
   // material_id(s) attached to each cell.
   stop = MPI_Wtime();
-  pcout << "Total number of agglomerates: " << ah->n_agglomerates()
-        << std::endl;
+  pcout << "Total number of agglomerates: "
+        << Utilities::MPI::sum(ah->n_agglomerates(), comm) << std::endl;
   pcout << "Agglomeration performed in " << stop - start << "[s]" << std::endl;
 }
 
