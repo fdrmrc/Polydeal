@@ -235,12 +235,18 @@ void
 AgglomerationHandler<dim, spacedim>::distribute_agglomerated_dofs(
   const FiniteElement<dim> &fe_space)
 {
+  Assert(fe_space.conforms(FiniteElementData<dim>::L2),
+         ExcMessage("Only discontinuous spaces are allowed."));
+
   if (dynamic_cast<const FE_DGQ<dim> *>(&fe_space))
     fe = std::make_unique<FE_DGQ<dim>>(fe_space.degree);
   else if (dynamic_cast<const FE_AggloDGP<dim> *>(&fe_space))
     fe = std::make_unique<FE_AggloDGP<dim>>(fe_space.degree);
   else if (dynamic_cast<const FE_SimplexDGP<dim> *>(&fe_space))
     fe = std::make_unique<FE_SimplexDGP<dim>>(fe_space.degree);
+  else if (dynamic_cast<const FESystem<dim> *>(&fe_space))
+    fe =
+      std::make_unique<FESystem<dim>>(FE_AggloDGP<dim>(fe_space.degree) ^ dim);
   else
     AssertThrow(
       false,
@@ -266,8 +272,13 @@ AgglomerationHandler<dim, spacedim>::distribute_agglomerated_dofs(
 
 
   fe_collection.push_back(*fe); // master
-  fe_collection.push_back(
-    FE_Nothing<dim, spacedim>(fe->reference_cell())); // slave
+
+  // slaves
+  if (fe_space.n_components() > 1)
+    fe_collection.push_back(
+      FESystem<dim>(FE_Nothing<dim, spacedim>(fe->reference_cell()) ^ dim));
+  else
+    fe_collection.push_back(FE_Nothing<dim, spacedim>(fe->reference_cell()));
 
   initialize_hp_structure();
 
