@@ -103,6 +103,68 @@ AgglomerationHandler<dim, spacedim>::define_agglomerate(
   return {cells[0], this};
 }
 
+template <int dim, int spacedim>
+typename AgglomerationHandler<dim, spacedim>::agglomeration_iterator
+AgglomerationHandler<dim, spacedim>::define_agglomerate(
+  const AgglomerationContainer &cells, const unsigned int fecollection_size)
+{
+  Assert(cells.size() > 0, ExcMessage("No cells to be agglomerated."));
+
+  if (cells.size() == 1)
+    hybrid_mesh = true; // mesh is made also by classical cells
+
+  // First index drives the selection of the master cell. After that, store the
+  // master cell.
+  const types::global_cell_index global_master_idx =
+    cells[0]->global_active_cell_index();
+  const types::global_cell_index master_idx = cells[0]->active_cell_index();
+  master_cells_container.push_back(cells[0]);
+  master_slave_relationships[global_master_idx] = -1;
+
+  const typename DoFHandler<dim>::active_cell_iterator cell_dh =
+    cells[0]->as_dof_handler_iterator(agglo_dh);
+    cell_dh->set_active_fe_index(CellAgglomerationType::master);
+
+  // Store slave cells and save the relationship with the parent
+  std::vector<typename Triangulation<dim, spacedim>::active_cell_iterator>
+    slaves;
+  slaves.reserve(cells.size() - 1);
+  // exclude first cell since it's the master cell
+  for (auto it = ++cells.begin(); it != cells.end(); ++it)
+    {
+      slaves.push_back(*it);
+      master_slave_relationships[(*it)->global_active_cell_index()] =
+        global_master_idx; // mark each slave
+      master_slave_relationships_iterators[(*it)->active_cell_index()] =
+        cells[0];
+
+      const typename DoFHandler<dim>::active_cell_iterator cell =
+        (*it)->as_dof_handler_iterator(agglo_dh);
+      cell->set_active_fe_index(fecollection_size); // slave cell (the last index)
+
+      // If we have a p::d::T, check that all cells are in the same subdomain.
+      // If serial, just check that the subdomain_id is invalid.
+      Assert(((*it)->subdomain_id() == tria->locally_owned_subdomain() ||
+              tria->locally_owned_subdomain() == numbers::invalid_subdomain_id),
+             ExcInternalError());
+    }
+
+  master_slave_relationships_iterators[master_idx] =
+    cells[0]; // set iterator to master cell
+
+  // Store the slaves of each master
+  master2slaves[master_idx] = slaves;
+  // Save to which polygon this agglomerate correspond
+  master2polygon[master_idx] = n_agglomerations;
+
+  ++n_agglomerations; // an agglomeration has been performed, record it
+
+  create_bounding_box(cells); // fill the vector of bboxes
+
+  // Finally, return a polygonal iterator to the polytope just constructed.
+  return {cells[0], this};
+}
+
 
 
 template <int dim, int spacedim>
@@ -168,6 +230,36 @@ AgglomerationHandler<dim, spacedim>::initialize_fe_values(
     dummy_fe,
     agglomeration_face_quad,
     update_quadrature_points | update_JxW_values |
+      update_normal_vectors); // only for quadrature
+}
+
+template <int dim, int spacedim>
+void
+AgglomerationHandler<dim, spacedim>::initialize_fe_values(
+  const hp::QCollection<dim>     &cell_qcollection,
+  const UpdateFlags         &flags,
+  const hp::QCollection<dim - 1> &face_qcollection,
+  const UpdateFlags         &face_flags)
+{
+  agglomeration_quad_collection       = cell_qcollection;
+  agglomeration_flags      = flags;
+  agglomeration_face_quad_collection  = face_qcollection;
+  agglomeration_face_flags = face_flags | internal_agglomeration_face_flags;
+
+  mapping_collection = hp::MappingCollection<dim>(*mapping);
+  dummy_fe_collection = hp::FECollection<dim, spacedim>(dummy_fe);
+  hp_no_values =
+      std::make_unique<hp::FEValues<dim>>(mapping_collection,
+                                    dummy_fe_collection,
+                                    agglomeration_quad_collection,
+                                    update_quadrature_points |
+                                    update_JxW_values); // only for quadrature
+
+  hp_no_face_values = std::make_unique<hp::FEFaceValues<dim>>(
+      mapping_collection,
+      dummy_fe_collection,
+      agglomeration_face_quad_collection,
+      update_quadrature_points | update_JxW_values |
       update_normal_vectors); // only for quadrature
 }
 
@@ -285,7 +377,68 @@ AgglomerationHandler<dim, spacedim>::distribute_agglomerated_dofs(
     exchange_interface_values();
 }
 
+template <int dim, int spacedim>
+void
+AgglomerationHandler<dim, spacedim>::distribute_agglomerated_dofs(
+  const hp::FECollection<dim, spacedim> &fe_collection_in)
+{
+  is_collection  = true;
 
+  fe_collection_input = std::make_unique<hp::FECollection<dim, spacedim>>(
+    fe_collection_in); // copy the input collection
+
+  box_mapping = std::make_unique<MappingBox<dim>>(
+    bboxes,
+    master2polygon); // construct bounding box mapping
+
+  
+  if (hybrid_mesh)
+    {
+      AssertThrow(
+      false,
+      ExcNotImplemented(
+        "Hybrid mesh is not implemented for hp::FECollection."));
+    }
+
+  for (unsigned int i = 0; i < fe_collection_in.size(); ++i)
+    fe_collection.push_back(fe_collection_in[i]);
+
+  Assert(fe_collection[0].n_components() >= 1, 
+    ExcMessage("Invalid FE: must have at least one component."));
+  if (fe_collection[0].n_components() == 1)
+    {
+      fe_collection.push_back(FE_Nothing<dim, spacedim>());
+    }
+  else if (fe_collection[0].n_components() > 1)
+    {
+      std::vector<const FiniteElement<dim, spacedim>*> base_elements;
+      std::vector<unsigned int> multiplicities;
+      for (unsigned int b = 0; b < fe_collection[0].n_base_elements(); ++b)
+        {
+          base_elements.push_back(new FE_Nothing<dim, spacedim>());
+          multiplicities.push_back(fe_collection[0].element_multiplicity(b));
+        }
+      FESystem<dim, spacedim> fe_system_nothing(base_elements, multiplicities);
+      for (const auto *ptr : base_elements)
+        delete ptr;
+      fe_collection.push_back(fe_system_nothing);
+    }
+
+  initialize_hp_structure();
+
+  // in case the tria is distributed, communicate ghost information with
+  // neighboring ranks
+  const bool needs_ghost_info =
+    dynamic_cast<const parallel::TriangulationBase<dim, spacedim> *>(&*tria) !=
+    nullptr;
+  if (needs_ghost_info)
+    setup_ghost_polytopes();
+
+  setup_connectivity_of_agglomeration();
+
+  if (needs_ghost_info)
+    exchange_interface_values();
+}
 
 template <int dim, int spacedim>
 void
