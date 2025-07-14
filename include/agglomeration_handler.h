@@ -902,6 +902,16 @@ private:
     parent_child_info;
 
   unsigned int present_extraction_level;
+
+  // Support for hp::FECollection
+  bool is_collection = false;
+  std::unique_ptr<hp::FECollection<dim, spacedim>> fe_collection_input;
+  hp::MappingCollection<dim> mapping_collection;
+  hp::QCollection<dim> agglomeration_quad_collection;
+  hp::QCollection<dim - 1> agglomeration_face_quad_collection;
+  hp::FECollection<dim, spacedim> dummy_fe_collection;
+  std::unique_ptr<hp::FEValues<dim, spacedim>> hp_no_values;
+  std::unique_ptr<hp::FEFaceValues<dim, spacedim>> hp_no_face_values;
 };
 
 
