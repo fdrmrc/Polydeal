@@ -557,6 +557,18 @@ public:
   void
   connect_hierarchy(const CellsAgglomerator<dim, RtreeType> &agglomerator);
 
+  /**
+   * Return the finite element collection passed to distribute_agglomerated_dofs().
+   */
+  inline const hp::FECollection<dim, spacedim> &
+  get_fe_collection() const;
+
+  /**
+   * Return whether a hp::FECollection is being used.
+   */
+  inline bool
+  used_fe_collection() const;
+
 private:
   /**
    * Initialize connectivity informations
@@ -1225,6 +1237,20 @@ AgglomerationHandler<dim, spacedim>::connect_hierarchy(
 {
   parent_child_info        = agglomerator.parent_node_to_children_nodes;
   present_extraction_level = agglomerator.extraction_level;
+}
+
+template <int dim, int spacedim>
+inline const hp::FECollection<dim, spacedim> &
+AgglomerationHandler<dim, spacedim>::get_fe_collection() const
+{
+  return *fe_collection_input;
+}
+
+template <int dim, int spacedim>
+inline bool
+AgglomerationHandler<dim, spacedim>::used_fe_collection() const
+{
+  return is_collection;
 }
 
 
