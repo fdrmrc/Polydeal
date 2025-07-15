@@ -769,9 +769,7 @@ namespace OseenNamespace
                   {
                     cell_matrix(i, j) +=
                       (viscosity_nu *
-                         TensorAccessors::internal::Contract2<2, dim>::
-                           template contract2<double>(grad_phi_u[i],
-                                                      grad_phi_u[j]) -
+                         scalar_product(grad_phi_u[i], grad_phi_u[j])
                        div_phi_u[i] * phi_p[j] + // + b(p,v)
                        phi_p[i] * div_phi_u[j]   //  - b(q,u)
                        + phi_u[i] * (grad_phi_u[j] * beta[q_index])) *
