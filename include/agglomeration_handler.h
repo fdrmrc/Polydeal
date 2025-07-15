@@ -916,13 +916,26 @@ private:
   unsigned int present_extraction_level;
 
   // Support for hp::FECollection
-  bool is_hp_collection = false;
-  std::unique_ptr<hp::FECollection<dim, spacedim>> fe_collection_input;
-  hp::MappingCollection<dim> mapping_collection;
-  hp::QCollection<dim> agglomeration_quad_collection;
+  bool is_hp_collection = false; // Indicates whether hp::FECollection is used
+  std::unique_ptr<hp::FECollection<dim, spacedim>>
+    fe_collection_input; // External input FECollection
+
+  // Stores quadrature rules; these QCollections should have the same size as
+  // fe_collection_input
+  hp::QCollection<dim>     agglomeration_quad_collection;
   hp::QCollection<dim - 1> agglomeration_face_quad_collection;
-  hp::FECollection<dim, spacedim> dummy_fe_collection;
-  std::unique_ptr<hp::FEValues<dim, spacedim>> hp_no_values;
+
+  hp::MappingCollection<dim>
+    mapping_collection; // Contains only one mapping object
+  hp::FECollection<dim, spacedim>
+    dummy_fe_collection; // Similar to dummy_fe, but as an FECollection
+                         // containing only dummy_fe
+  // Note: The above two variables provide an hp::FECollection interface but
+  // actually contain only one element each.
+
+  // Analogous to no_values and no_face_values, but used when different cells
+  // employ different FEs or quadratures
+  std::unique_ptr<hp::FEValues<dim, spacedim>>     hp_no_values;
   std::unique_ptr<hp::FEFaceValues<dim, spacedim>> hp_no_face_values;
 };
 
