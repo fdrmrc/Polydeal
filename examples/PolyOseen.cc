@@ -1478,7 +1478,7 @@ main()
       const unsigned int              deg_p_left  = 2;
       const unsigned int              deg_v_right = 2;
       const unsigned int              deg_p_right = 1;
-      double           Re          = 1.0;
+      const double           Re          = 1.0;
 
       for (unsigned int mesh_level = 2; mesh_level < 7; ++mesh_level)
         {
