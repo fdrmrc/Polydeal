@@ -916,7 +916,7 @@ private:
   unsigned int present_extraction_level;
 
   // Support for hp::FECollection
-  bool is_collection = false;
+  bool is_hp_collection = false;
   std::unique_ptr<hp::FECollection<dim, spacedim>> fe_collection_input;
   hp::MappingCollection<dim> mapping_collection;
   hp::QCollection<dim> agglomeration_quad_collection;
