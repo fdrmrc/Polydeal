@@ -817,7 +817,7 @@ AgglomerationAccessor<dim, spacedim>::get_fe() const
 
 template <int dim, int spacedim>
 inline void
-AgglomerationAccessor<dim, spacedim>::set_active_fe_index(const unsigned short int index) const
+AgglomerationAccessor<dim, spacedim>::set_active_fe_index(const types::fe_index index) const
 {
   Assert(!handler->is_slave_cell(master_cell),
          ExcMessage("The present function cannot be called for slave cells."));
