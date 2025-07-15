@@ -401,7 +401,38 @@ AgglomerationHandler<dim, spacedim>::distribute_agglomerated_dofs(
     }
 
   for (unsigned int i = 0; i < fe_collection_in.size(); ++i)
-    fe_collection.push_back(fe_collection_in[i]);
+    {
+      if (dynamic_cast<const FESystem<dim> *>(&fe_collection_in[i]))
+        {
+          // System case
+          for (unsigned int b = 0; b < fe_collection_in[i].n_base_elements();
+               ++b)
+            {
+              if (!(dynamic_cast<const FE_DGQ<dim> *>(
+                      &fe_collection_in[i].base_element(b)) ||
+                    dynamic_cast<const FE_AggloDGP<dim> *>(
+                      &fe_collection_in[i].base_element(b)) ||
+                    dynamic_cast<const FE_SimplexDGP<dim> *>(
+                      &fe_collection_in[i].base_element(b))))
+                AssertThrow(
+                  false,
+                  ExcNotImplemented(
+                    "Currently, this interface supports only DGQ and DGP bases."));
+            }
+        }
+      else
+        {
+          // Scalar case
+          if (!(dynamic_cast<const FE_DGQ<dim> *>(&fe_collection_in[i]) ||
+                dynamic_cast<const FE_AggloDGP<dim> *>(&fe_collection_in[i]) ||
+                dynamic_cast<const FE_SimplexDGP<dim> *>(&fe_collection_in[i])))
+            AssertThrow(
+              false,
+              ExcNotImplemented(
+                "Currently, this interface supports only DGQ and DGP bases."));
+        }
+      fe_collection.push_back(fe_collection_in[i]);
+    }
 
   Assert(fe_collection[0].n_components() >= 1, 
     ExcMessage("Invalid FE: must have at least one component."));
