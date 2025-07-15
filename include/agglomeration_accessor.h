@@ -192,7 +192,7 @@ public:
    * which finite element in the collection is assigned to the current polytope.
    */
   void
-  set_active_fe_index(const unsigned short int index) const;
+  set_active_fe_index(const types::fe_index index) const;
 
   /**
    * Returns the index of the active finite element.
