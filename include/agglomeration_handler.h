@@ -918,10 +918,10 @@ private:
   // Support for hp::FECollection
   bool is_hp_collection = false; // Indicates whether hp::FECollection is used
   std::unique_ptr<hp::FECollection<dim, spacedim>>
-    fe_collection_input; // External input FECollection
+    hp_fe_collection; // External input FECollection
 
   // Stores quadrature rules; these QCollections should have the same size as
-  // fe_collection_input
+  // hp_fe_collection
   hp::QCollection<dim>     agglomeration_quad_collection;
   hp::QCollection<dim - 1> agglomeration_face_quad_collection;
 
@@ -1256,7 +1256,7 @@ template <int dim, int spacedim>
 inline const hp::FECollection<dim, spacedim> &
 AgglomerationHandler<dim, spacedim>::get_fe_collection() const
 {
-  return *fe_collection_input;
+  return *hp_fe_collection;
 }
 
 template <int dim, int spacedim>
