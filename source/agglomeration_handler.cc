@@ -382,7 +382,7 @@ void
 AgglomerationHandler<dim, spacedim>::distribute_agglomerated_dofs(
   const hp::FECollection<dim, spacedim> &fe_collection_in)
 {
-  is_collection  = true;
+  is_hp_collection  = true;
 
   fe_collection_input = std::make_unique<hp::FECollection<dim, spacedim>>(
     fe_collection_in); // copy the input collection
@@ -725,7 +725,7 @@ AgglomerationHandler<dim, spacedim>::reinit(
 
   Quadrature<dim> agglo_quad = agglomerated_quadrature(agglo_cells, deal_cell);
 
-  if (!is_collection)
+  if (!is_hp_collection)
     {
       // Original version: handle case without hp::FECollection
       agglomerated_scratch = std::make_unique<ScratchData>(*box_mapping,
@@ -920,7 +920,7 @@ AgglomerationHandler<dim, spacedim>::create_agglomeration_sparsity_pattern(
     agglo_dh, dsp, constraints, keep_constrained_dofs, subdomain_id);
 
 
-  if(!is_collection)
+  if(!is_hp_collection)
     {
       // Original version: handle case without hp::FECollection
       const unsigned int dofs_per_cell = agglo_dh.get_fe(0).n_dofs_per_cell();
@@ -1105,7 +1105,7 @@ namespace dealii
         std::vector<double>          final_weights;
         std::vector<Tensor<1, dim>>  final_normals;
 
-        if (!handler.is_collection)
+        if (!handler.is_hp_collection)
           {
             // Original version: handle case without hp::FECollection
             const unsigned int expected_qpoints =
