@@ -631,7 +631,7 @@ AgglomerationHandler<dim, spacedim>::agglomerated_quadrature(
   std::vector<Point<dim>> vec_pts;
   std::vector<double>     vec_JxWs;
 
-  if (!is_collection)
+  if (!is_hp_collection)
     {
       // Original version: handle case without hp::FECollection
       for (const auto &dummy_cell : cells)
@@ -1174,7 +1174,7 @@ namespace dealii
         NonMatching::ImmersedSurfaceQuadrature<dim, spacedim> surface_quad(
           final_unit_q_points, final_weights, final_normals);
 
-        if(!handler.is_collection)
+        if(!handler.is_hp_collection)
           {
             agglo_isv_ptr =
               std::make_unique<NonMatching::FEImmersedSurfaceValues<spacedim>>(
