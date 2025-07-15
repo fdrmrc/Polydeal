@@ -384,7 +384,7 @@ AgglomerationHandler<dim, spacedim>::distribute_agglomerated_dofs(
 {
   is_hp_collection  = true;
 
-  fe_collection_input = std::make_unique<hp::FECollection<dim, spacedim>>(
+  hp_fe_collection = std::make_unique<hp::FECollection<dim, spacedim>>(
     fe_collection_in); // copy the input collection
 
   box_mapping = std::make_unique<MappingBox<dim>>(
