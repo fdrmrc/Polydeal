@@ -1397,7 +1397,7 @@ main()
                 << "(deg_v_right, deg_p_right) = (" << deg_v_right << ", "
                 << deg_p_right << ")," << std::endl
                 << std::fixed << std::setprecision(1)
-                << "Renolds number = " << Re << "," << std::endl;
+                << "Reynolds number = " << Re << "," << std::endl;
       convergence_table.write_text(std::cout);
       std::ofstream output("convergence_table.vtk");
       convergence_table.write_text(output);
