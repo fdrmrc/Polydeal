@@ -1250,7 +1250,7 @@ template <int dim, int spacedim>
 inline bool
 AgglomerationHandler<dim, spacedim>::used_fe_collection() const
 {
-  return is_collection;
+  return is_hp_collection;
 }
 
 
