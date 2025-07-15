@@ -445,6 +445,9 @@ namespace OseenNamespace
     std::unique_ptr<const TensorFunction<1, dim, double>> bcDirichlet;
     std::unique_ptr<const TensorFunction<1, dim, double>> beta_function;
 
+    const double penalty_constant_v = 40.0;
+    const double penalty_constant_p = 1.0;
+
     Vector<double> interpolated_solution;
 
     double error_velocity_L2;
@@ -820,7 +823,7 @@ namespace OseenNamespace
                 double tau_cell = (viscosity_nu) * (deg_v_current + 1) *
                                   (deg_v_current + dim) /
                                   std::fabs(polytope->diameter());
-                double sigma_v = 40.0 * tau_cell;
+                double sigma_v = penalty_constant_v * tau_cell;
 
                 for (unsigned int q_index : fe_face.quadrature_point_indices())
                   {
@@ -1005,14 +1008,14 @@ namespace OseenNamespace
                     double tau_neigh = (viscosity_nu) * (deg_v_neigh + 1) *
                                        (deg_v_neigh + dim) /
                                        std::fabs(neigh_polytope->diameter());
-                    double sigma_v = 40.0 * std::max(tau_current, tau_neigh);
+                    double sigma_v = penalty_constant_v * std::max(tau_current, tau_neigh);
 
                     double zeta_current =
                       1. / (viscosity_nu / polytope->diameter() + beta_max);
                     double zeta_neigh =
                       1. /
                       (viscosity_nu / neigh_polytope->diameter() + beta_max);
-                    double sigma_p = 1.0 * std::max(zeta_current, zeta_neigh);
+                    double sigma_p = penalty_constant_p * std::max(zeta_current, zeta_neigh);
 
                     for (unsigned int q_index = 0;
                          q_index < fe_faces0.n_quadrature_points;
