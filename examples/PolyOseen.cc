@@ -655,8 +655,8 @@ namespace OseenNamespace
       {
         auto tree = pack_rtree<bgi::rstar<max_elem_per_node>>(all_boxes[i]);
 
-        std::cout << "     Total number of available levels in domain_" << i << ": "
-                  << n_levels(tree) << std::endl;
+        std::cout << "     Total number of available levels in domain_" << i
+                  << ": " << n_levels(tree) << std::endl;
 
         const unsigned int extraction_level_sub =
           std::min(extraction_level - num_domain / max_elem_per_node,
