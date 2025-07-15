@@ -768,15 +768,21 @@ namespace OseenNamespace
                 for (unsigned int j = 0; j < current_dofs_per_cell; ++j)
                   {
                     cell_matrix(i, j) +=
-                      (viscosity_nu *
-                         scalar_product(grad_phi_u[i], grad_phi_u[j])
-                       div_phi_u[i] * phi_p[j] + // + b(p,v)
-                       phi_p[i] * div_phi_u[j]   //  - b(q,u)
-                       + phi_u[i] * (grad_phi_u[j] * beta[q_index])) *
-                      agglo_values.JxW(q_index);
+                      (viscosity_nu * scalar_product(grad_phi_u[i],
+                                                     grad_phi_u[j]) // + ν ∇v:∇u
+                       - div_phi_u[i] * phi_p[j]                    // - ∇·v p
+                       + phi_p[i] * div_phi_u[j]                    // + ∇·u q
+                       +
+                       phi_u[i] * (grad_phi_u[j] * beta[q_index]) // + v· (β·∇)u
+                       ) *
+                      agglo_values.JxW(q_index); // dx
+                    // + ν ∫ ∇v : ∇u dx
+                    // -   ∫ (∇·v) p dx
+                    // +   ∫ (∇·u) q dx
+                    // +   ∫ v · (β·∇u) dx
                   }
-                cell_rhs(i) +=
-                  phi_u[i] * rhs[q_index] * agglo_values.JxW(q_index); // rhs
+                cell_rhs(i) += phi_u[i] * rhs[q_index] *
+                               agglo_values.JxW(q_index); // ∫ v·f dx
               }
           }
 
@@ -835,28 +841,68 @@ namespace OseenNamespace
                           {
                             cell_matrix(i, j) +=
                               (-viscosity_nu * jump_phi_v[i] *
-                                 (aver_grad_phi_v[j] * normals[q_index]) -
-                               viscosity_nu * jump_phi_v[j] *
-                                 (aver_grad_phi_v[i] * normals[q_index]) +
-                               sigma_v * jump_phi_v[i] * jump_phi_v[j] +
-                               aver_phi_p[j] * jump_phi_v[i] *
-                                 normals[q_index] -
-                               aver_phi_p[i] * jump_phi_v[j] *
-                                 normals[q_index] -
-                               is_face_inflow_of_cell *
-                                 (beta[q_index] * normals[q_index]) *
-                                 jump_phi_v[j] * jump_phi_v[i]) *
-                              fe_face.JxW(q_index);
+                                 (aver_grad_phi_v[j] *
+                                  normals[q_index]) // - ν [v]·({∇u}·n)
+                               - viscosity_nu * jump_phi_v[j] *
+                                   (aver_grad_phi_v[i] *
+                                    normals[q_index]) // - ν [u]·({∇v}·n)
+                               + sigma_v * jump_phi_v[i] *
+                                   jump_phi_v[j] // + σ_v [v]·[u]
+                               + aver_phi_p[j] * jump_phi_v[i] *
+                                   normals[q_index] // + [v]·n {p}
+                               - aver_phi_p[i] * jump_phi_v[j] *
+                                   normals[q_index]       // - [u]·n {q}
+                               - is_face_inflow_of_cell * // inflow faces only
+                                   (beta[q_index] * normals[q_index]) *
+                                   jump_phi_v[j] *
+                                   jump_phi_v[i] // - (β·n) v_down·[u]
+                                                 // v_down = [v] at inflow
+                                                 // boundary
+                               ) *
+                              fe_face.JxW(q_index); // ds
+                            // - ν ∫    [v] · ({∇u} · n) ds
+                            // - ν ∫    [u] · ({∇v} · n) ds
+                            // +   ∫    σ_v [v] · [u] ds
+                            // +   ∫    [v] · n · {p} ds
+                            // -   ∫    [u] · n · {q} ds
+                            // -   ∫_in (β · n) v_down · [u] ds
+                            //
+                            // where:
+                            //   [·]      = jump across face; equals value
+                            //              on current cell at boundary
+                            //   {·}      = average across face; equals
+                            //              value on current cell at boundary
+                            //   v_down   = value from downwind side,
+                            //              taken as v_current at inflow
+                            //              boundary
+                            //   ∫_in     = integral over inflow faces
+                            //              where (β · n) < 0
+                            //
+                            // Note:
+                            //  Although inflow (upwind) directions usually
+                            //  matter more for stability,
+                            // here we integrate over faces, not cells.
+                            // The downwind-side cell regards the face as an
+                            // inflow face. Thus, convection terms on each face
+                            // should couple to the downwind-side cell.
                           }
                         cell_rhs(i) +=
                           (-viscosity_nu * g[q_index] *
-                             (aver_grad_phi_v[i] * normals[q_index]) +
-                           sigma_v * g[q_index] * jump_phi_v[i] -
-                           aver_phi_p[i] * g[q_index] * normals[q_index] -
-                           is_face_inflow_of_cell *
-                             (beta[q_index] * normals[q_index]) * g[q_index] *
-                             jump_phi_v[i]) *
-                          fe_face.JxW(q_index);
+                             (aver_grad_phi_v[i] *
+                              normals[q_index]) // - ν g · ({∇v} · n)
+                           +
+                           sigma_v * g[q_index] * jump_phi_v[i] // + σ_v g · [v]
+                           - aver_phi_p[i] * g[q_index] *
+                               normals[q_index] // - {q} (g · n)
+                           - is_face_inflow_of_cell *
+                               (beta[q_index] * normals[q_index]) * g[q_index] *
+                               jump_phi_v[i] // - (β·n) g · [v]
+                           ) *
+                          fe_face.JxW(q_index); // ds
+                        // - ∫     ν g · ({∇v} · n) ds
+                        // + ∫     σ_v g · [v] ds
+                        // - ∫     {q} (g · n) ds
+                        // - ∫_in  (β · n) g · [v] ds
                       }
                   }
               }
@@ -897,6 +943,22 @@ namespace OseenNamespace
                     M12 = 0.;
                     M21 = 0.;
                     M22 = 0.;
+                    // During interface integrals, dofs from both
+                    // adjacent cells are involved.
+                    //
+                    // M11 corresponds to test and trial functions both on the
+                    // current cell. M12 corresponds to test functions on the
+                    // current cell and trial functions on the neighbor cell.
+                    // M21 and M22 correspond similarly, with test functions on
+                    // the neighbor cell.
+                    //
+                    // When using hp::FECollection, the number of dofs may
+                    // differ between cells, so M12 and M21 are generally not
+                    // square.
+                    //
+                    //                 dof_current   dof_neighbor
+                    //   dof_current       M11           M12
+                    //   dof_neighbor      M21           M22
 
                     const auto &normals = fe_faces0.get_normal_vectors();
 
@@ -1002,19 +1064,51 @@ namespace OseenNamespace
                               {
                                 M11(i, j) +=
                                   (-viscosity_nu * jump_phi_v0[i] *
-                                     (aver_grad_phi_v0[j] * normals[q_index]) -
+                                     (aver_grad_phi_v0[j] *
+                                      normals[q_index]) // - ν [v] · ({∇u} · n)
+                                   -
                                    viscosity_nu * jump_phi_v0[j] *
-                                     (aver_grad_phi_v0[i] * normals[q_index]) +
-                                   sigma_v * jump_phi_v0[i] * jump_phi_v0[j] +
-                                   aver_phi_p0[j] * jump_phi_v0[i] *
-                                     normals[q_index] -
-                                   aver_phi_p0[i] * jump_phi_v0[j] *
-                                     normals[q_index] +
-                                   sigma_p * jump_phi_p0[i] * jump_phi_p0[j] -
-                                   (beta[q_index] * normals[q_index]) *
-                                     jump_phi_v0[j] * downwind_phi_v0[i]) *
-                                  fe_faces0.JxW(
-                                    q_index); // fe_faces_max.JxW(q_index);
+                                     (aver_grad_phi_v0[i] *
+                                      normals[q_index]) // - ν [u] · ({∇v} · n)
+                                   + sigma_v * jump_phi_v0[i] *
+                                       jump_phi_v0[j] // + σ_v [v] · [u]
+                                   + aver_phi_p0[j] * jump_phi_v0[i] *
+                                       normals[q_index] // + [v] · n · {p}
+                                   - aver_phi_p0[i] * jump_phi_v0[j] *
+                                       normals[q_index] // - [u] · n · {q}
+                                   + sigma_p * jump_phi_p0[i] *
+                                       jump_phi_p0[j] // + σ_p [p] · [q]
+                                   - (beta[q_index] * normals[q_index]) *
+                                       jump_phi_v0[j] *
+                                       downwind_phi_v0[i] // - (β·n) v_down·[u]
+                                   ) *
+                                  fe_faces0.JxW(q_index); // ds
+                                // - ν ∫    [v] · ({∇u} · n) ds
+                                // - ν ∫    [u] · ({∇v} · n) ds
+                                // + ∫     σ_v [v] · [u] ds
+                                // + ∫     [v] · n · {p} ds
+                                // - ∫     [u] · n · {q} ds
+                                // + ∫     σ_p [p] · [q] ds
+                                // - ∫_in  (β · n) v_down · [u] ds
+                                //
+                                // where:
+                                //   [·]      = jump across face; equals value
+                                //              on current cell at boundary
+                                //   {·}      = average across face; equals
+                                //              value on current cell at
+                                //              boundary
+                                //   v_down   = value from downwind side,
+                                //              taken as v_current at inflow
+                                //              boundary
+                                //   ∫_in     = integral over inflow faces
+                                //              where (β · n) < 0
+                                //   σ_v      = velocity penalty parameter
+                                //   σ_p      = pressure penalty parameter
+                                //
+                                // Note:
+                                //   Suffix '0' denotes basis functions of the
+                                //   current cell. M11 involves only basis
+                                //   functions from the current cell.
                               }
                           }
 
@@ -1036,8 +1130,20 @@ namespace OseenNamespace
                                    sigma_p * jump_phi_p0[i] * jump_phi_p1[j] -
                                    (beta[q_index] * normals[q_index]) *
                                      jump_phi_v1[j] * downwind_phi_v0[i]) *
-                                  fe_faces0.JxW(
-                                    q_index); // fe_faces_max.JxW(q_index);
+                                  fe_faces0.JxW(q_index);
+                                // Same structure as M11; only the basis functions differ.
+                                //
+                                // Suffix '1' refers to neighbor cell basis
+                                // functions, while suffix '0' refers to current
+                                // cell basis functions.
+                                //
+                                // Index [j] corresponds to trial functions,
+                                // and [i] to test functions.
+                                //
+                                // In M21, all [i] indices are associated with
+                                // suffix '1', indicating test functions from
+                                // the neighbor cell and trial functions from
+                                // the current cell.
                               }
                           }
 
@@ -1059,8 +1165,21 @@ namespace OseenNamespace
                                    sigma_p * jump_phi_p1[i] * jump_phi_p0[j] -
                                    (beta[q_index] * normals[q_index]) *
                                      jump_phi_v0[j] * downwind_phi_v1[i]) *
-                                  fe_faces0.JxW(
-                                    q_index); // fe_faces_max.JxW(q_index);
+                                  fe_faces0.JxW(q_index);
+                                // Same structure as M11; only the basis functions differ.
+                                //
+                                // Suffix '1' refers to neighbor cell basis
+                                // functions, while suffix '0' refers to current
+                                // cell basis functions.
+                                //
+                                // Index [j] corresponds to trial functions,
+                                // and [i] to test functions.
+                                //
+                                // In M21, [j] indices use suffix '0',
+                                // indicating trial functions from the current
+                                // cell, while [i] indices use suffix '1',
+                                // indicating test functions from the neighbor
+                                // cell.
                               }
                           }
 
@@ -1082,8 +1201,19 @@ namespace OseenNamespace
                                    sigma_p * jump_phi_p1[i] * jump_phi_p1[j] -
                                    (beta[q_index] * normals[q_index]) *
                                      jump_phi_v1[j] * downwind_phi_v1[i]) *
-                                  fe_faces0.JxW(
-                                    q_index); // fe_faces_max.JxW(q_index);
+                                  fe_faces0.JxW(q_index);
+                                // Same structure as M11; only the basis functions differ.
+                                //
+                                // Suffix '1' refers to neighbor cell basis
+                                // functions, while suffix '0' refers to current
+                                // cell basis functions.
+                                //
+                                // Index [j] corresponds to trial functions,
+                                // and [i] to test functions.
+                                //
+                                // In M22, both test and trial functions use
+                                // suffix '1', meaning they are associated with
+                                // the neighbor cell only.
                               }
                           }
                       }
