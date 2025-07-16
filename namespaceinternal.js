@@ -120,14 +120,12 @@ var namespaceinternal =
       [ "unit_support_points", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1MappingQImplementation.html#a9e8e8dbbf770ae5191f9dd195c33020f", null ]
     ] ],
     [ "MatrixFreeFunctions", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1MatrixFreeFunctions.html", [
-      [ "color", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1MatrixFreeFunctions_1_1color.html", null ],
       [ "internal", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1MatrixFreeFunctions_1_1internal.html", [
         [ "compute_row_lengths", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1MatrixFreeFunctions_1_1internal.html#a50a5f65ae685bb6c8d7a7f3d3926dbdb", null ],
         [ "fill_connectivity", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1MatrixFreeFunctions_1_1internal.html#a317a59770b78f307a1ceaddd5157345e", null ],
         [ "fill_connectivity_dofs", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1MatrixFreeFunctions_1_1internal.html#a02877e1140712ea39f3a22706c214da0", null ],
         [ "bucket_size_threading", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1MatrixFreeFunctions_1_1internal.html#aaeb857f50a6b7ece062f5405584780a6", null ]
       ] ],
-      [ "partition", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1MatrixFreeFunctions_1_1partition.html", null ],
       [ "VectorDataExchange", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1MatrixFreeFunctions_1_1VectorDataExchange.html", null ],
       [ "compressed_constraint_kind", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1MatrixFreeFunctions.html#ad4f45b97d337745885b8b8b5118c42a3", null ],
       [ "ConstraintKinds", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1MatrixFreeFunctions.html#a96472c3db6d5463f2ac3a59574dce264", null ],
