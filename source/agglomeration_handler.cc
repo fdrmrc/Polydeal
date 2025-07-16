@@ -656,6 +656,20 @@ AgglomerationHandler<dim, spacedim>::agglomerated_quadrature(
       const auto &master_cell_as_dh_iterator = master_cell->as_dof_handler_iterator(agglo_dh);
       for (const auto &dummy_cell : cells)
         {
+          // The following verbose call is necessary to handle cases where
+          // different slave cells on different polytopes use different
+          // quadrature rules. If the hp::QCollection contains multiple
+          // elements, calling hp_no_values->reinit(dummy_cell) won't work
+          // because it cannot infer the correct quadrature rule. By explicitly
+          // passing the active FE index as q_index, and setting mapping_index
+          // and fe_index to 0, we ensure that the dummy cell uses the same
+          // quadrature rule as its corresponding master cell. This assumes a
+          // one-to-one correspondence between hp::QCollection and
+          // hp::FECollection, which is the convention in deal.II. However, this
+          // implementation does not support cases where hp::QCollection and
+          // hp::FECollection have different sizes.
+          // TODO: Refactor the architecture to better handle numerical
+          // integration for hp::QCollection.
           hp_no_values->reinit(dummy_cell, master_cell_as_dh_iterator->active_fe_index(), 0, 0);
           auto        q_points = hp_no_values->get_present_fe_values().get_quadrature_points(); // real qpoints
           const auto &JxWs     = hp_no_values->get_present_fe_values().get_JxW_values();
