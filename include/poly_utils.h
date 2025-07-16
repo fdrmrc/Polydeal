@@ -1174,88 +1174,271 @@ namespace dealii::PolyUtils
     else
       {
         // otherwise, do not create any matrix
-        const Triangulation<dim, spacedim> &tria =
-          agglomeration_handler.get_triangulation();
-        const Mapping<dim> &mapping = agglomeration_handler.get_mapping();
-        const FiniteElement<dim, spacedim> &original_fe =
-          agglomeration_handler.get_fe();
-
-        // We use DGQ (on tensor-product meshes) or DGP (on simplex meshes)
-        // nodal elements of the same degree as the ones in the agglomeration
-        // handler to interpolate the solution onto the finer grid.
-        std::unique_ptr<FiniteElement<dim>> output_fe;
-        if (tria.all_reference_cells_are_hyper_cube())
-          output_fe = std::make_unique<FE_DGQ<dim>>(original_fe.degree);
-        else if (tria.all_reference_cells_are_simplex())
-          output_fe = std::make_unique<FE_SimplexDGP<dim>>(original_fe.degree);
-        else
-          AssertThrow(false, ExcNotImplemented());
-
-        DoFHandler<dim> &output_dh =
-          const_cast<DoFHandler<dim> &>(agglomeration_handler.output_dh);
-        output_dh.reinit(tria);
-        output_dh.distribute_dofs(*output_fe);
-
-        if constexpr (std::is_same_v<VectorType, TrilinosWrappers::MPI::Vector>)
+        if (!agglomeration_handler.used_fe_collection())
           {
-            const IndexSet &locally_owned_dofs = output_dh.locally_owned_dofs();
-            dst.reinit(locally_owned_dofs);
-          }
-        else if constexpr (std::is_same_v<VectorType, Vector<NumberType>>)
-          {
-            dst.reinit(output_dh.n_dofs());
-          }
-        else
-          {
-            // PETSc, LA::d::v options not implemented.
-            (void)agglomeration_handler;
-            (void)dst;
-            (void)src;
-            AssertThrow(false, ExcNotImplemented());
-          }
+            // Original version: handle case without hp::FECollection
+            const Triangulation<dim, spacedim> &tria =
+              agglomeration_handler.get_triangulation();
+            const Mapping<dim> &mapping = agglomeration_handler.get_mapping();
+            const FiniteElement<dim, spacedim> &original_fe =
+              agglomeration_handler.get_fe();
 
+            // We use DGQ (on tensor-product meshes) or DGP (on simplex meshes)
+            // nodal elements of the same degree as the ones in the
+            // agglomeration handler to interpolate the solution onto the finer
+            // grid.
+            std::unique_ptr<FiniteElement<dim>> output_fe;
+            if (tria.all_reference_cells_are_hyper_cube())
+              output_fe = std::make_unique<FE_DGQ<dim>>(original_fe.degree);
+            else if (tria.all_reference_cells_are_simplex())
+              output_fe =
+                std::make_unique<FE_SimplexDGP<dim>>(original_fe.degree);
+            else
+              AssertThrow(false, ExcNotImplemented());
 
+            DoFHandler<dim> &output_dh =
+              const_cast<DoFHandler<dim> &>(agglomeration_handler.output_dh);
+            output_dh.reinit(tria);
+            output_dh.distribute_dofs(*output_fe);
 
-        const unsigned int dofs_per_cell =
-          agglomeration_handler.n_dofs_per_cell();
-        const unsigned int output_dofs_per_cell = output_fe->n_dofs_per_cell();
-        Quadrature<dim>    quad(output_fe->get_unit_support_points());
-        FEValues<dim>      output_fe_values(mapping,
-                                       *output_fe,
-                                       quad,
-                                       update_quadrature_points);
-
-        std::vector<types::global_dof_index> local_dof_indices(dofs_per_cell);
-        std::vector<types::global_dof_index> local_dof_indices_output(
-          output_dofs_per_cell);
-
-        const auto &bboxes = agglomeration_handler.get_local_bboxes();
-        for (const auto &polytope : agglomeration_handler.polytope_iterators())
-          {
-            if (polytope->is_locally_owned())
+            if constexpr (std::is_same_v<VectorType,
+                                         TrilinosWrappers::MPI::Vector>)
               {
-                polytope->get_dof_indices(local_dof_indices);
-                const BoundingBox<dim> &box = bboxes[polytope->index()];
+                const IndexSet &locally_owned_dofs =
+                  output_dh.locally_owned_dofs();
+                dst.reinit(locally_owned_dofs);
+              }
+            else if constexpr (std::is_same_v<VectorType, Vector<NumberType>>)
+              {
+                dst.reinit(output_dh.n_dofs());
+              }
+            else
+              {
+                // PETSc, LA::d::v options not implemented.
+                (void)agglomeration_handler;
+                (void)dst;
+                (void)src;
+                AssertThrow(false, ExcNotImplemented());
+              }
 
-                const auto &deal_cells =
-                  polytope->get_agglomerate(); // fine deal.II cells
-                for (const auto &cell : deal_cells)
+
+
+            const unsigned int dofs_per_cell =
+              agglomeration_handler.n_dofs_per_cell();
+            const unsigned int output_dofs_per_cell =
+              output_fe->n_dofs_per_cell();
+            Quadrature<dim> quad(output_fe->get_unit_support_points());
+            FEValues<dim>   output_fe_values(mapping,
+                                           *output_fe,
+                                           quad,
+                                           update_quadrature_points);
+
+            std::vector<types::global_dof_index> local_dof_indices(
+              dofs_per_cell);
+            std::vector<types::global_dof_index> local_dof_indices_output(
+              output_dofs_per_cell);
+
+            const auto &bboxes = agglomeration_handler.get_local_bboxes();
+            for (const auto &polytope :
+                 agglomeration_handler.polytope_iterators())
+              {
+                if (polytope->is_locally_owned())
                   {
-                    const auto slave_output = cell->as_dof_handler_iterator(
-                      agglomeration_handler.output_dh);
-                    slave_output->get_dof_indices(local_dof_indices_output);
-                    output_fe_values.reinit(slave_output);
+                    polytope->get_dof_indices(local_dof_indices);
+                    const BoundingBox<dim> &box = bboxes[polytope->index()];
 
-                    const auto &qpoints =
-                      output_fe_values.get_quadrature_points();
-
-                    for (unsigned int j = 0; j < output_dofs_per_cell; ++j)
+                    const auto &deal_cells =
+                      polytope->get_agglomerate(); // fine deal.II cells
+                    for (const auto &cell : deal_cells)
                       {
-                        const auto &ref_qpoint = box.real_to_unit(qpoints[j]);
-                        for (unsigned int i = 0; i < dofs_per_cell; ++i)
-                          dst(local_dof_indices_output[j]) +=
-                            src(local_dof_indices[i]) *
-                            original_fe.shape_value(i, ref_qpoint);
+                        const auto slave_output = cell->as_dof_handler_iterator(
+                          agglomeration_handler.output_dh);
+                        slave_output->get_dof_indices(local_dof_indices_output);
+                        output_fe_values.reinit(slave_output);
+
+                        const auto &qpoints =
+                          output_fe_values.get_quadrature_points();
+
+                        for (unsigned int j = 0; j < output_dofs_per_cell; ++j)
+                          {
+                            const auto &ref_qpoint =
+                              box.real_to_unit(qpoints[j]);
+                            for (unsigned int i = 0; i < dofs_per_cell; ++i)
+                              dst(local_dof_indices_output[j]) +=
+                                src(local_dof_indices[i]) *
+                                original_fe.shape_value(i, ref_qpoint);
+                          }
+                      }
+                  }
+              }
+          }
+        else
+          {
+            // Handle the hp::FECollection case
+            const Triangulation<dim, spacedim> &tria =
+              agglomeration_handler.get_triangulation();
+            const Mapping<dim> &mapping = agglomeration_handler.get_mapping();
+            const hp::FECollection<dim, spacedim> &original_fe_collection =
+              agglomeration_handler.get_fe_collection();
+
+            // We use DGQ (on tensor-product meshes) or DGP (on simplex meshes)
+            // nodal elements of the same degree as the ones in the
+            // agglomeration handler to interpolate the solution onto the finer
+            // grid.
+            hp::FECollection<dim, spacedim> output_fe_collection;
+
+            Assert(original_fe_collection[0].n_components() >= 1,
+                   ExcMessage("Invalid FE: must have at least one component."));
+            if (original_fe_collection[0].n_components() == 1)
+              {
+                // Scalar case
+                for (unsigned int i = 0; i < original_fe_collection.size(); ++i)
+                  {
+                    std::unique_ptr<FiniteElement<dim>> output_fe;
+                    if (tria.all_reference_cells_are_hyper_cube())
+                      output_fe = std::make_unique<FE_DGQ<dim>>(
+                        original_fe_collection[i].degree);
+                    else if (tria.all_reference_cells_are_simplex())
+                      output_fe = std::make_unique<FE_SimplexDGP<dim>>(
+                        original_fe_collection[i].degree);
+                    else
+                      AssertThrow(false, ExcNotImplemented());
+                    output_fe_collection.push_back(*output_fe);
+                  }
+              }
+            else if (original_fe_collection[0].n_components() > 1)
+              {
+                // System case
+                for (unsigned int i = 0; i < original_fe_collection.size(); ++i)
+                  {
+                    std::vector<const FiniteElement<dim, spacedim> *>
+                                              base_elements;
+                    std::vector<unsigned int> multiplicities;
+                    for (unsigned int b = 0;
+                         b < original_fe_collection[i].n_base_elements();
+                         ++b)
+                      {
+                        if (tria.all_reference_cells_are_hyper_cube())
+                          base_elements.push_back(new FE_DGQ<dim, spacedim>(
+                            original_fe_collection[i].base_element(b).degree));
+                        else if (tria.all_reference_cells_are_simplex())
+                          base_elements.push_back(new FE_SimplexDGP<dim,
+                                                                    spacedim>(
+                            original_fe_collection[i].base_element(b).degree));
+                        else
+                          AssertThrow(false, ExcNotImplemented());
+                        multiplicities.push_back(
+                          original_fe_collection[i].element_multiplicity(b));
+                      }
+
+                    FESystem<dim, spacedim> output_fe_system(base_elements,
+                                                             multiplicities);
+                    for (const auto *ptr : base_elements)
+                      delete ptr;
+                    output_fe_collection.push_back(output_fe_system);
+                  }
+              }
+
+
+            DoFHandler<dim> &output_dh =
+              const_cast<DoFHandler<dim> &>(agglomeration_handler.output_dh);
+            output_dh.reinit(tria);
+            for (const auto &polytope :
+                 agglomeration_handler.polytope_iterators())
+              {
+                if (polytope->is_locally_owned())
+                  {
+                    const auto &deal_cells =
+                      polytope->get_agglomerate(); // fine deal.II cells
+                    const unsigned int active_fe_idx =
+                      polytope->active_fe_index();
+
+                    for (const auto &cell : deal_cells)
+                      {
+                        const typename DoFHandler<dim>::active_cell_iterator
+                          slave_cell_dh_iterator =
+                            cell->as_dof_handler_iterator(output_dh);
+                        slave_cell_dh_iterator->set_active_fe_index(
+                          active_fe_idx);
+                      }
+                  }
+              }
+            output_dh.distribute_dofs(output_fe_collection);
+
+            if constexpr (std::is_same_v<VectorType,
+                                         TrilinosWrappers::MPI::Vector>)
+              {
+                const IndexSet &locally_owned_dofs =
+                  output_dh.locally_owned_dofs();
+                dst.reinit(locally_owned_dofs);
+              }
+            else if constexpr (std::is_same_v<VectorType, Vector<NumberType>>)
+              {
+                dst.reinit(output_dh.n_dofs());
+              }
+            else
+              {
+                // PETSc, LA::d::v options not implemented.
+                (void)agglomeration_handler;
+                (void)dst;
+                (void)src;
+                AssertThrow(false, ExcNotImplemented());
+              }
+
+            const auto &bboxes = agglomeration_handler.get_local_bboxes();
+            for (const auto &polytope :
+                 agglomeration_handler.polytope_iterators())
+              {
+                if (polytope->is_locally_owned())
+                  {
+                    const unsigned int active_fe_idx =
+                      polytope->active_fe_index();
+                    const unsigned int dofs_per_cell =
+                      polytope->get_fe().dofs_per_cell;
+                    const unsigned int output_dofs_per_cell =
+                      output_fe_collection[active_fe_idx].n_dofs_per_cell();
+                    Quadrature<dim> quad(output_fe_collection[active_fe_idx]
+                                           .get_unit_support_points());
+                    FEValues<dim>   output_fe_values(
+                      mapping,
+                      output_fe_collection[active_fe_idx],
+                      quad,
+                      update_quadrature_points);
+                    std::vector<types::global_dof_index> local_dof_indices(
+                      dofs_per_cell);
+                    std::vector<types::global_dof_index>
+                      local_dof_indices_output(output_dofs_per_cell);
+
+                    polytope->get_dof_indices(local_dof_indices);
+                    const BoundingBox<dim> &box = bboxes[polytope->index()];
+
+                    const auto &deal_cells =
+                      polytope->get_agglomerate(); // fine deal.II cells
+                    for (const auto &cell : deal_cells)
+                      {
+                        const auto slave_output = cell->as_dof_handler_iterator(
+                          agglomeration_handler.output_dh);
+                        slave_output->get_dof_indices(local_dof_indices_output);
+                        output_fe_values.reinit(slave_output);
+
+                        const auto &qpoints =
+                          output_fe_values.get_quadrature_points();
+
+                        for (unsigned int j = 0; j < output_dofs_per_cell; ++j)
+                          {
+                            const unsigned int component_idx_of_this_dof =
+                              slave_output->get_fe()
+                                .system_to_component_index(j)
+                                .first;
+                            const auto &ref_qpoint =
+                              box.real_to_unit(qpoints[j]);
+                            for (unsigned int i = 0; i < dofs_per_cell; ++i)
+                              dst(local_dof_indices_output[j]) +=
+                                src(local_dof_indices[i]) *
+                                original_fe_collection[active_fe_idx]
+                                  .shape_value_component(
+                                    i, ref_qpoint, component_idx_of_this_dof);
+                          }
                       }
                   }
               }

@@ -248,6 +248,13 @@ public:
   distribute_agglomerated_dofs(const FiniteElement<dim> &fe_space);
 
   /**
+   * Overload for hp::FECollection.
+   */
+  void
+  distribute_agglomerated_dofs(
+    const hp::FECollection<dim, spacedim> &fe_collection_in);
+
+  /**
    *
    * Set the degree of the quadrature formula to be used and the proper flags
    * for the FEValues object on the agglomerated cell.
@@ -258,6 +265,18 @@ public:
     const UpdateFlags         &flags           = UpdateFlags::update_default,
     const Quadrature<dim - 1> &face_quadrature = QGauss<dim - 1>(1),
     const UpdateFlags         &face_flags      = UpdateFlags::update_default);
+
+  /**
+   * Overload for hp::FECollection.
+   */
+  void
+  initialize_fe_values(
+    const hp::QCollection<dim> &cell_qcollection =
+      hp::QCollection<dim>(QGauss<dim>(1)),
+    const UpdateFlags              &flags = UpdateFlags::update_default,
+    const hp::QCollection<dim - 1> &face_qcollection =
+      hp::QCollection<dim - 1>(QGauss<dim - 1>(1)),
+    const UpdateFlags &face_flags = UpdateFlags::update_default);
 
   /**
    * Given a Triangulation with some agglomerated cells, create the sparsity
@@ -283,6 +302,20 @@ public:
    */
   agglomeration_iterator
   define_agglomerate(const AgglomerationContainer &cells);
+
+  /**
+   * Overload for hp::FECollection.
+   *
+   * The parameter @p fecollection_size provides the number of finite elements
+   * in the collection, allowing Polydeal to insert an empty element for
+   * slave cells internally.
+   *
+   * When @p fecollection_size equals 1, this function behaves identically to
+   * define_agglomerate(const AgglomerationContainer &cells).
+   */
+  agglomeration_iterator
+  define_agglomerate(const AgglomerationContainer &cells,
+                     const unsigned int            fecollection_size);
 
   /**
    * Same as above, but checking that every vector of cells is connected. If
@@ -527,6 +560,19 @@ public:
   template <typename RtreeType>
   void
   connect_hierarchy(const CellsAgglomerator<dim, RtreeType> &agglomerator);
+
+  /**
+   * Return the finite element collection passed to
+   * distribute_agglomerated_dofs().
+   */
+  inline const hp::FECollection<dim, spacedim> &
+  get_fe_collection() const;
+
+  /**
+   * Return whether a hp::FECollection is being used.
+   */
+  inline bool
+  used_fe_collection() const;
 
 private:
   /**
@@ -873,6 +919,29 @@ private:
     parent_child_info;
 
   unsigned int present_extraction_level;
+
+  // Support for hp::FECollection
+  bool is_hp_collection = false; // Indicates whether hp::FECollection is used
+  std::unique_ptr<hp::FECollection<dim, spacedim>>
+    hp_fe_collection; // External input FECollection
+
+  // Stores quadrature rules; these QCollections should have the same size as
+  // hp_fe_collection
+  hp::QCollection<dim>     agglomeration_quad_collection;
+  hp::QCollection<dim - 1> agglomeration_face_quad_collection;
+
+  hp::MappingCollection<dim>
+    mapping_collection; // Contains only one mapping object
+  hp::FECollection<dim, spacedim>
+    dummy_fe_collection; // Similar to dummy_fe, but as an FECollection
+                         // containing only dummy_fe
+  // Note: The above two variables provide an hp::FECollection interface but
+  // actually contain only one element each.
+
+  // Analogous to no_values and no_face_values, but used when different cells
+  // employ different FEs or quadratures
+  std::unique_ptr<hp::FEValues<dim, spacedim>>     hp_no_values;
+  std::unique_ptr<hp::FEFaceValues<dim, spacedim>> hp_no_face_values;
 };
 
 
@@ -1186,6 +1255,20 @@ AgglomerationHandler<dim, spacedim>::connect_hierarchy(
 {
   parent_child_info        = agglomerator.parent_node_to_children_nodes;
   present_extraction_level = agglomerator.extraction_level;
+}
+
+template <int dim, int spacedim>
+inline const hp::FECollection<dim, spacedim> &
+AgglomerationHandler<dim, spacedim>::get_fe_collection() const
+{
+  return *hp_fe_collection;
+}
+
+template <int dim, int spacedim>
+inline bool
+AgglomerationHandler<dim, spacedim>::used_fe_collection() const
+{
+  return is_hp_collection;
 }
 
 

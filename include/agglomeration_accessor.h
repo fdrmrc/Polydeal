@@ -178,6 +178,30 @@ public:
   inline const std::vector<types::global_cell_index> &
   children() const;
 
+  /**
+   * Returns the FiniteElement object used by the current polytope.
+   * This function should only be called after the corresponding agglomeration
+   * handler has invoked distribute_agglomerated_dofs().
+   */
+  const FiniteElement<dim, spacedim> &
+  get_fe() const;
+
+  /**
+   * Sets the active finite element index.
+   * This function should be called when using hp::FECollection to specify
+   * which finite element in the collection is assigned to the current polytope.
+   */
+  void
+  set_active_fe_index(const types::fe_index index) const;
+
+  /**
+   * Returns the index of the active finite element.
+   * When using hp::FECollection, this function retrieves the index
+   * of the finite element assigned to the current polytope.
+   */
+  types::fe_index
+  active_fe_index() const;
+
 private:
   /**
    * Private default constructor. This is not supposed to be used and hence will
@@ -783,5 +807,37 @@ AgglomerationAccessor<dim, spacedim>::children() const
     {present_index, handler->present_extraction_level});
 }
 
+template <int dim, int spacedim>
+inline const FiniteElement<dim, spacedim> &
+AgglomerationAccessor<dim, spacedim>::get_fe() const
+{
+  typename DoFHandler<dim, spacedim>::active_cell_iterator
+    master_cell_as_dof_handler_iterator =
+      master_cell->as_dof_handler_iterator(handler->agglo_dh);
+  return master_cell_as_dof_handler_iterator->get_fe();
+}
+
+template <int dim, int spacedim>
+inline void
+AgglomerationAccessor<dim, spacedim>::set_active_fe_index(
+  const types::fe_index index) const
+{
+  Assert(!handler->is_slave_cell(master_cell),
+         ExcMessage("The present function cannot be called for slave cells."));
+  typename DoFHandler<dim, spacedim>::active_cell_iterator
+    master_cell_as_dof_handler_iterator =
+      master_cell->as_dof_handler_iterator(handler->agglo_dh);
+  master_cell_as_dof_handler_iterator->set_active_fe_index(index);
+}
+
+template <int dim, int spacedim>
+inline types::fe_index
+AgglomerationAccessor<dim, spacedim>::active_fe_index() const
+{
+  typename DoFHandler<dim, spacedim>::active_cell_iterator
+    master_cell_as_dof_handler_iterator =
+      master_cell->as_dof_handler_iterator(handler->agglo_dh);
+  return master_cell_as_dof_handler_iterator->active_fe_index();
+}
 
 #endif

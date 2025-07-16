@@ -103,6 +103,70 @@ AgglomerationHandler<dim, spacedim>::define_agglomerate(
   return {cells[0], this};
 }
 
+template <int dim, int spacedim>
+typename AgglomerationHandler<dim, spacedim>::agglomeration_iterator
+AgglomerationHandler<dim, spacedim>::define_agglomerate(
+  const AgglomerationContainer &cells,
+  const unsigned int            fecollection_size)
+{
+  Assert(cells.size() > 0, ExcMessage("No cells to be agglomerated."));
+
+  if (cells.size() == 1)
+    hybrid_mesh = true; // mesh is made also by classical cells
+
+  // First index drives the selection of the master cell. After that, store the
+  // master cell.
+  const types::global_cell_index global_master_idx =
+    cells[0]->global_active_cell_index();
+  const types::global_cell_index master_idx = cells[0]->active_cell_index();
+  master_cells_container.push_back(cells[0]);
+  master_slave_relationships[global_master_idx] = -1;
+
+  const typename DoFHandler<dim>::active_cell_iterator cell_dh =
+    cells[0]->as_dof_handler_iterator(agglo_dh);
+  cell_dh->set_active_fe_index(CellAgglomerationType::master);
+
+  // Store slave cells and save the relationship with the parent
+  std::vector<typename Triangulation<dim, spacedim>::active_cell_iterator>
+    slaves;
+  slaves.reserve(cells.size() - 1);
+  // exclude first cell since it's the master cell
+  for (auto it = ++cells.begin(); it != cells.end(); ++it)
+    {
+      slaves.push_back(*it);
+      master_slave_relationships[(*it)->global_active_cell_index()] =
+        global_master_idx; // mark each slave
+      master_slave_relationships_iterators[(*it)->active_cell_index()] =
+        cells[0];
+
+      const typename DoFHandler<dim>::active_cell_iterator cell =
+        (*it)->as_dof_handler_iterator(agglo_dh);
+      cell->set_active_fe_index(
+        fecollection_size); // slave cell (the last index)
+
+      // If we have a p::d::T, check that all cells are in the same subdomain.
+      // If serial, just check that the subdomain_id is invalid.
+      Assert(((*it)->subdomain_id() == tria->locally_owned_subdomain() ||
+              tria->locally_owned_subdomain() == numbers::invalid_subdomain_id),
+             ExcInternalError());
+    }
+
+  master_slave_relationships_iterators[master_idx] =
+    cells[0]; // set iterator to master cell
+
+  // Store the slaves of each master
+  master2slaves[master_idx] = slaves;
+  // Save to which polygon this agglomerate correspond
+  master2polygon[master_idx] = n_agglomerations;
+
+  ++n_agglomerations; // an agglomeration has been performed, record it
+
+  create_bounding_box(cells); // fill the vector of bboxes
+
+  // Finally, return a polygonal iterator to the polytope just constructed.
+  return {cells[0], this};
+}
+
 
 
 template <int dim, int spacedim>
@@ -167,6 +231,35 @@ AgglomerationHandler<dim, spacedim>::initialize_fe_values(
     *mapping,
     dummy_fe,
     agglomeration_face_quad,
+    update_quadrature_points | update_JxW_values |
+      update_normal_vectors); // only for quadrature
+}
+
+template <int dim, int spacedim>
+void
+AgglomerationHandler<dim, spacedim>::initialize_fe_values(
+  const hp::QCollection<dim>     &cell_qcollection,
+  const UpdateFlags              &flags,
+  const hp::QCollection<dim - 1> &face_qcollection,
+  const UpdateFlags              &face_flags)
+{
+  agglomeration_quad_collection      = cell_qcollection;
+  agglomeration_flags                = flags;
+  agglomeration_face_quad_collection = face_qcollection;
+  agglomeration_face_flags = face_flags | internal_agglomeration_face_flags;
+
+  mapping_collection  = hp::MappingCollection<dim>(*mapping);
+  dummy_fe_collection = hp::FECollection<dim, spacedim>(dummy_fe);
+  hp_no_values        = std::make_unique<hp::FEValues<dim>>(
+    mapping_collection,
+    dummy_fe_collection,
+    agglomeration_quad_collection,
+    update_quadrature_points | update_JxW_values); // only for quadrature
+
+  hp_no_face_values = std::make_unique<hp::FEFaceValues<dim>>(
+    mapping_collection,
+    dummy_fe_collection,
+    agglomeration_face_quad_collection,
     update_quadrature_points | update_JxW_values |
       update_normal_vectors); // only for quadrature
 }
@@ -285,7 +378,98 @@ AgglomerationHandler<dim, spacedim>::distribute_agglomerated_dofs(
     exchange_interface_values();
 }
 
+template <int dim, int spacedim>
+void
+AgglomerationHandler<dim, spacedim>::distribute_agglomerated_dofs(
+  const hp::FECollection<dim, spacedim> &fe_collection_in)
+{
+  is_hp_collection = true;
 
+  hp_fe_collection = std::make_unique<hp::FECollection<dim, spacedim>>(
+    fe_collection_in); // copy the input collection
+
+  box_mapping = std::make_unique<MappingBox<dim>>(
+    bboxes,
+    master2polygon); // construct bounding box mapping
+
+
+  if (hybrid_mesh)
+    {
+      AssertThrow(false,
+                  ExcNotImplemented(
+                    "Hybrid mesh is not implemented for hp::FECollection."));
+    }
+
+  for (unsigned int i = 0; i < fe_collection_in.size(); ++i)
+    {
+      if (dynamic_cast<const FESystem<dim> *>(&fe_collection_in[i]))
+        {
+          // System case
+          for (unsigned int b = 0; b < fe_collection_in[i].n_base_elements();
+               ++b)
+            {
+              if (!(dynamic_cast<const FE_DGQ<dim> *>(
+                      &fe_collection_in[i].base_element(b)) ||
+                    dynamic_cast<const FE_AggloDGP<dim> *>(
+                      &fe_collection_in[i].base_element(b)) ||
+                    dynamic_cast<const FE_SimplexDGP<dim> *>(
+                      &fe_collection_in[i].base_element(b))))
+                AssertThrow(
+                  false,
+                  ExcNotImplemented(
+                    "Currently, this interface supports only DGQ and DGP bases."));
+            }
+        }
+      else
+        {
+          // Scalar case
+          if (!(dynamic_cast<const FE_DGQ<dim> *>(&fe_collection_in[i]) ||
+                dynamic_cast<const FE_AggloDGP<dim> *>(&fe_collection_in[i]) ||
+                dynamic_cast<const FE_SimplexDGP<dim> *>(&fe_collection_in[i])))
+            AssertThrow(
+              false,
+              ExcNotImplemented(
+                "Currently, this interface supports only DGQ and DGP bases."));
+        }
+      fe_collection.push_back(fe_collection_in[i]);
+    }
+
+  Assert(fe_collection[0].n_components() >= 1,
+         ExcMessage("Invalid FE: must have at least one component."));
+  if (fe_collection[0].n_components() == 1)
+    {
+      fe_collection.push_back(FE_Nothing<dim, spacedim>());
+    }
+  else if (fe_collection[0].n_components() > 1)
+    {
+      std::vector<const FiniteElement<dim, spacedim> *> base_elements;
+      std::vector<unsigned int>                         multiplicities;
+      for (unsigned int b = 0; b < fe_collection[0].n_base_elements(); ++b)
+        {
+          base_elements.push_back(new FE_Nothing<dim, spacedim>());
+          multiplicities.push_back(fe_collection[0].element_multiplicity(b));
+        }
+      FESystem<dim, spacedim> fe_system_nothing(base_elements, multiplicities);
+      for (const auto *ptr : base_elements)
+        delete ptr;
+      fe_collection.push_back(fe_system_nothing);
+    }
+
+  initialize_hp_structure();
+
+  // in case the tria is distributed, communicate ghost information with
+  // neighboring ranks
+  const bool needs_ghost_info =
+    dynamic_cast<const parallel::TriangulationBase<dim, spacedim> *>(&*tria) !=
+    nullptr;
+  if (needs_ghost_info)
+    setup_ghost_polytopes();
+
+  setup_connectivity_of_agglomeration();
+
+  if (needs_ghost_info)
+    exchange_interface_values();
+}
 
 template <int dim, int spacedim>
 void
@@ -446,20 +630,65 @@ AgglomerationHandler<dim, spacedim>::agglomerated_quadrature(
 
   std::vector<Point<dim>> vec_pts;
   std::vector<double>     vec_JxWs;
-  for (const auto &dummy_cell : cells)
-    {
-      no_values->reinit(dummy_cell);
-      auto        q_points = no_values->get_quadrature_points(); // real qpoints
-      const auto &JxWs     = no_values->get_JxW_values();
 
-      std::transform(q_points.begin(),
-                     q_points.end(),
-                     std::back_inserter(vec_pts),
-                     [&](const Point<spacedim> &p) { return p; });
-      std::transform(JxWs.begin(),
-                     JxWs.end(),
-                     std::back_inserter(vec_JxWs),
-                     [&](const double w) { return w; });
+  if (!is_hp_collection)
+    {
+      // Original version: handle case without hp::FECollection
+      for (const auto &dummy_cell : cells)
+        {
+          no_values->reinit(dummy_cell);
+          auto q_points    = no_values->get_quadrature_points(); // real qpoints
+          const auto &JxWs = no_values->get_JxW_values();
+
+          std::transform(q_points.begin(),
+                         q_points.end(),
+                         std::back_inserter(vec_pts),
+                         [&](const Point<spacedim> &p) { return p; });
+          std::transform(JxWs.begin(),
+                         JxWs.end(),
+                         std::back_inserter(vec_JxWs),
+                         [&](const double w) { return w; });
+        }
+    }
+  else
+    {
+      // Handle the hp::FECollection case
+      const auto &master_cell_as_dh_iterator =
+        master_cell->as_dof_handler_iterator(agglo_dh);
+      for (const auto &dummy_cell : cells)
+        {
+          // The following verbose call is necessary to handle cases where
+          // different slave cells on different polytopes use different
+          // quadrature rules. If the hp::QCollection contains multiple
+          // elements, calling hp_no_values->reinit(dummy_cell) won't work
+          // because it cannot infer the correct quadrature rule. By explicitly
+          // passing the active FE index as q_index, and setting mapping_index
+          // and fe_index to 0, we ensure that the dummy cell uses the same
+          // quadrature rule as its corresponding master cell. This assumes a
+          // one-to-one correspondence between hp::QCollection and
+          // hp::FECollection, which is the convention in deal.II. However, this
+          // implementation does not support cases where hp::QCollection and
+          // hp::FECollection have different sizes.
+          // TODO: Refactor the architecture to better handle numerical
+          // integration for hp::QCollection.
+          hp_no_values->reinit(dummy_cell,
+                               master_cell_as_dh_iterator->active_fe_index(),
+                               0,
+                               0);
+          auto q_points = hp_no_values->get_present_fe_values()
+                            .get_quadrature_points(); // real qpoints
+          const auto &JxWs =
+            hp_no_values->get_present_fe_values().get_JxW_values();
+
+          std::transform(q_points.begin(),
+                         q_points.end(),
+                         std::back_inserter(vec_pts),
+                         [&](const Point<spacedim> &p) { return p; });
+          std::transform(JxWs.begin(),
+                         JxWs.end(),
+                         std::back_inserter(vec_JxWs),
+                         [&](const double w) { return w; });
+        }
     }
 
   // Map back each point in real space by using the map associated to the
@@ -516,10 +745,22 @@ AgglomerationHandler<dim, spacedim>::reinit(
 
   Quadrature<dim> agglo_quad = agglomerated_quadrature(agglo_cells, deal_cell);
 
-  agglomerated_scratch = std::make_unique<ScratchData>(*box_mapping,
-                                                       fe_collection[0],
-                                                       agglo_quad,
-                                                       agglomeration_flags);
+  if (!is_hp_collection)
+    {
+      // Original version: handle case without hp::FECollection
+      agglomerated_scratch = std::make_unique<ScratchData>(*box_mapping,
+                                                           fe_collection[0],
+                                                           agglo_quad,
+                                                           agglomeration_flags);
+    }
+  else
+    {
+      // Handle the hp::FECollection case
+      agglomerated_scratch = std::make_unique<ScratchData>(*box_mapping,
+                                                           polytope->get_fe(),
+                                                           agglo_quad,
+                                                           agglomeration_flags);
+    }
   return agglomerated_scratch->reinit(deal_cell);
 }
 
@@ -699,29 +940,73 @@ AgglomerationHandler<dim, spacedim>::create_agglomeration_sparsity_pattern(
     agglo_dh, dsp, constraints, keep_constrained_dofs, subdomain_id);
 
 
-  const unsigned int dofs_per_cell = agglo_dh.get_fe(0).n_dofs_per_cell();
-  std::vector<types::global_dof_index> current_dof_indices(dofs_per_cell);
-  std::vector<types::global_dof_index> neighbor_dof_indices(dofs_per_cell);
-
-  // Loop over all locally owned polytopes, find the neighbor (also ghosted)
-  // and add fluxes to the sparsity pattern.
-  for (const auto &polytope : polytope_iterators())
+  if (!is_hp_collection)
     {
-      if (polytope->is_locally_owned())
+      // Original version: handle case without hp::FECollection
+      const unsigned int dofs_per_cell = agglo_dh.get_fe(0).n_dofs_per_cell();
+      std::vector<types::global_dof_index> current_dof_indices(dofs_per_cell);
+      std::vector<types::global_dof_index> neighbor_dof_indices(dofs_per_cell);
+
+      // Loop over all locally owned polytopes, find the neighbor (also ghosted)
+      // and add fluxes to the sparsity pattern.
+      for (const auto &polytope : polytope_iterators())
         {
-          const unsigned int n_current_faces = polytope->n_faces();
-          polytope->get_dof_indices(current_dof_indices);
-          for (unsigned int f = 0; f < n_current_faces; ++f)
+          if (polytope->is_locally_owned())
             {
-              const auto &neigh_polytope = polytope->neighbor(f);
-              if (neigh_polytope.state() == IteratorState::valid)
+              const unsigned int n_current_faces = polytope->n_faces();
+              polytope->get_dof_indices(current_dof_indices);
+              for (unsigned int f = 0; f < n_current_faces; ++f)
                 {
-                  neigh_polytope->get_dof_indices(neighbor_dof_indices);
-                  constraints.add_entries_local_to_global(current_dof_indices,
-                                                          neighbor_dof_indices,
-                                                          dsp,
-                                                          keep_constrained_dofs,
-                                                          {});
+                  const auto &neigh_polytope = polytope->neighbor(f);
+                  if (neigh_polytope.state() == IteratorState::valid)
+                    {
+                      neigh_polytope->get_dof_indices(neighbor_dof_indices);
+                      constraints.add_entries_local_to_global(
+                        current_dof_indices,
+                        neighbor_dof_indices,
+                        dsp,
+                        keep_constrained_dofs,
+                        {});
+                    }
+                }
+            }
+        }
+    }
+  else
+    {
+      // Handle the hp::FECollection case
+
+      // Loop over all locally owned polytopes, find the neighbor (also ghosted)
+      // and add fluxes to the sparsity pattern.
+      for (const auto &polytope : polytope_iterators())
+        {
+          if (polytope->is_locally_owned())
+            {
+              const unsigned int current_dofs_per_cell =
+                polytope->get_fe().dofs_per_cell;
+              std::vector<types::global_dof_index> current_dof_indices(
+                current_dofs_per_cell);
+
+              const unsigned int n_current_faces = polytope->n_faces();
+              polytope->get_dof_indices(current_dof_indices);
+              for (unsigned int f = 0; f < n_current_faces; ++f)
+                {
+                  const auto &neigh_polytope = polytope->neighbor(f);
+                  if (neigh_polytope.state() == IteratorState::valid)
+                    {
+                      const unsigned int neighbor_dofs_per_cell =
+                        neigh_polytope->get_fe().dofs_per_cell;
+                      std::vector<types::global_dof_index> neighbor_dof_indices(
+                        neighbor_dofs_per_cell);
+
+                      neigh_polytope->get_dof_indices(neighbor_dof_indices);
+                      constraints.add_entries_local_to_global(
+                        current_dof_indices,
+                        neighbor_dof_indices,
+                        dsp,
+                        keep_constrained_dofs,
+                        {});
+                    }
                 }
             }
         }
@@ -846,41 +1131,109 @@ namespace dealii
         std::vector<double>          final_weights;
         std::vector<Tensor<1, dim>>  final_normals;
 
-        const unsigned int expected_qpoints =
-          common_face.size() * handler.agglomeration_face_quad.size();
-        final_unit_q_points.reserve(expected_qpoints);
-        final_weights.reserve(expected_qpoints);
-        final_normals.reserve(expected_qpoints);
-
-
-        for (const auto &[deal_cell, local_face_idx] : common_face)
+        if (!handler.is_hp_collection)
           {
-            handler.no_face_values->reinit(deal_cell, local_face_idx);
+            // Original version: handle case without hp::FECollection
+            const unsigned int expected_qpoints =
+              common_face.size() * handler.agglomeration_face_quad.size();
+            final_unit_q_points.reserve(expected_qpoints);
+            final_weights.reserve(expected_qpoints);
+            final_normals.reserve(expected_qpoints);
 
-            const auto &q_points =
-              handler.no_face_values->get_quadrature_points();
-            const auto &JxWs    = handler.no_face_values->get_JxW_values();
-            const auto &normals = handler.no_face_values->get_normal_vectors();
 
-            const unsigned int n_qpoints_agglo = q_points.size();
-
-            for (unsigned int q = 0; q < n_qpoints_agglo; ++q)
+            for (const auto &[deal_cell, local_face_idx] : common_face)
               {
-                final_unit_q_points.push_back(bbox.real_to_unit(q_points[q]));
-                final_weights.push_back(JxWs[q]);
-                final_normals.push_back(normals[q]);
+                handler.no_face_values->reinit(deal_cell, local_face_idx);
+
+                const auto &q_points =
+                  handler.no_face_values->get_quadrature_points();
+                const auto &JxWs = handler.no_face_values->get_JxW_values();
+                const auto &normals =
+                  handler.no_face_values->get_normal_vectors();
+
+                const unsigned int n_qpoints_agglo = q_points.size();
+
+                for (unsigned int q = 0; q < n_qpoints_agglo; ++q)
+                  {
+                    final_unit_q_points.push_back(
+                      bbox.real_to_unit(q_points[q]));
+                    final_weights.push_back(JxWs[q]);
+                    final_normals.push_back(normals[q]);
+                  }
               }
           }
+        else
+          {
+            // Handle the hp::FECollection case
+            unsigned int higher_order_quad_index = cell->active_fe_index();
+            if (neigh_polytope.state() == IteratorState::valid)
+              if (handler
+                    .agglomeration_face_quad_collection[cell->active_fe_index()]
+                    .size() <
+                  handler
+                    .agglomeration_face_quad_collection[neigh_polytope
+                                                          ->active_fe_index()]
+                    .size())
+                higher_order_quad_index = neigh_polytope->active_fe_index();
+
+            const unsigned int expected_qpoints =
+              common_face.size() *
+              handler
+                .agglomeration_face_quad_collection[higher_order_quad_index]
+                .size();
+            final_unit_q_points.reserve(expected_qpoints);
+            final_weights.reserve(expected_qpoints);
+            final_normals.reserve(expected_qpoints);
+
+            for (const auto &[deal_cell, local_face_idx] : common_face)
+              {
+                handler.hp_no_face_values->reinit(
+                  deal_cell, local_face_idx, higher_order_quad_index, 0, 0);
+
+                const auto &q_points =
+                  handler.hp_no_face_values->get_present_fe_values()
+                    .get_quadrature_points();
+                const auto &JxWs =
+                  handler.hp_no_face_values->get_present_fe_values()
+                    .get_JxW_values();
+                const auto &normals =
+                  handler.hp_no_face_values->get_present_fe_values()
+                    .get_normal_vectors();
+
+                const unsigned int n_qpoints_agglo = q_points.size();
+
+                for (unsigned int q = 0; q < n_qpoints_agglo; ++q)
+                  {
+                    final_unit_q_points.push_back(
+                      bbox.real_to_unit(q_points[q]));
+                    final_weights.push_back(JxWs[q]);
+                    final_normals.push_back(normals[q]);
+                  }
+              }
+          }
+
 
         NonMatching::ImmersedSurfaceQuadrature<dim, spacedim> surface_quad(
           final_unit_q_points, final_weights, final_normals);
 
-        agglo_isv_ptr =
-          std::make_unique<NonMatching::FEImmersedSurfaceValues<spacedim>>(
-            *(handler.box_mapping),
-            *(handler.fe),
-            surface_quad,
-            handler.agglomeration_face_flags);
+        if (!handler.is_hp_collection)
+          {
+            agglo_isv_ptr =
+              std::make_unique<NonMatching::FEImmersedSurfaceValues<spacedim>>(
+                *(handler.box_mapping),
+                *(handler.fe),
+                surface_quad,
+                handler.agglomeration_face_flags);
+          }
+        else
+          {
+            agglo_isv_ptr =
+              std::make_unique<NonMatching::FEImmersedSurfaceValues<spacedim>>(
+                *(handler.box_mapping),
+                cell->get_fe(),
+                surface_quad,
+                handler.agglomeration_face_flags);
+          }
 
         agglo_isv_ptr->reinit(cell);
 
