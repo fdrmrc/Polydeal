@@ -251,7 +251,8 @@ public:
    * Overload for hp::FECollection.
    */
   void
-  distribute_agglomerated_dofs(const hp::FECollection<dim, spacedim> &fe_collection_in);
+  distribute_agglomerated_dofs(
+    const hp::FECollection<dim, spacedim> &fe_collection_in);
 
   /**
    *
@@ -270,10 +271,12 @@ public:
    */
   void
   initialize_fe_values(
-    const hp::QCollection<dim>     &cell_qcollection = hp::QCollection<dim>(QGauss<dim>(1)),
-    const UpdateFlags              &flags           = UpdateFlags::update_default,
-    const hp::QCollection<dim - 1> &face_qcollection = hp::QCollection<dim - 1>(QGauss<dim - 1>(1)),
-    const UpdateFlags              &face_flags      = UpdateFlags::update_default);
+    const hp::QCollection<dim> &cell_qcollection =
+      hp::QCollection<dim>(QGauss<dim>(1)),
+    const UpdateFlags              &flags = UpdateFlags::update_default,
+    const hp::QCollection<dim - 1> &face_qcollection =
+      hp::QCollection<dim - 1>(QGauss<dim - 1>(1)),
+    const UpdateFlags &face_flags = UpdateFlags::update_default);
 
   /**
    * Given a Triangulation with some agglomerated cells, create the sparsity
@@ -306,12 +309,13 @@ public:
    * The parameter @p fecollection_size provides the number of finite elements
    * in the collection, allowing Polydeal to insert an empty element for
    * slave cells internally.
-   * 
+   *
    * When @p fecollection_size equals 1, this function behaves identically to
    * define_agglomerate(const AgglomerationContainer &cells).
    */
   agglomeration_iterator
-  define_agglomerate(const AgglomerationContainer &cells, const unsigned int fecollection_size);
+  define_agglomerate(const AgglomerationContainer &cells,
+                     const unsigned int            fecollection_size);
 
   /**
    * Same as above, but checking that every vector of cells is connected. If
@@ -558,7 +562,8 @@ public:
   connect_hierarchy(const CellsAgglomerator<dim, RtreeType> &agglomerator);
 
   /**
-   * Return the finite element collection passed to distribute_agglomerated_dofs().
+   * Return the finite element collection passed to
+   * distribute_agglomerated_dofs().
    */
   inline const hp::FECollection<dim, spacedim> &
   get_fe_collection() const;

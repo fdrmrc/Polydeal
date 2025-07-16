@@ -773,8 +773,8 @@ namespace OseenNamespace
                     cell_matrix(i, j) +=
                       (viscosity_nu * scalar_product(grad_phi_u[i],
                                                      grad_phi_u[j]) // + ν ∇v:∇u
-                       - div_phi_u[i] * phi_p[j]                    // - ∇·v p
-                       + phi_p[i] * div_phi_u[j]                    // + ∇·u q
+                       - div_phi_u[i] * phi_p[j] // - ∇·v p
+                       + phi_p[i] * div_phi_u[j] // + ∇·u q
                        +
                        phi_u[i] * (grad_phi_u[j] * beta[q_index]) // + v· (β·∇)u
                        ) *
@@ -1008,14 +1008,16 @@ namespace OseenNamespace
                     double tau_neigh = (viscosity_nu) * (deg_v_neigh + 1) *
                                        (deg_v_neigh + dim) /
                                        std::fabs(neigh_polytope->diameter());
-                    double sigma_v = penalty_constant_v * std::max(tau_current, tau_neigh);
+                    double sigma_v =
+                      penalty_constant_v * std::max(tau_current, tau_neigh);
 
                     double zeta_current =
                       1. / (viscosity_nu / polytope->diameter() + beta_max);
                     double zeta_neigh =
                       1. /
                       (viscosity_nu / neigh_polytope->diameter() + beta_max);
-                    double sigma_p = penalty_constant_p * std::max(zeta_current, zeta_neigh);
+                    double sigma_p =
+                      penalty_constant_p * std::max(zeta_current, zeta_neigh);
 
                     for (unsigned int q_index = 0;
                          q_index < fe_faces0.n_quadrature_points;
@@ -1134,7 +1136,8 @@ namespace OseenNamespace
                                    (beta[q_index] * normals[q_index]) *
                                      jump_phi_v1[j] * downwind_phi_v0[i]) *
                                   fe_faces0.JxW(q_index);
-                                // Same structure as M11; only the basis functions differ.
+                                // Same structure as M11; only the basis
+                                // functions differ.
                                 //
                                 // Suffix '1' refers to neighbor cell basis
                                 // functions, while suffix '0' refers to current
@@ -1169,7 +1172,8 @@ namespace OseenNamespace
                                    (beta[q_index] * normals[q_index]) *
                                      jump_phi_v0[j] * downwind_phi_v1[i]) *
                                   fe_faces0.JxW(q_index);
-                                // Same structure as M11; only the basis functions differ.
+                                // Same structure as M11; only the basis
+                                // functions differ.
                                 //
                                 // Suffix '1' refers to neighbor cell basis
                                 // functions, while suffix '0' refers to current
@@ -1205,7 +1209,8 @@ namespace OseenNamespace
                                    (beta[q_index] * normals[q_index]) *
                                      jump_phi_v1[j] * downwind_phi_v1[i]) *
                                   fe_faces0.JxW(q_index);
-                                // Same structure as M11; only the basis functions differ.
+                                // Same structure as M11; only the basis
+                                // functions differ.
                                 //
                                 // Suffix '1' refers to neighbor cell basis
                                 // functions, while suffix '0' refers to current
@@ -1473,12 +1478,12 @@ main()
     {
       using namespace OseenNamespace;
 
-      ConvergenceTable convergence_table;
-      const unsigned int              deg_v_left  = 3;
-      const unsigned int              deg_p_left  = 2;
-      const unsigned int              deg_v_right = 2;
-      const unsigned int              deg_p_right = 1;
-      const double           Re          = 1.0;
+      ConvergenceTable   convergence_table;
+      const unsigned int deg_v_left  = 3;
+      const unsigned int deg_p_left  = 2;
+      const unsigned int deg_v_right = 2;
+      const unsigned int deg_p_right = 1;
+      const double       Re          = 1.0;
 
       for (unsigned int mesh_level = 2; mesh_level < 7; ++mesh_level)
         {
