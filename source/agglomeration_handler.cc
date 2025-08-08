@@ -413,7 +413,10 @@ AgglomerationHandler<dim, spacedim>::distribute_agglomerated_dofs(
                     dynamic_cast<const FE_AggloDGP<dim> *>(
                       &fe_collection_in[i].base_element(b)) ||
                     dynamic_cast<const FE_SimplexDGP<dim> *>(
-                      &fe_collection_in[i].base_element(b))))
+                      &fe_collection_in[i].base_element(b)) ||
+                    dynamic_cast<const FE_Nothing<dim> *>(
+                      &fe_collection_in[i].base_element(b))
+                    ))
                 AssertThrow(
                   false,
                   ExcNotImplemented(
