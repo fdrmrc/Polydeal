@@ -1318,15 +1318,26 @@ namespace dealii::PolyUtils
                          b < original_fe_collection[i].n_base_elements();
                          ++b)
                       {
-                        if (tria.all_reference_cells_are_hyper_cube())
-                          base_elements.push_back(new FE_DGQ<dim, spacedim>(
-                            original_fe_collection[i].base_element(b).degree));
-                        else if (tria.all_reference_cells_are_simplex())
-                          base_elements.push_back(new FE_SimplexDGP<dim,
-                                                                    spacedim>(
-                            original_fe_collection[i].base_element(b).degree));
+                        if (dynamic_cast<const FE_Nothing<dim> *>(
+                              &original_fe_collection[i].base_element(b)))
+                          base_elements.push_back(
+                            new FE_Nothing<dim, spacedim>());
                         else
-                          AssertThrow(false, ExcNotImplemented());
+                          {
+                            if (tria.all_reference_cells_are_hyper_cube())
+                              base_elements.push_back(new FE_DGQ<dim, spacedim>(
+                                original_fe_collection[i]
+                                  .base_element(b)
+                                  .degree));
+                            else if (tria.all_reference_cells_are_simplex())
+                              base_elements.push_back(
+                                new FE_SimplexDGP<dim, spacedim>(
+                                  original_fe_collection[i]
+                                    .base_element(b)
+                                    .degree));
+                            else
+                              AssertThrow(false, ExcNotImplemented());
+                          }
                         multiplicities.push_back(
                           original_fe_collection[i].element_multiplicity(b));
                       }
