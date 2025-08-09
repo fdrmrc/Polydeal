@@ -479,7 +479,7 @@ namespace dealii
     /**
      * Sequence of transfer operators, stored as pointers to Trilinos matrices.
      */
-    MGLevelObject<SmartPointer<TrilinosWrappers::SparseMatrix>>
+    MGLevelObject<ObserverPointer<TrilinosWrappers::SparseMatrix>>
       transfer_matrices;
 
     /**
