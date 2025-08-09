@@ -991,7 +991,9 @@ namespace StokesDarcyNamespace
               }
           }
         else
-          DEAL_II_NOT_IMPLEMENTED();
+          Assert(false,ExcMessage(
+                   "Polytope with index " + std::to_string(polytope->index()) +
+                   " should belong to either Stokes or Darcy domain."));
 
 
 
