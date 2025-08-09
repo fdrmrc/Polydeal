@@ -574,9 +574,9 @@ namespace StokesDarcyNamespace
     std::unique_ptr<const TensorFunction<1, dim, double>> bcDirichlet_S;
     std::unique_ptr<const Function<dim>>                  bcNeumann_D;
 
-    const double penalty_constant_v   = 40.0;
-    const double penalty_constant_p_S = 1.0;
-    const double penalty_constant_p_D = 10.0;
+    static constexpr double penalty_constant_v   = 40.0;
+    static constexpr double penalty_constant_p_S = 1.0;
+    static constexpr double penalty_constant_p_D = 10.0;
 
     Vector<double> interpolated_solution;
 
