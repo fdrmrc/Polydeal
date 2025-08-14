@@ -1,10 +1,5 @@
 var NAVTREEINDEX12 =
 {
-"structTrilinosWrappers_1_1PreconditionILUT_1_1AdditionalData.html":[1,0,160,15],
-"structTrilinosWrappers_1_1PreconditionILU_1_1AdditionalData.html":[1,0,160,14],
-"structTrilinosWrappers_1_1PreconditionIdentity_1_1AdditionalData.html":[1,0,160,13],
-"structTrilinosWrappers_1_1PreconditionJacobi_1_1AdditionalData.html":[1,0,160,16],
-"structTrilinosWrappers_1_1PreconditionSOR_1_1AdditionalData.html":[1,0,160,17],
 "structTrilinosWrappers_1_1PreconditionSSOR_1_1AdditionalData.html":[1,0,160,18],
 "structTrilinosWrappers_1_1SolverBase_1_1AdditionalData.html":[1,0,160,19],
 "structTrilinosWrappers_1_1SolverDirect_1_1AdditionalData.html":[1,0,160,20],

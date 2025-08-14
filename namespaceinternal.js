@@ -271,8 +271,8 @@ var namespaceinternal =
       [ "void_t", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1SupportsOperation.html#a30b21aec6811b24e4a344a9d34a2d524", null ]
     ] ],
     [ "SymmetricTensorAccessors", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1SymmetricTensorAccessors.html", [
-      [ "merge", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1SymmetricTensorAccessors.html#ab31d9d284c3f3dc3fe3d307d996da197", null ],
-      [ "merge", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1SymmetricTensorAccessors.html#a0aad8d81ea6c0e4cc2345436d11c2025", null ]
+      [ "merge", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1SymmetricTensorAccessors.html#a576e469a48128291b31b14a58f20f890", null ],
+      [ "merge", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1SymmetricTensorAccessors.html#a7167ed229457130c451e197574ee30c9", null ]
     ] ],
     [ "SymmetricTensorImplementation", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1SymmetricTensorImplementation.html", [
       [ "hybrid", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1SymmetricTensorImplementation.html#aa8c80be55736c23fe69fa6b2abc06d24", null ],
@@ -378,6 +378,7 @@ var namespaceinternal =
     [ "apply_matrix_vector_product", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal.html#a86004cbfb8a3bbf52dd577fa85282adb", null ],
     [ "apply_matrix_vector_product", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal.html#a42cc0ff9eb1744ad8d54293d803be44c", null ],
     [ "apply_matrix_vector_product", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal.html#ae164113bd6e1e214389584d27019b126", null ],
+    [ "apply_piola_gradient", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal.html#a5bc2145998a87ad6ed7d48386bf45389", null ],
     [ "apply_piola_hessian", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal.html#a2b4ab1302f4feb29a3ed9681190b2a4b", null ],
     [ "assemble", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal.html#a2b3d48efdf7c94da455dc6a3553bab79", null ],
     [ "check_vector_compatibility", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal.html#a86d9ef14bd68b3203cc5f2a0a2c910bd", null ],
