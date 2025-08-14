@@ -1373,8 +1373,8 @@ namespace dealii
                                            .visited_cell_and_faces))
                               {
                                 handler.polytope_cache
-                                  .interface[{current_polytope_id,
-                                              neighbor_polytope_id}]
+                                  .interface[{
+                                  current_polytope_id, neighbor_polytope_id}]
                                   .emplace_back(cell, f);
 
                                 handler.polytope_cache.visited_cell_and_faces
@@ -1440,8 +1440,8 @@ namespace dealii
                                            .visited_cell_and_faces))
                               {
                                 handler.polytope_cache
-                                  .interface[{current_polytope_id,
-                                              neighbor_polytope_id}]
+                                  .interface[{
+                                  current_polytope_id, neighbor_polytope_id}]
                                   .emplace_back(cell, f);
 
                                 handler.polytope_cache.visited_cell_and_faces
