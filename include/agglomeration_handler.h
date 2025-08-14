@@ -13,8 +13,8 @@
 #define agglomeration_handler_h
 
 #include <deal.II/base/mpi.h>
+#include <deal.II/base/observer_pointer.h>
 #include <deal.II/base/quadrature.h>
-#include <deal.II/base/smartpointer.h>
 #include <deal.II/base/subscriptor.h>
 
 #include <deal.II/distributed/shared_tria.h>
@@ -807,9 +807,9 @@ private:
 
   ////////////////////////////////////////////////////////
 
-  SmartPointer<const Triangulation<dim, spacedim>> tria;
+  ObserverPointer<const Triangulation<dim, spacedim>> tria;
 
-  SmartPointer<const Mapping<dim, spacedim>> mapping;
+  ObserverPointer<const Mapping<dim, spacedim>> mapping;
 
   std::unique_ptr<GridTools::Cache<dim, spacedim>> cached_tria;
 

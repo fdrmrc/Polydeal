@@ -841,7 +841,7 @@ namespace dealii::PolyUtils
 
     const double overlap_factor =
       Utilities::MPI::sum(covering_bboxes,
-                          ah.get_dof_handler().get_communicator()) /
+                          ah.get_dof_handler().get_mpi_communicator()) /
       GridTools::volume(ah.get_triangulation()); // assuming a linear mapping
 
 
@@ -1091,7 +1091,7 @@ namespace dealii::PolyUtils
 
       if constexpr (std::is_same_v<MatrixType, TrilinosWrappers::SparseMatrix>)
         {
-          const MPI_Comm &communicator = tria.get_communicator();
+          const MPI_Comm &communicator = tria.get_mpi_communicator();
           SparsityTools::distribute_sparsity_pattern(dsp,
                                                      locally_owned_dofs,
                                                      communicator,
@@ -1602,7 +1602,7 @@ namespace dealii::PolyUtils
 
     if constexpr (std::is_same_v<MatrixType, TrilinosWrappers::SparseMatrix>)
       {
-        const MPI_Comm &communicator = tria.get_communicator();
+        const MPI_Comm &communicator = tria.get_mpi_communicator();
         SparsityTools::distribute_sparsity_pattern(dsp,
                                                    locally_owned_dofs,
                                                    communicator,
@@ -1734,7 +1734,7 @@ namespace dealii::PolyUtils
     // Perform reduction and take sqrt of each error
     global_errors[0] = Utilities::MPI::reduce<double>(
       local_errors[0],
-      agglomeration_handler.get_triangulation().get_communicator(),
+      agglomeration_handler.get_triangulation().get_mpi_communicator(),
       [](const double a, const double b) { return a + b; });
 
     global_errors[0] = std::sqrt(global_errors[0]);
@@ -1743,7 +1743,7 @@ namespace dealii::PolyUtils
       {
         global_errors[1] = Utilities::MPI::reduce<double>(
           local_errors[1],
-          agglomeration_handler.get_triangulation().get_communicator(),
+          agglomeration_handler.get_triangulation().get_mpi_communicator(),
           [](const double a, const double b) { return a + b; });
         global_errors[1] = std::sqrt(global_errors[1]);
       }
@@ -1774,7 +1774,7 @@ namespace dealii::PolyUtils
     GridTools::Cache<dim> cached_tria(tria);
     Assert(parallel_tria->n_active_cells() > 0, ExcInternalError());
 
-    const MPI_Comm     comm = parallel_tria->get_communicator();
+    const MPI_Comm     comm = parallel_tria->get_mpi_communicator();
     ConditionalOStream pcout(std::cout,
                              (Utilities::MPI::this_mpi_process(comm) == 0));
 
@@ -2231,17 +2231,18 @@ namespace dealii::PolyUtils
 
     DynamicSparsityPattern dsp(locally_relevant_dofs);
     DoFTools::make_flux_sparsity_pattern(dof_handler, dsp);
-    SparsityTools::distribute_sparsity_pattern(dsp,
-                                               dof_handler.locally_owned_dofs(),
-                                               dof_handler.get_communicator(),
-                                               locally_relevant_dofs);
+    SparsityTools::distribute_sparsity_pattern(
+      dsp,
+      dof_handler.locally_owned_dofs(),
+      dof_handler.get_mpi_communicator(),
+      locally_relevant_dofs);
 
     system_matrix.reinit(locally_owned_dofs,
                          locally_owned_dofs,
                          dsp,
-                         dof_handler.get_communicator());
+                         dof_handler.get_mpi_communicator());
 
-    system_rhs.reinit(locally_owned_dofs, dof_handler.get_communicator());
+    system_rhs.reinit(locally_owned_dofs, dof_handler.get_mpi_communicator());
 
     const unsigned int quadrature_degree = fe_dg.degree + 1;
     FEFaceValues<dim>  fe_faces0(mapping,
