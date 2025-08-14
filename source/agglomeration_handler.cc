@@ -415,8 +415,7 @@ AgglomerationHandler<dim, spacedim>::distribute_agglomerated_dofs(
                     dynamic_cast<const FE_SimplexDGP<dim> *>(
                       &fe_collection_in[i].base_element(b)) ||
                     dynamic_cast<const FE_Nothing<dim> *>(
-                      &fe_collection_in[i].base_element(b))
-                    ))
+                      &fe_collection_in[i].base_element(b))))
                 AssertThrow(
                   false,
                   ExcNotImplemented(
@@ -1374,8 +1373,8 @@ namespace dealii
                                            .visited_cell_and_faces))
                               {
                                 handler.polytope_cache
-                                  .interface[{
-                                  current_polytope_id, neighbor_polytope_id}]
+                                  .interface[{current_polytope_id,
+                                              neighbor_polytope_id}]
                                   .emplace_back(cell, f);
 
                                 handler.polytope_cache.visited_cell_and_faces
@@ -1389,8 +1388,8 @@ namespace dealii
                                            .visited_cell_and_faces))
                               {
                                 handler.polytope_cache
-                                  .interface[{
-                                  neighbor_polytope_id, current_polytope_id}]
+                                  .interface[{neighbor_polytope_id,
+                                              current_polytope_id}]
                                   .emplace_back(neighboring_cell, nof);
 
                                 handler.polytope_cache.visited_cell_and_faces
@@ -1441,8 +1440,8 @@ namespace dealii
                                            .visited_cell_and_faces))
                               {
                                 handler.polytope_cache
-                                  .interface[{
-                                  current_polytope_id, neighbor_polytope_id}]
+                                  .interface[{current_polytope_id,
+                                              neighbor_polytope_id}]
                                   .emplace_back(cell, f);
 
                                 handler.polytope_cache.visited_cell_and_faces
@@ -1455,8 +1454,8 @@ namespace dealii
                                            .visited_cell_and_faces))
                               {
                                 handler.polytope_cache
-                                  .interface[{
-                                  neighbor_polytope_id, current_polytope_id}]
+                                  .interface[{neighbor_polytope_id,
+                                              current_polytope_id}]
                                   .emplace_back(neighboring_cell, nof);
 
                                 handler.polytope_cache.visited_cell_and_faces
@@ -1534,8 +1533,8 @@ namespace dealii
                               handler.polytope_cache.visited_cell_and_faces_id))
                           {
                             handler.polytope_cache
-                              .interface[{
-                              current_polytope_id, check_neigh_polytope_id}]
+                              .interface[{current_polytope_id,
+                                          check_neigh_polytope_id}]
                               .emplace_back(cell, f);
 
                             // std::cout << "ADDED ("
@@ -1556,8 +1555,8 @@ namespace dealii
                               handler.polytope_cache.visited_cell_and_faces_id))
                           {
                             handler.polytope_cache
-                              .interface[{
-                              check_neigh_polytope_id, current_polytope_id}]
+                              .interface[{check_neigh_polytope_id,
+                                          current_polytope_id}]
                               .emplace_back(neighboring_cell, nof);
 
                             handler.polytope_cache.visited_cell_and_faces_id
@@ -1605,8 +1604,7 @@ namespace dealii
                         std::end(handler.polytope_cache.visited_cell_and_faces))
                       {
                         handler.polytope_cache
-                          .interface[{
-                          current_polytope_id, current_polytope_id}]
+                          .interface[{current_polytope_id, current_polytope_id}]
                           .emplace_back(cell, f);
 
                         handler.polytope_cache.visited_cell_and_faces.insert(
@@ -1614,7 +1612,7 @@ namespace dealii
                       }
                   }
               } // loop over faces
-          }     // loop over all cells of agglomerate
+          } // loop over all cells of agglomerate
 
 
 

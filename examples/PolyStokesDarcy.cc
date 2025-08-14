@@ -856,7 +856,8 @@ namespace StokesDarcyNamespace
         else if (polytope_is_in_Darcy_domain(polytope)) // bottom part
           polytope->set_active_fe_index(1);             // Darcy
         else
-          Assert(false,ExcMessage(
+          Assert(false,
+                 ExcMessage(
                    "Polytope with index " + std::to_string(polytope->index()) +
                    " should belong to either Stokes or Darcy domain."));
       }
@@ -993,7 +994,8 @@ namespace StokesDarcyNamespace
               }
           }
         else
-          Assert(false,ExcMessage(
+          Assert(false,
+                 ExcMessage(
                    "Polytope with index " + std::to_string(polytope->index()) +
                    " should belong to either Stokes or Darcy domain."));
 
@@ -1119,8 +1121,10 @@ namespace StokesDarcyNamespace
                       }
                   }
                 else
-                  Assert(false,ExcMessage(
-                           "Polytope with index " + std::to_string(polytope->index()) +
+                  Assert(false,
+                         ExcMessage(
+                           "Polytope with index " +
+                           std::to_string(polytope->index()) +
                            " should belong to either Stokes or Darcy domain."));
               }
             else
