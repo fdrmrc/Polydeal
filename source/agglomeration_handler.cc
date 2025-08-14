@@ -1533,8 +1533,8 @@ namespace dealii
                               handler.polytope_cache.visited_cell_and_faces_id))
                           {
                             handler.polytope_cache
-                              .interface[{current_polytope_id,
-                                          check_neigh_polytope_id}]
+                              .interface[{
+                              current_polytope_id, check_neigh_polytope_id}]
                               .emplace_back(cell, f);
 
                             // std::cout << "ADDED ("
@@ -1604,7 +1604,8 @@ namespace dealii
                         std::end(handler.polytope_cache.visited_cell_and_faces))
                       {
                         handler.polytope_cache
-                          .interface[{current_polytope_id, current_polytope_id}]
+                          .interface[{
+                          current_polytope_id, current_polytope_id}]
                           .emplace_back(cell, f);
 
                         handler.polytope_cache.visited_cell_and_faces.insert(
@@ -1612,7 +1613,7 @@ namespace dealii
                       }
                   }
               } // loop over faces
-          } // loop over all cells of agglomerate
+          }     // loop over all cells of agglomerate
 
 
 
