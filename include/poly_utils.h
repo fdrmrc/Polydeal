@@ -2183,9 +2183,9 @@ namespace dealii::PolyUtils
                             constraints.distribute_local_to_global(
                               M22, local_dof_indices_neighbor, system_matrix);
                           } // ghosted polytope case
-                      } // only once
-                  } // internal face
-              } // face loop
+                      }     // only once
+                  }         // internal face
+              }             // face loop
             constraints.distribute_local_to_global(cell_matrix,
                                                    local_dof_indices,
                                                    system_matrix);
@@ -2448,7 +2448,7 @@ namespace dealii::PolyUtils
                           M22, local_dof_indices_neighbor, system_matrix);
 
                       } // check idx neighbors
-                  } // over faces
+                  }     // over faces
               }
             constraints.distribute_local_to_global(cell_matrix,
                                                    cell_rhs,
