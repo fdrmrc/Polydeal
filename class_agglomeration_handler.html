@@ -370,10 +370,10 @@ Private Attributes</h2></td></tr>
 <tr class="separator:a278f23721bdee3123d9b14efbeb8db98"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8f9d14a81b9fe99310b46d8b761df4db" id="r_a8f9d14a81b9fe99310b46d8b761df4db"><td class="memItemLeft" align="right" valign="top">std::map&lt; <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/namespacetypes.html#a3d8ea8a4c6a58127f8c2fcc9ec74af6e">types::subdomain_id</a>, std::map&lt; std::pair&lt; <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classCellId.html">CellId</a>, unsigned int &gt;, std::vector&lt; std::vector&lt; <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classTensor.html">Tensor</a>&lt; 1, spacedim &gt; &gt; &gt; &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a8f9d14a81b9fe99310b46d8b761df4db">local_gradients</a></td></tr>
 <tr class="separator:a8f9d14a81b9fe99310b46d8b761df4db"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4af2c4c5d927780b9f34a3879b680ffe" id="r_a4af2c4c5d927780b9f34a3879b680ffe"><td class="memItemLeft" align="right" valign="top"><a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/observer__pointer_8h.html#a3b6d40085e56aa07e0ac14c306ddb0cd">SmartPointer</a>&lt; const <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classTriangulation.html">Triangulation</a>&lt; dim, spacedim &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a4af2c4c5d927780b9f34a3879b680ffe">tria</a></td></tr>
-<tr class="separator:a4af2c4c5d927780b9f34a3879b680ffe"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aecc69931ae6d071ff5fa61029e4a279a" id="r_aecc69931ae6d071ff5fa61029e4a279a"><td class="memItemLeft" align="right" valign="top"><a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/observer__pointer_8h.html#a3b6d40085e56aa07e0ac14c306ddb0cd">SmartPointer</a>&lt; const <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classMapping.html">Mapping</a>&lt; dim, spacedim &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aecc69931ae6d071ff5fa61029e4a279a">mapping</a></td></tr>
-<tr class="separator:aecc69931ae6d071ff5fa61029e4a279a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5545e68c330633358d003d6f915f8415" id="r_a5545e68c330633358d003d6f915f8415"><td class="memItemLeft" align="right" valign="top"><a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classObserverPointer.html">ObserverPointer</a>&lt; const <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classTriangulation.html">Triangulation</a>&lt; dim, spacedim &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a5545e68c330633358d003d6f915f8415">tria</a></td></tr>
+<tr class="separator:a5545e68c330633358d003d6f915f8415"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aeb083bb6559ca41441f6ad228fdd8f19" id="r_aeb083bb6559ca41441f6ad228fdd8f19"><td class="memItemLeft" align="right" valign="top"><a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classObserverPointer.html">ObserverPointer</a>&lt; const <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classMapping.html">Mapping</a>&lt; dim, spacedim &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aeb083bb6559ca41441f6ad228fdd8f19">mapping</a></td></tr>
+<tr class="separator:aeb083bb6559ca41441f6ad228fdd8f19"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0f17801149c42a7959a8cf2aa9b4528d" id="r_a0f17801149c42a7959a8cf2aa9b4528d"><td class="memItemLeft" align="right" valign="top">std::unique_ptr&lt; <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classGridTools_1_1Cache.html">GridTools::Cache</a>&lt; dim, spacedim &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a0f17801149c42a7959a8cf2aa9b4528d">cached_tria</a></td></tr>
 <tr class="separator:a0f17801149c42a7959a8cf2aa9b4528d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a70d25302979f8b4d13c07b1011940ffc" id="r_a70d25302979f8b4d13c07b1011940ffc"><td class="memItemLeft" align="right" valign="top">const MPI_Comm&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a70d25302979f8b4d13c07b1011940ffc">communicator</a></td></tr>
@@ -3532,8 +3532,8 @@ template&lt;int dim, int spacedim = dim&gt; </div>
 
 </div>
 </div>
-<a id="aecc69931ae6d071ff5fa61029e4a279a" name="aecc69931ae6d071ff5fa61029e4a279a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aecc69931ae6d071ff5fa61029e4a279a">&#9670;&#160;</a></span>mapping</h2>
+<a id="aeb083bb6559ca41441f6ad228fdd8f19" name="aeb083bb6559ca41441f6ad228fdd8f19"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aeb083bb6559ca41441f6ad228fdd8f19">&#9670;&#160;</a></span>mapping</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -3544,7 +3544,7 @@ template&lt;int dim, int spacedim = dim&gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/observer__pointer_8h.html#a3b6d40085e56aa07e0ac14c306ddb0cd">SmartPointer</a>&lt;const <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classMapping.html">Mapping</a>&lt;dim, spacedim&gt; &gt; <a class="el" href="class_agglomeration_handler.html">AgglomerationHandler</a>&lt; dim, spacedim &gt;::mapping</td>
+          <td class="memname"><a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classObserverPointer.html">ObserverPointer</a>&lt;const <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classMapping.html">Mapping</a>&lt;dim, spacedim&gt; &gt; <a class="el" href="class_agglomeration_handler.html">AgglomerationHandler</a>&lt; dim, spacedim &gt;::mapping</td>
         </tr>
       </table>
   </td>
@@ -4337,8 +4337,8 @@ template&lt;int dim, int spacedim = dim&gt; </div>
 
 </div>
 </div>
-<a id="a4af2c4c5d927780b9f34a3879b680ffe" name="a4af2c4c5d927780b9f34a3879b680ffe"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a4af2c4c5d927780b9f34a3879b680ffe">&#9670;&#160;</a></span>tria</h2>
+<a id="a5545e68c330633358d003d6f915f8415" name="a5545e68c330633358d003d6f915f8415"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5545e68c330633358d003d6f915f8415">&#9670;&#160;</a></span>tria</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -4349,7 +4349,7 @@ template&lt;int dim, int spacedim = dim&gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/observer__pointer_8h.html#a3b6d40085e56aa07e0ac14c306ddb0cd">SmartPointer</a>&lt;const <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classTriangulation.html">Triangulation</a>&lt;dim, spacedim&gt; &gt; <a class="el" href="class_agglomeration_handler.html">AgglomerationHandler</a>&lt; dim, spacedim &gt;::tria</td>
+          <td class="memname"><a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classObserverPointer.html">ObserverPointer</a>&lt;const <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classTriangulation.html">Triangulation</a>&lt;dim, spacedim&gt; &gt; <a class="el" href="class_agglomeration_handler.html">AgglomerationHandler</a>&lt; dim, spacedim &gt;::tria</td>
         </tr>
       </table>
   </td>
@@ -4404,7 +4404,7 @@ template&lt;int dim, int spacedim = dim&gt; </div>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="class_agglomeration_handler.html">AgglomerationHandler</a></li>
-    <li class="footer">Generated on Thu Aug 14 2025 14:15:39 for PolyDEAL by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.13.2 </li>
+    <li class="footer">Generated on Thu Aug 14 2025 15:32:47 for PolyDEAL by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.13.2 </li>
   </ul>
 </div>
 </body>
