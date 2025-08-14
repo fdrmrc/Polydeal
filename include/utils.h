@@ -145,7 +145,7 @@ namespace Utils
     if constexpr (is_trilinos_matrix)
       dsp.reinit(locally_owned_dofs_fine,
                  locally_owned_dofs_coarse,
-                 tria.get_communicator());
+                 tria.get_mpi_communicator());
     else
       dsp.reinit(fine_agglo_dh.n_dofs(),
                  coarse_agglo_dh.n_dofs(),

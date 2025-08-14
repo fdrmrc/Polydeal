@@ -123,7 +123,7 @@ namespace dealii
       {
         // std::cout << "level = " << level << std::endl;
         dst[level].reinit(dof_handlers[level]->locally_owned_dofs(),
-                          dof_handlers[level]->get_communicator());
+                          dof_handlers[level]->get_mpi_communicator());
       }
 
     if constexpr (std::is_same_v<VectorType, TrilinosWrappers::MPI::Vector>)

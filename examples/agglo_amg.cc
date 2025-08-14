@@ -892,7 +892,7 @@ fill_interpolation_matrix(
 
   if constexpr (std::is_same_v<MatrixType, TrilinosWrappers::SparseMatrix>)
     {
-      const MPI_Comm &communicator = tria.get_communicator();
+      const MPI_Comm &communicator = tria.get_mpi_communicator();
       SparsityTools::distribute_sparsity_pattern(dsp,
                                                  locally_owned_dofs,
                                                  communicator,
