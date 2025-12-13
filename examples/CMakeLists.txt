@@ -21,6 +21,20 @@ FOREACH(_build_type ${_d2_build_types})
       foreach (testsourcefile ${APP_SOURCES})
       # Cut off the file extension and directory path
             get_filename_component( exename ${testsourcefile} NAME_WE )            
+            
+            # Require MUMPS for monodomain_DG3D example
+            if(exename STREQUAL "monodomain_DG3D")
+              if(NOT DEAL_II_WITH_MUMPS)
+                message(WARNING "\n"
+                  "*** The example '${exename}' requires MUMPS support. ***\n\n"
+                  "Please recompile deal.II with MUMPS enabled for this example to work correctly.\n"
+                  "To enable MUMPS in deal.II, use -DDEAL_II_WITH_MUMPS=ON when configuring deal.II."
+                )
+              else()
+                message("-- MUMPS support detected for ${exename}")
+              endif()
+            endif()
+            
             # Add suffix for debug
             set(testname ${exename}${_p})
             message("-- Configuring executable ${testname} (${testsourcefile})")

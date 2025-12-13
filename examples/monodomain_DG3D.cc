@@ -55,7 +55,11 @@
 
 using namespace dealii;
 
-// static constexpr double       TOL            = 2.5e-3;
+#ifndef DEAL_II_WITH_MUMPS
+class SparseDirectMUMPS
+{};
+#endif
+
 static constexpr double       TOL            = 3e-3;
 static constexpr unsigned int starting_level = 1;
 
@@ -73,7 +77,9 @@ namespace Utils
     return (0.5 * (1 + std::tanh(k * (x - x0))));
   }
 
-  template <typename MatrixType, typename Number>
+  template <typename MatrixType,
+            typename Number,
+            typename PreconditionerType = TrilinosWrappers::PreconditionAMG>
   class MGCoarseIterative
     : public MGCoarseGridBase<LinearAlgebra::distributed::Vector<Number>>
   {
@@ -85,7 +91,30 @@ namespace Utils
     initialize(const MatrixType &matrix)
     {
       coarse_matrix = &matrix;
-      precondition.initialize(*coarse_matrix);
+      if constexpr (std::is_same_v<PreconditionerType, SparseDirectMUMPS>)
+        {
+#ifdef DEAL_II_WITH_MUMPS
+          precondition = std::make_unique<SparseDirectMUMPS>(
+            typename SparseDirectMUMPS::AdditionalData(),
+            matrix.get_mpi_communicator());
+          precondition->initialize(matrix);
+#else
+          AssertThrow(false,
+                      ExcMessage(
+                        "MUMPS support is required but not available. "
+                        "Please recompile deal.II with MUMPS enabled."));
+#endif
+        }
+      else if constexpr (std::is_same_v<PreconditionerType,
+                                        TrilinosWrappers::PreconditionAMG>)
+        {
+          precondition = std::make_unique<TrilinosWrappers::PreconditionAMG>();
+          precondition->initialize(*coarse_matrix);
+        }
+      else
+        {
+          DEAL_II_NOT_IMPLEMENTED();
+        }
     }
 
     virtual void
@@ -95,21 +124,52 @@ namespace Utils
       const LinearAlgebra::distributed::Vector<double> &src) const override
     {
       (void)level;
-      ReductionControl solver_control(1e4, 1e-50, 1e-14);
-      SolverCG<LinearAlgebra::distributed::Vector<double>> solver_coarse(
-        solver_control);
-      // double start, stop;
-      // start = MPI_Wtime();
-      solver_coarse.solve(*coarse_matrix, dst, src, precondition);
-      // stop = MPI_Wtime();
+      [[maybe_unused]] double start, stop;
+      if constexpr (std::is_same_v<PreconditionerType,
+                                   TrilinosWrappers::PreconditionAMG>)
+        {
+          ReductionControl solver_control(1e4, 1e-50, 1e-14);
+          SolverCG<LinearAlgebra::distributed::Vector<double>> solver_coarse(
+            solver_control);
+#ifdef AGGLO_DEBUG
+          start = MPI_Wtime();
+#endif
+          solver_coarse.solve(*coarse_matrix, dst, src, *precondition);
+#ifdef AGGLO_DEBUG
+          stop = MPI_Wtime();
+#endif
+        }
+      else if constexpr (std::is_same_v<PreconditionerType, SparseDirectMUMPS>)
+        {
+#ifdef AGGLO_DEBUG
+          start = MPI_Wtime();
+#endif
+#ifdef DEAL_II_WITH_MUMPS
+          precondition->vmult(dst, src);
+#else
+          AssertThrow(false,
+                      ExcMessage(
+                        "MUMPS support is required but not available. "
+                        "Please recompile deal.II with MUMPS enabled."));
+#endif
+#ifdef AGGLO_DEBUG
+          stop = MPI_Wtime();
+#endif
+        }
+      else
+        {
+          DEAL_II_NOT_IMPLEMENTED();
+        }
 
-      // if (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
-      //   std::cout << "Coarse solver elapsed time: " << stop - start << "[s]"
-      //             << std::endl;
+#ifdef AGGLO_DEBUG
+      if (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
+        std::cout << "Coarse solver elapsed time: " << stop - start << "[s]"
+                  << std::endl;
+#endif
     }
 
-    const MatrixType                 *coarse_matrix;
-    TrilinosWrappers::PreconditionILU precondition;
+    const MatrixType                   *coarse_matrix;
+    std::unique_ptr<PreconditionerType> precondition;
   };
 
 } // namespace Utils
@@ -155,6 +215,7 @@ struct ModelParameters
   double       k3                 = 2.0994;
   double       kso                = 2.0;
   bool         use_amg            = false;
+  unsigned int output_frequency   = 1;
 
   std::string mesh_dir = "../../meshes/idealized_lv.msh";
 
@@ -503,10 +564,10 @@ private:
   std::unique_ptr<AgglomerationHandler<dim>>  agglomeration_handler_coarse;
 
 
-  // Multigrid related
-
-  using LevelMatrixType = TrilinosWrappers::SparseMatrix;
-  using SmootherType    = PreconditionChebyshev<LevelMatrixType, VectorType>;
+  // Multigrid related types
+  using LevelMatrixType  = TrilinosWrappers::SparseMatrix;
+  using SmootherType     = PreconditionChebyshev<LevelMatrixType, VectorType>;
+  using CoarseSolverType = SparseDirectMUMPS;
 
   MGLevelObject<TrilinosWrappers::SparseMatrix> multigrid_matrices;
   std::unique_ptr<Multigrid<VectorType>>        mg;
@@ -520,8 +581,9 @@ private:
 
   std::unique_ptr<mg::Matrix<VectorType>> mg_matrix;
 
-  std::unique_ptr<
-    Utils::MGCoarseIterative<TrilinosWrappers::SparseMatrix, double>>
+  std::unique_ptr<Utils::MGCoarseIterative<TrilinosWrappers::SparseMatrix,
+                                           double,
+                                           CoarseSolverType>>
     mg_coarse;
 
   std::unique_ptr<mg::SmootherRelaxation<SmootherType, VectorType>> mg_smoother;
@@ -913,9 +975,10 @@ IonicModel<dim>::setup_multigrid()
 
   // Define coarse grid solver
   const unsigned int min_level = 0;
-
-  mg_coarse = std::make_unique<
-    Utils::MGCoarseIterative<TrilinosWrappers::SparseMatrix, double>>();
+  mg_coarse =
+    std::make_unique<Utils::MGCoarseIterative<TrilinosWrappers::SparseMatrix,
+                                              double,
+                                              CoarseSolverType>>();
   mg_coarse->initialize(multigrid_matrices[min_level]);
 
   pcout << "Coarse solver initialized" << std::endl;
@@ -1283,11 +1346,9 @@ IonicModel<dim>::solve()
                  system_rhs,
                  *preconditioner);
 
-
-  // #ifdef AGGLO_DEBUG
   pcout << "Number of outer iterations: " << param.control.last_step()
         << std::endl;
-  // #endif
+
   if (Utilities::MPI::this_mpi_process(communicator) == 0)
     {
       file_iterations << param.control.last_step();
@@ -1403,8 +1464,7 @@ IonicModel<dim>::run()
         << std::endl;
 
   // Set initial conditions
-  locally_relevant_solution_pre = -84e-3;
-  // locally_relevant_solution_pre     = 0.;
+  locally_relevant_solution_pre     = -84e-3;
   locally_relevant_solution_current = locally_relevant_solution_pre;
 
   locally_relevant_w0_pre     = 1.;
@@ -1423,7 +1483,7 @@ IonicModel<dim>::run()
 
   unsigned int iter_count = 0;
 
-  const auto mesh_size = [this]() -> double {
+  const double mesh_size = [this]() -> double {
     double hmax = 0.;
     for (const auto &cell : classical_dh.active_cell_iterators())
       if (cell->is_locally_owned())
@@ -1476,9 +1536,9 @@ IonicModel<dim>::run()
       pcout << "Solved at t= " << time << std::endl;
       ++iter_count;
 
-      // output results every 5 time steps
-      // if ((iter_count % 10 == 0) || time < param.final_time_current)
-      // output_results();
+      // output results
+      if (iter_count % param.output_frequency == 0)
+        output_results();
 
       // Store minimum value current action potential on each processor
       min_value = *locally_relevant_solution_current.begin();
@@ -1536,6 +1596,7 @@ main(int argc, char *argv[])
     parameters.dt                 = 1e-4;
     parameters.final_time         = 0.4;
     parameters.final_time_current = 3e-3;
+    parameters.output_frequency   = 5;
 
     IonicModel<3> problem(parameters);
     problem.run();
