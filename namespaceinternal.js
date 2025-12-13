@@ -474,7 +474,7 @@ var namespaceinternal =
     [ "set_ghost_state", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal.html#aadf183992767fd4a10ab2c8c57f6ab31", null ],
     [ "setup_nonprimitive_offset_table", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal.html#a08f21fb8e3509ecdc2d01955772bbd30", null ],
     [ "setup_primitive_offset_table", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal.html#a183f33c8a3ae365e6763b5d58014a5c7", null ],
-    [ "split_face_orientation", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal.html#a5df570792d8ead0848534e5780fa6c3c", null ],
+    [ "split_face_orientation", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal.html#a218719135b837582ca64958b234d6a0c", null ],
     [ "truncate_tensor_product_to_complete_degrees", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal.html#ace6dcc14b7cc2c50017a1e875c46cf37", null ],
     [ "use_collocation_evaluation", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal.html#a2879ea8e9c8ad1d99a234569c675f3fb", null ],
     [ "vector_access", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal.html#a94892fd51cb3142441d13590ac4bb477", null ],
