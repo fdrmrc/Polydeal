@@ -492,7 +492,7 @@ private:
   // Multigrid related types
   using LevelMatrixType  = TrilinosWrappers::SparseMatrix;
   using SmootherType     = PreconditionChebyshev<LevelMatrixType, VectorType>;
-  using CoarseSolverType = SparseDirectMUMPS;
+  using CoarseSolverType = TrilinosWrappers::PreconditionAMG;
 
   MGLevelObject<TrilinosWrappers::SparseMatrix> multigrid_matrices;
   std::unique_ptr<Multigrid<VectorType>>        mg;
