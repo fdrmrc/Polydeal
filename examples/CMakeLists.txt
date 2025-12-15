@@ -38,11 +38,21 @@ FOREACH(_build_type ${_d2_build_types})
             # Add suffix for debug
             set(testname ${exename}${_p})
             message("-- Configuring executable ${testname} (${testsourcefile})")
-
+            
             add_executable( ${testname} ${testsourcefile} )
-
+            
             # Make sure YourLib is linked to each app
             target_link_libraries(${testname} ${_lib})
+            string(FIND ${testname} "likwid" REQUIRES_LIKWID)
+            if(REQUIRES_LIKWID)
+            if(LIKWID) 
+              message("-- Configuring executable ${testname} (${testsourcefile}) with LIKWID")
+              TARGET_COMPILE_DEFINITIONS(${testname} PUBLIC LIKWID_PERFMON)
+              TARGET_INCLUDE_DIRECTORIES(${testname} PUBLIC $ENV{LIKWID_INCLUDE})
+              TARGET_LINK_LIBRARIES(${testname} ${LIKWID}) 
+            endif()
+            endif()
+
             DEAL_II_SETUP_TARGET(${testname} ${_BUILD_TYPE})
             INSTALL(TARGETS ${testname})
             set(testname ${testname}${_p})

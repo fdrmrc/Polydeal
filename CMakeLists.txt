@@ -28,6 +28,14 @@ ENDIF()
 DEAL_II_INITIALIZE_CACHED_VARIABLES()
 PROJECT(polydeal)
 
+FIND_LIBRARY(LIKWID likwid HINTS $ENV{LIKWID_LIB})
+
+IF(LIKWID) 
+  MESSAGE("Configuration with LIKWID")
+ELSE()
+  MESSAGE("Configuration without LIKWID")
+ENDIF()
+
 # Enable testing and descent into tests/ subdirectory:
 ENABLE_TESTING()
 INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/include)
