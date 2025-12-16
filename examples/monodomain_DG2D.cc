@@ -96,9 +96,7 @@ namespace Utils
                                         TrilinosWrappers::PreconditionAMG>)
         {
           precondition = std::make_unique<TrilinosWrappers::PreconditionAMG>();
-          typename TrilinosWrappers::PreconditionAMG::AdditionalData data;
-          data.output_details = true;
-          precondition->initialize(*coarse_matrix, data);
+          precondition->initialize(*coarse_matrix);
         }
       else
         {
@@ -167,8 +165,8 @@ namespace Utils
 struct ModelParameters
 {
   SolverControl control;
-  bool          use_amg            = false;
-  unsigned int  fe_degree          = 2;
+  bool          use_amg            = true;
+  unsigned int  fe_degree          = 1;
   unsigned int  output_frequency   = 1;
   bool          output_results     = true;
   double        dt                 = 1e-4;
@@ -496,7 +494,7 @@ private:
   // Multigrid related types
   using LevelMatrixType  = TrilinosWrappers::SparseMatrix;
   using SmootherType     = PreconditionChebyshev<LevelMatrixType, VectorType>;
-  using CoarseSolverType = SparseDirectMUMPS;
+  using CoarseSolverType = TrilinosWrappers::PreconditionAMG;
 
   MGLevelObject<TrilinosWrappers::SparseMatrix> multigrid_matrices;
   std::unique_ptr<Multigrid<VectorType>>        mg;
@@ -1334,7 +1332,11 @@ IonicModel<dim>::run()
 
   // Depending on the preconditioner type, use AMG or polytopal multigrid.
   if (param.use_amg)
-    amg_preconditioner.initialize(system_matrix);
+    {
+      typename TrilinosWrappers::PreconditionAMG::AdditionalData amg_data;
+      amg_data.output_details = true;
+      amg_preconditioner.initialize(system_matrix, amg_data);
+    }
   else
     setup_multigrid();
   pcout << "Setup multigrid: done " << std::endl;
@@ -1379,6 +1381,8 @@ int
 main(int argc, char *argv[])
 {
   Utilities::MPI::MPI_InitFinalize mpi_initialization(argc, argv, 1);
+  deallog.depth_console(
+    Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0 ? 10 : 0);
 
   {
     ModelParameters parameters;
