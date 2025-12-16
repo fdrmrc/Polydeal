@@ -96,7 +96,9 @@ namespace Utils
                                         TrilinosWrappers::PreconditionAMG>)
         {
           precondition = std::make_unique<TrilinosWrappers::PreconditionAMG>();
-          precondition->initialize(*coarse_matrix);
+          typename TrilinosWrappers::PreconditionAMG::AdditionalData data;
+          data.output_details = true;
+          precondition->initialize(*coarse_matrix, data);
         }
       else
         {
@@ -161,25 +163,27 @@ namespace Utils
 
 } // namespace Utils
 
-// Model parameters for Bueno
+// Model parameters for FitzHugh-Nagumo
 struct ModelParameters
 {
   SolverControl control;
-  bool          use_amg          = false;
-  unsigned int  output_frequency = 1;
+  bool          use_amg            = false;
+  unsigned int  fe_degree          = 2;
+  unsigned int  output_frequency   = 1;
+  bool          output_results     = true;
+  double        dt                 = 1e-4;
+  double        final_time         = 0.4;
+  double        final_time_current = 3e-3;
 
-  double       penalty_constant   = 10.;
-  unsigned int fe_degree          = 1;
-  double       dt                 = 1e-2;
-  double       final_time         = 1.;
-  double       final_time_current = 1.;
-  double       chi                = 1e5;
-  double       Cm                 = 1e-2;
-  double       sigma              = 12e-2;
-  double       kappa              = 19.5;
-  double       epsilon            = 40.;
-  double       gamma              = 0.1;
-  double       a                  = 1.3e-2;
+
+  double penalty_constant = 10.;
+  double chi              = 1e5;
+  double Cm               = 1e-2;
+  double sigma            = 12e-2;
+  double kappa            = 19.5;
+  double epsilon          = 40.;
+  double gamma            = 0.1;
+  double a                = 1.3e-2;
 };
 
 
@@ -492,7 +496,7 @@ private:
   // Multigrid related types
   using LevelMatrixType  = TrilinosWrappers::SparseMatrix;
   using SmootherType     = PreconditionChebyshev<LevelMatrixType, VectorType>;
-  using CoarseSolverType = TrilinosWrappers::PreconditionAMG;
+  using CoarseSolverType = SparseDirectMUMPS;
 
   MGLevelObject<TrilinosWrappers::SparseMatrix> multigrid_matrices;
   std::unique_ptr<Multigrid<VectorType>>        mg;
@@ -652,7 +656,8 @@ IonicModel<dim>::setup_problem()
                                                             communicator);
 
   file_iterations.open(
-    "iterations_level_" + std::to_string(total_tree_levels + 1) + "_" +
+    "iterations_" + std::string(param.use_amg ? "AMG" : "AGGLOMG") + "_level_" +
+    std::to_string(total_tree_levels + 1) + "_" +
     std::to_string(Utilities::MPI::n_mpi_processes(communicator)) +
     "_procs_deg_" + std::to_string(dg_fe.degree) + ".txt");
 }
@@ -886,6 +891,18 @@ IonicModel<dim>::setup_multigrid()
   preconditioner = std::make_unique<
     PreconditionMG<dim, VectorType, MGTransferAgglomeration<dim, VectorType>>>(
     classical_dh, *mg, *mg_transfer);
+
+
+  // compute operator complexity for AGGLO MG
+  double op_complexity = 0.;
+  for (unsigned int level = 0; level < total_tree_levels + 1; ++level)
+    {
+      pcout << "l" << level << std::endl;
+      const double nnz_level = multigrid_matrices[level].n_nonzero_elements();
+      op_complexity += nnz_level;
+    }
+  op_complexity /= system_matrix.n_nonzero_elements();
+  pcout << "Operator complexity (AGGLO MG): " << op_complexity << std::endl;
 }
 
 
@@ -1192,8 +1209,7 @@ IonicModel<dim>::solve()
 
   if (Utilities::MPI::this_mpi_process(communicator) == 0)
     {
-      file_iterations << param.control.last_step();
-      file_iterations << ",";
+      file_iterations << param.control.last_step() << "\n";
     }
 }
 
@@ -1285,7 +1301,8 @@ IonicModel<dim>::run()
   locally_relevant_w0_pre     = 0.;
   locally_relevant_w0_current = locally_relevant_w0_pre;
 
-  output_results();
+  if (param.output_results)
+    output_results();
 
   // Assemble time independent term
   assemble_time_independent_matrix();
@@ -1367,13 +1384,6 @@ main(int argc, char *argv[])
     ModelParameters parameters;
     parameters.control.set_tolerance(1e-14); // used in CG solver
     parameters.control.set_max_steps(1000);
-
-    parameters.use_amg            = false;
-    parameters.fe_degree          = 1;
-    parameters.dt                 = 1e-4;
-    parameters.final_time         = 0.4;
-    parameters.final_time_current = 3e-3;
-    parameters.output_frequency   = 1;
 
     IonicModel<2> problem(parameters);
     problem.run();
