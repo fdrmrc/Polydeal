@@ -22,8 +22,8 @@ FOREACH(_build_type ${_d2_build_types})
       # Cut off the file extension and directory path
             get_filename_component( exename ${testsourcefile} NAME_WE )            
             
-            # Require MUMPS for monodomain_DG3D example
-            if(exename STREQUAL "monodomain_DG3D")
+            # Require MUMPS for monodomain examples
+            if(exename STREQUAL "monodomain_DG3D" OR exename STREQUAL "monodomain_DG2D")
               if(NOT DEAL_II_WITH_MUMPS)
                 message(WARNING "\n"
                   "*** The example '${exename}' requires MUMPS support. ***\n\n"
