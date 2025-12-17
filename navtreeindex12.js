@@ -1,5 +1,7 @@
 var NAVTREEINDEX12 =
 {
+"structPETScWrappers_1_1SparseDirectMUMPS_1_1AdditionalData.html":[1,0,102,27],
+"structPortable_1_1MatrixFree_1_1AdditionalData.html":[1,0,106,1],
 "structPreconditionChebyshev_1_1AdditionalData.html":[1,0,109],
 "structPreconditionIdentity_1_1AdditionalData.html":[1,0,110],
 "structSolverBFGS_1_1AdditionalData.html":[1,0,121],

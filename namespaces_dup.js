@@ -1594,7 +1594,9 @@ var namespaces_dup =
     ] ],
     [ "RelaxationBlock", "http://www.dealii.org/developer/doxygen/deal.II/classRelaxationBlock_1_1AdditionalData.html", null ],
     [ "RepartitioningPolicyTools", "http://www.dealii.org/developer/doxygen/deal.II/namespaceRepartitioningPolicyTools.html", null ],
-    [ "Rol", "http://www.dealii.org/developer/doxygen/deal.II/namespaceRol.html", null ],
+    [ "Rol", "http://www.dealii.org/developer/doxygen/deal.II/namespaceRol.html", [
+      [ "VectorAdaptor", "http://www.dealii.org/developer/doxygen/deal.II/namespaceRol.html#a57c2c17f7b72cccb28c63545ac92a158", null ]
+    ] ],
     [ "SLEPcWrappers", "http://www.dealii.org/developer/doxygen/deal.II/namespaceSLEPcWrappers.html", null ],
     [ "SmoothnessEstimator", "http://www.dealii.org/developer/doxygen/deal.II/namespaceSmoothnessEstimator.html", null ],
     [ "SolverBFGS", "http://www.dealii.org/developer/doxygen/deal.II/structSolverBFGS_1_1AdditionalData.html", null ],

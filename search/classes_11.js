@@ -74,10 +74,12 @@ var searchData=
   ['rgbvalues_71',['RgbValues',['http://www.dealii.org/developer/doxygen/deal.II/structDataOutBase_1_1EpsFlags_1_1RgbValues.html',1,'DataOutBase::EpsFlags']]],
   ['righthandside_72',['RightHandSide',['../class_right_hand_side.html',1,'']]],
   ['rigidbodymotion_73',['RigidBodyMotion',['http://www.dealii.org/developer/doxygen/deal.II/classDoFTools_1_1internal_1_1RigidBodyMotion.html',1,'DoFTools::internal']]],
-  ['rootfinder_74',['RootFinder',['http://www.dealii.org/developer/doxygen/deal.II/classNonMatching_1_1internal_1_1QuadratureGeneratorImplementation_1_1RootFinder.html',1,'NonMatching::internal::QuadratureGeneratorImplementation']]],
-  ['rotate2d_75',['Rotate2d',['http://www.dealii.org/developer/doxygen/deal.II/classGridTools_1_1internal_1_1Rotate2d.html',1,'GridTools::internal']]],
-  ['rotate3d_76',['Rotate3d',['http://www.dealii.org/developer/doxygen/deal.II/classGridTools_1_1internal_1_1Rotate3d.html',1,'GridTools::internal']]],
-  ['rowinfo_77',['RowInfo',['http://www.dealii.org/developer/doxygen/deal.II/structSparseMatrixEZ_1_1RowInfo.html',1,'SparseMatrixEZ']]],
-  ['rtree_5fvisitor_78',['Rtree_visitor',['../structdealii_1_1internal_1_1_rtree__visitor.html',1,'dealii::internal::Rtree_visitor&lt; Value, Options, Translator, Box, Allocators &gt;'],['../structdealii_1_1_poly_utils_1_1_rtree__visitor.html',1,'dealii::PolyUtils::Rtree_visitor&lt; Value, Options, Translator, Box, Allocators &gt;']]],
-  ['rungekutta_79',['RungeKutta',['http://www.dealii.org/developer/doxygen/deal.II/classTimeStepping_1_1RungeKutta.html',1,'TimeStepping']]]
+  ['rolvector_74',['ROLVector',['http://www.dealii.org/developer/doxygen/deal.II/classTrilinosWrappers_1_1ROLVector.html',1,'TrilinosWrappers']]],
+  ['rolvector_3c_20vectortype_20_3e_75',['ROLVector&lt; VectorType &gt;',['http://www.dealii.org/developer/doxygen/deal.II/classTrilinosWrappers_1_1ROLVector.html',1,'TrilinosWrappers']]],
+  ['rootfinder_76',['RootFinder',['http://www.dealii.org/developer/doxygen/deal.II/classNonMatching_1_1internal_1_1QuadratureGeneratorImplementation_1_1RootFinder.html',1,'NonMatching::internal::QuadratureGeneratorImplementation']]],
+  ['rotate2d_77',['Rotate2d',['http://www.dealii.org/developer/doxygen/deal.II/classGridTools_1_1internal_1_1Rotate2d.html',1,'GridTools::internal']]],
+  ['rotate3d_78',['Rotate3d',['http://www.dealii.org/developer/doxygen/deal.II/classGridTools_1_1internal_1_1Rotate3d.html',1,'GridTools::internal']]],
+  ['rowinfo_79',['RowInfo',['http://www.dealii.org/developer/doxygen/deal.II/structSparseMatrixEZ_1_1RowInfo.html',1,'SparseMatrixEZ']]],
+  ['rtree_5fvisitor_80',['Rtree_visitor',['../structdealii_1_1internal_1_1_rtree__visitor.html',1,'dealii::internal::Rtree_visitor&lt; Value, Options, Translator, Box, Allocators &gt;'],['../structdealii_1_1_poly_utils_1_1_rtree__visitor.html',1,'dealii::PolyUtils::Rtree_visitor&lt; Value, Options, Translator, Box, Allocators &gt;']]],
+  ['rungekutta_81',['RungeKutta',['http://www.dealii.org/developer/doxygen/deal.II/classTimeStepping_1_1RungeKutta.html',1,'TimeStepping']]]
 ];

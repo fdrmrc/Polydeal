@@ -1,5 +1,7 @@
 var NAVTREEINDEX9 =
 {
+"namespaceVectorTools.html#a69967cb7a148a7169963126249213db1a694dcdb8213d64925e9be0fa90cc7619":[1,0,167,121],
+"namespaceVectorTools.html#a69967cb7a148a7169963126249213db1a6a4df2311989608627aa7bff3898fd3c":[1,0,167,113],
 "namespaceVectorTools.html#a69967cb7a148a7169963126249213db1a8a97c0127bcfceec1fefbd0ad5839357":[1,0,167,116],
 "namespaceVectorTools.html#a69967cb7a148a7169963126249213db1aa24d2a903e0841b2d6794e3329a69930":[1,0,167,124],
 "namespaceVectorTools.html#a69967cb7a148a7169963126249213db1aa3903caf348e2d5dc54d1b49e15c1e8e":[1,0,167,117],
@@ -247,7 +249,5 @@ var NAVTREEINDEX9 =
 "namespaceinternal.html#a964a30febfbf50e5f991fe267dc20dea":[1,0,57,147],
 "namespaceinternal.html#a9bc077636546766a70ed9139b05281dc":[1,0,57,177],
 "namespaceinternal.html#a9c4a4a26ff4fd7aaf52b41c9361eb03a":[1,0,57,131],
-"namespaceinternal.html#a9f70e56c1672248af482b73b33949385":[1,0,57,70],
-"namespaceinternal.html#aa1c66592673b9ca3c1f4adecdc7897ce":[1,0,57,78],
-"namespaceinternal.html#aa585d3c3b76108d8c9d026c8632dd296":[1,0,57,118]
+"namespaceinternal.html#a9f70e56c1672248af482b73b33949385":[1,0,57,70]
 };
