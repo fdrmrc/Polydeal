@@ -50,7 +50,7 @@
 
 using namespace dealii;
 
-static constexpr unsigned int degree_finite_element = 3;
+static constexpr unsigned int degree_finite_element = 2;
 static constexpr unsigned int n_components          = 1;
 static constexpr bool         CHECK_AMG             = true;
 
@@ -180,11 +180,11 @@ AgglomeratedMG<dim>::agglomerate_and_compute_level_matrices()
   // Define matrix free operator
   dof_handler.distribute_dofs(fe_dg);
   constexpr unsigned int n_qpoints = degree_finite_element + 1;
-  Utils::LaplaceOperatorDG<dim,
-                           degree_finite_element,
-                           n_qpoints,
-                           n_components,
-                           double>
+  Utils::MatrixFreeOperators::LaplaceOperatorDG<dim,
+                                                degree_finite_element,
+                                                n_qpoints,
+                                                n_components,
+                                                double>
     system_matrix_dg;
   system_matrix_dg.reinit(mapping, dof_handler);
 
@@ -245,8 +245,8 @@ AgglomeratedMG<dim>::agglomerate_and_compute_level_matrices()
     multigrid_matrices, multigrid_matrices_lo);
   pcout << "Projected using transfer_matrices:" << std::endl;
 
-  multigrid_matrices_lo[max_level] =
-    linear_operator_mg<VectorType, VectorType>(system_matrix_dg);
+  multigrid_matrices_lo[max_level] = linear_operator_mg<VectorType, VectorType>(
+    system_matrix_dg.get_system_matrix());
   multigrid_matrices_lo[max_level].n_rows = system_matrix_dg.m();
   multigrid_matrices_lo[max_level].n_cols = system_matrix_dg.n();
 
@@ -376,7 +376,10 @@ AgglomeratedMG<dim>::agglomerate_and_compute_level_matrices()
   double               start, stop;
   pcout << "Start solver" << std::endl;
   start = MPI_Wtime();
-  cg.solve(system_matrix_dg, solution, system_rhs, preconditioner);
+  cg.solve(system_matrix_dg.get_system_matrix(),
+           solution,
+           system_rhs,
+           preconditioner);
   stop = MPI_Wtime();
   pcout << "Agglo AMG elapsed time: " << stop - start << "[s]" << std::endl;
 
@@ -522,9 +525,9 @@ main(int argc, char *argv[])
   if (Utilities::MPI::this_mpi_process(comm) == 0)
     std::cout << "Degree: " << degree_finite_element << std::endl;
 
-  for (unsigned int starting_level = 0; starting_level < 2; ++starting_level)
+  for (unsigned int starting_level = 1; starting_level < 2; ++starting_level)
     {
-      AgglomeratedMG<dim> problem(GridType::unstructured,
+      AgglomeratedMG<dim> problem(GridType::grid_generator,
                                   degree_finite_element,
                                   starting_level,
                                   comm);
