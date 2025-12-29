@@ -62,6 +62,12 @@ class SparseDirectMUMPS
 
 static constexpr unsigned int starting_level = 1;
 
+// matrix-free related parameters
+static constexpr unsigned int degree_finite_element = 1;
+constexpr unsigned int        n_qpoints             = degree_finite_element + 1;
+static constexpr unsigned int n_components          = 1;
+
+
 namespace Utils
 {
   template <typename MatrixType,
@@ -165,8 +171,8 @@ namespace Utils
 struct ModelParameters
 {
   SolverControl control;
-  bool          use_amg            = false;
-  unsigned int  fe_degree          = 1;
+  bool          use_amg            = true;
+  bool          use_matrix_free    = true;
   unsigned int  output_frequency   = 1;
   bool          output_results     = true;
   double        dt                 = 1e-4;
@@ -441,10 +447,18 @@ private:
   TrilinosWrappers::PreconditionAMG              amg_preconditioner;
   TrilinosWrappers::SparseMatrix                 mass_matrix;
   TrilinosWrappers::SparseMatrix                 laplace_matrix;
-  LinearAlgebra::distributed::Vector<double>     system_rhs;
-  std::unique_ptr<Function<dim>>                 rhs_function;
-  std::unique_ptr<Function<dim>>                 Iext;
-  std::unique_ptr<Function<dim>>                 analytical_solution;
+
+  std::unique_ptr<
+    Utils::MatrixFreeOperators::
+      MonodomainOperatorDG<dim, degree_finite_element, n_qpoints, n_components>>
+    monodomain_operator;
+  LinearOperator<LinearAlgebra::distributed::Vector<double>> system_operator;
+
+  TrilinosWrappers::SparseMatrix            *system_matrix;
+  LinearAlgebra::distributed::Vector<double> system_rhs;
+  std::unique_ptr<Function<dim>>             rhs_function;
+  std::unique_ptr<Function<dim>>             Iext;
+  std::unique_ptr<Function<dim>>             analytical_solution;
 
   std::unique_ptr<FEValues<dim>>     fe_values;
   std::unique_ptr<FEFaceValues<dim>> fe_faces0;
@@ -523,6 +537,8 @@ private:
 
   std::ofstream file_iterations;
 
+  Utils::Physics::BilinearFormParameters bilinear_form_parameters;
+
 public:
   IonicModel(const ModelParameters &parameters);
   void
@@ -538,7 +554,7 @@ IonicModel<dim>::IonicModel(const ModelParameters &parameters)
   : communicator(MPI_COMM_WORLD)
   , tria(communicator)
   , mapping(1)
-  , dg_fe(parameters.fe_degree)
+  , dg_fe(degree_finite_element)
   , classical_dh(tria)
   , pcout(std::cout, Utilities::MPI::this_mpi_process(communicator) == 0)
   , computing_timer(communicator,
@@ -552,10 +568,23 @@ IonicModel<dim>::IonicModel(const ModelParameters &parameters)
   , param(parameters)
 {
   static_assert(dim == 2);
-  time = 0.;
-  penalty_constant =
-    param.penalty_constant * parameters.fe_degree * (parameters.fe_degree + 1);
+  time             = 0.;
+  penalty_constant = param.penalty_constant * degree_finite_element *
+                     (degree_finite_element + 1);
   total_tree_levels = 0;
+
+  bilinear_form_parameters.dt               = dt;
+  bilinear_form_parameters.penalty_constant = penalty_constant;
+  bilinear_form_parameters.chi              = param.chi;
+  bilinear_form_parameters.Cm               = param.Cm;
+  bilinear_form_parameters.sigma            = param.sigma;
+
+  monodomain_operator = std::make_unique<
+    Utils::MatrixFreeOperators::MonodomainOperatorDG<dim,
+                                                     degree_finite_element,
+                                                     n_qpoints,
+                                                     n_components>>(
+    bilinear_form_parameters);
 }
 
 
@@ -628,8 +657,8 @@ IonicModel<dim>::setup_problem()
 
   // // Start building R-tree
   namespace bgi = boost::geometry::index;
-  static constexpr unsigned int max_elem_per_node =
-    PolyUtils::constexpr_pow(2, dim); // 2^dim
+  // static constexpr unsigned int max_elem_per_node =
+  //   PolyUtils::constexpr_pow(2, dim); // 2^dim
   std::vector<std::pair<BoundingBox<dim>,
                         typename Triangulation<dim>::active_cell_iterator>>
                boxes(tria.n_locally_owned_active_cells());
@@ -774,8 +803,7 @@ IonicModel<dim>::setup_multigrid()
 
   pcout << "Projected using transfer_matrices:" << std::endl;
 
-  TrilinosWrappers::SparseMatrix &system_matrix =
-    multigrid_matrices[multigrid_matrices.max_level()];
+  system_matrix = &multigrid_matrices[multigrid_matrices.max_level()];
 
   // Setup multigrid
 
@@ -794,10 +822,10 @@ IonicModel<dim>::setup_multigrid()
   diag_inverses.back().reinit(classical_dh.locally_owned_dofs(), communicator);
 
   // Set exact diagonal for each operator
-  for (unsigned int i = system_matrix.local_range().first;
-       i < system_matrix.local_range().second;
+  for (unsigned int i = system_matrix->local_range().first;
+       i < system_matrix->local_range().second;
        ++i)
-    diag_inverses.back()[i] = 1. / system_matrix.diag_element(i);
+    diag_inverses.back()[i] = 1. / system_matrix->diag_element(i);
 
   smoother_data[total_tree_levels].preconditioner =
     std::make_shared<DiagonalMatrix<VectorType>>(diag_inverses.back());
@@ -900,7 +928,7 @@ IonicModel<dim>::setup_multigrid()
       const double nnz_level = multigrid_matrices[level].n_nonzero_elements();
       op_complexity += nnz_level;
     }
-  op_complexity /= system_matrix.n_nonzero_elements();
+  op_complexity /= system_matrix->n_nonzero_elements();
   pcout << "Operator complexity (AGGLO MG): " << op_complexity << std::endl;
 }
 
@@ -1189,16 +1217,13 @@ IonicModel<dim>::solve()
 {
   TimerOutput::Scope t(computing_timer, "Solve");
 
-  TrilinosWrappers::SparseMatrix &system_matrix =
-    multigrid_matrices[multigrid_matrices.max_level()];
-
   if (param.use_amg)
-    solver.solve(system_matrix,
+    solver.solve(system_operator,
                  locally_relevant_solution_current,
                  system_rhs,
                  amg_preconditioner);
   else
-    solver.solve(system_matrix,
+    solver.solve(system_operator,
                  locally_relevant_solution_current,
                  system_rhs,
                  *preconditioner);
@@ -1304,12 +1329,33 @@ IonicModel<dim>::run()
     output_results();
 
   // Assemble time independent term
+
+
   assemble_time_independent_matrix();
   pcout << "Assembled time independent term: done" << std::endl;
 
-  unsigned int iter_count = 0;
+  system_matrix = &multigrid_matrices[multigrid_matrices.max_level()];
+  system_matrix->copy_from(mass_matrix);   // (chi*Cm)/dt * M
+  system_matrix->add(+1., laplace_matrix); // (chi*Cm)/dt * M + A
 
-  const double mesh_size = [this]() -> double {
+  if (param.use_matrix_free)
+    {
+      monodomain_operator->reinit(mapping, classical_dh);
+      system_matrix = const_cast<TrilinosWrappers::SparseMatrix *>(
+        &monodomain_operator->get_system_matrix());
+      system_operator =
+        linear_operator<LinearAlgebra::distributed::Vector<double>>(
+          *monodomain_operator);
+    }
+  else
+    {
+      system_operator =
+        linear_operator<LinearAlgebra::distributed::Vector<double>>(
+          *system_matrix);
+    }
+
+  unsigned int iter_count = 0;
+  const double mesh_size  = [this]() -> double {
     double hmax = 0.;
     for (const auto &cell : classical_dh.active_cell_iterators())
       if (cell->is_locally_owned())
@@ -1323,14 +1369,6 @@ IonicModel<dim>::run()
 
   pcout << "Max mesh size: " << mesh_size << std::endl;
 
-
-  TrilinosWrappers::SparseMatrix &system_matrix =
-    multigrid_matrices[multigrid_matrices.max_level()];
-
-  system_matrix.copy_from(mass_matrix);   // (chi*Cm)/dt * M
-  system_matrix.add(+1., laplace_matrix); // (chi*Cm)/dt * M + A
-
-
   // Depending on the preconditioner type, use AMG or polytopal multigrid.
   if (param.use_amg)
     {
@@ -1341,11 +1379,12 @@ IonicModel<dim>::run()
       amg_data.smoother_type   = "Chebyshev";
       amg_data.smoother_sweeps = 3;
       amg_data.output_details  = true;
-      amg_preconditioner.initialize(system_matrix, amg_data);
+      amg_preconditioner.initialize(*system_matrix, amg_data);
     }
   else
     setup_multigrid();
-  pcout << "Setup multigrid: done " << std::endl;
+
+  pcout << "Setup multigrid preconditioner: done " << std::endl;
 
   while (time <= end_time)
     {
