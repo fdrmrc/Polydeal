@@ -2452,7 +2452,9 @@ var namespaces_dup =
     [ "VTKWrappers", "http://www.dealii.org/developer/doxygen/deal.II/namespaceVTKWrappers.html", [
       [ "dealii_point_to_vtk_array", "http://www.dealii.org/developer/doxygen/deal.II/namespaceVTKWrappers.html#a3d0d175b0798a218ee87eafbf7994c62", null ],
       [ "read_cell_data", "http://www.dealii.org/developer/doxygen/deal.II/namespaceVTKWrappers.html#a1f6f750d1746a3932e6f14d41010c303", null ],
-      [ "read_tria", "http://www.dealii.org/developer/doxygen/deal.II/namespaceVTKWrappers.html#a34fbb7274cb3b89377119cb9098abc49", null ]
+      [ "read_tria", "http://www.dealii.org/developer/doxygen/deal.II/namespaceVTKWrappers.html#a34fbb7274cb3b89377119cb9098abc49", null ],
+      [ "read_vertex_data", "http://www.dealii.org/developer/doxygen/deal.II/namespaceVTKWrappers.html#ab3f2f78117bdedee8b96635ed7386893", null ],
+      [ "vtk_to_finite_element", "http://www.dealii.org/developer/doxygen/deal.II/namespaceVTKWrappers.html#af770b0cc678a0224408391989995ff66", null ]
     ] ],
     [ "WorkStream", "http://www.dealii.org/developer/doxygen/deal.II/namespaceWorkStream.html", [
       [ "internal", "http://www.dealii.org/developer/doxygen/deal.II/namespaceWorkStream_1_1internal.html", null ],

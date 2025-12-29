@@ -1,5 +1,8 @@
 var NAVTREEINDEX12 =
 {
+"structPETScWrappers_1_1SolverRichardson_1_1AdditionalData.html":[1,0,102,24],
+"structPETScWrappers_1_1SolverTCQMR_1_1AdditionalData.html":[1,0,102,25],
+"structPETScWrappers_1_1SolverTFQMR_1_1AdditionalData.html":[1,0,102,26],
 "structPETScWrappers_1_1SparseDirectMUMPS_1_1AdditionalData.html":[1,0,102,27],
 "structPortable_1_1MatrixFree_1_1AdditionalData.html":[1,0,106,1],
 "structPreconditionChebyshev_1_1AdditionalData.html":[1,0,109],
@@ -104,7 +107,7 @@ var NAVTREEINDEX12 =
 "structdealii_1_1internal_1_1_rtree__visitor.html#af2eedd0dd3bf88f068391889d9e9325c":[2,0,0,0,2,8],
 "structhp_1_1FECollection_1_1DefaultHierarchy.html":[1,0,55,0],
 "structinternal_1_1DoFAccessorImplementation_1_1Implementation_1_1DoFIndexProcessor.html":[1,0,57,5,0],
-"structinternal_1_1TriangulationImplementation_1_1TriaObjects_1_1BoundaryOrMaterialId.html":[1,0,57,65,0],
+"structinternal_1_1TriangulationImplementation_1_1TriaObjects_1_1BoundaryOrMaterialId.html":[1,0,57,66,0],
 "structparallel_1_1TriangulationBase_1_1NumberCache.html":[1,0,98,4],
 "topics.html":[0],
 "utils_8h.html":[3,0,0,0,0,10],
