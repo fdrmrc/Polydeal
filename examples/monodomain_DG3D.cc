@@ -91,22 +91,8 @@ namespace Utils
     initialize(const MatrixType &matrix)
     {
       coarse_matrix = &matrix;
-      if constexpr (std::is_same_v<PreconditionerType, SparseDirectMUMPS>)
-        {
-#ifdef DEAL_II_WITH_MUMPS
-          precondition = std::make_unique<SparseDirectMUMPS>(
-            typename SparseDirectMUMPS::AdditionalData(),
-            matrix.get_mpi_communicator());
-          precondition->initialize(matrix);
-#else
-          AssertThrow(false,
-                      ExcMessage(
-                        "MUMPS support is required but not available. "
-                        "Please recompile deal.II with MUMPS enabled."));
-#endif
-        }
-      else if constexpr (std::is_same_v<PreconditionerType,
-                                        TrilinosWrappers::PreconditionAMG>)
+      if constexpr (std::is_same_v<PreconditionerType,
+                                   TrilinosWrappers::PreconditionAMG>)
         {
           precondition = std::make_unique<TrilinosWrappers::PreconditionAMG>();
           precondition->initialize(*coarse_matrix);
@@ -128,30 +114,13 @@ namespace Utils
       if constexpr (std::is_same_v<PreconditionerType,
                                    TrilinosWrappers::PreconditionAMG>)
         {
-          ReductionControl solver_control(1e4, 1e-50, 1e-14);
+          ReductionControl solver_control(100, 1e-5, 1e-6);
           SolverCG<LinearAlgebra::distributed::Vector<double>> solver_coarse(
             solver_control);
 #ifdef AGGLO_DEBUG
           start = MPI_Wtime();
 #endif
           solver_coarse.solve(*coarse_matrix, dst, src, *precondition);
-#ifdef AGGLO_DEBUG
-          stop = MPI_Wtime();
-#endif
-        }
-      else if constexpr (std::is_same_v<PreconditionerType, SparseDirectMUMPS>)
-        {
-#ifdef AGGLO_DEBUG
-          start = MPI_Wtime();
-#endif
-#ifdef DEAL_II_WITH_MUMPS
-          precondition->vmult(dst, src);
-#else
-          AssertThrow(false,
-                      ExcMessage(
-                        "MUMPS support is required but not available. "
-                        "Please recompile deal.II with MUMPS enabled."));
-#endif
 #ifdef AGGLO_DEBUG
           stop = MPI_Wtime();
 #endif
@@ -231,12 +200,13 @@ class AppliedCurrent : public Function<dim>
 public:
   AppliedCurrent(const double final_time_current)
     : Function<dim>()
-    , p1{-0.015598, -0.0173368, 0.0307704}
-    , p2{0.0264292, -0.0043322, 0.0187656}
-    , p3{0.00155326, 0.0252701, 0.0248006}
-  // , p1{0.0981402, -0.0970197, -0.0406029}
-  // , p2{0.0981402, -0.0970197, -0.0406029}
-  // , p3{0.0981402, -0.0970197, -0.0406029}
+    // , p1{-0.015598, -0.0173368, 0.0307704}
+    // , p2{0.0264292, -0.0043322, 0.0187656}
+    // , p3{0.00155326, 0.0252701, 0.0248006}
+    , p1{0.0981402, -0.0970197, -0.0406029}
+    , p2{0.0981402, -0.0580452, -0.000723225}
+    , p3{0.0770339, -0.101529, -0.00292254}
+
   {
     t_end_current = final_time_current;
     p.push_back(p1);
@@ -567,7 +537,7 @@ private:
   // Multigrid related types
   using LevelMatrixType  = TrilinosWrappers::SparseMatrix;
   using SmootherType     = PreconditionChebyshev<LevelMatrixType, VectorType>;
-  using CoarseSolverType = SparseDirectMUMPS;
+  using CoarseSolverType = TrilinosWrappers::PreconditionAMG;
 
   MGLevelObject<TrilinosWrappers::SparseMatrix> multigrid_matrices;
   std::unique_ptr<Multigrid<VectorType>>        mg;
@@ -956,19 +926,20 @@ IonicModel<dim>::setup_multigrid()
       if (level > 0)
         {
           smoother_data[level].smoothing_range     = 20.; // 15.;
-          smoother_data[level].degree              = 5;   // 5;
+          smoother_data[level].degree              = 3;   // 5;
           smoother_data[level].eig_cg_n_iterations = 20;
         }
       else
         {
           smoother_data[0].smoothing_range = 1e-3;
-          smoother_data[0].degree = 5; // numbers::invalid_unsigned_int;
+          smoother_data[0].degree = 3; // numbers::invalid_unsigned_int;
           smoother_data[0].eig_cg_n_iterations = classical_dh.n_dofs();
         }
     }
 
   mg_smoother =
     std::make_unique<mg::SmootherRelaxation<SmootherType, VectorType>>();
+  mg_smoother->set_steps(3);
   mg_smoother->initialize(multigrid_matrices, smoother_data);
 
   pcout << "Smoothers initialized" << std::endl;
@@ -1019,6 +990,17 @@ IonicModel<dim>::setup_multigrid()
   preconditioner = std::make_unique<
     PreconditionMG<dim, VectorType, MGTransferAgglomeration<dim, VectorType>>>(
     classical_dh, *mg, *mg_transfer);
+
+  // compute operator complexity for AGGLO MG
+  double op_complexity = 0.;
+  for (unsigned int level = 0; level < total_tree_levels + 1; ++level)
+    {
+      pcout << "l" << level << std::endl;
+      const double nnz_level = multigrid_matrices[level].n_nonzero_elements();
+      op_complexity += nnz_level;
+    }
+  op_complexity /= system_matrix.n_nonzero_elements();
+  pcout << "Operator complexity (AGGLO MG): " << op_complexity << std::endl;
 }
 
 

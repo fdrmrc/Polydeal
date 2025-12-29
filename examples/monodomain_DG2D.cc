@@ -165,7 +165,7 @@ namespace Utils
 struct ModelParameters
 {
   SolverControl control;
-  bool          use_amg            = true;
+  bool          use_amg            = false;
   unsigned int  fe_degree          = 1;
   unsigned int  output_frequency   = 1;
   bool          output_results     = true;
@@ -826,19 +826,20 @@ IonicModel<dim>::setup_multigrid()
       if (level > 0)
         {
           smoother_data[level].smoothing_range     = 20.; // 15.;
-          smoother_data[level].degree              = 5;   // 5;
+          smoother_data[level].degree              = 3;   // 5;
           smoother_data[level].eig_cg_n_iterations = 20;
         }
       else
         {
           smoother_data[0].smoothing_range = 1e-3;
-          smoother_data[0].degree = 5; // numbers::invalid_unsigned_int;
+          smoother_data[0].degree = 3; // numbers::invalid_unsigned_int;
           smoother_data[0].eig_cg_n_iterations = classical_dh.n_dofs();
         }
     }
 
   mg_smoother =
     std::make_unique<mg::SmootherRelaxation<SmootherType, VectorType>>();
+  mg_smoother->set_steps(3);
   mg_smoother->initialize(multigrid_matrices, smoother_data);
 
   pcout << "Smoothers initialized" << std::endl;
@@ -1334,7 +1335,12 @@ IonicModel<dim>::run()
   if (param.use_amg)
     {
       typename TrilinosWrappers::PreconditionAMG::AdditionalData amg_data;
-      amg_data.output_details = true;
+      if (dg_fe.degree > 1)
+        amg_data.higher_order_elements = true;
+
+      amg_data.smoother_type   = "Chebyshev";
+      amg_data.smoother_sweeps = 3;
+      amg_data.output_details  = true;
       amg_preconditioner.initialize(system_matrix, amg_data);
     }
   else
