@@ -350,6 +350,20 @@ namespace Utils
   };
 
 
+
+  namespace Physics
+  {
+    struct BilinearFormParameters
+    {
+      double dt               = 1e-4;
+      double penalty_constant = 10.;
+      double chi              = 1e5;
+      double Cm               = 1e-2;
+      double sigma            = 12e-2;
+    };
+
+  } // namespace Physics
+
   namespace MatrixFreeOperators
   {
     /**
@@ -1103,8 +1117,10 @@ namespace Utils
       using VectorizedArrayType = VectorizedArray<number>;
       using VectorType          = LinearAlgebra::distributed::Vector<number>;
 
-
-      MonodomainOperatorDG(){};
+      MonodomainOperatorDG(const Physics::BilinearFormParameters &parameters_)
+      {
+        parameters = parameters_;
+      };
 
       void
       reinit(const Mapping<dim>    &mapping,
@@ -1246,11 +1262,16 @@ namespace Utils
       {
         // Boilerplate for SIP-DG form. TODO: unify interface.
         //////////////////////////////////////////////////
+        const double factor = (parameters.chi * parameters.Cm) / parameters.dt;
+
         const auto cell_operation = [&](auto &phi) {
-          phi.evaluate(EvaluationFlags::gradients);
+          phi.evaluate(EvaluationFlags::gradients | EvaluationFlags::values);
           for (unsigned int q = 0; q < phi.n_q_points; ++q)
-            phi.submit_gradient(phi.get_gradient(q), q);
-          phi.integrate(EvaluationFlags::gradients);
+            {
+              phi.submit_value(phi.get_value(q) * factor, q);
+              phi.submit_gradient(phi.get_gradient(q) * parameters.sigma, q);
+            }
+          phi.integrate(EvaluationFlags::gradients | EvaluationFlags::values);
         };
 
         const auto face_operation = [&](auto &phi_m, auto &phi_p) {
@@ -1272,33 +1293,19 @@ namespace Utils
                 phi_m.get_normal_derivative(q) + phi_p.get_normal_derivative(q);
               average_valgrad =
                 average_value * 2. * sigmaF - average_valgrad * 0.5;
-              phi_m.submit_normal_derivative(-average_value, q);
-              phi_p.submit_normal_derivative(-average_value, q);
-              phi_m.submit_value(average_valgrad, q);
-              phi_p.submit_value(-average_valgrad, q);
+              phi_m.submit_normal_derivative(-parameters.sigma * average_value,
+                                             q);
+              phi_p.submit_normal_derivative(-parameters.sigma * average_value,
+                                             q);
+              phi_m.submit_value(parameters.sigma * average_valgrad, q);
+              phi_p.submit_value(-parameters.sigma * average_valgrad, q);
             }
           phi_m.integrate(EvaluationFlags::values | EvaluationFlags::gradients);
           phi_p.integrate(EvaluationFlags::values | EvaluationFlags::gradients);
         };
 
         const auto boundary_operation = [&](auto &phi_m) {
-          phi_m.evaluate(EvaluationFlags::values | EvaluationFlags::gradients);
-          VectorizedArrayType sigmaF =
-            std::abs(
-              (phi_m.normal_vector(0) * phi_m.inverse_jacobian(0))[dim - 1]) *
-            number(std::max(fe_degree, 1) * (fe_degree + 1.0)) * 2.0;
-
-          for (unsigned int q = 0; q < phi_m.n_q_points; ++q)
-            {
-              VectorizedArrayType average_value = phi_m.get_value(q);
-              VectorizedArrayType average_valgrad =
-                -phi_m.get_normal_derivative(q);
-              average_valgrad += average_value * sigmaF * 2.0;
-              phi_m.submit_normal_derivative(-average_value, q);
-              phi_m.submit_value(average_valgrad, q);
-            }
-
-          phi_m.integrate(EvaluationFlags::values | EvaluationFlags::gradients);
+          // Do nothing since we have homogeneous Neumann BCs
         };
 
 
@@ -1356,11 +1363,16 @@ namespace Utils
       {
         // Boilerplate for SIP-DG form. TODO: unify interface.
         //////////////////////////////////////////////////
+        const double factor = (parameters.chi * parameters.Cm) / parameters.dt;
+
         const auto cell_operation = [&](auto &phi) {
-          phi.evaluate(EvaluationFlags::gradients);
+          phi.evaluate(EvaluationFlags::gradients | EvaluationFlags::values);
           for (unsigned int q = 0; q < phi.n_q_points; ++q)
-            phi.submit_gradient(phi.get_gradient(q), q);
-          phi.integrate(EvaluationFlags::gradients);
+            {
+              phi.submit_value(phi.get_value(q) * factor, q);
+              phi.submit_gradient(phi.get_gradient(q) * parameters.sigma, q);
+            }
+          phi.integrate(EvaluationFlags::gradients | EvaluationFlags::values);
         };
 
         const auto face_operation = [&](auto &phi_m, auto &phi_p) {
@@ -1382,33 +1394,19 @@ namespace Utils
                 phi_m.get_normal_derivative(q) + phi_p.get_normal_derivative(q);
               average_valgrad =
                 average_value * 2. * sigmaF - average_valgrad * 0.5;
-              phi_m.submit_normal_derivative(-average_value, q);
-              phi_p.submit_normal_derivative(-average_value, q);
-              phi_m.submit_value(average_valgrad, q);
-              phi_p.submit_value(-average_valgrad, q);
+              phi_m.submit_normal_derivative(-parameters.sigma * average_value,
+                                             q);
+              phi_p.submit_normal_derivative(-parameters.sigma * average_value,
+                                             q);
+              phi_m.submit_value(parameters.sigma * average_valgrad, q);
+              phi_p.submit_value(-parameters.sigma * average_valgrad, q);
             }
           phi_m.integrate(EvaluationFlags::values | EvaluationFlags::gradients);
           phi_p.integrate(EvaluationFlags::values | EvaluationFlags::gradients);
         };
 
         const auto boundary_operation = [&](auto &phi_m) {
-          phi_m.evaluate(EvaluationFlags::values | EvaluationFlags::gradients);
-          VectorizedArrayType sigmaF =
-            std::abs(
-              (phi_m.normal_vector(0) * phi_m.inverse_jacobian(0))[dim - 1]) *
-            number(std::max(fe_degree, 1) * (fe_degree + 1.0)) * 2.0;
-
-          for (unsigned int q = 0; q < phi_m.n_q_points; ++q)
-            {
-              VectorizedArrayType average_value = phi_m.get_value(q);
-              VectorizedArrayType average_valgrad =
-                -phi_m.get_normal_derivative(q);
-              average_valgrad += average_value * sigmaF * 2.0;
-              phi_m.submit_normal_derivative(-average_value, q);
-              phi_m.submit_value(average_valgrad, q);
-            }
-
-          phi_m.integrate(EvaluationFlags::values | EvaluationFlags::gradients);
+          // Do nothing since we have homogeneous Neumann BCs
         };
 
 
@@ -1460,46 +1458,8 @@ namespace Utils
       void
       rhs(LinearAlgebra::distributed::Vector<number> &b) const
       {
-        const int dummy = 0;
-
-
-        data
-          .template cell_loop<LinearAlgebra::distributed::Vector<number>, int>(
-            [](const auto &matrix_free,
-               auto       &dst,
-               const auto &,
-               const auto cells) {
-              FEEvaluation<dim, -1, 0, n_components, number> phi(matrix_free,
-                                                                 cells);
-              for (unsigned int cell = cells.first; cell < cells.second; ++cell)
-                {
-                  phi.reinit(cell);
-                  for (unsigned int q = 0; q < phi.n_q_points; ++q)
-                    {
-                      if constexpr (n_components == 1)
-                        {
-                          phi.submit_value(1.0, q);
-                        }
-                      else
-                        {
-                          Tensor<1, n_components, VectorizedArray<number>> temp;
-                          for (unsigned int v = 0;
-                               v < VectorizedArray<number>::size();
-                               ++v)
-                            {
-                              for (unsigned int i = 0; i < n_components; i++)
-                                temp[i][v] = 1.;
-                            }
-                          phi.submit_value(temp, q);
-                        }
-                    }
-
-                  phi.integrate_scatter(EvaluationFlags::values, dst);
-                }
-            },
-            b,
-            dummy,
-            true);
+        AssertThrow(false,
+                    ExcMessage("RHS not implemented for MonodomainOperatorDG"));
       }
 
 
@@ -1533,16 +1493,20 @@ namespace Utils
                   const std::pair<unsigned int, unsigned int> &cell_range) const
       {
         FEEvaluation<dim, -1, 0, 1, number> phi(data);
+        const double factor = (parameters.chi * parameters.Cm) / parameters.dt;
 
         for (unsigned int cell = cell_range.first; cell < cell_range.second;
              ++cell)
           {
             phi.reinit(cell);
             phi.read_dof_values(src);
-            phi.evaluate(EvaluationFlags::gradients);
+            phi.evaluate(EvaluationFlags::gradients | EvaluationFlags::values);
             for (unsigned int q = 0; q < phi.n_q_points; ++q)
-              phi.submit_gradient(phi.get_gradient(q), q);
-            phi.integrate(EvaluationFlags::gradients);
+              {
+                phi.submit_value(phi.get_value(q) * factor, q);
+                phi.submit_gradient(phi.get_gradient(q) * parameters.sigma, q);
+              }
+            phi.integrate(EvaluationFlags::gradients | EvaluationFlags::values);
             phi.distribute_local_to_global(dst);
           }
       }
@@ -1585,10 +1549,16 @@ namespace Utils
                   fe_eval_neighbor.get_normal_derivative(q);
                 average_valgrad =
                   average_value * 2. * sigmaF - average_valgrad * 0.5;
-                fe_eval.submit_normal_derivative(-average_value, q);
-                fe_eval_neighbor.submit_normal_derivative(-average_value, q);
-                fe_eval.submit_value(average_valgrad, q);
-                fe_eval_neighbor.submit_value(-average_valgrad, q);
+                fe_eval.submit_normal_derivative(-parameters.sigma *
+                                                   average_value,
+                                                 q);
+                fe_eval_neighbor.submit_normal_derivative(-parameters.sigma *
+                                                            average_value,
+                                                          q);
+                fe_eval.submit_value(parameters.sigma * average_valgrad, q);
+                fe_eval_neighbor.submit_value(-parameters.sigma *
+                                                average_valgrad,
+                                              q);
               }
             fe_eval.integrate(EvaluationFlags::values |
                               EvaluationFlags::gradients);
@@ -1606,33 +1576,7 @@ namespace Utils
         const LinearAlgebra::distributed::Vector<number> &src,
         const std::pair<unsigned int, unsigned int>      &face_range) const
       {
-        FEFaceEvaluation<dim, -1, 0, 1, number> fe_eval(data, true);
-        for (unsigned int face = face_range.first; face < face_range.second;
-             ++face)
-          {
-            fe_eval.reinit(face);
-            fe_eval.read_dof_values(src);
-            fe_eval.evaluate(EvaluationFlags::values |
-                             EvaluationFlags::gradients);
-            VectorizedArray<number> sigmaF =
-              std::abs((fe_eval.normal_vector(0) *
-                        fe_eval.inverse_jacobian(0))[dim - 1]) *
-              number(std::max(fe_degree, 1) * (fe_degree + 1.0)) * 2.0;
-
-            for (unsigned int q = 0; q < fe_eval.n_q_points; ++q)
-              {
-                VectorizedArray<number> average_value = fe_eval.get_value(q);
-                VectorizedArray<number> average_valgrad =
-                  -fe_eval.get_normal_derivative(q);
-                average_valgrad += average_value * sigmaF * 2.0;
-                fe_eval.submit_normal_derivative(-average_value, q);
-                fe_eval.submit_value(average_valgrad, q);
-              }
-
-            fe_eval.integrate(EvaluationFlags::values |
-                              EvaluationFlags::gradients);
-            fe_eval.distribute_local_to_global(dst);
-          }
+        // Do nothing since we have homogeneous Neumann BCs
       }
 
 
@@ -1646,6 +1590,7 @@ namespace Utils
         FEEvaluation<dim, -1, 0, 1, number>    phi(data);
         AlignedVector<VectorizedArray<number>> local_diagonal_vector(
           phi.dofs_per_cell);
+        const double factor = (parameters.chi * parameters.Cm) / parameters.dt;
 
         for (unsigned int cell = cell_range.first; cell < cell_range.second;
              ++cell)
@@ -1657,10 +1602,16 @@ namespace Utils
                 for (unsigned int j = 0; j < phi.dofs_per_cell; ++j)
                   phi.begin_dof_values()[j] = VectorizedArray<number>();
                 phi.begin_dof_values()[i] = 1.;
-                phi.evaluate(EvaluationFlags::gradients);
+                phi.evaluate(EvaluationFlags::gradients |
+                             EvaluationFlags::values);
                 for (unsigned int q = 0; q < phi.n_q_points; ++q)
-                  phi.submit_gradient(phi.get_gradient(q), q);
-                phi.integrate(EvaluationFlags::gradients);
+                  {
+                    phi.submit_value(phi.get_value(q) * factor, q);
+                    phi.submit_gradient(phi.get_gradient(q) * parameters.sigma,
+                                        q);
+                  }
+                phi.integrate(EvaluationFlags::gradients |
+                              EvaluationFlags::values);
                 local_diagonal_vector[i] = phi.begin_dof_values()[i];
               }
             for (unsigned int i = 0; i < phi.dofs_per_cell; ++i)
@@ -1716,8 +1667,10 @@ namespace Utils
                       phi_outer.get_normal_derivative(q);
                     average_valgrad =
                       average_value * 2. * sigmaF - average_valgrad * 0.5;
-                    phi.submit_normal_derivative(-average_value, q);
-                    phi.submit_value(average_valgrad, q);
+                    phi.submit_normal_derivative(-parameters.sigma *
+                                                   average_value,
+                                                 q);
+                    phi.submit_value(parameters.sigma * average_valgrad, q);
                   }
                 phi.integrate(EvaluationFlags::values |
                               EvaluationFlags::gradients);
@@ -1748,8 +1701,11 @@ namespace Utils
                       phi_outer.get_normal_derivative(q);
                     average_valgrad =
                       average_value * 2. * sigmaF - average_valgrad * 0.5;
-                    phi_outer.submit_normal_derivative(-average_value, q);
-                    phi_outer.submit_value(-average_valgrad, q);
+                    phi_outer.submit_normal_derivative(-parameters.sigma *
+                                                         average_value,
+                                                       q);
+                    phi_outer.submit_value(-parameters.sigma * average_valgrad,
+                                           q);
                   }
                 phi_outer.integrate(EvaluationFlags::values |
                                     EvaluationFlags::gradients);
@@ -1768,46 +1724,7 @@ namespace Utils
         const unsigned int &,
         const std::pair<unsigned int, unsigned int> &face_range) const
       {
-        FEFaceEvaluation<dim, -1, 0, 1, number> phi(data);
-        AlignedVector<VectorizedArray<number>>  local_diagonal_vector(
-          phi.dofs_per_cell);
-
-        for (unsigned int face = face_range.first; face < face_range.second;
-             ++face)
-          {
-            phi.reinit(face);
-
-            VectorizedArray<number> sigmaF =
-              std::abs(
-                (phi.normal_vector(0) * phi.inverse_jacobian(0))[dim - 1]) *
-              number(std::max(fe_degree, 1) * (fe_degree + 1.0)) * 2.0;
-
-            for (unsigned int i = 0; i < phi.dofs_per_cell; ++i)
-              {
-                for (unsigned int j = 0; j < phi.dofs_per_cell; ++j)
-                  phi.begin_dof_values()[j] = VectorizedArray<number>();
-                phi.begin_dof_values()[i] = 1.;
-                phi.evaluate(EvaluationFlags::values |
-                             EvaluationFlags::gradients);
-
-                for (unsigned int q = 0; q < phi.n_q_points; ++q)
-                  {
-                    VectorizedArray<number> average_value = phi.get_value(q);
-                    VectorizedArray<number> average_valgrad =
-                      -phi.get_normal_derivative(q);
-                    average_valgrad += average_value * sigmaF * 2.0;
-                    phi.submit_normal_derivative(-average_value, q);
-                    phi.submit_value(average_valgrad, q);
-                  }
-
-                phi.integrate(EvaluationFlags::values |
-                              EvaluationFlags::gradients);
-                local_diagonal_vector[i] = phi.begin_dof_values()[i];
-              }
-            for (unsigned int i = 0; i < phi.dofs_per_cell; ++i)
-              phi.begin_dof_values()[i] = local_diagonal_vector[i];
-            phi.distribute_local_to_global(dst);
-          }
+        // Do nothing since we have homogeneous Neumann BCs
       }
 
 
@@ -1817,6 +1734,7 @@ namespace Utils
       int                                        fe_degree;
       mutable TrilinosWrappers::SparseMatrix     system_matrix;
       AffineConstraints<number>                  constraints;
+      Physics::BilinearFormParameters            parameters;
     };
 
 
