@@ -1305,6 +1305,7 @@ namespace Utils
         };
 
         const auto boundary_operation = [&](auto &phi_m) {
+          (void)phi_m;
           // Do nothing since we have homogeneous Neumann BCs
         };
 
@@ -1407,6 +1408,7 @@ namespace Utils
 
         const auto boundary_operation = [&](auto &phi_m) {
           // Do nothing since we have homogeneous Neumann BCs
+          (void)phi_m;
         };
 
 
@@ -1576,6 +1578,10 @@ namespace Utils
         const LinearAlgebra::distributed::Vector<number> &src,
         const std::pair<unsigned int, unsigned int>      &face_range) const
       {
+        (void)data;
+        (void)dst;
+        (void)src;
+        (void)face_range;
         // Do nothing since we have homogeneous Neumann BCs
       }
 
@@ -1724,6 +1730,9 @@ namespace Utils
         const unsigned int &,
         const std::pair<unsigned int, unsigned int> &face_range) const
       {
+        (void)data;
+        (void)dst;
+        (void)face_range;
         // Do nothing since we have homogeneous Neumann BCs
       }
 
