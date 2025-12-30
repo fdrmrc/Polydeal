@@ -63,7 +63,7 @@ class SparseDirectMUMPS
 static constexpr unsigned int starting_level = 1;
 
 // matrix-free related parameters
-static constexpr bool         use_matrix_free_action = false;
+static constexpr bool         use_matrix_free_action = true;
 static constexpr unsigned int degree_finite_element  = 1;
 constexpr unsigned int        n_qpoints    = degree_finite_element + 1;
 static constexpr unsigned int n_components = 1;
@@ -1428,6 +1428,17 @@ main(int argc, char *argv[])
   Utilities::MPI::MPI_InitFinalize mpi_initialization(argc, argv, 1);
   deallog.depth_console(
     Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0 ? 10 : 0);
+
+  if constexpr (use_matrix_free_action)
+    {
+      const unsigned int n_vect_doubles = VectorizedArray<double>::size();
+      const unsigned int n_vect_bits    = 8 * sizeof(double) * n_vect_doubles;
+
+      deallog << "Vectorization over " << n_vect_doubles
+              << " doubles = " << n_vect_bits << " bits ("
+              << Utilities::System::get_current_vectorization_level() << ')'
+              << std::endl;
+    }
 
   {
     ModelParameters parameters;
