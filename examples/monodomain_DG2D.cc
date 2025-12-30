@@ -26,6 +26,7 @@
 #include <deal.II/numerics/vector_tools_integrate_difference.h>
 
 // Trilinos linear algebra is employed for parallel computations
+#include <deal.II/base/table_handler.h>
 #include <deal.II/base/timer.h>
 
 #include <deal.II/lac/precondition.h>
@@ -60,12 +61,14 @@ class SparseDirectMUMPS
 {};
 #endif
 
-static constexpr unsigned int starting_level = 1;
+static constexpr bool         measure_solve_times = true;
+static constexpr unsigned int starting_level      = 1;
 
 // matrix-free related parameters
-static constexpr unsigned int degree_finite_element = 1;
-constexpr unsigned int        n_qpoints             = degree_finite_element + 1;
-static constexpr unsigned int n_components          = 1;
+static constexpr bool         use_matrix_free_action = true;
+static constexpr unsigned int degree_finite_element  = 4;
+constexpr unsigned int        n_qpoints    = degree_finite_element + 1;
+static constexpr unsigned int n_components = 1;
 
 
 namespace Utils
@@ -121,7 +124,7 @@ namespace Utils
       if constexpr (std::is_same_v<PreconditionerType,
                                    TrilinosWrappers::PreconditionAMG>)
         {
-          ReductionControl solver_control(1e4, 1e-50, 1e-14);
+          ReductionControl solver_control(1e4, 1e-6, 1e-6);
           SolverCG<LinearAlgebra::distributed::Vector<double>> solver_coarse(
             solver_control);
 #ifdef AGGLO_DEBUG
@@ -171,13 +174,12 @@ namespace Utils
 struct ModelParameters
 {
   SolverControl control;
-  bool          use_amg            = true;
-  bool          use_matrix_free    = true;
-  unsigned int  output_frequency   = 1;
-  bool          output_results     = true;
-  double        dt                 = 1e-4;
-  double        final_time         = 0.4;
-  double        final_time_current = 3e-3;
+  bool          use_amg_preconditioner = true;
+  unsigned int  output_frequency       = 4001;
+  bool          output_results         = true;
+  double        dt                     = 1e-4;
+  double        final_time             = dt * 20;
+  double        final_time_current     = 3e-3;
 
 
   double penalty_constant = 10.;
@@ -427,8 +429,6 @@ private:
   void
   update_w_and_ion();
   void
-  solve_w();
-  void
   solve();
   void
   output_results();
@@ -466,17 +466,15 @@ private:
 
   IndexSet locally_owned_dofs;
   // Related to update solution
-  LinearAlgebra::distributed::Vector<double> locally_relevant_solution_pre;
-  LinearAlgebra::distributed::Vector<double> locally_relevant_solution_current;
-
-  LinearAlgebra::distributed::Vector<double> locally_relevant_w0_pre;
-  LinearAlgebra::distributed::Vector<double> locally_relevant_w0_current;
-
-  LinearAlgebra::distributed::Vector<double> ion_at_dofs;
-
-  // Activation map
   using VectorType = LinearAlgebra::distributed::Vector<double>;
-  LinearAlgebra::distributed::Vector<double> activation_map;
+  VectorType locally_relevant_solution_pre;
+  VectorType locally_relevant_solution_current;
+
+  VectorType locally_relevant_w0_pre;
+  VectorType locally_relevant_w0_current;
+
+  VectorType ion_at_dofs;
+
 
   //   Time stepping parameters
   double       time;
@@ -506,12 +504,15 @@ private:
 
 
   // Multigrid related types
-  using LevelMatrixType  = TrilinosWrappers::SparseMatrix;
+  using LevelMatrixType  = LinearOperatorMG<VectorType, VectorType>;
   using SmootherType     = PreconditionChebyshev<LevelMatrixType, VectorType>;
   using CoarseSolverType = TrilinosWrappers::PreconditionAMG;
 
-  MGLevelObject<TrilinosWrappers::SparseMatrix> multigrid_matrices;
-  std::unique_ptr<Multigrid<VectorType>>        mg;
+  MGLevelObject<std::unique_ptr<TrilinosWrappers::SparseMatrix>>
+                                 multigrid_matrices;
+  MGLevelObject<LevelMatrixType> multigrid_matrices_lo;
+
+  std::unique_ptr<Multigrid<VectorType>> mg;
   std::unique_ptr<
     PreconditionMG<dim, VectorType, MGTransferAgglomeration<dim, VectorType>>>
     preconditioner;
@@ -538,6 +539,11 @@ private:
   std::ofstream file_iterations;
 
   Utils::Physics::BilinearFormParameters bilinear_form_parameters;
+
+  TableHandler              statistics_table;
+  std::vector<unsigned int> iterations;
+  std::vector<double>       iteration_times;
+  double                    start_solver, stop_solver;
 
 public:
   IonicModel(const ModelParameters &parameters);
@@ -585,6 +591,9 @@ IonicModel<dim>::IonicModel(const ModelParameters &parameters)
                                                      n_qpoints,
                                                      n_components>>(
     bilinear_form_parameters);
+
+  iterations.reserve(static_cast<unsigned int>(end_time / dt));
+  iteration_times.reserve(static_cast<unsigned int>(end_time / dt));
 }
 
 
@@ -627,6 +636,9 @@ IonicModel<dim>::setup_problem()
   constraints.clear();
   constraints.close();
 
+  statistics_table.add_value("N. cells", tria.n_active_cells());
+  statistics_table.add_value("N. DoFs", classical_dh.n_dofs());
+
   DynamicSparsityPattern dsp(locally_relevant_dofs);
   DoFTools::make_flux_sparsity_pattern(classical_dh, dsp);
   SparsityTools::distribute_sparsity_pattern(dsp,
@@ -651,7 +663,6 @@ IonicModel<dim>::setup_problem()
 
   ion_at_dofs.reinit(locally_owned_dofs, communicator);
 
-  activation_map.reinit(locally_owned_dofs, communicator);
 
   Iext = std::make_unique<AppliedCurrent<dim>>(end_time_current);
 
@@ -677,13 +688,20 @@ IonicModel<dim>::setup_problem()
 
   multigrid_matrices.resize(0, total_tree_levels);
 
-  multigrid_matrices[multigrid_matrices.max_level()].reinit(locally_owned_dofs,
-                                                            locally_owned_dofs,
-                                                            dsp,
-                                                            communicator);
+  // if constexpr (!use_matrix_free_action)
+  for (unsigned int level = 0; level < multigrid_matrices.max_level() + 1;
+       ++level)
+    multigrid_matrices[level] =
+      std::make_unique<TrilinosWrappers::SparseMatrix>();
+
+  multigrid_matrices[multigrid_matrices.max_level()]->reinit(locally_owned_dofs,
+                                                             locally_owned_dofs,
+                                                             dsp,
+                                                             communicator);
 
   file_iterations.open(
-    "iterations_" + std::string(param.use_amg ? "AMG" : "AGGLOMG") + "_level_" +
+    "iterations_" +
+    std::string(param.use_amg_preconditioner ? "AMG" : "AGGLOMG") + "_level_" +
     std::to_string(total_tree_levels + 1) + "_" +
     std::to_string(Utilities::MPI::n_mpi_processes(communicator)) +
     "_procs_deg_" + std::to_string(dg_fe.degree) + ".txt");
@@ -730,10 +748,10 @@ IonicModel<dim>::setup_multigrid()
         }
 
       const unsigned int n_local_agglomerates = agglo_index;
-      // unsigned int       total_agglomerates =
-      Utilities::MPI::sum(n_local_agglomerates, communicator);
-      // pcout << "Total agglomerates per (tree) level: " << extraction_level
-      //<< ": " << total_agglomerates << std::endl;
+      unsigned int       total_agglomerates =
+        Utilities::MPI::sum(n_local_agglomerates, communicator);
+      pcout << "Total agglomerates per (tree) level: " << extraction_level
+            << ": " << total_agglomerates << std::endl;
 
       // Now, perform agglomeration within each locally owned partition
       std::vector<
@@ -771,49 +789,53 @@ IonicModel<dim>::setup_multigrid()
                                    sparsity,
                                    injection_matrices_two_level[l - 1]);
     }
-  // pcout << "Computed two-level matrices between agglomerated levels"
-  //<< std::endl;
-
+  pcout << "Computed two-level matrices between agglomerated levels"
+        << std::endl;
 
   // Define transfer between levels.
   transfer_matrices.resize(total_tree_levels);
   for (unsigned int l = 0; l < total_tree_levels - 1; ++l)
     transfer_matrices[l] = &injection_matrices_two_level[l];
 
-
   // Last matrix, fill it by hand
-  // add last two-level (which is an embedding)
   fill_interpolation_matrix(*agglomeration_handlers.back(),
                             injection_matrices_two_level.back());
   transfer_matrices[total_tree_levels - 1] =
     &injection_matrices_two_level.back();
 
-  // pcout << injection_matrices_two_level.back().m() << " and "
-  //     << injection_matrices_two_level.back().n() << std::endl;
-
+  // Multigrid matrices and vectors
   AmgProjector<dim, TrilinosWrappers::SparseMatrix, double> amg_projector(
     injection_matrices_two_level);
-  // pcout << "Initialized projector" << std::endl;
 
-  // multigrid_matrices[multigrid_matrices.max_level()].release();
-  // multigrid_matrices[multigrid_matrices.max_level()].reset(&system_matrix);
+  // Get fine operator and use it to build other levels.
+  const unsigned int max_level = multigrid_matrices.max_level();
+  multigrid_matrices[max_level] =
+    std::make_unique<TrilinosWrappers::SparseMatrix>();
+  monodomain_operator->get_system_matrix(*multigrid_matrices[max_level]);
 
+  // Once the level operators are built, use the finest in a matrix-free way,
+  // the others matrix-based
+  multigrid_matrices_lo.resize(0, max_level);
 
-  amg_projector.compute_level_matrices(multigrid_matrices);
+  amg_projector.compute_level_matrices_as_linear_operators(
+    multigrid_matrices, multigrid_matrices_lo);
+
+  if constexpr (use_matrix_free_action)
+    multigrid_matrices_lo[max_level] =
+      linear_operator_mg<VectorType, VectorType>(*monodomain_operator);
+  else
+    multigrid_matrices_lo[max_level] =
+      linear_operator_mg<VectorType, VectorType>(
+        *multigrid_matrices[max_level]);
+
+  multigrid_matrices_lo[max_level].n_rows = monodomain_operator->m();
+  multigrid_matrices_lo[max_level].n_cols = monodomain_operator->n();
 
   pcout << "Projected using transfer_matrices:" << std::endl;
 
-  system_matrix = &multigrid_matrices[multigrid_matrices.max_level()];
-
   // Setup multigrid
 
-
-  // Multigrid matrices
-  using LevelMatrixType = TrilinosWrappers::SparseMatrix;
-  using VectorType      = LinearAlgebra::distributed::Vector<double>;
-  mg_matrix = std::make_unique<mg::Matrix<VectorType>>(multigrid_matrices);
-
-  using SmootherType = PreconditionChebyshev<LevelMatrixType, VectorType>;
+  mg_matrix = std::make_unique<mg::Matrix<VectorType>>(multigrid_matrices_lo);
 
   smoother_data.resize(0, total_tree_levels + 1);
 
@@ -838,10 +860,10 @@ IonicModel<dim>::setup_multigrid()
         agglomeration_handlers[l]->agglo_dh.locally_owned_dofs(), communicator);
 
       // Set exact diagonal for each operator
-      for (unsigned int i = multigrid_matrices[l].local_range().first;
-           i < multigrid_matrices[l].local_range().second;
+      for (unsigned int i = multigrid_matrices[l]->local_range().first;
+           i < multigrid_matrices[l]->local_range().second;
            ++i)
-        diag_inverses[l][i] = 1. / multigrid_matrices[l].diag_element(i);
+        diag_inverses[l][i] = 1. / multigrid_matrices[l]->diag_element(i);
 
       smoother_data[l].preconditioner =
         std::make_shared<DiagonalMatrix<VectorType>>(diag_inverses[l]);
@@ -868,7 +890,7 @@ IonicModel<dim>::setup_multigrid()
   mg_smoother =
     std::make_unique<mg::SmootherRelaxation<SmootherType, VectorType>>();
   mg_smoother->set_steps(3);
-  mg_smoother->initialize(multigrid_matrices, smoother_data);
+  mg_smoother->initialize(multigrid_matrices_lo, smoother_data);
 
   pcout << "Smoothers initialized" << std::endl;
 
@@ -878,7 +900,7 @@ IonicModel<dim>::setup_multigrid()
     std::make_unique<Utils::MGCoarseIterative<TrilinosWrappers::SparseMatrix,
                                               double,
                                               CoarseSolverType>>();
-  mg_coarse->initialize(multigrid_matrices[min_level]);
+  mg_coarse->initialize(*multigrid_matrices[min_level]);
 
   pcout << "Coarse solver initialized" << std::endl;
 
@@ -919,17 +941,19 @@ IonicModel<dim>::setup_multigrid()
     PreconditionMG<dim, VectorType, MGTransferAgglomeration<dim, VectorType>>>(
     classical_dh, *mg, *mg_transfer);
 
-
   // compute operator complexity for AGGLO MG
   double op_complexity = 0.;
   for (unsigned int level = 0; level < total_tree_levels + 1; ++level)
     {
       pcout << "l" << level << std::endl;
-      const double nnz_level = multigrid_matrices[level].n_nonzero_elements();
+      const double nnz_level = multigrid_matrices[level]->n_nonzero_elements();
       op_complexity += nnz_level;
     }
   op_complexity /= system_matrix->n_nonzero_elements();
   pcout << "Operator complexity (AGGLO MG): " << op_complexity << std::endl;
+
+  statistics_table.add_value("N. MG levels", total_tree_levels + 1);
+  statistics_table.add_value("MG Op. complexity", op_complexity);
 }
 
 
@@ -1217,7 +1241,9 @@ IonicModel<dim>::solve()
 {
   TimerOutput::Scope t(computing_timer, "Solve");
 
-  if (param.use_amg)
+  if constexpr (measure_solve_times)
+    start_solver = MPI_Wtime();
+  if (param.use_amg_preconditioner)
     solver.solve(system_operator,
                  locally_relevant_solution_current,
                  system_rhs,
@@ -1228,6 +1254,12 @@ IonicModel<dim>::solve()
                  system_rhs,
                  *preconditioner);
 
+  if constexpr (measure_solve_times)
+    {
+      stop_solver = MPI_Wtime();
+      iteration_times.push_back(stop_solver - start_solver);
+      iterations.push_back(param.control.last_step());
+    }
   pcout << "Number of outer iterations: " << param.control.last_step()
         << std::endl;
 
@@ -1330,29 +1362,23 @@ IonicModel<dim>::run()
 
   // Assemble time independent term
 
-
   assemble_time_independent_matrix();
   pcout << "Assembled time independent term: done" << std::endl;
 
-  system_matrix = &multigrid_matrices[multigrid_matrices.max_level()];
-  system_matrix->copy_from(mass_matrix);   // (chi*Cm)/dt * M
-  system_matrix->add(+1., laplace_matrix); // (chi*Cm)/dt * M + A
+  // Initialize matrix-free evaluator, and using it to get the system matrix
+  monodomain_operator->reinit(mapping, classical_dh);
+  system_matrix = const_cast<TrilinosWrappers::SparseMatrix *>(
+    &monodomain_operator->get_system_matrix());
 
-  if (param.use_matrix_free)
-    {
-      monodomain_operator->reinit(mapping, classical_dh);
-      system_matrix = const_cast<TrilinosWrappers::SparseMatrix *>(
-        &monodomain_operator->get_system_matrix());
-      system_operator =
-        linear_operator<LinearAlgebra::distributed::Vector<double>>(
-          *monodomain_operator);
-    }
+  if (use_matrix_free_action)
+    system_operator =
+      linear_operator<LinearAlgebra::distributed::Vector<double>>(
+        *monodomain_operator);
   else
-    {
-      system_operator =
-        linear_operator<LinearAlgebra::distributed::Vector<double>>(
-          *system_matrix);
-    }
+    system_operator =
+      linear_operator<LinearAlgebra::distributed::Vector<double>>(
+        *system_matrix);
+
 
   unsigned int iter_count = 0;
   const double mesh_size  = [this]() -> double {
@@ -1369,16 +1395,17 @@ IonicModel<dim>::run()
 
   pcout << "Max mesh size: " << mesh_size << std::endl;
 
-  // Depending on the preconditioner type, use AMG or polytopal multigrid.
-  if (param.use_amg)
+  // Use AMG or agglomeration-based multigrid
+  if (param.use_amg_preconditioner)
     {
       typename TrilinosWrappers::PreconditionAMG::AdditionalData amg_data;
       if (dg_fe.degree > 1)
         amg_data.higher_order_elements = true;
 
-      amg_data.smoother_type   = "Chebyshev";
-      amg_data.smoother_sweeps = 3;
-      amg_data.output_details  = true;
+      amg_data.aggregation_threshold = 0.1; // 0.15;
+      amg_data.smoother_type         = "Chebyshev";
+      amg_data.smoother_sweeps       = 3;
+      amg_data.output_details        = true;
       amg_preconditioner.initialize(*system_matrix, amg_data);
     }
   else
@@ -1392,7 +1419,7 @@ IonicModel<dim>::run()
 
       // Solve the ODEs for w
       update_w_and_ion();
-      //   Assemble time dependent terms
+      // Assemble time dependent terms
       assemble_time_terms();
 
       // Build system matrix by adding the time term
@@ -1418,6 +1445,42 @@ IonicModel<dim>::run()
       system_rhs = 0.;
     }
   pcout << std::endl;
+
+
+  if (Utilities::MPI::this_mpi_process(communicator) == 0)
+    {
+      std::cout
+        << "---------------------------------------------------------SOLVER STATISTICS----"
+           "-------------------------------------------"
+        << std::endl;
+      std::cout
+        << "+------------------------------------------------------------------"
+           "-----------------------------------------------------+"
+        << std::endl;
+
+      const auto [min_iter, max_iter] =
+        std::minmax_element(iterations.begin(), iterations.end());
+      const double avg_iter =
+        std::accumulate(iterations.begin(), iterations.end(), 0.0) /
+        iterations.size();
+
+      statistics_table.add_value("Min iterations", *min_iter);
+      statistics_table.add_value("Max iterations", *max_iter);
+      statistics_table.add_value("Avg iterations", avg_iter);
+      if constexpr (measure_solve_times)
+        statistics_table.add_value("Time per it.",
+                                   std::accumulate(iteration_times.begin(),
+                                                   iteration_times.end(),
+                                                   0.0) /
+                                     iterations.size());
+
+      statistics_table.write_text(std::cout, TableHandler::org_mode_table);
+
+      std::cout
+        << "+------------------------------------------------------------------"
+           "-----------------------------------------------------+"
+        << std::endl;
+    }
 }
 
 
@@ -1428,6 +1491,17 @@ main(int argc, char *argv[])
   Utilities::MPI::MPI_InitFinalize mpi_initialization(argc, argv, 1);
   deallog.depth_console(
     Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0 ? 10 : 0);
+
+  if constexpr (use_matrix_free_action)
+    {
+      const unsigned int n_vect_doubles = VectorizedArray<double>::size();
+      const unsigned int n_vect_bits    = 8 * sizeof(double) * n_vect_doubles;
+
+      deallog << "Vectorization over " << n_vect_doubles
+              << " doubles = " << n_vect_bits << " bits ("
+              << Utilities::System::get_current_vectorization_level() << ')'
+              << std::endl;
+    }
 
   {
     ModelParameters parameters;

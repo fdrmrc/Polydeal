@@ -374,7 +374,7 @@ namespace Utils
      */
     template <int dim,
               int degree,
-              int n_qpoints,
+              int n_q_points,
               int n_components,
               typename number = double>
     class LaplaceOperatorDG : public Subscriptor
@@ -394,7 +394,7 @@ namespace Utils
       {
         fe_degree = dof_handler.get_fe().degree;
 
-        const QGauss<1>                                  quad(n_qpoints);
+        const QGauss<1>                                  quad(n_q_points);
         typename MatrixFree<dim, number>::AdditionalData addit_data;
         addit_data.tasks_parallel_scheme =
           MatrixFree<dim, number>::AdditionalData::none;
@@ -547,14 +547,14 @@ namespace Utils
 
           for (unsigned int q = 0; q < phi_m.n_q_points; ++q)
             {
-              VectorizedArrayType average_value =
+              VectorizedArrayType jump_value =
                 (phi_m.get_value(q) - phi_p.get_value(q)) * 0.5;
               VectorizedArrayType average_valgrad =
                 phi_m.get_normal_derivative(q) + phi_p.get_normal_derivative(q);
               average_valgrad =
-                average_value * 2. * sigmaF - average_valgrad * 0.5;
-              phi_m.submit_normal_derivative(-average_value, q);
-              phi_p.submit_normal_derivative(-average_value, q);
+                jump_value * 2. * sigmaF - average_valgrad * 0.5;
+              phi_m.submit_normal_derivative(-jump_value, q);
+              phi_p.submit_normal_derivative(-jump_value, q);
               phi_m.submit_value(average_valgrad, q);
               phi_p.submit_value(-average_valgrad, q);
             }
@@ -571,11 +571,11 @@ namespace Utils
 
           for (unsigned int q = 0; q < phi_m.n_q_points; ++q)
             {
-              VectorizedArrayType average_value = phi_m.get_value(q);
+              VectorizedArrayType jump_value = phi_m.get_value(q);
               VectorizedArrayType average_valgrad =
                 -phi_m.get_normal_derivative(q);
-              average_valgrad += average_value * sigmaF * 2.0;
-              phi_m.submit_normal_derivative(-average_value, q);
+              average_valgrad += jump_value * sigmaF * 2.0;
+              phi_m.submit_normal_derivative(-jump_value, q);
               phi_m.submit_value(average_valgrad, q);
             }
 
@@ -615,7 +615,7 @@ namespace Utils
 
             MatrixFreeTools::compute_matrix<dim,
                                             degree,
-                                            n_qpoints,
+                                            n_q_points,
                                             n_components,
                                             number,
                                             VectorizedArrayType>(
@@ -657,14 +657,14 @@ namespace Utils
 
           for (unsigned int q = 0; q < phi_m.n_q_points; ++q)
             {
-              VectorizedArrayType average_value =
+              VectorizedArrayType jump_value =
                 (phi_m.get_value(q) - phi_p.get_value(q)) * 0.5;
               VectorizedArrayType average_valgrad =
                 phi_m.get_normal_derivative(q) + phi_p.get_normal_derivative(q);
               average_valgrad =
-                average_value * 2. * sigmaF - average_valgrad * 0.5;
-              phi_m.submit_normal_derivative(-average_value, q);
-              phi_p.submit_normal_derivative(-average_value, q);
+                jump_value * 2. * sigmaF - average_valgrad * 0.5;
+              phi_m.submit_normal_derivative(-jump_value, q);
+              phi_p.submit_normal_derivative(-jump_value, q);
               phi_m.submit_value(average_valgrad, q);
               phi_p.submit_value(-average_valgrad, q);
             }
@@ -681,11 +681,11 @@ namespace Utils
 
           for (unsigned int q = 0; q < phi_m.n_q_points; ++q)
             {
-              VectorizedArrayType average_value = phi_m.get_value(q);
+              VectorizedArrayType jump_value = phi_m.get_value(q);
               VectorizedArrayType average_valgrad =
                 -phi_m.get_normal_derivative(q);
-              average_valgrad += average_value * sigmaF * 2.0;
-              phi_m.submit_normal_derivative(-average_value, q);
+              average_valgrad += jump_value * sigmaF * 2.0;
+              phi_m.submit_normal_derivative(-jump_value, q);
               phi_m.submit_value(average_valgrad, q);
             }
 
@@ -724,7 +724,7 @@ namespace Utils
         // Assemble system matrix.
         MatrixFreeTools::compute_matrix<dim,
                                         degree,
-                                        n_qpoints,
+                                        n_q_points,
                                         n_components,
                                         number,
                                         VectorizedArrayType>(
@@ -859,15 +859,15 @@ namespace Utils
 
             for (unsigned int q = 0; q < fe_eval.n_q_points; ++q)
               {
-                VectorizedArray<number> average_value =
+                VectorizedArray<number> jump_value =
                   (fe_eval.get_value(q) - fe_eval_neighbor.get_value(q)) * 0.5;
                 VectorizedArray<number> average_valgrad =
                   fe_eval.get_normal_derivative(q) +
                   fe_eval_neighbor.get_normal_derivative(q);
                 average_valgrad =
-                  average_value * 2. * sigmaF - average_valgrad * 0.5;
-                fe_eval.submit_normal_derivative(-average_value, q);
-                fe_eval_neighbor.submit_normal_derivative(-average_value, q);
+                  jump_value * 2. * sigmaF - average_valgrad * 0.5;
+                fe_eval.submit_normal_derivative(-jump_value, q);
+                fe_eval_neighbor.submit_normal_derivative(-jump_value, q);
                 fe_eval.submit_value(average_valgrad, q);
                 fe_eval_neighbor.submit_value(-average_valgrad, q);
               }
@@ -902,11 +902,11 @@ namespace Utils
 
             for (unsigned int q = 0; q < fe_eval.n_q_points; ++q)
               {
-                VectorizedArray<number> average_value = fe_eval.get_value(q);
+                VectorizedArray<number> jump_value = fe_eval.get_value(q);
                 VectorizedArray<number> average_valgrad =
                   -fe_eval.get_normal_derivative(q);
-                average_valgrad += average_value * sigmaF * 2.0;
-                fe_eval.submit_normal_derivative(-average_value, q);
+                average_valgrad += jump_value * sigmaF * 2.0;
+                fe_eval.submit_normal_derivative(-jump_value, q);
                 fe_eval.submit_value(average_valgrad, q);
               }
 
@@ -990,14 +990,14 @@ namespace Utils
 
                 for (unsigned int q = 0; q < phi.n_q_points; ++q)
                   {
-                    VectorizedArray<number> average_value =
+                    VectorizedArray<number> jump_value =
                       (phi.get_value(q) - phi_outer.get_value(q)) * 0.5;
                     VectorizedArray<number> average_valgrad =
                       phi.get_normal_derivative(q) +
                       phi_outer.get_normal_derivative(q);
                     average_valgrad =
-                      average_value * 2. * sigmaF - average_valgrad * 0.5;
-                    phi.submit_normal_derivative(-average_value, q);
+                      jump_value * 2. * sigmaF - average_valgrad * 0.5;
+                    phi.submit_normal_derivative(-jump_value, q);
                     phi.submit_value(average_valgrad, q);
                   }
                 phi.integrate(EvaluationFlags::values |
@@ -1022,14 +1022,14 @@ namespace Utils
 
                 for (unsigned int q = 0; q < phi.n_q_points; ++q)
                   {
-                    VectorizedArray<number> average_value =
+                    VectorizedArray<number> jump_value =
                       (phi.get_value(q) - phi_outer.get_value(q)) * 0.5;
                     VectorizedArray<number> average_valgrad =
                       phi.get_normal_derivative(q) +
                       phi_outer.get_normal_derivative(q);
                     average_valgrad =
-                      average_value * 2. * sigmaF - average_valgrad * 0.5;
-                    phi_outer.submit_normal_derivative(-average_value, q);
+                      jump_value * 2. * sigmaF - average_valgrad * 0.5;
+                    phi_outer.submit_normal_derivative(-jump_value, q);
                     phi_outer.submit_value(-average_valgrad, q);
                   }
                 phi_outer.integrate(EvaluationFlags::values |
@@ -1073,11 +1073,11 @@ namespace Utils
 
                 for (unsigned int q = 0; q < phi.n_q_points; ++q)
                   {
-                    VectorizedArray<number> average_value = phi.get_value(q);
+                    VectorizedArray<number> jump_value = phi.get_value(q);
                     VectorizedArray<number> average_valgrad =
                       -phi.get_normal_derivative(q);
-                    average_valgrad += average_value * sigmaF * 2.0;
-                    phi.submit_normal_derivative(-average_value, q);
+                    average_valgrad += jump_value * sigmaF * 2.0;
+                    phi.submit_normal_derivative(-jump_value, q);
                     phi.submit_value(average_valgrad, q);
                   }
 
@@ -1107,7 +1107,7 @@ namespace Utils
      */
     template <int dim,
               int degree,
-              int n_qpoints,
+              int n_q_points,
               int n_components,
               typename number = double>
     class MonodomainOperatorDG : public Subscriptor
@@ -1127,14 +1127,20 @@ namespace Utils
              const DoFHandler<dim> &dof_handler,
              const unsigned int     level = numbers::invalid_unsigned_int)
       {
+        Assert(
+          degree == dof_handler.get_fe().degree,
+          ExcMessage(
+            "Degree of the operator must match the degree of the DoFHandler"));
         fe_degree = dof_handler.get_fe().degree;
 
-        const QGauss<1>                                  quad(n_qpoints);
+        const QGauss<1>                                  quad(n_q_points);
         typename MatrixFree<dim, number>::AdditionalData addit_data;
         addit_data.tasks_parallel_scheme =
           MatrixFree<dim, number>::AdditionalData::none;
         addit_data.tasks_block_size = 3;
         addit_data.mg_level         = level;
+        addit_data.mapping_update_flags =
+          (update_values | update_gradients | update_quadrature_points);
         addit_data.mapping_update_flags_inner_faces =
           (update_gradients | update_JxW_values);
         addit_data.mapping_update_flags_boundary_faces =
@@ -1196,7 +1202,10 @@ namespace Utils
                   &MonodomainOperatorDG::local_apply_boundary,
                   this,
                   dst,
-                  src);
+                  src,
+                  /*zero_dst =*/false,
+                  MatrixFree<dim, number>::DataAccessOnFaces::gradients,
+                  MatrixFree<dim, number>::DataAccessOnFaces::gradients);
       }
 
       types::global_dof_index
@@ -1287,16 +1296,14 @@ namespace Utils
 
           for (unsigned int q = 0; q < phi_m.n_q_points; ++q)
             {
-              VectorizedArrayType average_value =
+              VectorizedArrayType jump_value =
                 (phi_m.get_value(q) - phi_p.get_value(q)) * 0.5;
               VectorizedArrayType average_valgrad =
                 phi_m.get_normal_derivative(q) + phi_p.get_normal_derivative(q);
               average_valgrad =
-                average_value * 2. * sigmaF - average_valgrad * 0.5;
-              phi_m.submit_normal_derivative(-parameters.sigma * average_value,
-                                             q);
-              phi_p.submit_normal_derivative(-parameters.sigma * average_value,
-                                             q);
+                jump_value * 2. * sigmaF - average_valgrad * 0.5;
+              phi_m.submit_normal_derivative(-parameters.sigma * jump_value, q);
+              phi_p.submit_normal_derivative(-parameters.sigma * jump_value, q);
               phi_m.submit_value(parameters.sigma * average_valgrad, q);
               phi_p.submit_value(-parameters.sigma * average_valgrad, q);
             }
@@ -1304,9 +1311,14 @@ namespace Utils
           phi_p.integrate(EvaluationFlags::values | EvaluationFlags::gradients);
         };
 
-        const auto boundary_operation = [&](auto &phi_m) {
-          // Do nothing since we have homogeneous Neumann BCs
-        };
+        // const auto boundary_operation = [&](auto &phi_m) {
+        //   (void)phi_m;
+        //   AssertThrow(
+        //     false,
+        //     ExcMessage(
+        //       "We have Neumann BCs only, so this should never be called."));
+        //   // Do nothing since we have homogeneous Neumann BCs
+        // };
 
 
         //////////////////////////////////////////////////
@@ -1341,7 +1353,7 @@ namespace Utils
 
             MatrixFreeTools::compute_matrix<dim,
                                             degree,
-                                            n_qpoints,
+                                            n_q_points,
                                             n_components,
                                             number,
                                             VectorizedArrayType>(
@@ -1350,7 +1362,7 @@ namespace Utils
               system_matrix,
               cell_operation,
               face_operation,
-              boundary_operation);
+              nullptr /*boundary_operation*/);
           }
 
         return system_matrix;
@@ -1388,25 +1400,19 @@ namespace Utils
 
           for (unsigned int q = 0; q < phi_m.n_q_points; ++q)
             {
-              VectorizedArrayType average_value =
+              VectorizedArrayType jump_value =
                 (phi_m.get_value(q) - phi_p.get_value(q)) * 0.5;
               VectorizedArrayType average_valgrad =
                 phi_m.get_normal_derivative(q) + phi_p.get_normal_derivative(q);
               average_valgrad =
-                average_value * 2. * sigmaF - average_valgrad * 0.5;
-              phi_m.submit_normal_derivative(-parameters.sigma * average_value,
-                                             q);
-              phi_p.submit_normal_derivative(-parameters.sigma * average_value,
-                                             q);
+                jump_value * 2. * sigmaF - average_valgrad * 0.5;
+              phi_m.submit_normal_derivative(-parameters.sigma * jump_value, q);
+              phi_p.submit_normal_derivative(-parameters.sigma * jump_value, q);
               phi_m.submit_value(parameters.sigma * average_valgrad, q);
               phi_p.submit_value(-parameters.sigma * average_valgrad, q);
             }
           phi_m.integrate(EvaluationFlags::values | EvaluationFlags::gradients);
           phi_p.integrate(EvaluationFlags::values | EvaluationFlags::gradients);
-        };
-
-        const auto boundary_operation = [&](auto &phi_m) {
-          // Do nothing since we have homogeneous Neumann BCs
         };
 
 
@@ -1441,7 +1447,7 @@ namespace Utils
         // Assemble system matrix.
         MatrixFreeTools::compute_matrix<dim,
                                         degree,
-                                        n_qpoints,
+                                        n_q_points,
                                         n_components,
                                         number,
                                         VectorizedArrayType>(
@@ -1450,18 +1456,8 @@ namespace Utils
           mg_matrix,
           cell_operation,
           face_operation,
-          boundary_operation);
+          nullptr /*boundary_operation*/);
       }
-
-
-
-      void
-      rhs(LinearAlgebra::distributed::Vector<number> &b) const
-      {
-        AssertThrow(false,
-                    ExcMessage("RHS not implemented for MonodomainOperatorDG"));
-      }
-
 
 
       void
@@ -1485,6 +1481,72 @@ namespace Utils
       }
 
 
+
+      void
+      apply_mass_term(
+        LinearAlgebra::distributed::Vector<number>       &dst,
+        const LinearAlgebra::distributed::Vector<number> &src) const
+      {
+        FEEvaluation<dim, degree, n_q_points, n_components, number> phi(data);
+        const double factor = (parameters.chi * parameters.Cm) / parameters.dt;
+
+        for (unsigned int cell = 0; cell < data.n_cell_batches(); ++cell)
+          {
+            phi.reinit(cell);
+            phi.read_dof_values(src);
+            phi.evaluate(EvaluationFlags::values);
+            for (unsigned int q = 0; q < phi.n_q_points; ++q)
+              phi.submit_value(phi.get_value(q) * factor, q);
+            phi.integrate(EvaluationFlags::values);
+            phi.distribute_local_to_global(dst);
+          }
+        dst.compress(VectorOperation::add);
+      }
+
+
+
+      void
+      rhs(LinearAlgebra::distributed::Vector<number>       &rhs,
+          const LinearAlgebra::distributed::Vector<number> &solution_minus_ion,
+          const Function<dim>                              &Iext) const
+      {
+        FEEvaluation<dim, degree, n_q_points, n_components, number> phi(data);
+
+        for (unsigned int cell = 0; cell < data.n_cell_batches(); ++cell)
+          {
+            phi.reinit(cell);
+            phi.read_dof_values(solution_minus_ion);
+            phi.evaluate(EvaluationFlags::values);
+            for (unsigned int q = 0; q < phi.n_q_points; ++q)
+              {
+                const Point<dim, VectorizedArray<number>> p_vect =
+                  phi.quadrature_point(q);
+                // evaluate the external current for each component in
+                // VectorizedArray
+                VectorizedArray<number> applied_current_value = 0.0;
+                for (unsigned int v = 0; v < VectorizedArray<number>::size();
+                     ++v)
+                  {
+                    Point<dim> p;
+                    for (unsigned int d = 0; d < dim; ++d)
+                      p[d] = p_vect[d][v];
+                    applied_current_value[v] = Iext.value(p);
+                  }
+
+                //  reaction_term =  (parameters.chi * phi.get_value(q)) +
+                //  applied_current_value;
+                phi.submit_value((parameters.chi * phi.get_value(q)) +
+                                   applied_current_value,
+                                 q);
+              }
+            phi.integrate(EvaluationFlags::values);
+            phi.distribute_local_to_global(rhs);
+          }
+        rhs.compress(VectorOperation::add);
+      }
+
+
+
     private:
       void
       local_apply(const MatrixFree<dim, number>                    &data,
@@ -1492,7 +1554,7 @@ namespace Utils
                   const LinearAlgebra::distributed::Vector<number> &src,
                   const std::pair<unsigned int, unsigned int> &cell_range) const
       {
-        FEEvaluation<dim, -1, 0, 1, number> phi(data);
+        FEEvaluation<dim, degree, n_q_points, n_components, number> phi(data);
         const double factor = (parameters.chi * parameters.Cm) / parameters.dt;
 
         for (unsigned int cell = cell_range.first; cell < cell_range.second;
@@ -1518,8 +1580,10 @@ namespace Utils
         const LinearAlgebra::distributed::Vector<number> &src,
         const std::pair<unsigned int, unsigned int>      &face_range) const
       {
-        FEFaceEvaluation<dim, -1, 0, 1, number> fe_eval(data, true);
-        FEFaceEvaluation<dim, -1, 0, 1, number> fe_eval_neighbor(data, false);
+        FEFaceEvaluation<dim, degree, n_q_points, n_components, number> fe_eval(
+          data, true);
+        FEFaceEvaluation<dim, degree, n_q_points, n_components, number>
+          fe_eval_neighbor(data, false);
 
         for (unsigned int face = face_range.first; face < face_range.second;
              ++face)
@@ -1542,18 +1606,17 @@ namespace Utils
 
             for (unsigned int q = 0; q < fe_eval.n_q_points; ++q)
               {
-                VectorizedArray<number> average_value =
+                VectorizedArray<number> jump_value =
                   (fe_eval.get_value(q) - fe_eval_neighbor.get_value(q)) * 0.5;
                 VectorizedArray<number> average_valgrad =
                   fe_eval.get_normal_derivative(q) +
                   fe_eval_neighbor.get_normal_derivative(q);
                 average_valgrad =
-                  average_value * 2. * sigmaF - average_valgrad * 0.5;
-                fe_eval.submit_normal_derivative(-parameters.sigma *
-                                                   average_value,
+                  jump_value * 2. * sigmaF - average_valgrad * 0.5;
+                fe_eval.submit_normal_derivative(-parameters.sigma * jump_value,
                                                  q);
                 fe_eval_neighbor.submit_normal_derivative(-parameters.sigma *
-                                                            average_value,
+                                                            jump_value,
                                                           q);
                 fe_eval.submit_value(parameters.sigma * average_valgrad, q);
                 fe_eval_neighbor.submit_value(-parameters.sigma *
@@ -1576,6 +1639,10 @@ namespace Utils
         const LinearAlgebra::distributed::Vector<number> &src,
         const std::pair<unsigned int, unsigned int>      &face_range) const
       {
+        (void)data;
+        (void)dst;
+        (void)src;
+        (void)face_range;
         // Do nothing since we have homogeneous Neumann BCs
       }
 
@@ -1587,7 +1654,7 @@ namespace Utils
         const unsigned int &,
         const std::pair<unsigned int, unsigned int> &cell_range) const
       {
-        FEEvaluation<dim, -1, 0, 1, number>    phi(data);
+        FEEvaluation<dim, degree, n_q_points, n_components, number> phi(data);
         AlignedVector<VectorizedArray<number>> local_diagonal_vector(
           phi.dofs_per_cell);
         const double factor = (parameters.chi * parameters.Cm) / parameters.dt;
@@ -1627,9 +1694,11 @@ namespace Utils
         const unsigned int &,
         const std::pair<unsigned int, unsigned int> &face_range) const
       {
-        FEFaceEvaluation<dim, -1, 0, 1, number> phi(data, true);
-        FEFaceEvaluation<dim, -1, 0, 1, number> phi_outer(data, false);
-        AlignedVector<VectorizedArray<number>>  local_diagonal_vector(
+        FEFaceEvaluation<dim, degree, n_q_points, n_components, number> phi(
+          data, true);
+        FEFaceEvaluation<dim, degree, n_q_points, n_components, number>
+                                               phi_outer(data, false);
+        AlignedVector<VectorizedArray<number>> local_diagonal_vector(
           phi.dofs_per_cell);
 
         for (unsigned int face = face_range.first; face < face_range.second;
@@ -1660,15 +1729,14 @@ namespace Utils
 
                 for (unsigned int q = 0; q < phi.n_q_points; ++q)
                   {
-                    VectorizedArray<number> average_value =
+                    VectorizedArray<number> jump_value =
                       (phi.get_value(q) - phi_outer.get_value(q)) * 0.5;
                     VectorizedArray<number> average_valgrad =
                       phi.get_normal_derivative(q) +
                       phi_outer.get_normal_derivative(q);
                     average_valgrad =
-                      average_value * 2. * sigmaF - average_valgrad * 0.5;
-                    phi.submit_normal_derivative(-parameters.sigma *
-                                                   average_value,
+                      jump_value * 2. * sigmaF - average_valgrad * 0.5;
+                    phi.submit_normal_derivative(-parameters.sigma * jump_value,
                                                  q);
                     phi.submit_value(parameters.sigma * average_valgrad, q);
                   }
@@ -1694,15 +1762,15 @@ namespace Utils
 
                 for (unsigned int q = 0; q < phi.n_q_points; ++q)
                   {
-                    VectorizedArray<number> average_value =
+                    VectorizedArray<number> jump_value =
                       (phi.get_value(q) - phi_outer.get_value(q)) * 0.5;
                     VectorizedArray<number> average_valgrad =
                       phi.get_normal_derivative(q) +
                       phi_outer.get_normal_derivative(q);
                     average_valgrad =
-                      average_value * 2. * sigmaF - average_valgrad * 0.5;
+                      jump_value * 2. * sigmaF - average_valgrad * 0.5;
                     phi_outer.submit_normal_derivative(-parameters.sigma *
-                                                         average_value,
+                                                         jump_value,
                                                        q);
                     phi_outer.submit_value(-parameters.sigma * average_valgrad,
                                            q);
@@ -1724,6 +1792,9 @@ namespace Utils
         const unsigned int &,
         const std::pair<unsigned int, unsigned int> &face_range) const
       {
+        (void)data;
+        (void)dst;
+        (void)face_range;
         // Do nothing since we have homogeneous Neumann BCs
       }
 
