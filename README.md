@@ -97,7 +97,11 @@ This project is developed and maintained by:
 
 under the supervision of 
 - [Prof. Andrea Cangiani](https://people.sissa.it/~acangian/) ([@andreacangiani](https://github.com/andreacangiani)), SISSA, IT
-- [ Prof. Luca Heltai](https://sites.google.com/view/luca-heltai) ([@luca-heltai](https://github.com/luca-heltai)), University of Pisa, IT
+- [ Prof. Luca Heltai](https://sites.google.com/view/luca-heltai) ([@luca-heltai](https://github.com/luca-heltai)), SISSA, IT. (Now at University of Pisa, IT)
 
 
-Feel free to start a [discussion](https://github.com/fdrmrc/Polydeal/discussions) or open an [issue](https://github.com/fdrmrc/Polydeal/issues), especially if you want to contribute. For any other inquiries or special requests, you can directly contact mfeder@sissa.it.
+
+
+## Contributing
+
+Contributors are welcome to start a [discussion](https://github.com/fdrmrc/Polydeal/discussions) to ask questions, exchange ideas, or seek guidance. For substantial contributions, we recommend reaching out early—either via a discussion or by contacting mfeder@sissa.it.
