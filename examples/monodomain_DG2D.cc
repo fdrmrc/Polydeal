@@ -466,17 +466,15 @@ private:
 
   IndexSet locally_owned_dofs;
   // Related to update solution
-  LinearAlgebra::distributed::Vector<double> locally_relevant_solution_pre;
-  LinearAlgebra::distributed::Vector<double> locally_relevant_solution_current;
-
-  LinearAlgebra::distributed::Vector<double> locally_relevant_w0_pre;
-  LinearAlgebra::distributed::Vector<double> locally_relevant_w0_current;
-
-  LinearAlgebra::distributed::Vector<double> ion_at_dofs;
-
-  // Activation map
   using VectorType = LinearAlgebra::distributed::Vector<double>;
-  LinearAlgebra::distributed::Vector<double> activation_map;
+  VectorType locally_relevant_solution_pre;
+  VectorType locally_relevant_solution_current;
+
+  VectorType locally_relevant_w0_pre;
+  VectorType locally_relevant_w0_current;
+
+  VectorType ion_at_dofs;
+
 
   //   Time stepping parameters
   double       time;
@@ -654,7 +652,6 @@ IonicModel<dim>::setup_problem()
 
   ion_at_dofs.reinit(locally_owned_dofs, communicator);
 
-  activation_map.reinit(locally_owned_dofs, communicator);
 
   Iext = std::make_unique<AppliedCurrent<dim>>(end_time_current);
 
