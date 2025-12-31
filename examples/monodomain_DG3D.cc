@@ -65,7 +65,7 @@ static constexpr unsigned int starting_level = 1;
 
 // matrix-free related parameters
 static constexpr bool         use_matrix_free_action = true;
-static constexpr unsigned int degree_finite_element  = 2;
+static constexpr unsigned int degree_finite_element  = 1;
 constexpr unsigned int        n_qpoints    = degree_finite_element + 1;
 static constexpr unsigned int n_components = 1;
 
@@ -761,8 +761,8 @@ IonicModel<dim>::setup_problem()
 
   ion_at_dofs.reinit(locally_owned_dofs, communicator);
 
-  Iext = std::make_unique<AppliedCurrent<dim>>(end_time_current,
-                                               parameters.test_case);
+  Iext =
+    std::make_unique<AppliedCurrent<dim>>(end_time_current, param.test_case);
 
   // // Start building R-tree
   namespace bgi = boost::geometry::index;
@@ -1453,9 +1453,9 @@ IonicModel<dim>::run()
     GridIn<dim>        grid_in;
     grid_in.attach_triangulation(tria_dummy);
     std::string mesh_path;
-    if (parameters.test_case == TestCase::Idealized)
+    if (param.test_case == TestCase::Idealized)
       mesh_path = "../../meshes/idealized_lv.msh";
-    else if (parameters.test_case == TestCase::Realistic)
+    else if (param.test_case == TestCase::Realistic)
       mesh_path = "../../meshes/realistic_lv.msh";
     std::ifstream mesh_file(mesh_path);
     grid_in.read_msh(mesh_file);
@@ -1643,7 +1643,7 @@ main(int argc, char *argv[])
     parameters.test_case              = TestCase::Idealized;
     parameters.fe_degree              = degree_finite_element;
     parameters.dt                     = 1e-4;
-    parameters.final_time             = parameters.dt * 10;
+    parameters.final_time             = 0.4;
     parameters.final_time_current     = 3e-3;
     parameters.compute_min_value      = false;
     parameters.output_frequency       = 1;
