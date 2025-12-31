@@ -1350,8 +1350,15 @@ IonicModel<dim>::run()
   monodomain_operator->reinit(mapping, classical_dh);
   system_matrix = const_cast<TrilinosWrappers::SparseMatrix *>(
     &monodomain_operator->get_system_matrix());
-  system_operator = linear_operator<LinearAlgebra::distributed::Vector<double>>(
-    *monodomain_operator);
+
+  if (use_matrix_free_action)
+    system_operator =
+      linear_operator<LinearAlgebra::distributed::Vector<double>>(
+        *monodomain_operator);
+  else
+    system_operator =
+      linear_operator<LinearAlgebra::distributed::Vector<double>>(
+        *system_matrix);
 
 
   unsigned int iter_count = 0;

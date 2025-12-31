@@ -1304,10 +1304,14 @@ namespace Utils
           phi_p.integrate(EvaluationFlags::values | EvaluationFlags::gradients);
         };
 
-        const auto boundary_operation = [&](auto &phi_m) {
-          (void)phi_m;
-          // Do nothing since we have homogeneous Neumann BCs
-        };
+        // const auto boundary_operation = [&](auto &phi_m) {
+        //   (void)phi_m;
+        //   AssertThrow(
+        //     false,
+        //     ExcMessage(
+        //       "We have Neumann BCs only, so this should never be called."));
+        //   // Do nothing since we have homogeneous Neumann BCs
+        // };
 
 
         //////////////////////////////////////////////////
@@ -1351,7 +1355,7 @@ namespace Utils
               system_matrix,
               cell_operation,
               face_operation,
-              boundary_operation);
+              nullptr /*boundary_operation*/);
           }
 
         return system_matrix;
@@ -1406,11 +1410,6 @@ namespace Utils
           phi_p.integrate(EvaluationFlags::values | EvaluationFlags::gradients);
         };
 
-        const auto boundary_operation = [&](auto &phi_m) {
-          // Do nothing since we have homogeneous Neumann BCs
-          (void)phi_m;
-        };
-
 
         //////////////////////////////////////////////////
 
@@ -1452,7 +1451,7 @@ namespace Utils
           mg_matrix,
           cell_operation,
           face_operation,
-          boundary_operation);
+          nullptr /*boundary_operation*/);
       }
 
 
@@ -1460,8 +1459,7 @@ namespace Utils
       void
       rhs(LinearAlgebra::distributed::Vector<number> &b) const
       {
-        AssertThrow(false,
-                    ExcMessage("RHS not implemented for MonodomainOperatorDG"));
+        DEAL_II_NOT_IMPLEMENTED();
       }
 
 
