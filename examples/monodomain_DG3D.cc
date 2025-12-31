@@ -63,6 +63,13 @@ class SparseDirectMUMPS
 static constexpr double       TOL            = 3e-3;
 static constexpr unsigned int starting_level = 1;
 
+// matrix-free related parameters
+static constexpr bool         use_matrix_free_action = true;
+static constexpr unsigned int degree_finite_element  = 2;
+constexpr unsigned int        n_qpoints    = degree_finite_element + 1;
+static constexpr unsigned int n_components = 1;
+
+
 namespace Utils
 {
   double
@@ -148,48 +155,45 @@ struct ModelParameters
 {
   SolverControl control;
 
-  double       penalty_constant   = 10.;
-  unsigned int fe_degree          = 1;
-  double       dt                 = 1e-2;
-  double       final_time         = 1.;
-  double       final_time_current = 1.;
-  double       chi                = 1;
-  double       Cm                 = 1.;
-  double       sigma              = 1e-4;
-  double       V1                 = 0.3;
-  double       V1m                = 0.015;
-  double       V2                 = 0.015;
-  double       V2m                = 0.03;
-  double       V3                 = 0.9087;
-  double       Vhat               = 1.58;
-  double       Vo                 = 0.006;
-  double       Vso                = 0.65;
-  double       tauop              = 6e-3;
-  double       tauopp             = 6e-3;
-  double       tausop             = 43e-3;
-  double       tausopp            = 0.2e-3;
-  double       tausi              = 2.8723e-3;
-  double       taufi              = 0.11e-3;
-  double       tau1plus           = 1.4506e-3;
-  double       tau2plus           = 0.28;
-  double       tau2inf            = 0.07;
-  double       tau1p              = 0.06;
-  double       tau1pp             = 1.15;
-  double       tau2p              = 0.07;
-  double       tau2pp             = 0.02;
-  double       tau3p              = 2.7342e-3;
-  double       tau3pp             = 0.003;
-  double       w_star_inf         = 0.94;
-  double       k2                 = 65.0;
-  double       k3                 = 2.0994;
-  double       kso                = 2.0;
-  bool         use_amg            = false;
-  unsigned int output_frequency   = 1;
+  double       penalty_constant       = 10.;
+  unsigned int fe_degree              = 1;
+  double       dt                     = 1e-2;
+  double       final_time             = 1.;
+  double       final_time_current     = 1.;
+  double       chi                    = 1;
+  double       Cm                     = 1.;
+  double       sigma                  = 1e-4;
+  double       V1                     = 0.3;
+  double       V1m                    = 0.015;
+  double       V2                     = 0.015;
+  double       V2m                    = 0.03;
+  double       V3                     = 0.9087;
+  double       Vhat                   = 1.58;
+  double       Vo                     = 0.006;
+  double       Vso                    = 0.65;
+  double       tauop                  = 6e-3;
+  double       tauopp                 = 6e-3;
+  double       tausop                 = 43e-3;
+  double       tausopp                = 0.2e-3;
+  double       tausi                  = 2.8723e-3;
+  double       taufi                  = 0.11e-3;
+  double       tau1plus               = 1.4506e-3;
+  double       tau2plus               = 0.28;
+  double       tau2inf                = 0.07;
+  double       tau1p                  = 0.06;
+  double       tau1pp                 = 1.15;
+  double       tau2p                  = 0.07;
+  double       tau2pp                 = 0.02;
+  double       tau3p                  = 2.7342e-3;
+  double       tau3pp                 = 0.003;
+  double       w_star_inf             = 0.94;
+  double       k2                     = 65.0;
+  double       k3                     = 2.0994;
+  double       kso                    = 2.0;
+  bool         use_amg_preconditioner = false;
+  unsigned int output_frequency       = 1;
 
   std::string mesh_dir = "../../meshes/idealized_lv.msh";
-
-  // eventually compute activation map at each time step
-  bool compute_activation_map = false;
 };
 
 
@@ -200,12 +204,12 @@ class AppliedCurrent : public Function<dim>
 public:
   AppliedCurrent(const double final_time_current)
     : Function<dim>()
-    // , p1{-0.015598, -0.0173368, 0.0307704}
-    // , p2{0.0264292, -0.0043322, 0.0187656}
-    // , p3{0.00155326, 0.0252701, 0.0248006}
-    , p1{0.0981402, -0.0970197, -0.0406029}
-    , p2{0.0981402, -0.0580452, -0.000723225}
-    , p3{0.0770339, -0.101529, -0.00292254}
+    , p1{-0.015598, -0.0173368, 0.0307704}
+    , p2{0.0264292, -0.0043322, 0.0187656}
+    , p3{0.00155326, 0.0252701, 0.0248006}
+  // , p1{0.0981402, -0.0970197, -0.0406029}
+  // , p2{0.0981402, -0.0580452, -0.000723225}
+  // , p3{0.0770339, -0.101529, -0.00292254}
 
   {
     t_end_current = final_time_current;
@@ -480,10 +484,18 @@ private:
   TrilinosWrappers::PreconditionAMG              amg_preconditioner;
   TrilinosWrappers::SparseMatrix                 mass_matrix;
   TrilinosWrappers::SparseMatrix                 laplace_matrix;
-  LinearAlgebra::distributed::Vector<double>     system_rhs;
-  std::unique_ptr<Function<dim>>                 rhs_function;
-  std::unique_ptr<Function<dim>>                 Iext;
-  std::unique_ptr<Function<dim>>                 analytical_solution;
+  TrilinosWrappers::SparseMatrix                *system_matrix;
+
+  std::unique_ptr<
+    Utils::MatrixFreeOperators::
+      MonodomainOperatorDG<dim, degree_finite_element, n_qpoints, n_components>>
+    monodomain_operator;
+  LinearOperator<LinearAlgebra::distributed::Vector<double>> system_operator;
+
+  LinearAlgebra::distributed::Vector<double> system_rhs;
+  std::unique_ptr<Function<dim>>             rhs_function;
+  std::unique_ptr<Function<dim>>             Iext;
+  std::unique_ptr<Function<dim>>             analytical_solution;
 
   std::unique_ptr<FEValues<dim>>     fe_values;
   std::unique_ptr<FEFaceValues<dim>> fe_faces0;
@@ -505,7 +517,6 @@ private:
 
   // Activation map
   using VectorType = LinearAlgebra::distributed::Vector<double>;
-  LinearAlgebra::distributed::Vector<double> activation_map;
 
   //   Time stepping parameters
   double       time;
@@ -566,6 +577,8 @@ private:
 
   std::ofstream file_iterations;
 
+  Utils::Physics::BilinearFormParameters bilinear_form_parameters;
+
 public:
   IonicModel(const ModelParameters &parameters);
   void
@@ -599,6 +612,19 @@ IonicModel<dim>::IonicModel(const ModelParameters &parameters)
   penalty_constant =
     param.penalty_constant * parameters.fe_degree * (parameters.fe_degree + 1);
   total_tree_levels = 0;
+
+  bilinear_form_parameters.dt               = dt;
+  bilinear_form_parameters.penalty_constant = penalty_constant;
+  bilinear_form_parameters.chi              = param.chi;
+  bilinear_form_parameters.Cm               = param.Cm;
+  bilinear_form_parameters.sigma            = param.sigma;
+
+  monodomain_operator = std::make_unique<
+    Utils::MatrixFreeOperators::MonodomainOperatorDG<dim,
+                                                     degree_finite_element,
+                                                     n_qpoints,
+                                                     n_components>>(
+    bilinear_form_parameters);
 }
 
 
@@ -722,8 +748,6 @@ IonicModel<dim>::setup_problem()
   locally_relevant_w2_current.reinit(locally_owned_dofs, communicator);
 
   ion_at_dofs.reinit(locally_owned_dofs, communicator);
-
-  activation_map.reinit(locally_owned_dofs, communicator);
 
   Iext = std::make_unique<AppliedCurrent<dim>>(end_time_current);
 
@@ -874,18 +898,13 @@ IonicModel<dim>::setup_multigrid()
 
   pcout << "Projected using transfer_matrices:" << std::endl;
 
-  TrilinosWrappers::SparseMatrix &system_matrix =
-    multigrid_matrices[multigrid_matrices.max_level()];
+  system_matrix = &multigrid_matrices[multigrid_matrices.max_level()];
 
   // Setup multigrid
 
 
   // Multigrid matrices
-  using LevelMatrixType = TrilinosWrappers::SparseMatrix;
-  using VectorType      = LinearAlgebra::distributed::Vector<double>;
   mg_matrix = std::make_unique<mg::Matrix<VectorType>>(multigrid_matrices);
-
-  using SmootherType = PreconditionChebyshev<LevelMatrixType, VectorType>;
 
   smoother_data.resize(0, total_tree_levels + 1);
 
@@ -894,10 +913,10 @@ IonicModel<dim>::setup_multigrid()
   diag_inverses.back().reinit(classical_dh.locally_owned_dofs(), communicator);
 
   // Set exact diagonal for each operator
-  for (unsigned int i = system_matrix.local_range().first;
-       i < system_matrix.local_range().second;
+  for (unsigned int i = system_matrix->local_range().first;
+       i < system_matrix->local_range().second;
        ++i)
-    diag_inverses.back()[i] = 1. / system_matrix.diag_element(i);
+    diag_inverses.back()[i] = 1. / system_matrix->diag_element(i);
 
   smoother_data[total_tree_levels].preconditioner =
     std::make_shared<DiagonalMatrix<VectorType>>(diag_inverses.back());
@@ -999,7 +1018,7 @@ IonicModel<dim>::setup_multigrid()
       const double nnz_level = multigrid_matrices[level].n_nonzero_elements();
       op_complexity += nnz_level;
     }
-  op_complexity /= system_matrix.n_nonzero_elements();
+  op_complexity /= system_matrix->n_nonzero_elements();
   pcout << "Operator complexity (AGGLO MG): " << op_complexity << std::endl;
 }
 
@@ -1314,16 +1333,13 @@ IonicModel<dim>::solve()
 {
   TimerOutput::Scope t(computing_timer, "Solve");
 
-  TrilinosWrappers::SparseMatrix &system_matrix =
-    multigrid_matrices[multigrid_matrices.max_level()];
-
-  if (param.use_amg)
-    solver.solve(system_matrix,
+  if (param.use_amg_preconditioner)
+    solver.solve(system_operator,
                  locally_relevant_solution_current,
                  system_rhs,
                  amg_preconditioner);
   else
-    solver.solve(system_matrix,
+    solver.solve(system_operator,
                  locally_relevant_solution_current,
                  system_rhs,
                  *preconditioner);
@@ -1479,20 +1495,24 @@ IonicModel<dim>::run()
 
   pcout << "Max mesh size: " << mesh_size << std::endl;
 
+  // Initialize matrix-free evaluator
+  monodomain_operator->reinit(mapping, classical_dh);
+  system_matrix = const_cast<TrilinosWrappers::SparseMatrix *>(
+    &monodomain_operator->get_system_matrix());
 
-  TrilinosWrappers::SparseMatrix &system_matrix =
-    multigrid_matrices[multigrid_matrices.max_level()];
-
-  system_matrix.copy_from(mass_matrix);   // M/dt
-  system_matrix.add(+1., laplace_matrix); // M/dt + A
+  if constexpr (use_matrix_free_action)
+    system_operator = linear_operator<VectorType>(*monodomain_operator);
+  else
+    system_operator = linear_operator<VectorType>(*system_matrix);
 
 
   // Depending on the preconditioner type, use AMG or polytopal multigrid.
-  if (param.use_amg)
-    amg_preconditioner.initialize(system_matrix);
+  if (param.use_amg_preconditioner)
+    amg_preconditioner.initialize(*system_matrix);
   else
     setup_multigrid();
-  pcout << "Setup multigrid: done " << std::endl;
+
+  pcout << "Setup preconditioner: done " << std::endl;
 
   double              min_value = std::numeric_limits<double>::min();
   std::vector<double> min_values;
@@ -1571,14 +1591,14 @@ main(int argc, char *argv[])
     parameters.control.set_tolerance(1e-13); // used in CG solver
     parameters.control.set_max_steps(2000);
 
-    parameters.use_amg  = false;
-    parameters.mesh_dir = "../../meshes/idealized_lv.msh";
+    parameters.use_amg_preconditioner = true;
+    parameters.mesh_dir               = "../../meshes/idealized_lv.msh";
     // parameters.mesh_dir           = "../../meshes/realistic_lv.msh";
-    parameters.fe_degree          = 2;
+    parameters.fe_degree          = degree_finite_element;
     parameters.dt                 = 1e-4;
-    parameters.final_time         = 0.4;
+    parameters.final_time         = parameters.dt * 2;
     parameters.final_time_current = 3e-3;
-    parameters.output_frequency   = 5;
+    parameters.output_frequency   = 1;
 
     IonicModel<3> problem(parameters);
     problem.run();
