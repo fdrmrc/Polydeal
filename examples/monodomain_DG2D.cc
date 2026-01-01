@@ -26,6 +26,7 @@
 #include <deal.II/numerics/vector_tools_integrate_difference.h>
 
 // Trilinos linear algebra is employed for parallel computations
+#include <deal.II/base/table_handler.h>
 #include <deal.II/base/timer.h>
 
 #include <deal.II/lac/precondition.h>
@@ -60,7 +61,8 @@ class SparseDirectMUMPS
 {};
 #endif
 
-static constexpr unsigned int starting_level = 1;
+static constexpr bool         measure_solve_times = true;
+static constexpr unsigned int starting_level      = 1;
 
 // matrix-free related parameters
 static constexpr bool         use_matrix_free_action = true;
@@ -540,6 +542,11 @@ private:
 
   Utils::Physics::BilinearFormParameters bilinear_form_parameters;
 
+  TableHandler              statistics_table;
+  std::vector<unsigned int> iterations;
+  std::vector<double>       iteration_times;
+  double                    start_solver, stop_solver;
+
 public:
   IonicModel(const ModelParameters &parameters);
   void
@@ -586,6 +593,9 @@ IonicModel<dim>::IonicModel(const ModelParameters &parameters)
                                                      n_qpoints,
                                                      n_components>>(
     bilinear_form_parameters);
+
+  iterations.reserve(static_cast<unsigned int>(end_time / dt));
+  iteration_times.reserve(static_cast<unsigned int>(end_time / dt));
 }
 
 
@@ -627,6 +637,9 @@ IonicModel<dim>::setup_problem()
 
   constraints.clear();
   constraints.close();
+
+  statistics_table.add_value("N. cells", tria.n_active_cells());
+  statistics_table.add_value("N. DoFs", classical_dh.n_dofs());
 
   DynamicSparsityPattern dsp(locally_relevant_dofs);
   DoFTools::make_flux_sparsity_pattern(classical_dh, dsp);
@@ -940,6 +953,9 @@ IonicModel<dim>::setup_multigrid()
     }
   op_complexity /= system_matrix->n_nonzero_elements();
   pcout << "Operator complexity (AGGLO MG): " << op_complexity << std::endl;
+
+  statistics_table.add_value("N. MG levels", total_tree_levels + 1);
+  statistics_table.add_value("MG Op. complexity", op_complexity);
 }
 
 
@@ -1227,6 +1243,8 @@ IonicModel<dim>::solve()
 {
   TimerOutput::Scope t(computing_timer, "Solve");
 
+  if constexpr (measure_solve_times)
+    start_solver = MPI_Wtime();
   if (param.use_amg_preconditioner)
     solver.solve(system_operator,
                  locally_relevant_solution_current,
@@ -1238,6 +1256,12 @@ IonicModel<dim>::solve()
                  system_rhs,
                  *preconditioner);
 
+  if constexpr (measure_solve_times)
+    {
+      stop_solver = MPI_Wtime();
+      iteration_times.push_back(stop_solver - start_solver);
+      iterations.push_back(param.control.last_step());
+    }
   pcout << "Number of outer iterations: " << param.control.last_step()
         << std::endl;
 
@@ -1422,6 +1446,42 @@ IonicModel<dim>::run()
       system_rhs = 0.;
     }
   pcout << std::endl;
+
+
+  if (Utilities::MPI::this_mpi_process(communicator) == 0)
+    {
+      std::cout
+        << "---------------------------------------------------------SOLVER STATISTICS----"
+           "-------------------------------------------"
+        << std::endl;
+      std::cout
+        << "+------------------------------------------------------------------"
+           "-----------------------------------------------------+"
+        << std::endl;
+
+      const auto [min_iter, max_iter] =
+        std::minmax_element(iterations.begin(), iterations.end());
+      const double avg_iter =
+        std::accumulate(iterations.begin(), iterations.end(), 0.0) /
+        iterations.size();
+
+      statistics_table.add_value("Min iterations", *min_iter);
+      statistics_table.add_value("Max iterations", *max_iter);
+      statistics_table.add_value("Avg iterations", avg_iter);
+      if constexpr (measure_solve_times)
+        statistics_table.add_value("Time per it.",
+                                   std::accumulate(iteration_times.begin(),
+                                                   iteration_times.end(),
+                                                   0.0) /
+                                     iterations.size());
+
+      statistics_table.write_text(std::cout, TableHandler::org_mode_table);
+
+      std::cout
+        << "+------------------------------------------------------------------"
+           "-----------------------------------------------------+"
+        << std::endl;
+    }
 }
 
 
