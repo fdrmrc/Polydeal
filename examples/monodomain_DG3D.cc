@@ -2,6 +2,8 @@
 
 #include <deal.II/base/conditional_ostream.h>
 #include <deal.II/base/function.h>
+#include <deal.II/base/table_handler.h>
+#include <deal.II/base/timer.h>
 
 #include <deal.II/distributed/fully_distributed_tria.h>
 #include <deal.II/distributed/tria.h>
@@ -23,11 +25,8 @@
 #include <deal.II/lac/sparsity_tools.h>
 
 #include <deal.II/numerics/data_out.h>
-#include <deal.II/numerics/vector_tools_integrate_difference.h>
 
 // Trilinos linear algebra is employed for parallel computations
-#include <deal.II/base/timer.h>
-
 #include <deal.II/lac/precondition.h>
 #include <deal.II/lac/solver_cg.h>
 #include <deal.II/lac/trilinos_precondition.h>
@@ -60,8 +59,16 @@ class SparseDirectMUMPS
 {};
 #endif
 
-static constexpr double       TOL            = 3e-3;
-static constexpr unsigned int starting_level = 1;
+static constexpr double       TOL                 = 3e-3;
+static constexpr bool         measure_solve_times = true;
+static constexpr unsigned int starting_level      = 1;
+
+// matrix-free related parameters
+static constexpr bool         use_matrix_free_action = true;
+static constexpr unsigned int degree_finite_element  = 2;
+constexpr unsigned int        n_qpoints    = degree_finite_element + 1;
+static constexpr unsigned int n_components = 1;
+
 
 namespace Utils
 {
@@ -143,53 +150,60 @@ namespace Utils
 
 } // namespace Utils
 
-// Model parameters for Bueno
+
+
+enum class TestCase
+{
+  Idealized,
+  Realistic
+};
+
+
+// Model parameters for Bueno Orovio
 struct ModelParameters
 {
   SolverControl control;
 
-  double       penalty_constant   = 10.;
-  unsigned int fe_degree          = 1;
-  double       dt                 = 1e-2;
-  double       final_time         = 1.;
-  double       final_time_current = 1.;
-  double       chi                = 1;
-  double       Cm                 = 1.;
-  double       sigma              = 1e-4;
-  double       V1                 = 0.3;
-  double       V1m                = 0.015;
-  double       V2                 = 0.015;
-  double       V2m                = 0.03;
-  double       V3                 = 0.9087;
-  double       Vhat               = 1.58;
-  double       Vo                 = 0.006;
-  double       Vso                = 0.65;
-  double       tauop              = 6e-3;
-  double       tauopp             = 6e-3;
-  double       tausop             = 43e-3;
-  double       tausopp            = 0.2e-3;
-  double       tausi              = 2.8723e-3;
-  double       taufi              = 0.11e-3;
-  double       tau1plus           = 1.4506e-3;
-  double       tau2plus           = 0.28;
-  double       tau2inf            = 0.07;
-  double       tau1p              = 0.06;
-  double       tau1pp             = 1.15;
-  double       tau2p              = 0.07;
-  double       tau2pp             = 0.02;
-  double       tau3p              = 2.7342e-3;
-  double       tau3pp             = 0.003;
-  double       w_star_inf         = 0.94;
-  double       k2                 = 65.0;
-  double       k3                 = 2.0994;
-  double       kso                = 2.0;
-  bool         use_amg            = false;
-  unsigned int output_frequency   = 1;
+  double       penalty_constant       = 10.;
+  unsigned int fe_degree              = 1;
+  double       dt                     = 1e-2;
+  double       final_time             = 1.;
+  double       final_time_current     = 1.;
+  double       chi                    = 1;
+  double       Cm                     = 1.;
+  double       sigma                  = 1e-4;
+  double       V1                     = 0.3;
+  double       V1m                    = 0.015;
+  double       V2                     = 0.015;
+  double       V2m                    = 0.03;
+  double       V3                     = 0.9087;
+  double       Vhat                   = 1.58;
+  double       Vo                     = 0.006;
+  double       Vso                    = 0.65;
+  double       tauop                  = 6e-3;
+  double       tauopp                 = 6e-3;
+  double       tausop                 = 43e-3;
+  double       tausopp                = 0.2e-3;
+  double       tausi                  = 2.8723e-3;
+  double       taufi                  = 0.11e-3;
+  double       tau1plus               = 1.4506e-3;
+  double       tau2plus               = 0.28;
+  double       tau2inf                = 0.07;
+  double       tau1p                  = 0.06;
+  double       tau1pp                 = 1.15;
+  double       tau2p                  = 0.07;
+  double       tau2pp                 = 0.02;
+  double       tau3p                  = 2.7342e-3;
+  double       tau3pp                 = 0.003;
+  double       w_star_inf             = 0.94;
+  double       k2                     = 65.0;
+  double       k3                     = 2.0994;
+  double       kso                    = 2.0;
+  bool         use_amg_preconditioner = false;
+  unsigned int output_frequency       = 1;
+  bool         compute_min_value      = false;
 
-  std::string mesh_dir = "../../meshes/idealized_lv.msh";
-
-  // eventually compute activation map at each time step
-  bool compute_activation_map = false;
+  enum TestCase test_case = TestCase::Idealized;
 };
 
 
@@ -198,14 +212,17 @@ template <int dim>
 class AppliedCurrent : public Function<dim>
 {
 public:
-  AppliedCurrent(const double final_time_current)
+  AppliedCurrent(const double final_time_current, const TestCase test_case)
     : Function<dim>()
-    // , p1{-0.015598, -0.0173368, 0.0307704}
-    // , p2{0.0264292, -0.0043322, 0.0187656}
-    // , p3{0.00155326, 0.0252701, 0.0248006}
-    , p1{0.0981402, -0.0970197, -0.0406029}
-    , p2{0.0981402, -0.0580452, -0.000723225}
-    , p3{0.0770339, -0.101529, -0.00292254}
+    , p1{test_case == TestCase::Idealized ?
+           Point<dim>{-0.015598, -0.0173368, 0.0307704} :
+           Point<dim>{0.0981402, -0.0970197, -0.0406029}}
+    , p2{test_case == TestCase::Idealized ?
+           Point<dim>{0.0264292, -0.0043322, 0.0187656} :
+           Point<dim>{0.0981402, -0.0580452, -0.000723225}}
+    , p3{test_case == TestCase::Idealized ?
+           Point<dim>{0.00155326, 0.0252701, 0.0248006} :
+           Point<dim>{0.0770339, -0.101529, -0.00292254}}
 
   {
     t_end_current = final_time_current;
@@ -464,8 +481,6 @@ private:
   solve();
   void
   output_results();
-  void
-  compute_error() const;
 
 
   const MPI_Comm                                 communicator;
@@ -480,32 +495,37 @@ private:
   TrilinosWrappers::PreconditionAMG              amg_preconditioner;
   TrilinosWrappers::SparseMatrix                 mass_matrix;
   TrilinosWrappers::SparseMatrix                 laplace_matrix;
-  LinearAlgebra::distributed::Vector<double>     system_rhs;
-  std::unique_ptr<Function<dim>>                 rhs_function;
-  std::unique_ptr<Function<dim>>                 Iext;
-  std::unique_ptr<Function<dim>>                 analytical_solution;
+  TrilinosWrappers::SparseMatrix                *system_matrix;
+
+  std::unique_ptr<
+    Utils::MatrixFreeOperators::
+      MonodomainOperatorDG<dim, degree_finite_element, n_qpoints, n_components>>
+    monodomain_operator;
+  LinearOperator<LinearAlgebra::distributed::Vector<double>> system_operator;
+
+  LinearAlgebra::distributed::Vector<double> system_rhs;
+  std::unique_ptr<Function<dim>>             rhs_function;
+  std::unique_ptr<Function<dim>>             Iext;
 
   std::unique_ptr<FEValues<dim>>     fe_values;
   std::unique_ptr<FEFaceValues<dim>> fe_faces0;
   std::unique_ptr<FEFaceValues<dim>> fe_faces1;
 
   IndexSet locally_owned_dofs;
+
   // Related to update solution
-  LinearAlgebra::distributed::Vector<double> locally_relevant_solution_pre;
-  LinearAlgebra::distributed::Vector<double> locally_relevant_solution_current;
-
-  LinearAlgebra::distributed::Vector<double> locally_relevant_w0_pre;
-  LinearAlgebra::distributed::Vector<double> locally_relevant_w0_current;
-  LinearAlgebra::distributed::Vector<double> locally_relevant_w1_pre;
-  LinearAlgebra::distributed::Vector<double> locally_relevant_w1_current;
-  LinearAlgebra::distributed::Vector<double> locally_relevant_w2_pre;
-  LinearAlgebra::distributed::Vector<double> locally_relevant_w2_current;
-
-  LinearAlgebra::distributed::Vector<double> ion_at_dofs;
-
-  // Activation map
   using VectorType = LinearAlgebra::distributed::Vector<double>;
-  LinearAlgebra::distributed::Vector<double> activation_map;
+  VectorType locally_relevant_solution_pre;
+  VectorType locally_relevant_solution_current;
+
+  VectorType locally_relevant_w0_pre;
+  VectorType locally_relevant_w0_current;
+  VectorType locally_relevant_w1_pre;
+  VectorType locally_relevant_w1_current;
+  VectorType locally_relevant_w2_pre;
+  VectorType locally_relevant_w2_current;
+
+  VectorType ion_at_dofs;
 
   //   Time stepping parameters
   double       time;
@@ -535,12 +555,15 @@ private:
 
 
   // Multigrid related types
-  using LevelMatrixType  = TrilinosWrappers::SparseMatrix;
+  using LevelMatrixType  = LinearOperatorMG<VectorType, VectorType>;
   using SmootherType     = PreconditionChebyshev<LevelMatrixType, VectorType>;
   using CoarseSolverType = TrilinosWrappers::PreconditionAMG;
 
-  MGLevelObject<TrilinosWrappers::SparseMatrix> multigrid_matrices;
-  std::unique_ptr<Multigrid<VectorType>>        mg;
+  MGLevelObject<std::unique_ptr<TrilinosWrappers::SparseMatrix>>
+                                 multigrid_matrices;
+  MGLevelObject<LevelMatrixType> multigrid_matrices_lo;
+
+  std::unique_ptr<Multigrid<VectorType>> mg;
   std::unique_ptr<
     PreconditionMG<dim, VectorType, MGTransferAgglomeration<dim, VectorType>>>
     preconditioner;
@@ -560,11 +583,18 @@ private:
 
   MGLevelObject<typename SmootherType::AdditionalData> smoother_data;
 
-  std::vector<LinearAlgebra::distributed::Vector<double>> diag_inverses;
-  std::vector<TrilinosWrappers::SparseMatrix *>           transfer_matrices;
-  std::vector<DoFHandler<dim> *>                          dof_handlers;
+  std::vector<VectorType>                       diag_inverses;
+  std::vector<TrilinosWrappers::SparseMatrix *> transfer_matrices;
+  std::vector<DoFHandler<dim> *>                dof_handlers;
 
   std::ofstream file_iterations;
+
+  Utils::Physics::BilinearFormParameters bilinear_form_parameters;
+
+  TableHandler              statistics_table;
+  std::vector<unsigned int> iterations;
+  std::vector<double>       iteration_times;
+  double                    start_solver, stop_solver;
 
 public:
   IonicModel(const ModelParameters &parameters);
@@ -599,6 +629,22 @@ IonicModel<dim>::IonicModel(const ModelParameters &parameters)
   penalty_constant =
     param.penalty_constant * parameters.fe_degree * (parameters.fe_degree + 1);
   total_tree_levels = 0;
+
+  bilinear_form_parameters.dt               = dt;
+  bilinear_form_parameters.penalty_constant = penalty_constant;
+  bilinear_form_parameters.chi              = param.chi;
+  bilinear_form_parameters.Cm               = param.Cm;
+  bilinear_form_parameters.sigma            = param.sigma;
+
+  monodomain_operator = std::make_unique<
+    Utils::MatrixFreeOperators::MonodomainOperatorDG<dim,
+                                                     degree_finite_element,
+                                                     n_qpoints,
+                                                     n_components>>(
+    bilinear_form_parameters);
+
+  iterations.reserve(static_cast<unsigned int>(end_time / dt));
+  iteration_times.reserve(static_cast<unsigned int>(end_time / dt));
 }
 
 
@@ -695,6 +741,10 @@ IonicModel<dim>::setup_problem()
   constraints.clear();
   constraints.close();
 
+  statistics_table.add_value("N. cells", tria.n_active_cells());
+  statistics_table.add_value("N. DoFs", classical_dh.n_dofs());
+
+
   DynamicSparsityPattern dsp(locally_relevant_dofs);
   DoFTools::make_flux_sparsity_pattern(classical_dh, dsp);
   SparsityTools::distribute_sparsity_pattern(dsp,
@@ -723,9 +773,8 @@ IonicModel<dim>::setup_problem()
 
   ion_at_dofs.reinit(locally_owned_dofs, communicator);
 
-  activation_map.reinit(locally_owned_dofs, communicator);
-
-  Iext = std::make_unique<AppliedCurrent<dim>>(end_time_current);
+  Iext =
+    std::make_unique<AppliedCurrent<dim>>(end_time_current, param.test_case);
 
   // // Start building R-tree
   namespace bgi = boost::geometry::index;
@@ -749,10 +798,15 @@ IonicModel<dim>::setup_problem()
 
   multigrid_matrices.resize(0, total_tree_levels);
 
-  multigrid_matrices[multigrid_matrices.max_level()].reinit(locally_owned_dofs,
-                                                            locally_owned_dofs,
-                                                            dsp,
-                                                            communicator);
+  for (unsigned int level = 0; level < multigrid_matrices.max_level() + 1;
+       ++level)
+    multigrid_matrices[level] =
+      std::make_unique<TrilinosWrappers::SparseMatrix>();
+
+  multigrid_matrices[multigrid_matrices.max_level()]->reinit(locally_owned_dofs,
+                                                             locally_owned_dofs,
+                                                             dsp,
+                                                             communicator);
 
   file_iterations.open(
     "iterations_level_" + std::to_string(total_tree_levels + 1) + "_" +
@@ -801,10 +855,10 @@ IonicModel<dim>::setup_multigrid()
         }
 
       const unsigned int n_local_agglomerates = agglo_index;
-      // unsigned int       total_agglomerates =
-      Utilities::MPI::sum(n_local_agglomerates, communicator);
-      // pcout << "Total agglomerates per (tree) level: " << extraction_level
-      //<< ": " << total_agglomerates << std::endl;
+      unsigned int       total_agglomerates =
+        Utilities::MPI::sum(n_local_agglomerates, communicator);
+      pcout << "Total agglomerates per (tree) level: " << extraction_level
+            << ": " << total_agglomerates << std::endl;
 
       // Now, perform agglomeration within each locally owned partition
       std::vector<
@@ -864,28 +918,38 @@ IonicModel<dim>::setup_multigrid()
 
   AmgProjector<dim, TrilinosWrappers::SparseMatrix, double> amg_projector(
     injection_matrices_two_level);
-  // pcout << "Initialized projector" << std::endl;
-
-  // multigrid_matrices[multigrid_matrices.max_level()].release();
-  // multigrid_matrices[multigrid_matrices.max_level()].reset(&system_matrix);
 
 
-  amg_projector.compute_level_matrices(multigrid_matrices);
+  // Get fine operator and use it to build other levels.
+  const unsigned int max_level = multigrid_matrices.max_level();
+  multigrid_matrices[max_level] =
+    std::make_unique<TrilinosWrappers::SparseMatrix>();
+  monodomain_operator->get_system_matrix(*multigrid_matrices[max_level]);
 
+  // Once the level operators are built, use the finest in a matrix-free way,
+  // the others matrix-based
+  multigrid_matrices_lo.resize(0, max_level);
+
+  amg_projector.compute_level_matrices_as_linear_operators(
+    multigrid_matrices, multigrid_matrices_lo);
+
+  if constexpr (use_matrix_free_action)
+    multigrid_matrices_lo[max_level] =
+      linear_operator_mg<VectorType, VectorType>(*monodomain_operator);
+  else
+    multigrid_matrices_lo[max_level] =
+      linear_operator_mg<VectorType, VectorType>(
+        *multigrid_matrices[max_level]);
+
+  multigrid_matrices_lo[max_level].n_rows = monodomain_operator->m();
+  multigrid_matrices_lo[max_level].n_cols = monodomain_operator->n();
   pcout << "Projected using transfer_matrices:" << std::endl;
 
-  TrilinosWrappers::SparseMatrix &system_matrix =
-    multigrid_matrices[multigrid_matrices.max_level()];
 
   // Setup multigrid
 
-
   // Multigrid matrices
-  using LevelMatrixType = TrilinosWrappers::SparseMatrix;
-  using VectorType      = LinearAlgebra::distributed::Vector<double>;
-  mg_matrix = std::make_unique<mg::Matrix<VectorType>>(multigrid_matrices);
-
-  using SmootherType = PreconditionChebyshev<LevelMatrixType, VectorType>;
+  mg_matrix = std::make_unique<mg::Matrix<VectorType>>(multigrid_matrices_lo);
 
   smoother_data.resize(0, total_tree_levels + 1);
 
@@ -894,10 +958,10 @@ IonicModel<dim>::setup_multigrid()
   diag_inverses.back().reinit(classical_dh.locally_owned_dofs(), communicator);
 
   // Set exact diagonal for each operator
-  for (unsigned int i = system_matrix.local_range().first;
-       i < system_matrix.local_range().second;
+  for (unsigned int i = system_matrix->local_range().first;
+       i < system_matrix->local_range().second;
        ++i)
-    diag_inverses.back()[i] = 1. / system_matrix.diag_element(i);
+    diag_inverses.back()[i] = 1. / system_matrix->diag_element(i);
 
   smoother_data[total_tree_levels].preconditioner =
     std::make_shared<DiagonalMatrix<VectorType>>(diag_inverses.back());
@@ -910,10 +974,10 @@ IonicModel<dim>::setup_multigrid()
         agglomeration_handlers[l]->agglo_dh.locally_owned_dofs(), communicator);
 
       // Set exact diagonal for each operator
-      for (unsigned int i = multigrid_matrices[l].local_range().first;
-           i < multigrid_matrices[l].local_range().second;
+      for (unsigned int i = multigrid_matrices[l]->local_range().first;
+           i < multigrid_matrices[l]->local_range().second;
            ++i)
-        diag_inverses[l][i] = 1. / multigrid_matrices[l].diag_element(i);
+        diag_inverses[l][i] = 1. / multigrid_matrices[l]->diag_element(i);
 
       smoother_data[l].preconditioner =
         std::make_shared<DiagonalMatrix<VectorType>>(diag_inverses[l]);
@@ -940,7 +1004,7 @@ IonicModel<dim>::setup_multigrid()
   mg_smoother =
     std::make_unique<mg::SmootherRelaxation<SmootherType, VectorType>>();
   mg_smoother->set_steps(3);
-  mg_smoother->initialize(multigrid_matrices, smoother_data);
+  mg_smoother->initialize(multigrid_matrices_lo, smoother_data);
 
   pcout << "Smoothers initialized" << std::endl;
 
@@ -950,7 +1014,7 @@ IonicModel<dim>::setup_multigrid()
     std::make_unique<Utils::MGCoarseIterative<TrilinosWrappers::SparseMatrix,
                                               double,
                                               CoarseSolverType>>();
-  mg_coarse->initialize(multigrid_matrices[min_level]);
+  mg_coarse->initialize(*multigrid_matrices[min_level]);
 
   pcout << "Coarse solver initialized" << std::endl;
 
@@ -996,11 +1060,14 @@ IonicModel<dim>::setup_multigrid()
   for (unsigned int level = 0; level < total_tree_levels + 1; ++level)
     {
       pcout << "l" << level << std::endl;
-      const double nnz_level = multigrid_matrices[level].n_nonzero_elements();
+      const double nnz_level = multigrid_matrices[level]->n_nonzero_elements();
       op_complexity += nnz_level;
     }
-  op_complexity /= system_matrix.n_nonzero_elements();
+  op_complexity /= system_matrix->n_nonzero_elements();
   pcout << "Operator complexity (AGGLO MG): " << op_complexity << std::endl;
+
+  statistics_table.add_value("N. MG levels", total_tree_levels + 1);
+  statistics_table.add_value("MG Op. complexity", op_complexity);
 }
 
 
@@ -1314,19 +1381,24 @@ IonicModel<dim>::solve()
 {
   TimerOutput::Scope t(computing_timer, "Solve");
 
-  TrilinosWrappers::SparseMatrix &system_matrix =
-    multigrid_matrices[multigrid_matrices.max_level()];
-
-  if (param.use_amg)
-    solver.solve(system_matrix,
+  if constexpr (measure_solve_times)
+    start_solver = MPI_Wtime();
+  if (param.use_amg_preconditioner)
+    solver.solve(system_operator,
                  locally_relevant_solution_current,
                  system_rhs,
                  amg_preconditioner);
   else
-    solver.solve(system_matrix,
+    solver.solve(system_operator,
                  locally_relevant_solution_current,
                  system_rhs,
                  *preconditioner);
+  if constexpr (measure_solve_times)
+    {
+      stop_solver = MPI_Wtime();
+      iteration_times.push_back(stop_solver - start_solver);
+      iterations.push_back(param.control.last_step());
+    }
 
   pcout << "Number of outer iterations: " << param.control.last_step()
         << std::endl;
@@ -1389,26 +1461,6 @@ IonicModel<dim>::output_results()
 }
 
 
-template <int dim>
-void
-IonicModel<dim>::compute_error() const
-{
-  pcout << "Computing error: " << std::endl;
-  Vector<double> cellwise_error(locally_relevant_solution_current.size());
-  VectorTools::integrate_difference(mapping,
-                                    classical_dh,
-                                    locally_relevant_solution_current,
-                                    *analytical_solution,
-                                    cellwise_error,
-                                    QGauss<dim>(2 * dg_fe.degree + 1),
-                                    VectorTools::NormType::L2_norm);
-  const double error =
-    VectorTools::compute_global_error(tria,
-                                      cellwise_error,
-                                      VectorTools::NormType::L2_norm);
-
-  pcout << "L2 norm of error at t= " << time << " is " << error << std::endl;
-}
 
 template <int dim>
 void
@@ -1418,28 +1470,36 @@ IonicModel<dim>::run()
         << " MPI rank(s)." << std::endl;
 
   // Create mesh
-  Triangulation<dim> tria_dummy;
-  GridIn<dim>        grid_in;
-  grid_in.attach_triangulation(tria_dummy);
-  std::ifstream mesh_file(param.mesh_dir); // idealized mesh of left ventricle
-  grid_in.read_msh(mesh_file);
+  {
+    TimerOutput::Scope t(computing_timer, "Import and partition mesh");
+    Triangulation<dim> tria_dummy;
+    GridIn<dim>        grid_in;
+    grid_in.attach_triangulation(tria_dummy);
+    std::string mesh_path;
+    if (param.test_case == TestCase::Idealized)
+      mesh_path = "../../meshes/idealized_lv.msh";
+    else if (param.test_case == TestCase::Realistic)
+      mesh_path = "../../meshes/realistic_lv.msh";
+    std::ifstream mesh_file(mesh_path);
+    grid_in.read_msh(mesh_file);
 
-  // scale triangulation by a suitable factor in order to work with mm
-  const double scale_factor = 1e-3;
-  GridTools::scale(scale_factor, tria_dummy);
+    // scale triangulation by a suitable factor in order to work with mm
+    const double scale_factor = 1e-3;
+    GridTools::scale(scale_factor, tria_dummy);
 
-  // Partition serial triangulation:
-  const unsigned int n_ranks = Utilities::MPI::n_mpi_processes(communicator);
-  GridTools::partition_triangulation(n_ranks, tria_dummy);
+    // Partition serial triangulation:
+    const unsigned int n_ranks = Utilities::MPI::n_mpi_processes(communicator);
+    GridTools::partition_triangulation(n_ranks, tria_dummy);
 
-  // Create building blocks:
-  const TriangulationDescription::Description<dim, dim> description =
-    TriangulationDescription::Utilities::create_description_from_triangulation(
-      tria_dummy, communicator);
+    // Create building blocks:
+    const TriangulationDescription::Description<dim, dim> description =
+      TriangulationDescription::Utilities::
+        create_description_from_triangulation(tria_dummy, communicator);
 
-  tria.create_triangulation(description);
-  pcout << "   Number of active cells:       " << tria.n_global_active_cells()
-        << std::endl;
+    tria.create_triangulation(description);
+    pcout << "   Number of active cells:       " << tria.n_global_active_cells()
+          << std::endl;
+  }
 
   setup_problem();
   pcout << "   Number of degrees of freedom: " << classical_dh.n_dofs()
@@ -1479,20 +1539,34 @@ IonicModel<dim>::run()
 
   pcout << "Max mesh size: " << mesh_size << std::endl;
 
+  // Initialize matrix-free evaluator
+  monodomain_operator->reinit(mapping, classical_dh);
+  system_matrix = const_cast<TrilinosWrappers::SparseMatrix *>(
+    &monodomain_operator->get_system_matrix());
 
-  TrilinosWrappers::SparseMatrix &system_matrix =
-    multigrid_matrices[multigrid_matrices.max_level()];
-
-  system_matrix.copy_from(mass_matrix);   // M/dt
-  system_matrix.add(+1., laplace_matrix); // M/dt + A
+  if constexpr (use_matrix_free_action)
+    system_operator = linear_operator<VectorType>(*monodomain_operator);
+  else
+    system_operator = linear_operator<VectorType>(*system_matrix);
 
 
   // Depending on the preconditioner type, use AMG or polytopal multigrid.
-  if (param.use_amg)
-    amg_preconditioner.initialize(system_matrix);
+  if (param.use_amg_preconditioner)
+    {
+      TimerOutput::Scope t(computing_timer, "Initialize AMG preconditioner");
+      typename TrilinosWrappers::PreconditionAMG::AdditionalData amg_data;
+      if (dg_fe.degree > 1)
+        amg_data.higher_order_elements = true;
+
+      amg_data.smoother_type   = "Chebyshev";
+      amg_data.smoother_sweeps = 3;
+      amg_data.output_details  = true;
+      amg_preconditioner.initialize(*system_matrix, amg_data);
+    }
   else
     setup_multigrid();
-  pcout << "Setup multigrid: done " << std::endl;
+
+  pcout << "Setup preconditioner: done " << std::endl;
 
   double              min_value = std::numeric_limits<double>::min();
   std::vector<double> min_values;
@@ -1523,13 +1597,16 @@ IonicModel<dim>::run()
         output_results();
 
       // Store minimum value current action potential on each processor
-      min_value = *locally_relevant_solution_current.begin();
-      for (const double v : locally_relevant_solution_current)
-        if (v < min_value)
-          min_value = v;
+      if (param.compute_min_value)
+        {
+          min_value = *locally_relevant_solution_current.begin();
+          for (const double v : locally_relevant_solution_current)
+            if (v < min_value)
+              min_value = v;
 
-      min_values.push_back(Utilities::MPI::min(min_value, communicator));
-      pcout << Utilities::MPI::min(min_value, communicator) << std::endl;
+          min_values.push_back(Utilities::MPI::min(min_value, communicator));
+          pcout << Utilities::MPI::min(min_value, communicator) << std::endl;
+        }
 
       // update solutions
       locally_relevant_solution_pre = locally_relevant_solution_current;
@@ -1543,7 +1620,8 @@ IonicModel<dim>::run()
   pcout << std::endl;
 
   // Writing minimum values to file
-  if (Utilities::MPI::this_mpi_process(communicator) == 0)
+  if (Utilities::MPI::this_mpi_process(communicator) == 0 &&
+      param.compute_min_value)
     {
       std::ofstream file_min_values;
       file_min_values.open("min_values_ord2" + std::to_string(param.fe_degree) +
@@ -1557,6 +1635,42 @@ IonicModel<dim>::run()
       file_min_values.close();
       file_iterations.close();
     }
+
+
+  if (Utilities::MPI::this_mpi_process(communicator) == 0)
+    {
+      std::cout
+        << "---------------------------------------------------------SOLVER STATISTICS----"
+           "-------------------------------------------"
+        << std::endl;
+      std::cout
+        << "+------------------------------------------------------------------"
+           "-----------------------------------------------------+"
+        << std::endl;
+
+      const auto [min_iter, max_iter] =
+        std::minmax_element(iterations.begin(), iterations.end());
+      const double avg_iter =
+        std::accumulate(iterations.begin(), iterations.end(), 0.0) /
+        iterations.size();
+
+      statistics_table.add_value("Min iterations", *min_iter);
+      statistics_table.add_value("Max iterations", *max_iter);
+      statistics_table.add_value("Avg iterations", avg_iter);
+      if constexpr (measure_solve_times)
+        statistics_table.add_value("Time per it.",
+                                   std::accumulate(iteration_times.begin(),
+                                                   iteration_times.end(),
+                                                   0.0) /
+                                     iterations.size());
+
+      statistics_table.write_text(std::cout, TableHandler::org_mode_table);
+
+      std::cout
+        << "+------------------------------------------------------------------"
+           "-----------------------------------------------------+"
+        << std::endl;
+    }
 }
 
 
@@ -1565,20 +1679,33 @@ int
 main(int argc, char *argv[])
 {
   Utilities::MPI::MPI_InitFinalize mpi_initialization(argc, argv, 1);
+  deallog.depth_console(
+    Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0 ? 10 : 0);
+
+  if constexpr (use_matrix_free_action)
+    {
+      const unsigned int n_vect_doubles = VectorizedArray<double>::size();
+      const unsigned int n_vect_bits    = 8 * sizeof(double) * n_vect_doubles;
+
+      deallog << "Vectorization over " << n_vect_doubles
+              << " doubles = " << n_vect_bits << " bits ("
+              << Utilities::System::get_current_vectorization_level() << ')'
+              << std::endl;
+    }
 
   {
     ModelParameters parameters;
     parameters.control.set_tolerance(1e-13); // used in CG solver
     parameters.control.set_max_steps(2000);
 
-    parameters.use_amg  = false;
-    parameters.mesh_dir = "../../meshes/idealized_lv.msh";
-    // parameters.mesh_dir           = "../../meshes/realistic_lv.msh";
-    parameters.fe_degree          = 2;
-    parameters.dt                 = 1e-4;
-    parameters.final_time         = 0.4;
-    parameters.final_time_current = 3e-3;
-    parameters.output_frequency   = 5;
+    parameters.use_amg_preconditioner = true;
+    parameters.test_case              = TestCase::Idealized;
+    parameters.fe_degree              = degree_finite_element;
+    parameters.dt                     = 1e-4;
+    parameters.final_time             = 0.4;
+    parameters.final_time_current     = 3e-3;
+    parameters.compute_min_value      = false;
+    parameters.output_frequency       = 1;
 
     IonicModel<3> problem(parameters);
     problem.run();
