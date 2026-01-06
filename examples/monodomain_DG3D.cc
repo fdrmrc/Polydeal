@@ -457,7 +457,7 @@ fill_interpolation_matrix(
 
 
 template <int dim>
-class IonicModel
+class MonodomainProblem
 {
 private:
   void
@@ -605,7 +605,7 @@ private:
   double                    start_solver, stop_solver;
 
 public:
-  IonicModel(const ModelParameters &parameters);
+  MonodomainProblem(const ModelParameters &parameters);
   void
   run();
 
@@ -615,7 +615,7 @@ public:
 
 
 template <int dim>
-IonicModel<dim>::IonicModel(const ModelParameters &parameters)
+MonodomainProblem<dim>::MonodomainProblem(const ModelParameters &parameters)
   : communicator(MPI_COMM_WORLD)
   , tria(communicator)
   , mapping(1)
@@ -670,7 +670,7 @@ IonicModel<dim>::IonicModel(const ModelParameters &parameters)
 
 template <int dim>
 std::array<double, 3>
-IonicModel<dim>::alpha(const double u)
+MonodomainProblem<dim>::alpha(const double u)
 {
   std::array<double, 3> a;
 
@@ -692,7 +692,7 @@ IonicModel<dim>::alpha(const double u)
 
 template <int dim>
 std::array<double, 3>
-IonicModel<dim>::beta(const double u)
+MonodomainProblem<dim>::beta(const double u)
 {
   std::array<double, 3> b;
 
@@ -707,7 +707,7 @@ IonicModel<dim>::beta(const double u)
 
 template <int dim>
 std::array<double, 3>
-IonicModel<dim>::w_inf(const double u)
+MonodomainProblem<dim>::w_inf(const double u)
 {
   std::array<double, 3> wi;
 
@@ -724,7 +724,7 @@ IonicModel<dim>::w_inf(const double u)
 
 template <int dim>
 void
-IonicModel<dim>::setup_problem()
+MonodomainProblem<dim>::setup_problem()
 {
   TimerOutput::Scope t(computing_timer, "Setup DoFs");
 
@@ -831,7 +831,7 @@ IonicModel<dim>::setup_problem()
 
 template <int dim>
 void
-IonicModel<dim>::setup_multigrid()
+MonodomainProblem<dim>::setup_multigrid()
 {
   TimerOutput::Scope t(computing_timer, "Setup polytopal multigrid");
 
@@ -1085,7 +1085,8 @@ IonicModel<dim>::setup_multigrid()
 
 template <int dim>
 double
-IonicModel<dim>::Iion(const double u_old, const std::vector<double> &w) const
+MonodomainProblem<dim>::Iion(const double               u_old,
+                             const std::vector<double> &w) const
 {
   double Iion_val =
     Utils::heaviside_sharp(u_old, param.V1) * (u_old - param.V1) *
@@ -1108,7 +1109,7 @@ IonicModel<dim>::Iion(const double u_old, const std::vector<double> &w) const
 
 template <int dim>
 void
-IonicModel<dim>::update_w_and_ion()
+MonodomainProblem<dim>::update_w_and_ion()
 {
   TimerOutput::Scope t(computing_timer, "Update w and ion at DoFs");
 
@@ -1148,7 +1149,7 @@ IonicModel<dim>::update_w_and_ion()
  */
 template <int dim>
 void
-IonicModel<dim>::assemble_time_independent_matrix()
+MonodomainProblem<dim>::assemble_time_independent_matrix()
 {
   TimerOutput::Scope t(computing_timer, "Assemble time independent terms");
 
@@ -1381,7 +1382,7 @@ IonicModel<dim>::assemble_time_independent_matrix()
 
 template <int dim>
 void
-IonicModel<dim>::assemble_time_terms()
+MonodomainProblem<dim>::assemble_time_terms()
 {
   TimerOutput::Scope t(computing_timer, "Assemble time dependent terms");
 
@@ -1438,7 +1439,7 @@ IonicModel<dim>::assemble_time_terms()
 
 template <int dim>
 void
-IonicModel<dim>::solve()
+MonodomainProblem<dim>::solve()
 {
   TimerOutput::Scope t(computing_timer, "Solve");
 
@@ -1469,7 +1470,7 @@ IonicModel<dim>::solve()
 
 template <int dim>
 void
-IonicModel<dim>::output_results()
+MonodomainProblem<dim>::output_results()
 {
   TimerOutput::Scope t(computing_timer, "Output results");
 
@@ -1522,7 +1523,7 @@ IonicModel<dim>::output_results()
 
 template <int dim>
 void
-IonicModel<dim>::run()
+MonodomainProblem<dim>::run()
 {
   pcout << "Running on " << Utilities::MPI::n_mpi_processes(communicator)
         << " MPI rank(s)." << std::endl;
@@ -1774,7 +1775,7 @@ main(int argc, char *argv[])
     parameters.output_frequency   = 1;
     parameters.output_directory   = "results/";
 
-    IonicModel<3> problem(parameters);
+    MonodomainProblem<3> problem(parameters);
     problem.run();
   }
   return 0;
