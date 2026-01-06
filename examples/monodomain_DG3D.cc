@@ -67,7 +67,7 @@ static constexpr unsigned int starting_level      = 1;
 
 // matrix-free related parameters
 static constexpr bool         use_matrix_free_action = true;
-static constexpr unsigned int degree_finite_element  = 2;
+static constexpr unsigned int degree_finite_element  = 1;
 constexpr unsigned int        n_qpoints    = degree_finite_element + 1;
 static constexpr unsigned int n_components = 1;
 
@@ -1721,11 +1721,11 @@ MonodomainProblem<dim>::run()
 
       std::cout
         << "---------------------------------------------------------------------SOLVER STATISTICS----"
-           "----------------------------------------------------------------------------------"
+           "--------------------------------------------------------------------------------------------------------------"
         << std::endl;
       std::cout
         << "+-------------------------------------------------------------------------------------"
-           "-------------------------------------------------------------------------------------+"
+           "-----------------------------------------------------------------------------------------------------------------+"
         << std::endl;
 
       const auto [min_iter, max_iter] =
@@ -1733,12 +1733,22 @@ MonodomainProblem<dim>::run()
       const double avg_iter =
         std::accumulate(iterations.begin(), iterations.end(), 0.0) /
         iterations.size();
+      const double std_deviation_iter =
+        [](const std::vector<unsigned int> &iters,
+           const double                     average) -> double {
+        double sum = 0.0;
+        for (const unsigned int it : iters)
+          sum += (it - average) * (it - average);
+        return std::sqrt(sum / iters.size());
+      }(iterations, avg_iter);
 
       statistics_table.add_value("Min. iterations", *min_iter);
       statistics_table.add_value("Max. iterations", *max_iter);
       statistics_table.add_value("Avg. iterations", avg_iter);
+      statistics_table.add_value("Std. deviation iterations",
+                                 std_deviation_iter);
       if constexpr (measure_solve_times)
-        statistics_table.add_value("Avg. time per iteration [s]",
+        statistics_table.add_value("Avg. time per time-step [s]",
                                    std::accumulate(iteration_times.begin(),
                                                    iteration_times.end(),
                                                    0.0) /
@@ -1755,7 +1765,7 @@ MonodomainProblem<dim>::run()
 
       std::cout
         << "+-------------------------------------------------------------------------------------"
-           "-------------------------------------------------------------------------------------+"
+           "-----------------------------------------------------------------------------------------------------------------+"
         << std::endl;
     }
 }
