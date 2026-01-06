@@ -67,7 +67,7 @@ static constexpr unsigned int starting_level      = 1;
 
 // matrix-free related parameters
 static constexpr bool         use_matrix_free_action = true;
-static constexpr unsigned int degree_finite_element  = 1;
+static constexpr unsigned int degree_finite_element  = 2;
 constexpr unsigned int        n_qpoints    = degree_finite_element + 1;
 static constexpr unsigned int n_components = 1;
 
@@ -1182,9 +1182,25 @@ MonodomainProblem<dim>::assemble_time_independent_matrix()
             {
               for (unsigned int i = 0; i < dofs_per_cell; ++i)
                 {
-                  for (unsigned int j = 0; j < dofs_per_cell; ++j)
+                  const double Aii =
+                    (param.sigma * fe_values->shape_grad(i, q_index) *
+                       fe_values->shape_grad(i, q_index) +
+                     (param.chi * param.Cm / dt) *
+                       fe_values->shape_value(i, q_index) *
+                       fe_values->shape_value(i, q_index)) *
+                    fe_values->JxW(q_index);
+
+                  const double Mii = (param.chi * param.Cm / dt) *
+                                     fe_values->shape_value(i, q_index) *
+                                     fe_values->shape_value(i, q_index) *
+                                     fe_values->JxW(q_index);
+
+                  cell_matrix(i, i) += Aii;
+                  cell_mass_matrix(i, i) += Mii;
+
+                  for (unsigned int j = i + 1; j < dofs_per_cell; ++j)
                     {
-                      cell_matrix(i, j) +=
+                      const double Aij =
                         (param.sigma * fe_values->shape_grad(i, q_index) *
                            fe_values->shape_grad(j, q_index) +
                          (param.chi * param.Cm / dt) *
@@ -1192,11 +1208,15 @@ MonodomainProblem<dim>::assemble_time_independent_matrix()
                            fe_values->shape_value(j, q_index)) *
                         fe_values->JxW(q_index);
 
-                      cell_mass_matrix(i, j) +=
-                        (param.chi * param.Cm / dt) *
-                        fe_values->shape_value(i, q_index) *
-                        fe_values->shape_value(j, q_index) *
-                        fe_values->JxW(q_index);
+                      const double Mij = (param.chi * param.Cm / dt) *
+                                         fe_values->shape_value(i, q_index) *
+                                         fe_values->shape_value(j, q_index) *
+                                         fe_values->JxW(q_index);
+
+                      cell_matrix(i, j) += Aij;
+                      cell_matrix(j, i) += Aij;
+                      cell_mass_matrix(i, j) += Mij;
+                      cell_mass_matrix(j, i) += Mij;
                     }
                 }
             }
