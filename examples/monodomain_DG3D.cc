@@ -51,6 +51,7 @@
 #include <utils.h>
 
 #include <algorithm>
+#include <filesystem>
 
 using namespace dealii;
 
@@ -59,13 +60,14 @@ class SparseDirectMUMPS
 {};
 #endif
 
+// solver-related parameters
 static constexpr double       TOL                 = 3e-3;
 static constexpr bool         measure_solve_times = true;
 static constexpr unsigned int starting_level      = 1;
 
 // matrix-free related parameters
 static constexpr bool         use_matrix_free_action = true;
-static constexpr unsigned int degree_finite_element  = 2;
+static constexpr unsigned int degree_finite_element  = 1;
 constexpr unsigned int        n_qpoints    = degree_finite_element + 1;
 static constexpr unsigned int n_components = 1;
 
@@ -159,49 +161,57 @@ enum class TestCase
 };
 
 
+
+enum class Preconditioner
+{
+  AMG,
+  AGGLOMG
+};
+
 // Model parameters for Bueno Orovio
 struct ModelParameters
 {
   SolverControl control;
 
-  double       penalty_constant       = 10.;
-  unsigned int fe_degree              = 1;
-  double       dt                     = 1e-2;
-  double       final_time             = 1.;
-  double       final_time_current     = 1.;
-  double       chi                    = 1;
-  double       Cm                     = 1.;
-  double       sigma                  = 1e-4;
-  double       V1                     = 0.3;
-  double       V1m                    = 0.015;
-  double       V2                     = 0.015;
-  double       V2m                    = 0.03;
-  double       V3                     = 0.9087;
-  double       Vhat                   = 1.58;
-  double       Vo                     = 0.006;
-  double       Vso                    = 0.65;
-  double       tauop                  = 6e-3;
-  double       tauopp                 = 6e-3;
-  double       tausop                 = 43e-3;
-  double       tausopp                = 0.2e-3;
-  double       tausi                  = 2.8723e-3;
-  double       taufi                  = 0.11e-3;
-  double       tau1plus               = 1.4506e-3;
-  double       tau2plus               = 0.28;
-  double       tau2inf                = 0.07;
-  double       tau1p                  = 0.06;
-  double       tau1pp                 = 1.15;
-  double       tau2p                  = 0.07;
-  double       tau2pp                 = 0.02;
-  double       tau3p                  = 2.7342e-3;
-  double       tau3pp                 = 0.003;
-  double       w_star_inf             = 0.94;
-  double       k2                     = 65.0;
-  double       k3                     = 2.0994;
-  double       kso                    = 2.0;
-  bool         use_amg_preconditioner = false;
-  unsigned int output_frequency       = 1;
-  bool         compute_min_value      = false;
+  double         penalty_constant   = 10.;
+  unsigned int   fe_degree          = 1;
+  double         dt                 = 1e-2;
+  double         final_time         = 1.;
+  double         final_time_current = 1.;
+  double         chi                = 1;
+  double         Cm                 = 1.;
+  double         sigma              = 1e-4;
+  double         V1                 = 0.3;
+  double         V1m                = 0.015;
+  double         V2                 = 0.015;
+  double         V2m                = 0.03;
+  double         V3                 = 0.9087;
+  double         Vhat               = 1.58;
+  double         Vo                 = 0.006;
+  double         Vso                = 0.65;
+  double         tauop              = 6e-3;
+  double         tauopp             = 6e-3;
+  double         tausop             = 43e-3;
+  double         tausopp            = 0.2e-3;
+  double         tausi              = 2.8723e-3;
+  double         taufi              = 0.11e-3;
+  double         tau1plus           = 1.4506e-3;
+  double         tau2plus           = 0.28;
+  double         tau2inf            = 0.07;
+  double         tau1p              = 0.06;
+  double         tau1pp             = 1.15;
+  double         tau2p              = 0.07;
+  double         tau2pp             = 0.02;
+  double         tau3p              = 2.7342e-3;
+  double         tau3pp             = 0.003;
+  double         w_star_inf         = 0.94;
+  double         k2                 = 65.0;
+  double         k3                 = 2.0994;
+  double         kso                = 2.0;
+  Preconditioner preconditioner     = Preconditioner::AMG;
+  std::string    output_directory   = ".";
+  unsigned int   output_frequency   = 1;
+  bool           compute_min_value  = false;
 
   enum TestCase test_case = TestCase::Idealized;
 };
@@ -494,8 +504,7 @@ private:
   AffineConstraints<double>                      constraints;
   TrilinosWrappers::PreconditionAMG              amg_preconditioner;
   TrilinosWrappers::SparseMatrix                 mass_matrix;
-  TrilinosWrappers::SparseMatrix                 laplace_matrix;
-  TrilinosWrappers::SparseMatrix                *system_matrix;
+  TrilinosWrappers::SparseMatrix                 system_matrix;
 
   std::unique_ptr<
     Utils::MatrixFreeOperators::
@@ -559,9 +568,8 @@ private:
   using SmootherType     = PreconditionChebyshev<LevelMatrixType, VectorType>;
   using CoarseSolverType = TrilinosWrappers::PreconditionAMG;
 
-  MGLevelObject<std::unique_ptr<TrilinosWrappers::SparseMatrix>>
-                                 multigrid_matrices;
-  MGLevelObject<LevelMatrixType> multigrid_matrices_lo;
+  MGLevelObject<TrilinosWrappers::SparseMatrix> multigrid_matrices;
+  MGLevelObject<LevelMatrixType>                multigrid_matrices_lo;
 
   std::unique_ptr<Multigrid<VectorType>> mg;
   std::unique_ptr<
@@ -627,7 +635,8 @@ IonicModel<dim>::IonicModel(const ModelParameters &parameters)
   static_assert(dim == 3);
   time = 0.;
   penalty_constant =
-    param.penalty_constant * parameters.fe_degree * (parameters.fe_degree + 1);
+    (double)(std::max(1u, degree_finite_element) * (degree_finite_element + 1));
+  // param.penalty_constant * parameters.fe_degree * (parameters.fe_degree + 1);
   total_tree_levels = 0;
 
   bilinear_form_parameters.dt               = dt;
@@ -645,6 +654,16 @@ IonicModel<dim>::IonicModel(const ModelParameters &parameters)
 
   iterations.reserve(static_cast<unsigned int>(end_time / dt));
   iteration_times.reserve(static_cast<unsigned int>(end_time / dt));
+
+  if (std::filesystem::exists(param.output_directory))
+    {
+      Assert(std::filesystem::is_directory(param.output_directory),
+             ExcMessage("You specified <" + param.output_directory +
+                        "> as the output directory in the input file, "
+                        "but this is not in fact a directory."));
+    }
+  else
+    std::filesystem::create_directory(param.output_directory);
 }
 
 
@@ -709,7 +728,7 @@ IonicModel<dim>::setup_problem()
 {
   TimerOutput::Scope t(computing_timer, "Setup DoFs");
 
-  const unsigned int quadrature_degree = 2 * dg_fe.degree + 1;
+  const unsigned int quadrature_degree = dg_fe.degree + 1;
   fe_values =
     std::make_unique<FEValues<dim>>(mapping,
                                     dg_fe,
@@ -724,7 +743,8 @@ IonicModel<dim>::setup_problem()
                                         update_values | update_JxW_values |
                                           update_gradients |
                                           update_quadrature_points |
-                                          update_normal_vectors);
+                                          update_normal_vectors |
+                                          update_inverse_jacobians);
   fe_faces1 =
     std::make_unique<FEFaceValues<dim>>(mapping,
                                         dg_fe,
@@ -732,7 +752,8 @@ IonicModel<dim>::setup_problem()
                                         update_values | update_JxW_values |
                                           update_gradients |
                                           update_quadrature_points |
-                                          update_normal_vectors);
+                                          update_normal_vectors |
+                                          update_inverse_jacobians);
   classical_dh.distribute_dofs(dg_fe);
   locally_owned_dofs = classical_dh.locally_owned_dofs();
   const IndexSet locally_relevant_dofs =
@@ -741,9 +762,11 @@ IonicModel<dim>::setup_problem()
   constraints.clear();
   constraints.close();
 
-  statistics_table.add_value("N. cells", tria.n_active_cells());
+  statistics_table.add_value("N. MPI processes",
+                             Utilities::MPI::n_mpi_processes(communicator));
+  statistics_table.add_value("N. cells", tria.n_global_active_cells());
   statistics_table.add_value("N. DoFs", classical_dh.n_dofs());
-
+  statistics_table.add_value("FE degree", degree_finite_element);
 
   DynamicSparsityPattern dsp(locally_relevant_dofs);
   DoFTools::make_flux_sparsity_pattern(classical_dh, dsp);
@@ -753,11 +776,11 @@ IonicModel<dim>::setup_problem()
                                              locally_relevant_dofs);
 
   mass_matrix.reinit(locally_owned_dofs, locally_owned_dofs, dsp, communicator);
-
-  laplace_matrix.reinit(locally_owned_dofs,
-                        locally_owned_dofs,
-                        dsp,
-                        communicator);
+  if (param.preconditioner == Preconditioner::AMG)
+    system_matrix.reinit(locally_owned_dofs,
+                         locally_owned_dofs,
+                         dsp,
+                         communicator);
 
   locally_relevant_solution_pre.reinit(locally_owned_dofs, communicator);
   locally_relevant_solution_current.reinit(locally_owned_dofs, communicator);
@@ -797,21 +820,12 @@ IonicModel<dim>::setup_problem()
   total_tree_levels = n_levels(tree) - starting_level + 1;
 
   multigrid_matrices.resize(0, total_tree_levels);
-
-  for (unsigned int level = 0; level < multigrid_matrices.max_level() + 1;
-       ++level)
-    multigrid_matrices[level] =
-      std::make_unique<TrilinosWrappers::SparseMatrix>();
-
-  multigrid_matrices[multigrid_matrices.max_level()]->reinit(locally_owned_dofs,
-                                                             locally_owned_dofs,
-                                                             dsp,
-                                                             communicator);
-
-  file_iterations.open(
-    "iterations_level_" + std::to_string(total_tree_levels + 1) + "_" +
-    std::to_string(Utilities::MPI::n_mpi_processes(communicator)) +
-    "_procs_deg_" + std::to_string(dg_fe.degree) + ".txt");
+  // The layout of the coarser level will be computed a'la AMG. Hence, we only
+  // reinit the finest matrix of the problem
+  multigrid_matrices[multigrid_matrices.max_level()].reinit(locally_owned_dofs,
+                                                            locally_owned_dofs,
+                                                            dsp,
+                                                            communicator);
 }
 
 
@@ -922,9 +936,6 @@ IonicModel<dim>::setup_multigrid()
 
   // Get fine operator and use it to build other levels.
   const unsigned int max_level = multigrid_matrices.max_level();
-  multigrid_matrices[max_level] =
-    std::make_unique<TrilinosWrappers::SparseMatrix>();
-  monodomain_operator->get_system_matrix(*multigrid_matrices[max_level]);
 
   // Once the level operators are built, use the finest in a matrix-free way,
   // the others matrix-based
@@ -938,8 +949,7 @@ IonicModel<dim>::setup_multigrid()
       linear_operator_mg<VectorType, VectorType>(*monodomain_operator);
   else
     multigrid_matrices_lo[max_level] =
-      linear_operator_mg<VectorType, VectorType>(
-        *multigrid_matrices[max_level]);
+      linear_operator_mg<VectorType, VectorType>(multigrid_matrices[max_level]);
 
   multigrid_matrices_lo[max_level].n_rows = monodomain_operator->m();
   multigrid_matrices_lo[max_level].n_cols = monodomain_operator->n();
@@ -958,14 +968,15 @@ IonicModel<dim>::setup_multigrid()
   diag_inverses.back().reinit(classical_dh.locally_owned_dofs(), communicator);
 
   // Set exact diagonal for each operator
-  for (unsigned int i = system_matrix->local_range().first;
-       i < system_matrix->local_range().second;
+  for (unsigned int i = multigrid_matrices[max_level].local_range().first;
+       i < multigrid_matrices[max_level].local_range().second;
        ++i)
-    diag_inverses.back()[i] = 1. / system_matrix->diag_element(i);
+    diag_inverses.back()[i] =
+      1. / multigrid_matrices[max_level].diag_element(i);
 
   smoother_data[total_tree_levels].preconditioner =
     std::make_shared<DiagonalMatrix<VectorType>>(diag_inverses.back());
-  // pcout << "Start defining smoothers data" << std::endl;
+  // Start defining smoothers data
 
   for (unsigned int l = 0; l < total_tree_levels; ++l)
     {
@@ -974,10 +985,10 @@ IonicModel<dim>::setup_multigrid()
         agglomeration_handlers[l]->agglo_dh.locally_owned_dofs(), communicator);
 
       // Set exact diagonal for each operator
-      for (unsigned int i = multigrid_matrices[l]->local_range().first;
-           i < multigrid_matrices[l]->local_range().second;
+      for (unsigned int i = multigrid_matrices[l].local_range().first;
+           i < multigrid_matrices[l].local_range().second;
            ++i)
-        diag_inverses[l][i] = 1. / multigrid_matrices[l]->diag_element(i);
+        diag_inverses[l][i] = 1. / multigrid_matrices[l].diag_element(i);
 
       smoother_data[l].preconditioner =
         std::make_shared<DiagonalMatrix<VectorType>>(diag_inverses[l]);
@@ -1014,7 +1025,7 @@ IonicModel<dim>::setup_multigrid()
     std::make_unique<Utils::MGCoarseIterative<TrilinosWrappers::SparseMatrix,
                                               double,
                                               CoarseSolverType>>();
-  mg_coarse->initialize(*multigrid_matrices[min_level]);
+  mg_coarse->initialize(multigrid_matrices[min_level]);
 
   pcout << "Coarse solver initialized" << std::endl;
 
@@ -1060,10 +1071,10 @@ IonicModel<dim>::setup_multigrid()
   for (unsigned int level = 0; level < total_tree_levels + 1; ++level)
     {
       pcout << "l" << level << std::endl;
-      const double nnz_level = multigrid_matrices[level]->n_nonzero_elements();
+      const double nnz_level = multigrid_matrices[level].n_nonzero_elements();
       op_complexity += nnz_level;
     }
-  op_complexity /= system_matrix->n_nonzero_elements();
+  op_complexity /= multigrid_matrices[max_level].n_nonzero_elements();
   pcout << "Operator complexity (AGGLO MG): " << op_complexity << std::endl;
 
   statistics_table.add_value("N. MG levels", total_tree_levels + 1);
@@ -1172,13 +1183,17 @@ IonicModel<dim>::assemble_time_independent_matrix()
                 {
                   for (unsigned int j = 0; j < dofs_per_cell; ++j)
                     {
-                      cell_matrix(i, j) += param.sigma *
-                                           fe_values->shape_grad(i, q_index) *
-                                           fe_values->shape_grad(j, q_index) *
-                                           fe_values->JxW(q_index);
+                      cell_matrix(i, j) +=
+                        (param.sigma * fe_values->shape_grad(i, q_index) *
+                           fe_values->shape_grad(j, q_index) +
+                         (param.chi * param.Cm / dt) *
+                           fe_values->shape_value(i, q_index) *
+                           fe_values->shape_value(j, q_index)) *
+                        fe_values->JxW(q_index);
 
                       cell_mass_matrix(i, j) +=
-                        (1. / dt) * fe_values->shape_value(i, q_index) *
+                        (param.chi * param.Cm / dt) *
+                        fe_values->shape_value(i, q_index) *
                         fe_values->shape_value(j, q_index) *
                         fe_values->JxW(q_index);
                     }
@@ -1187,9 +1202,6 @@ IonicModel<dim>::assemble_time_independent_matrix()
 
           for (const auto f : cell->face_indices())
             {
-              double       hf      = 0.;
-              const double extent1 = cell->measure() / cell->face(f)->measure();
-
               // Do nothing at boundary, we have Neumann homogeneous BC
               if (!cell->face(f)->at_boundary())
                 {
@@ -1198,14 +1210,44 @@ IonicModel<dim>::assemble_time_independent_matrix()
                   if (cell->global_active_cell_index() <
                       neigh_cell->global_active_cell_index())
                     {
-                      const double extent2 =
-                        neigh_cell->measure() /
-                        neigh_cell->face(cell->neighbor_of_neighbor(f))
-                          ->measure();
-                      hf = (1. / extent1 + 1. / extent2);
+                      // const double extent1 = cell->measure() /
+                      // cell->face(f)->measure(); const double extent2 =
+                      // neigh_cell->measure() /
+                      // neigh_cell->face(cell->neighbor_of_neighbor(f))
+                      // ->measure();
                       fe_faces0->reinit(cell, f);
                       fe_faces1->reinit(neigh_cell,
                                         cell->neighbor_of_neighbor(f));
+
+                      // FEFaceValues::inverse_jacobian returns J^{-1}. To
+                      // emulate matrix-free (which sees J^{-T} with reference
+                      // normal aligned to the last coordinate) pick the row of
+                      // J^{-1} corresponding to this face’s reference normal
+                      // and dot it with the physical normal.
+                      const unsigned int ref_normal_0 =
+                        GeometryInfo<dim>::unit_normal_direction[f];
+                      const unsigned int ref_normal_1 = GeometryInfo<dim>::
+                        unit_normal_direction[cell->neighbor_of_neighbor(f)];
+
+                      double h_inverse_0 = 0.;
+                      double h_inverse_1 = 0.;
+                      for (unsigned int j = 0; j < dim; ++j)
+                        {
+                          h_inverse_0 +=
+                            fe_faces0->inverse_jacobian(0)[ref_normal_0][j] *
+                            fe_faces0->normal_vector(0)[j];
+                          h_inverse_1 +=
+                            fe_faces1->inverse_jacobian(0)[ref_normal_1][j] *
+                            fe_faces1->normal_vector(0)[j];
+                        }
+
+                      // Notice: in case of cartesian meshes, this is equivalent
+                      // to
+                      // const double penalty = penalty_constant*(1. / extent1
+                      // + 1. / extent2);
+                      const double penalty =
+                        penalty_constant *
+                        (std::abs(h_inverse_0) + std::abs(h_inverse_1));
 
                       std::vector<types::global_dof_index>
                         local_dof_indices_neighbor(dofs_per_cell);
@@ -1232,8 +1274,8 @@ IonicModel<dim>::assemble_time_independent_matrix()
                                      0.5 * fe_faces0->shape_grad(j, q_index) *
                                        normals[q_index] *
                                        fe_faces0->shape_value(i, q_index) +
-                                     (penalty_constant * hf) *
-                                       fe_faces0->shape_value(i, q_index) *
+                                     (penalty)*fe_faces0->shape_value(i,
+                                                                      q_index) *
                                        fe_faces0->shape_value(j, q_index)) *
                                     fe_faces0->JxW(q_index);
 
@@ -1245,8 +1287,8 @@ IonicModel<dim>::assemble_time_independent_matrix()
                                      0.5 * fe_faces1->shape_grad(j, q_index) *
                                        normals[q_index] *
                                        fe_faces0->shape_value(i, q_index) -
-                                     (penalty_constant * hf) *
-                                       fe_faces0->shape_value(i, q_index) *
+                                     (penalty)*fe_faces0->shape_value(i,
+                                                                      q_index) *
                                        fe_faces1->shape_value(j, q_index)) *
                                     fe_faces1->JxW(q_index);
 
@@ -1259,8 +1301,8 @@ IonicModel<dim>::assemble_time_independent_matrix()
                                      0.5 * fe_faces0->shape_grad(j, q_index) *
                                        normals[q_index] *
                                        fe_faces1->shape_value(i, q_index) -
-                                     (penalty_constant * hf) *
-                                       fe_faces1->shape_value(i, q_index) *
+                                     (penalty)*fe_faces1->shape_value(i,
+                                                                      q_index) *
                                        fe_faces0->shape_value(j, q_index)) *
                                     fe_faces1->JxW(q_index);
 
@@ -1273,8 +1315,8 @@ IonicModel<dim>::assemble_time_independent_matrix()
                                      0.5 * fe_faces1->shape_grad(j, q_index) *
                                        normals[q_index] *
                                        fe_faces1->shape_value(i, q_index) +
-                                     (penalty_constant * hf) *
-                                       fe_faces1->shape_value(i, q_index) *
+                                     (penalty)*fe_faces1->shape_value(i,
+                                                                      q_index) *
                                        fe_faces1->shape_value(j, q_index)) *
                                     fe_faces1->JxW(q_index);
                                 }
@@ -1285,35 +1327,54 @@ IonicModel<dim>::assemble_time_independent_matrix()
 
                       neigh_cell->get_dof_indices(local_dof_indices_neighbor);
 
-                      constraints.distribute_local_to_global(M11,
-                                                             local_dof_indices,
-                                                             laplace_matrix);
+                      constraints.distribute_local_to_global(
+                        M11,
+                        local_dof_indices,
+                        param.preconditioner == Preconditioner::AMG ?
+                          system_matrix :
+                          multigrid_matrices[multigrid_matrices.max_level()]);
                       constraints.distribute_local_to_global(
                         M12,
                         local_dof_indices,
                         local_dof_indices_neighbor,
-                        laplace_matrix);
+                        param.preconditioner == Preconditioner::AMG ?
+                          system_matrix :
+                          multigrid_matrices[multigrid_matrices.max_level()]);
                       constraints.distribute_local_to_global(
                         M21,
                         local_dof_indices_neighbor,
                         local_dof_indices,
-                        laplace_matrix);
+                        param.preconditioner == Preconditioner::AMG ?
+                          system_matrix :
+                          multigrid_matrices[multigrid_matrices.max_level()]);
                       constraints.distribute_local_to_global(
-                        M22, local_dof_indices_neighbor, laplace_matrix);
+                        M22,
+                        local_dof_indices_neighbor,
+                        param.preconditioner == Preconditioner::AMG ?
+                          system_matrix :
+                          multigrid_matrices[multigrid_matrices.max_level()]);
 
                     } // check idx neighbors
                 }     // over faces
             }
-          constraints.distribute_local_to_global(cell_matrix,
-                                                 local_dof_indices,
-                                                 laplace_matrix);
+          constraints.distribute_local_to_global(
+            cell_matrix,
+            local_dof_indices,
+            param.preconditioner == Preconditioner::AMG ?
+              system_matrix :
+              multigrid_matrices[multigrid_matrices.max_level()]);
           constraints.distribute_local_to_global(cell_mass_matrix,
                                                  local_dof_indices,
                                                  mass_matrix);
         }
     }
   mass_matrix.compress(VectorOperation::add);
-  laplace_matrix.compress(VectorOperation::add);
+
+  if (param.preconditioner == Preconditioner::AMG)
+    system_matrix.compress(VectorOperation::add);
+  else
+    multigrid_matrices[multigrid_matrices.max_level()].compress(
+      VectorOperation::add);
 }
 
 
@@ -1383,7 +1444,7 @@ IonicModel<dim>::solve()
 
   if constexpr (measure_solve_times)
     start_solver = MPI_Wtime();
-  if (param.use_amg_preconditioner)
+  if (param.preconditioner == Preconditioner::AMG)
     solver.solve(system_operator,
                  locally_relevant_solution_current,
                  system_rhs,
@@ -1397,17 +1458,11 @@ IonicModel<dim>::solve()
     {
       stop_solver = MPI_Wtime();
       iteration_times.push_back(stop_solver - start_solver);
-      iterations.push_back(param.control.last_step());
     }
 
   pcout << "Number of outer iterations: " << param.control.last_step()
         << std::endl;
-
-  if (Utilities::MPI::this_mpi_process(communicator) == 0)
-    {
-      file_iterations << param.control.last_step();
-      file_iterations << ",";
-    }
+  iterations.push_back(param.control.last_step());
 }
 
 
@@ -1438,7 +1493,8 @@ IonicModel<dim>::output_results()
   data_out.build_patches(mapping);
 
   const std::string filename =
-    ("3Dmonodomain_time_" + std::to_string(time) +
+    (param.output_directory + "/" + "3Dmonodomain_time_" +
+     std::to_string(time) +
      Utilities::int_to_string(tria.locally_owned_subdomain(), 4));
 
   std::ofstream output((filename + ".vtu").c_str());
@@ -1451,10 +1507,12 @@ IonicModel<dim>::output_results()
            i < Utilities::MPI::n_mpi_processes(communicator);
            i++)
         {
-          filenames.push_back("3Dmonodomain_time_" + std::to_string(time) +
+          filenames.push_back(param.output_directory + "/" +
+                              "3Dmonodomain_time_" + std::to_string(time) +
                               Utilities::int_to_string(i, 4) + ".vtu");
         }
-      std::ofstream master_output("3Dmonodomain_time_" + std::to_string(time) +
+      std::ofstream master_output(param.output_directory + "/" +
+                                  "3Dmonodomain_time_" + std::to_string(time) +
                                   ".pvtu");
       data_out.write_pvtu_record(master_output, filenames);
     }
@@ -1537,21 +1595,22 @@ IonicModel<dim>::run()
     return hmax;
   }();
 
-  pcout << "Max mesh size: " << mesh_size << std::endl;
+  pcout << "Max mesh size: " << Utilities::MPI::max(mesh_size, communicator)
+        << std::endl;
 
   // Initialize matrix-free evaluator
   monodomain_operator->reinit(mapping, classical_dh);
-  system_matrix = const_cast<TrilinosWrappers::SparseMatrix *>(
-    &monodomain_operator->get_system_matrix());
 
   if constexpr (use_matrix_free_action)
     system_operator = linear_operator<VectorType>(*monodomain_operator);
   else
-    system_operator = linear_operator<VectorType>(*system_matrix);
-
+    system_operator = linear_operator<VectorType>(
+      param.preconditioner == Preconditioner::AMG ?
+        system_matrix :
+        multigrid_matrices[multigrid_matrices.max_level()]);
 
   // Depending on the preconditioner type, use AMG or polytopal multigrid.
-  if (param.use_amg_preconditioner)
+  if (param.preconditioner == Preconditioner::AMG)
     {
       TimerOutput::Scope t(computing_timer, "Initialize AMG preconditioner");
       typename TrilinosWrappers::PreconditionAMG::AdditionalData amg_data;
@@ -1561,7 +1620,7 @@ IonicModel<dim>::run()
       amg_data.smoother_type   = "Chebyshev";
       amg_data.smoother_sweeps = 3;
       amg_data.output_details  = true;
-      amg_preconditioner.initialize(*system_matrix, amg_data);
+      amg_preconditioner.initialize(system_matrix, amg_data);
     }
   else
     setup_multigrid();
@@ -1605,7 +1664,7 @@ IonicModel<dim>::run()
               min_value = v;
 
           min_values.push_back(Utilities::MPI::min(min_value, communicator));
-          pcout << Utilities::MPI::min(min_value, communicator) << std::endl;
+          pcout << min_values.back() << std::endl;
         }
 
       // update solutions
@@ -1619,33 +1678,33 @@ IonicModel<dim>::run()
     }
   pcout << std::endl;
 
-  // Writing minimum values to file
-  if (Utilities::MPI::this_mpi_process(communicator) == 0 &&
-      param.compute_min_value)
-    {
-      std::ofstream file_min_values;
-      file_min_values.open("min_values_ord2" + std::to_string(param.fe_degree) +
-                           ".txt");
-      for (const double x : min_values)
-        {
-          file_min_values << x;
-          file_min_values << ",";
-          file_min_values << "\n";
-        }
-      file_min_values.close();
-      file_iterations.close();
-    }
 
 
   if (Utilities::MPI::this_mpi_process(communicator) == 0)
     {
+      file_iterations.open(param.output_directory + "/" + "iterations_" +
+                           (param.preconditioner == Preconditioner::AMG ?
+                              std::string("AMG_") :
+                              std::string("AGGLOMG_")) +
+                           "degree_" + std::to_string(param.fe_degree) +
+                           ".txt");
+
+      for (size_t i = 0; i < iterations.size(); ++i)
+        {
+          file_iterations << iterations[i];
+          if (i < iterations.size() - 1)
+            file_iterations << ",\n";
+        }
+      file_iterations << "\n";
+      file_iterations.close();
+
       std::cout
-        << "---------------------------------------------------------SOLVER STATISTICS----"
-           "-------------------------------------------"
+        << "---------------------------------------------------------------------SOLVER STATISTICS----"
+           "----------------------------------------------------------------------------------"
         << std::endl;
       std::cout
-        << "+------------------------------------------------------------------"
-           "-----------------------------------------------------+"
+        << "+-------------------------------------------------------------------------------------"
+           "-------------------------------------------------------------------------------------+"
         << std::endl;
 
       const auto [min_iter, max_iter] =
@@ -1654,21 +1713,28 @@ IonicModel<dim>::run()
         std::accumulate(iterations.begin(), iterations.end(), 0.0) /
         iterations.size();
 
-      statistics_table.add_value("Min iterations", *min_iter);
-      statistics_table.add_value("Max iterations", *max_iter);
-      statistics_table.add_value("Avg iterations", avg_iter);
+      statistics_table.add_value("Min. iterations", *min_iter);
+      statistics_table.add_value("Max. iterations", *max_iter);
+      statistics_table.add_value("Avg. iterations", avg_iter);
       if constexpr (measure_solve_times)
-        statistics_table.add_value("Time per it.",
+        statistics_table.add_value("Avg. time per iteration [s]",
                                    std::accumulate(iteration_times.begin(),
                                                    iteration_times.end(),
                                                    0.0) /
                                      iterations.size());
 
       statistics_table.write_text(std::cout, TableHandler::org_mode_table);
+      std::ofstream output_file(param.output_directory + "/" + "statistics_" +
+                                (param.preconditioner == Preconditioner::AMG ?
+                                   std::string("AMG_") :
+                                   std::string("AGGLOMG_")) +
+                                "degree_" + std::to_string(param.fe_degree) +
+                                ".txt");
+      statistics_table.write_text(output_file, TableHandler::org_mode_table);
 
       std::cout
-        << "+------------------------------------------------------------------"
-           "-----------------------------------------------------+"
+        << "+-------------------------------------------------------------------------------------"
+           "-------------------------------------------------------------------------------------+"
         << std::endl;
     }
 }
@@ -1698,14 +1764,15 @@ main(int argc, char *argv[])
     parameters.control.set_tolerance(1e-13); // used in CG solver
     parameters.control.set_max_steps(2000);
 
-    parameters.use_amg_preconditioner = true;
-    parameters.test_case              = TestCase::Idealized;
-    parameters.fe_degree              = degree_finite_element;
-    parameters.dt                     = 1e-4;
-    parameters.final_time             = 0.4;
-    parameters.final_time_current     = 3e-3;
-    parameters.compute_min_value      = false;
-    parameters.output_frequency       = 1;
+    parameters.preconditioner     = Preconditioner::AGGLOMG;
+    parameters.test_case          = TestCase::Idealized;
+    parameters.fe_degree          = degree_finite_element;
+    parameters.dt                 = 1e-4;
+    parameters.final_time         = 0.4;
+    parameters.final_time_current = 3e-3;
+    parameters.compute_min_value  = false;
+    parameters.output_frequency   = 1;
+    parameters.output_directory   = "results/";
 
     IonicModel<3> problem(parameters);
     problem.run();
