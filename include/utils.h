@@ -374,7 +374,7 @@ namespace Utils
      */
     template <int dim,
               int degree,
-              int n_qpoints,
+              int n_q_points,
               int n_components,
               typename number = double>
     class LaplaceOperatorDG : public Subscriptor
@@ -394,7 +394,7 @@ namespace Utils
       {
         fe_degree = dof_handler.get_fe().degree;
 
-        const QGauss<1>                                  quad(n_qpoints);
+        const QGauss<1>                                  quad(n_q_points);
         typename MatrixFree<dim, number>::AdditionalData addit_data;
         addit_data.tasks_parallel_scheme =
           MatrixFree<dim, number>::AdditionalData::none;
@@ -615,7 +615,7 @@ namespace Utils
 
             MatrixFreeTools::compute_matrix<dim,
                                             degree,
-                                            n_qpoints,
+                                            n_q_points,
                                             n_components,
                                             number,
                                             VectorizedArrayType>(
@@ -724,7 +724,7 @@ namespace Utils
         // Assemble system matrix.
         MatrixFreeTools::compute_matrix<dim,
                                         degree,
-                                        n_qpoints,
+                                        n_q_points,
                                         n_components,
                                         number,
                                         VectorizedArrayType>(
@@ -1107,7 +1107,7 @@ namespace Utils
      */
     template <int dim,
               int degree,
-              int n_qpoints,
+              int n_q_points,
               int n_components,
               typename number = double>
     class MonodomainOperatorDG : public Subscriptor
@@ -1127,9 +1127,13 @@ namespace Utils
              const DoFHandler<dim> &dof_handler,
              const unsigned int     level = numbers::invalid_unsigned_int)
       {
+        Assert(
+          degree == dof_handler.get_fe().degree,
+          ExcMessage(
+            "Degree of the operator must match the degree of the DoFHandler"));
         fe_degree = dof_handler.get_fe().degree;
 
-        const QGauss<1>                                  quad(n_qpoints);
+        const QGauss<1>                                  quad(n_q_points);
         typename MatrixFree<dim, number>::AdditionalData addit_data;
         addit_data.tasks_parallel_scheme =
           MatrixFree<dim, number>::AdditionalData::none;
@@ -1346,7 +1350,7 @@ namespace Utils
 
             MatrixFreeTools::compute_matrix<dim,
                                             degree,
-                                            n_qpoints,
+                                            n_q_points,
                                             n_components,
                                             number,
                                             VectorizedArrayType>(
@@ -1442,7 +1446,7 @@ namespace Utils
         // Assemble system matrix.
         MatrixFreeTools::compute_matrix<dim,
                                         degree,
-                                        n_qpoints,
+                                        n_q_points,
                                         n_components,
                                         number,
                                         VectorizedArrayType>(
@@ -1492,7 +1496,7 @@ namespace Utils
                   const LinearAlgebra::distributed::Vector<number> &src,
                   const std::pair<unsigned int, unsigned int> &cell_range) const
       {
-        FEEvaluation<dim, -1, 0, 1, number> phi(data);
+        FEEvaluation<dim, degree, n_q_points, n_components, number> phi(data);
         const double factor = (parameters.chi * parameters.Cm) / parameters.dt;
 
         for (unsigned int cell = cell_range.first; cell < cell_range.second;
@@ -1518,8 +1522,10 @@ namespace Utils
         const LinearAlgebra::distributed::Vector<number> &src,
         const std::pair<unsigned int, unsigned int>      &face_range) const
       {
-        FEFaceEvaluation<dim, -1, 0, 1, number> fe_eval(data, true);
-        FEFaceEvaluation<dim, -1, 0, 1, number> fe_eval_neighbor(data, false);
+        FEFaceEvaluation<dim, degree, n_q_points, n_components, number> fe_eval(
+          data, true);
+        FEFaceEvaluation<dim, degree, n_q_points, n_components, number>
+          fe_eval_neighbor(data, false);
 
         for (unsigned int face = face_range.first; face < face_range.second;
              ++face)
@@ -1591,7 +1597,7 @@ namespace Utils
         const unsigned int &,
         const std::pair<unsigned int, unsigned int> &cell_range) const
       {
-        FEEvaluation<dim, -1, 0, 1, number>    phi(data);
+        FEEvaluation<dim, degree, n_q_points, n_components, number> phi(data);
         AlignedVector<VectorizedArray<number>> local_diagonal_vector(
           phi.dofs_per_cell);
         const double factor = (parameters.chi * parameters.Cm) / parameters.dt;
@@ -1631,9 +1637,11 @@ namespace Utils
         const unsigned int &,
         const std::pair<unsigned int, unsigned int> &face_range) const
       {
-        FEFaceEvaluation<dim, -1, 0, 1, number> phi(data, true);
-        FEFaceEvaluation<dim, -1, 0, 1, number> phi_outer(data, false);
-        AlignedVector<VectorizedArray<number>>  local_diagonal_vector(
+        FEFaceEvaluation<dim, degree, n_q_points, n_components, number> phi(
+          data, true);
+        FEFaceEvaluation<dim, degree, n_q_points, n_components, number>
+                                               phi_outer(data, false);
+        AlignedVector<VectorizedArray<number>> local_diagonal_vector(
           phi.dofs_per_cell);
 
         for (unsigned int face = face_range.first; face < face_range.second;
