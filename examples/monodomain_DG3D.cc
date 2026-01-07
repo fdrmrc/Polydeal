@@ -68,7 +68,7 @@ static constexpr unsigned int starting_level      = 1;
 // matrix-free related parameters
 static constexpr bool         use_matrix_free_action = true;
 static constexpr unsigned int degree_finite_element  = 1;
-constexpr unsigned int        n_qpoints    = degree_finite_element + 1;
+static constexpr unsigned int n_qpoints    = degree_finite_element + 1;
 static constexpr unsigned int n_components = 1;
 
 
@@ -249,6 +249,9 @@ public:
              std::vector<double>           &values,
              const unsigned int /*component*/) const override;
 
+  const std::vector<Point<dim>> &
+  get_points() const;
+
 private:
   double                  t_end_current;
   std::vector<Point<dim>> p;
@@ -288,6 +291,14 @@ AppliedCurrent<dim>::value(const Point<dim> &point,
     }
   else
     return 0.;
+}
+
+
+template <int dim>
+const std::vector<Point<dim>> &
+AppliedCurrent<dim>::get_points() const
+{
+  return p;
 }
 
 
@@ -594,8 +605,6 @@ private:
   std::vector<VectorType>                       diag_inverses;
   std::vector<TrilinosWrappers::SparseMatrix *> transfer_matrices;
   std::vector<DoFHandler<dim> *>                dof_handlers;
-
-  std::ofstream file_iterations;
 
   Utils::Physics::BilinearFormParameters bilinear_form_parameters;
 
@@ -1701,6 +1710,7 @@ MonodomainProblem<dim>::run()
 
   if (Utilities::MPI::this_mpi_process(communicator) == 0)
     {
+      std::ofstream file_iterations;
       file_iterations.open(param.output_directory + "/" + "iterations_" +
                            (param.preconditioner == Preconditioner::AMG ?
                               std::string("AMG_") :
@@ -1716,6 +1726,23 @@ MonodomainProblem<dim>::run()
         }
       file_iterations << "\n";
       file_iterations.close();
+
+      std::ofstream file_iteration_times;
+      file_iteration_times.open(
+        param.output_directory + "/" + "iteration_times_" +
+        (param.preconditioner == Preconditioner::AMG ?
+           std::string("AMG_") :
+           std::string("AGGLOMG_")) +
+        "degree_" + std::to_string(param.fe_degree) + ".txt");
+
+      for (size_t i = 0; i < iteration_times.size(); ++i)
+        {
+          file_iteration_times << iteration_times[i];
+          if (i < iteration_times.size() - 1)
+            file_iteration_times << ",\n";
+        }
+      file_iteration_times << "\n";
+      file_iteration_times.close();
 
       std::cout
         << "---------------------------------------------------------------------SOLVER STATISTICS----"
