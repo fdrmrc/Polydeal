@@ -1408,7 +1408,6 @@ MonodomainProblem<dim>::assemble_time_terms()
 
   const unsigned int dofs_per_cell = dg_fe.n_dofs_per_cell();
   Vector<double>     cell_rhs(dofs_per_cell);
-  Vector<double>     cell_ion(dofs_per_cell);
 
   std::vector<types::global_dof_index> local_dof_indices(dofs_per_cell);
 
@@ -1418,7 +1417,6 @@ MonodomainProblem<dim>::assemble_time_terms()
       if (cell->is_locally_owned())
         {
           cell_rhs = 0.;
-          cell_ion = 0.;
 
           fe_values->reinit(cell);
 
