@@ -1200,7 +1200,10 @@ namespace Utils
                   &MonodomainOperatorDG::local_apply_boundary,
                   this,
                   dst,
-                  src);
+                  src,
+                  /*zero_dst =*/false,
+                  MatrixFree<dim, number>::DataAccessOnFaces::gradients,
+                  MatrixFree<dim, number>::DataAccessOnFaces::gradients);
       }
 
       types::global_dof_index
