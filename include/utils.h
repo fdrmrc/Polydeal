@@ -547,14 +547,14 @@ namespace Utils
 
           for (unsigned int q = 0; q < phi_m.n_q_points; ++q)
             {
-              VectorizedArrayType average_value =
+              VectorizedArrayType jump_value =
                 (phi_m.get_value(q) - phi_p.get_value(q)) * 0.5;
               VectorizedArrayType average_valgrad =
                 phi_m.get_normal_derivative(q) + phi_p.get_normal_derivative(q);
               average_valgrad =
-                average_value * 2. * sigmaF - average_valgrad * 0.5;
-              phi_m.submit_normal_derivative(-average_value, q);
-              phi_p.submit_normal_derivative(-average_value, q);
+                jump_value * 2. * sigmaF - average_valgrad * 0.5;
+              phi_m.submit_normal_derivative(-jump_value, q);
+              phi_p.submit_normal_derivative(-jump_value, q);
               phi_m.submit_value(average_valgrad, q);
               phi_p.submit_value(-average_valgrad, q);
             }
@@ -571,11 +571,11 @@ namespace Utils
 
           for (unsigned int q = 0; q < phi_m.n_q_points; ++q)
             {
-              VectorizedArrayType average_value = phi_m.get_value(q);
+              VectorizedArrayType jump_value = phi_m.get_value(q);
               VectorizedArrayType average_valgrad =
                 -phi_m.get_normal_derivative(q);
-              average_valgrad += average_value * sigmaF * 2.0;
-              phi_m.submit_normal_derivative(-average_value, q);
+              average_valgrad += jump_value * sigmaF * 2.0;
+              phi_m.submit_normal_derivative(-jump_value, q);
               phi_m.submit_value(average_valgrad, q);
             }
 
@@ -657,14 +657,14 @@ namespace Utils
 
           for (unsigned int q = 0; q < phi_m.n_q_points; ++q)
             {
-              VectorizedArrayType average_value =
+              VectorizedArrayType jump_value =
                 (phi_m.get_value(q) - phi_p.get_value(q)) * 0.5;
               VectorizedArrayType average_valgrad =
                 phi_m.get_normal_derivative(q) + phi_p.get_normal_derivative(q);
               average_valgrad =
-                average_value * 2. * sigmaF - average_valgrad * 0.5;
-              phi_m.submit_normal_derivative(-average_value, q);
-              phi_p.submit_normal_derivative(-average_value, q);
+                jump_value * 2. * sigmaF - average_valgrad * 0.5;
+              phi_m.submit_normal_derivative(-jump_value, q);
+              phi_p.submit_normal_derivative(-jump_value, q);
               phi_m.submit_value(average_valgrad, q);
               phi_p.submit_value(-average_valgrad, q);
             }
@@ -681,11 +681,11 @@ namespace Utils
 
           for (unsigned int q = 0; q < phi_m.n_q_points; ++q)
             {
-              VectorizedArrayType average_value = phi_m.get_value(q);
+              VectorizedArrayType jump_value = phi_m.get_value(q);
               VectorizedArrayType average_valgrad =
                 -phi_m.get_normal_derivative(q);
-              average_valgrad += average_value * sigmaF * 2.0;
-              phi_m.submit_normal_derivative(-average_value, q);
+              average_valgrad += jump_value * sigmaF * 2.0;
+              phi_m.submit_normal_derivative(-jump_value, q);
               phi_m.submit_value(average_valgrad, q);
             }
 
@@ -859,15 +859,15 @@ namespace Utils
 
             for (unsigned int q = 0; q < fe_eval.n_q_points; ++q)
               {
-                VectorizedArray<number> average_value =
+                VectorizedArray<number> jump_value =
                   (fe_eval.get_value(q) - fe_eval_neighbor.get_value(q)) * 0.5;
                 VectorizedArray<number> average_valgrad =
                   fe_eval.get_normal_derivative(q) +
                   fe_eval_neighbor.get_normal_derivative(q);
                 average_valgrad =
-                  average_value * 2. * sigmaF - average_valgrad * 0.5;
-                fe_eval.submit_normal_derivative(-average_value, q);
-                fe_eval_neighbor.submit_normal_derivative(-average_value, q);
+                  jump_value * 2. * sigmaF - average_valgrad * 0.5;
+                fe_eval.submit_normal_derivative(-jump_value, q);
+                fe_eval_neighbor.submit_normal_derivative(-jump_value, q);
                 fe_eval.submit_value(average_valgrad, q);
                 fe_eval_neighbor.submit_value(-average_valgrad, q);
               }
@@ -902,11 +902,11 @@ namespace Utils
 
             for (unsigned int q = 0; q < fe_eval.n_q_points; ++q)
               {
-                VectorizedArray<number> average_value = fe_eval.get_value(q);
+                VectorizedArray<number> jump_value = fe_eval.get_value(q);
                 VectorizedArray<number> average_valgrad =
                   -fe_eval.get_normal_derivative(q);
-                average_valgrad += average_value * sigmaF * 2.0;
-                fe_eval.submit_normal_derivative(-average_value, q);
+                average_valgrad += jump_value * sigmaF * 2.0;
+                fe_eval.submit_normal_derivative(-jump_value, q);
                 fe_eval.submit_value(average_valgrad, q);
               }
 
@@ -990,14 +990,14 @@ namespace Utils
 
                 for (unsigned int q = 0; q < phi.n_q_points; ++q)
                   {
-                    VectorizedArray<number> average_value =
+                    VectorizedArray<number> jump_value =
                       (phi.get_value(q) - phi_outer.get_value(q)) * 0.5;
                     VectorizedArray<number> average_valgrad =
                       phi.get_normal_derivative(q) +
                       phi_outer.get_normal_derivative(q);
                     average_valgrad =
-                      average_value * 2. * sigmaF - average_valgrad * 0.5;
-                    phi.submit_normal_derivative(-average_value, q);
+                      jump_value * 2. * sigmaF - average_valgrad * 0.5;
+                    phi.submit_normal_derivative(-jump_value, q);
                     phi.submit_value(average_valgrad, q);
                   }
                 phi.integrate(EvaluationFlags::values |
@@ -1022,14 +1022,14 @@ namespace Utils
 
                 for (unsigned int q = 0; q < phi.n_q_points; ++q)
                   {
-                    VectorizedArray<number> average_value =
+                    VectorizedArray<number> jump_value =
                       (phi.get_value(q) - phi_outer.get_value(q)) * 0.5;
                     VectorizedArray<number> average_valgrad =
                       phi.get_normal_derivative(q) +
                       phi_outer.get_normal_derivative(q);
                     average_valgrad =
-                      average_value * 2. * sigmaF - average_valgrad * 0.5;
-                    phi_outer.submit_normal_derivative(-average_value, q);
+                      jump_value * 2. * sigmaF - average_valgrad * 0.5;
+                    phi_outer.submit_normal_derivative(-jump_value, q);
                     phi_outer.submit_value(-average_valgrad, q);
                   }
                 phi_outer.integrate(EvaluationFlags::values |
@@ -1073,11 +1073,11 @@ namespace Utils
 
                 for (unsigned int q = 0; q < phi.n_q_points; ++q)
                   {
-                    VectorizedArray<number> average_value = phi.get_value(q);
+                    VectorizedArray<number> jump_value = phi.get_value(q);
                     VectorizedArray<number> average_valgrad =
                       -phi.get_normal_derivative(q);
-                    average_valgrad += average_value * sigmaF * 2.0;
-                    phi.submit_normal_derivative(-average_value, q);
+                    average_valgrad += jump_value * sigmaF * 2.0;
+                    phi.submit_normal_derivative(-jump_value, q);
                     phi.submit_value(average_valgrad, q);
                   }
 
@@ -1294,16 +1294,14 @@ namespace Utils
 
           for (unsigned int q = 0; q < phi_m.n_q_points; ++q)
             {
-              VectorizedArrayType average_value =
+              VectorizedArrayType jump_value =
                 (phi_m.get_value(q) - phi_p.get_value(q)) * 0.5;
               VectorizedArrayType average_valgrad =
                 phi_m.get_normal_derivative(q) + phi_p.get_normal_derivative(q);
               average_valgrad =
-                average_value * 2. * sigmaF - average_valgrad * 0.5;
-              phi_m.submit_normal_derivative(-parameters.sigma * average_value,
-                                             q);
-              phi_p.submit_normal_derivative(-parameters.sigma * average_value,
-                                             q);
+                jump_value * 2. * sigmaF - average_valgrad * 0.5;
+              phi_m.submit_normal_derivative(-parameters.sigma * jump_value, q);
+              phi_p.submit_normal_derivative(-parameters.sigma * jump_value, q);
               phi_m.submit_value(parameters.sigma * average_valgrad, q);
               phi_p.submit_value(-parameters.sigma * average_valgrad, q);
             }
@@ -1400,16 +1398,14 @@ namespace Utils
 
           for (unsigned int q = 0; q < phi_m.n_q_points; ++q)
             {
-              VectorizedArrayType average_value =
+              VectorizedArrayType jump_value =
                 (phi_m.get_value(q) - phi_p.get_value(q)) * 0.5;
               VectorizedArrayType average_valgrad =
                 phi_m.get_normal_derivative(q) + phi_p.get_normal_derivative(q);
               average_valgrad =
-                average_value * 2. * sigmaF - average_valgrad * 0.5;
-              phi_m.submit_normal_derivative(-parameters.sigma * average_value,
-                                             q);
-              phi_p.submit_normal_derivative(-parameters.sigma * average_value,
-                                             q);
+                jump_value * 2. * sigmaF - average_valgrad * 0.5;
+              phi_m.submit_normal_derivative(-parameters.sigma * jump_value, q);
+              phi_p.submit_normal_derivative(-parameters.sigma * jump_value, q);
               phi_m.submit_value(parameters.sigma * average_valgrad, q);
               phi_p.submit_value(-parameters.sigma * average_valgrad, q);
             }
@@ -1551,18 +1547,17 @@ namespace Utils
 
             for (unsigned int q = 0; q < fe_eval.n_q_points; ++q)
               {
-                VectorizedArray<number> average_value =
+                VectorizedArray<number> jump_value =
                   (fe_eval.get_value(q) - fe_eval_neighbor.get_value(q)) * 0.5;
                 VectorizedArray<number> average_valgrad =
                   fe_eval.get_normal_derivative(q) +
                   fe_eval_neighbor.get_normal_derivative(q);
                 average_valgrad =
-                  average_value * 2. * sigmaF - average_valgrad * 0.5;
-                fe_eval.submit_normal_derivative(-parameters.sigma *
-                                                   average_value,
+                  jump_value * 2. * sigmaF - average_valgrad * 0.5;
+                fe_eval.submit_normal_derivative(-parameters.sigma * jump_value,
                                                  q);
                 fe_eval_neighbor.submit_normal_derivative(-parameters.sigma *
-                                                            average_value,
+                                                            jump_value,
                                                           q);
                 fe_eval.submit_value(parameters.sigma * average_valgrad, q);
                 fe_eval_neighbor.submit_value(-parameters.sigma *
@@ -1675,15 +1670,14 @@ namespace Utils
 
                 for (unsigned int q = 0; q < phi.n_q_points; ++q)
                   {
-                    VectorizedArray<number> average_value =
+                    VectorizedArray<number> jump_value =
                       (phi.get_value(q) - phi_outer.get_value(q)) * 0.5;
                     VectorizedArray<number> average_valgrad =
                       phi.get_normal_derivative(q) +
                       phi_outer.get_normal_derivative(q);
                     average_valgrad =
-                      average_value * 2. * sigmaF - average_valgrad * 0.5;
-                    phi.submit_normal_derivative(-parameters.sigma *
-                                                   average_value,
+                      jump_value * 2. * sigmaF - average_valgrad * 0.5;
+                    phi.submit_normal_derivative(-parameters.sigma * jump_value,
                                                  q);
                     phi.submit_value(parameters.sigma * average_valgrad, q);
                   }
@@ -1709,15 +1703,15 @@ namespace Utils
 
                 for (unsigned int q = 0; q < phi.n_q_points; ++q)
                   {
-                    VectorizedArray<number> average_value =
+                    VectorizedArray<number> jump_value =
                       (phi.get_value(q) - phi_outer.get_value(q)) * 0.5;
                     VectorizedArray<number> average_valgrad =
                       phi.get_normal_derivative(q) +
                       phi_outer.get_normal_derivative(q);
                     average_valgrad =
-                      average_value * 2. * sigmaF - average_valgrad * 0.5;
+                      jump_value * 2. * sigmaF - average_valgrad * 0.5;
                     phi_outer.submit_normal_derivative(-parameters.sigma *
-                                                         average_value,
+                                                         jump_value,
                                                        q);
                     phi_outer.submit_value(-parameters.sigma * average_valgrad,
                                            q);
