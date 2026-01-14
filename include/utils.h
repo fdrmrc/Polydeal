@@ -1139,6 +1139,8 @@ namespace Utils
           MatrixFree<dim, number>::AdditionalData::none;
         addit_data.tasks_block_size = 3;
         addit_data.mg_level         = level;
+        addit_data.mapping_update_flags =
+          (update_values | update_gradients | update_quadrature_points);
         addit_data.mapping_update_flags_inner_faces =
           (update_gradients | update_JxW_values);
         addit_data.mapping_update_flags_boundary_faces =
@@ -1458,15 +1460,6 @@ namespace Utils
       }
 
 
-
-      void
-      rhs(LinearAlgebra::distributed::Vector<number> &b) const
-      {
-        DEAL_II_NOT_IMPLEMENTED();
-      }
-
-
-
       void
       compute_inverse_diagonal()
       {
@@ -1486,6 +1479,72 @@ namespace Utils
             inverse_diagonal_entries.local_element(i) =
               1. / inverse_diagonal_entries.local_element(i);
       }
+
+
+
+      void
+      apply_mass_term(
+        LinearAlgebra::distributed::Vector<number>       &dst,
+        const LinearAlgebra::distributed::Vector<number> &src) const
+      {
+        FEEvaluation<dim, degree, n_q_points, n_components, number> phi(data);
+        const double factor = (parameters.chi * parameters.Cm) / parameters.dt;
+
+        for (unsigned int cell = 0; cell < data.n_cell_batches(); ++cell)
+          {
+            phi.reinit(cell);
+            phi.read_dof_values(src);
+            phi.evaluate(EvaluationFlags::values);
+            for (unsigned int q = 0; q < phi.n_q_points; ++q)
+              phi.submit_value(phi.get_value(q) * factor, q);
+            phi.integrate(EvaluationFlags::values);
+            phi.distribute_local_to_global(dst);
+          }
+        dst.compress(VectorOperation::add);
+      }
+
+
+
+      void
+      rhs(LinearAlgebra::distributed::Vector<number>       &rhs,
+          const LinearAlgebra::distributed::Vector<number> &solution_minus_ion,
+          const Function<dim>                              &Iext) const
+      {
+        FEEvaluation<dim, degree, n_q_points, n_components, number> phi(data);
+
+        for (unsigned int cell = 0; cell < data.n_cell_batches(); ++cell)
+          {
+            phi.reinit(cell);
+            phi.read_dof_values(solution_minus_ion);
+            phi.evaluate(EvaluationFlags::values);
+            for (unsigned int q = 0; q < phi.n_q_points; ++q)
+              {
+                const Point<dim, VectorizedArray<number>> p_vect =
+                  phi.quadrature_point(q);
+                // evaluate the external current for each component in
+                // VectorizedArray
+                VectorizedArray<number> applied_current_value = 0.0;
+                for (unsigned int v = 0; v < VectorizedArray<number>::size();
+                     ++v)
+                  {
+                    Point<dim> p;
+                    for (unsigned int d = 0; d < dim; ++d)
+                      p[d] = p_vect[d][v];
+                    applied_current_value[v] = Iext.value(p);
+                  }
+
+                //  reaction_term =  (parameters.chi * phi.get_value(q)) +
+                //  applied_current_value;
+                phi.submit_value((parameters.chi * phi.get_value(q)) +
+                                   applied_current_value,
+                                 q);
+              }
+            phi.integrate(EvaluationFlags::values);
+            phi.distribute_local_to_global(rhs);
+          }
+        rhs.compress(VectorOperation::add);
+      }
+
 
 
     private:

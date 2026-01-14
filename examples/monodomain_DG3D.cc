@@ -63,7 +63,7 @@ class SparseDirectMUMPS
 // solver-related parameters
 static constexpr double       TOL                 = 3e-3;
 static constexpr bool         measure_solve_times = true;
-static constexpr unsigned int starting_level      = 1;
+static constexpr unsigned int starting_level      = 2;
 
 // matrix-free related parameters
 static constexpr bool         use_matrix_free_action = true;
@@ -1413,12 +1413,11 @@ template <int dim>
 void
 MonodomainProblem<dim>::assemble_time_terms()
 {
-  TimerOutput::Scope t(computing_timer, "Assemble time dependent terms");
-
   const unsigned int dofs_per_cell = dg_fe.n_dofs_per_cell();
   Vector<double>     cell_rhs(dofs_per_cell);
 
   std::vector<types::global_dof_index> local_dof_indices(dofs_per_cell);
+  const double                         factor = param.chi * param.Cm / dt;
 
   // Loop over standard deal.II cells
   for (const auto &cell : classical_dh.active_cell_iterators())
@@ -1438,6 +1437,10 @@ MonodomainProblem<dim>::assemble_time_terms()
           std::vector<double> ion_at_qpoints(n_qpoints);
           fe_values->get_function_values(ion_at_dofs, ion_at_qpoints);
 
+          std::vector<double> solution_current(n_qpoints);
+          fe_values->get_function_values(locally_relevant_solution_pre,
+                                         solution_current);
+
           // Get local values of current solution, to be used inside the non
           // linear reaction matrix
 
@@ -1447,10 +1450,11 @@ MonodomainProblem<dim>::assemble_time_terms()
             {
               for (unsigned int i = 0; i < dofs_per_cell; ++i)
                 {
-                  cell_rhs(i) +=
-                    (applied_currents[q_index] - ion_at_qpoints[q_index]) *
-                    fe_values->shape_value(i, q_index) *
-                    fe_values->JxW(q_index);
+                  cell_rhs(i) += (applied_currents[q_index] -
+                                  param.Cm * ion_at_qpoints[q_index] +
+                                  factor * solution_current[q_index]) *
+                                 fe_values->shape_value(i, q_index) *
+                                 fe_values->JxW(q_index);
                 }
             }
 
@@ -1659,6 +1663,9 @@ MonodomainProblem<dim>::run()
   std::vector<double> min_values;
   min_values.push_back(-84e-3);
 
+  VectorType solution_minus_ion(classical_dh.locally_owned_dofs(),
+                                communicator);
+
   while (time <= end_time)
     {
       time += dt;
@@ -1666,13 +1673,23 @@ MonodomainProblem<dim>::run()
 
       // Solve the ODEs for w
       update_w_and_ion();
-      //   Assemble time dependent terms
-      assemble_time_terms();
 
-      // Build system matrix by adding the time term
-      mass_matrix.vmult_add(
-        system_rhs,
-        locally_relevant_solution_pre); // Add to system_rhs (M/dt)un
+      // Assemble time dependent terms on the rhs
+      if constexpr (use_matrix_free_action)
+        {
+          TimerOutput::Scope t(computing_timer,
+                               "Assemble time dependent terms (matrix-free)");
+          solution_minus_ion = locally_relevant_solution_pre;
+          solution_minus_ion *= (param.Cm / dt);
+          solution_minus_ion -= ion_at_dofs;
+          monodomain_operator->rhs(system_rhs, solution_minus_ion, *Iext);
+        }
+      else
+        {
+          TimerOutput::Scope t(computing_timer,
+                               "Assemble time dependent terms (matrix-based)");
+          assemble_time_terms();
+        }
 
       // Solver for transmembrane potential
       solve();
