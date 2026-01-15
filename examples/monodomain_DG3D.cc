@@ -809,18 +809,22 @@ MonodomainProblem<dim>::setup_problem()
     std::make_unique<AppliedCurrent<dim>>(end_time_current, param.test_case);
 
   // // Start building R-tree
-  namespace bgi = boost::geometry::index;
-  static constexpr unsigned int max_elem_per_node =
-    PolyUtils::constexpr_pow(2, dim); // 2^dim
-  std::vector<std::pair<BoundingBox<dim>,
-                        typename Triangulation<dim>::active_cell_iterator>>
-               boxes(tria.n_locally_owned_active_cells());
-  unsigned int i = 0;
-  for (const auto &cell : tria.active_cell_iterators())
-    if (cell->is_locally_owned())
-      boxes[i++] = std::make_pair(mapping.get_bounding_box(cell), cell);
 
-  tree = pack_rtree<bgi::rstar<max_elem_per_node>>(boxes);
+  namespace bgi = boost::geometry::index;
+  {
+    TimerOutput::Scope t(computing_timer, "[R-tree]: Build data structure");
+    static constexpr unsigned int max_elem_per_node =
+      PolyUtils::constexpr_pow(2, dim); // 2^dim
+    std::vector<std::pair<BoundingBox<dim>,
+                          typename Triangulation<dim>::active_cell_iterator>>
+                 boxes(tria.n_locally_owned_active_cells());
+    unsigned int i = 0;
+    for (const auto &cell : tria.active_cell_iterators())
+      if (cell->is_locally_owned())
+        boxes[i++] = std::make_pair(mapping.get_bounding_box(cell), cell);
+
+    tree = pack_rtree<bgi::rstar<max_elem_per_node>>(boxes);
+  }
 
   Assert(n_levels(tree) >= 2, ExcMessage("At least two levels are needed."));
   pcout << "Total number of available levels: " << n_levels(tree) << std::endl;
@@ -842,7 +846,7 @@ template <int dim>
 void
 MonodomainProblem<dim>::setup_multigrid()
 {
-  TimerOutput::Scope t(computing_timer, "Setup polytopal multigrid");
+  TimerOutput::Scope t(computing_timer, "[R-tree]: Setup polytopal multigrid");
 
   GridTools::Cache<dim> cached_tria(tria);
 
@@ -857,6 +861,8 @@ MonodomainProblem<dim>::setup_multigrid()
        extraction_level <= n_levels(tree);
        ++extraction_level)
     {
+      TimerOutput::Scope t(computing_timer,
+                           "[R-tree]: Setup agglomeration DoFs");
       agglomeration_handlers[extraction_level - starting_level] =
         std::make_unique<AgglomerationHandler<dim>>(cached_tria);
       CellsAgglomerator<dim, decltype(tree)> agglomerator{tree,
@@ -909,49 +915,53 @@ MonodomainProblem<dim>::setup_multigrid()
   // Compute two-level transfers between agglomeration handlers
   // pcout << "Fill injection matrices between agglomerated levels" <<
   // std::endl;
-  injection_matrices_two_level.resize(total_tree_levels);
-  for (unsigned int l = 1; l < total_tree_levels; ++l)
-    {
-      // pcout << "from level " << l - 1 << " to level " << l << std::endl;
-      SparsityPattern sparsity;
-      Utils::fill_injection_matrix(*agglomeration_handlers[l - 1],
-                                   *agglomeration_handlers[l],
-                                   sparsity,
-                                   injection_matrices_two_level[l - 1]);
-    }
-  // pcout << "Computed two-level matrices between agglomerated levels"
-  //<< std::endl;
-
-
-  // Define transfer between levels.
-  transfer_matrices.resize(total_tree_levels);
-  for (unsigned int l = 0; l < total_tree_levels - 1; ++l)
-    transfer_matrices[l] = &injection_matrices_two_level[l];
-
-
-  // Last matrix, fill it by hand
-  // add last two-level (which is an embedding)
-  fill_interpolation_matrix(*agglomeration_handlers.back(),
-                            injection_matrices_two_level.back());
-  transfer_matrices[total_tree_levels - 1] =
-    &injection_matrices_two_level.back();
-
-  // pcout << injection_matrices_two_level.back().m() << " and "
-  //     << injection_matrices_two_level.back().n() << std::endl;
-
-  AmgProjector<dim, TrilinosWrappers::SparseMatrix, double> amg_projector(
-    injection_matrices_two_level);
-
-
-  // Get fine operator and use it to build other levels.
   const unsigned int max_level = multigrid_matrices.max_level();
+  {
+    TimerOutput::Scope t(
+      computing_timer,
+      "[R-tree]: Compute transfers matrices and create level operators");
+    injection_matrices_two_level.resize(total_tree_levels);
+    for (unsigned int l = 1; l < total_tree_levels; ++l)
+      {
+        // pcout << "from level " << l - 1 << " to level " << l << std::endl;
+        SparsityPattern sparsity;
+        Utils::fill_injection_matrix(*agglomeration_handlers[l - 1],
+                                     *agglomeration_handlers[l],
+                                     sparsity,
+                                     injection_matrices_two_level[l - 1]);
+      }
+    // pcout << "Computed two-level matrices between agglomerated levels"
+    //<< std::endl;
 
-  // Once the level operators are built, use the finest in a matrix-free way,
-  // the others matrix-based
-  multigrid_matrices_lo.resize(0, max_level);
 
-  amg_projector.compute_level_matrices_as_linear_operators(
-    multigrid_matrices, multigrid_matrices_lo);
+    // Define transfer between levels.
+    transfer_matrices.resize(total_tree_levels);
+    for (unsigned int l = 0; l < total_tree_levels - 1; ++l)
+      transfer_matrices[l] = &injection_matrices_two_level[l];
+
+
+    // Last matrix, fill it by hand
+    // add last two-level (which is an embedding)
+    fill_interpolation_matrix(*agglomeration_handlers.back(),
+                              injection_matrices_two_level.back());
+    transfer_matrices[total_tree_levels - 1] =
+      &injection_matrices_two_level.back();
+
+    // pcout << injection_matrices_two_level.back().m() << " and "
+    //     << injection_matrices_two_level.back().n() << std::endl;
+
+    AmgProjector<dim, TrilinosWrappers::SparseMatrix, double> amg_projector(
+      injection_matrices_two_level);
+
+
+    // Get fine operator and use it to build other levels.
+    // Once the level operators are built, use the finest in a matrix-free way,
+    // the others matrix-based
+    multigrid_matrices_lo.resize(0, max_level);
+
+    amg_projector.compute_level_matrices_as_linear_operators(
+      multigrid_matrices, multigrid_matrices_lo);
+  }
 
   if constexpr (use_matrix_free_action)
     multigrid_matrices_lo[max_level] =
