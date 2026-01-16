@@ -861,27 +861,35 @@ MonodomainProblem<dim>::setup_multigrid()
        extraction_level <= n_levels(tree);
        ++extraction_level)
     {
-      TimerOutput::Scope t(computing_timer,
-                           "[R-tree]: Setup agglomeration DoFs");
       agglomeration_handlers[extraction_level - starting_level] =
         std::make_unique<AgglomerationHandler<dim>>(cached_tria);
       CellsAgglomerator<dim, decltype(tree)> agglomerator{tree,
                                                           extraction_level};
-      const auto agglomerates = agglomerator.extract_agglomerates();
-      agglomeration_handlers[extraction_level - starting_level]
-        ->connect_hierarchy(agglomerator);
+      unsigned int                           agglo_index = 0;
+      {
+        TimerOutput::Scope t(computing_timer, "[R-tree]: Define agglomerates");
+        const auto         agglomerates = agglomerator.extract_agglomerates();
+        agglomeration_handlers[extraction_level - starting_level]
+          ->connect_hierarchy(agglomerator);
 
+        for (const auto &agglo : agglomerates)
+          {
+            agglomeration_handlers[extraction_level - starting_level]
+              ->define_agglomerate(agglo);
+            ++agglo_index;
+          }
+      }
       // Flag elements for agglomeration
-      unsigned int agglo_index = 0;
-      for (unsigned int i = 0; i < agglomerates.size(); ++i)
-        {
-          const auto &agglo = agglomerates[i]; // i-th agglomerate
-          for (const auto &el : agglo)
-            {
-              el->set_material_id(agglo_index);
-            }
-          ++agglo_index;
-        }
+      // unsigned int agglo_index = 0;
+      // for (unsigned int i = 0; i < agglomerates.size(); ++i)
+      //   {
+      //     const auto &agglo = agglomerates[i]; // i-th agglomerate
+      //     for (const auto &el : agglo)
+      //       {
+      //         el->set_material_id(agglo_index);
+      //       }
+      //     ++agglo_index;
+      //   }
 
       const unsigned int n_local_agglomerates = agglo_index;
       unsigned int       total_agglomerates =
@@ -890,36 +898,39 @@ MonodomainProblem<dim>::setup_multigrid()
             << ": " << total_agglomerates << std::endl;
 
       // Now, perform agglomeration within each locally owned partition
-      std::vector<
-        std::vector<typename Triangulation<dim>::active_cell_iterator>>
-        cells_per_subdomain(n_local_agglomerates);
-      for (const auto &cell : tria.active_cell_iterators())
-        if (cell->is_locally_owned())
-          cells_per_subdomain[cell->material_id()].push_back(cell);
+      // std::vector<
+      //   std::vector<typename Triangulation<dim>::active_cell_iterator>>
+      //   cells_per_subdomain(n_local_agglomerates);
+      // for (const auto &cell : tria.active_cell_iterators())
+      //   if (cell->is_locally_owned())
+      //     cells_per_subdomain[cell->material_id()].push_back(cell);
 
       // For every subdomain, agglomerate elements together
-      for (std::size_t i = 0; i < cells_per_subdomain.size(); ++i)
+      // for (std::size_t i = 0; i < cells_per_subdomain.size(); ++i)
+      //   agglomeration_handlers[extraction_level - starting_level]
+      //     ->define_agglomerate(cells_per_subdomain[i]);
+      {
+        TimerOutput::Scope t(computing_timer,
+                             "[R-tree]: Compute transfers matrices");
         agglomeration_handlers[extraction_level - starting_level]
-          ->define_agglomerate(cells_per_subdomain[i]);
-
-      agglomeration_handlers[extraction_level - starting_level]
-        ->initialize_fe_values(QGauss<dim>(dg_fe.degree + 1),
-                               update_values | update_gradients |
-                                 update_JxW_values | update_quadrature_points,
-                               QGauss<dim - 1>(dg_fe.degree + 1),
-                               update_JxW_values);
-      agglomeration_handlers[extraction_level - starting_level]
-        ->distribute_agglomerated_dofs(dg_fe);
+          ->initialize_fe_values(QGauss<dim>(dg_fe.degree + 1),
+                                 update_values | update_gradients |
+                                   update_JxW_values | update_quadrature_points,
+                                 QGauss<dim - 1>(dg_fe.degree + 1),
+                                 update_JxW_values);
+        agglomeration_handlers[extraction_level - starting_level]
+          ->distribute_agglomerated_dofs(dg_fe);
+      }
     }
 
   // Compute two-level transfers between agglomeration handlers
   // pcout << "Fill injection matrices between agglomerated levels" <<
   // std::endl;
   const unsigned int max_level = multigrid_matrices.max_level();
+
   {
-    TimerOutput::Scope t(
-      computing_timer,
-      "[R-tree]: Compute transfers matrices and create level operators");
+    TimerOutput::Scope t(computing_timer,
+                         "[R-tree]: Compute transfers matrices");
     injection_matrices_two_level.resize(total_tree_levels);
     for (unsigned int l = 1; l < total_tree_levels; ++l)
       {
@@ -946,19 +957,23 @@ MonodomainProblem<dim>::setup_multigrid()
                               injection_matrices_two_level.back());
     transfer_matrices[total_tree_levels - 1] =
       &injection_matrices_two_level.back();
+  }
 
-    // pcout << injection_matrices_two_level.back().m() << " and "
-    //     << injection_matrices_two_level.back().n() << std::endl;
+  // pcout << injection_matrices_two_level.back().m() << " and "
+  //     << injection_matrices_two_level.back().n() << std::endl;
 
-    AmgProjector<dim, TrilinosWrappers::SparseMatrix, double> amg_projector(
-      injection_matrices_two_level);
+  AmgProjector<dim, TrilinosWrappers::SparseMatrix, double> amg_projector(
+    injection_matrices_two_level);
 
 
-    // Get fine operator and use it to build other levels.
-    // Once the level operators are built, use the finest in a matrix-free way,
-    // the others matrix-based
-    multigrid_matrices_lo.resize(0, max_level);
+  // Get fine operator and use it to build other levels.
+  // Once the level operators are built, use the finest in a matrix-free way,
+  // the others matrix-based
+  multigrid_matrices_lo.resize(0, max_level);
 
+
+  {
+    TimerOutput::Scope t(computing_timer, "[R-tree]: Compute level operators");
     amg_projector.compute_level_matrices_as_linear_operators(
       multigrid_matrices, multigrid_matrices_lo);
   }
@@ -1848,7 +1863,7 @@ main(int argc, char *argv[])
     parameters.control.set_max_steps(2000);
 
     parameters.preconditioner     = Preconditioner::AGGLOMG;
-    parameters.test_case          = TestCase::Idealized;
+    parameters.test_case          = TestCase::Realistic;
     parameters.fe_degree          = degree_finite_element;
     parameters.dt                 = 1e-4;
     parameters.final_time         = 0.4;
