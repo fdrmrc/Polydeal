@@ -94,7 +94,13 @@ namespace Utils
   {
   public:
     MGCoarseIterative()
-    {}
+    {
+      reduction_control =
+        std::make_unique<ReductionControl>(100, 1e-5, 1e-6, false, false);
+      solver_coarse =
+        std::make_unique<SolverCG<LinearAlgebra::distributed::Vector<double>>>(
+          *reduction_control);
+    }
 
     void
     initialize(const MatrixType &matrix)
@@ -123,13 +129,11 @@ namespace Utils
       if constexpr (std::is_same_v<PreconditionerType,
                                    TrilinosWrappers::PreconditionAMG>)
         {
-          ReductionControl solver_control(100, 1e-5, 1e-6);
-          SolverCG<LinearAlgebra::distributed::Vector<double>> solver_coarse(
-            solver_control);
 #ifdef AGGLO_DEBUG
           start = MPI_Wtime();
 #endif
-          solver_coarse.solve(*coarse_matrix, dst, src, *precondition);
+          solver_coarse->solve(*coarse_matrix, dst, src, *precondition);
+          // precondition->vmult(dst, src);
 #ifdef AGGLO_DEBUG
           stop = MPI_Wtime();
 #endif
@@ -148,6 +152,9 @@ namespace Utils
 
     const MatrixType                   *coarse_matrix;
     std::unique_ptr<PreconditionerType> precondition;
+    std::unique_ptr<ReductionControl>   reduction_control;
+    std::unique_ptr<SolverCG<LinearAlgebra::distributed::Vector<double>>>
+      solver_coarse;
   };
 
 } // namespace Utils
@@ -553,8 +560,9 @@ private:
   const double end_time;
   const double end_time_current; // final time external application
 
-  SolverCG<LinearAlgebra::distributed::Vector<double>> solver;
-  const ModelParameters                               &param;
+  SolverCG<VectorType> solver;
+  // SolverFlexibleCG<VectorType> solver;
+  const ModelParameters &param;
 
   // Agglomeration related
   dealii::RTree<
@@ -1674,9 +1682,10 @@ MonodomainProblem<dim>::run()
       if (dg_fe.degree > 1)
         amg_data.higher_order_elements = true;
 
-      amg_data.smoother_type   = "Chebyshev";
-      amg_data.smoother_sweeps = 3;
-      amg_data.output_details  = true;
+      amg_data.smoother_type         = "Chebyshev";
+      amg_data.smoother_sweeps       = 3;
+      amg_data.output_details        = true;
+      amg_data.aggregation_threshold = 0.2;
       amg_preconditioner.initialize(system_matrix, amg_data);
     }
   else
