@@ -66,7 +66,7 @@ static constexpr unsigned int starting_level      = 1;
 
 // matrix-free related parameters
 static constexpr bool         use_matrix_free_action = true;
-static constexpr unsigned int degree_finite_element  = 1;
+static constexpr unsigned int degree_finite_element  = 3;
 constexpr unsigned int        n_qpoints    = degree_finite_element + 1;
 static constexpr unsigned int n_components = 1;
 
@@ -174,7 +174,7 @@ namespace Utils
 struct ModelParameters
 {
   SolverControl control;
-  bool          use_amg_preconditioner = true;
+  bool          use_amg_preconditioner = false;
   unsigned int  output_frequency       = 1;
   bool          output_results         = true;
   double        dt                     = 1e-4;
@@ -1404,9 +1404,10 @@ IonicModel<dim>::run()
       if (dg_fe.degree > 1)
         amg_data.higher_order_elements = true;
 
-      amg_data.smoother_type   = "Chebyshev";
-      amg_data.smoother_sweeps = 3;
-      amg_data.output_details  = true;
+      amg_data.aggregation_threshold = 0.2;
+      amg_data.smoother_type         = "Chebyshev";
+      amg_data.smoother_sweeps       = 3;
+      amg_data.output_details        = true;
       amg_preconditioner.initialize(*system_matrix, amg_data);
     }
   else
