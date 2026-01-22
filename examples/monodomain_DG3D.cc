@@ -1887,7 +1887,7 @@ main(int argc, char *argv[])
     parameters.final_time                = 0.4;
     parameters.final_time_current        = 3e-3;
     parameters.compute_min_value         = false;
-    parameters.estimate_condition_number = true;
+    parameters.estimate_condition_number = false;
     parameters.output_frequency          = 1;
     parameters.output_directory          = "results/";
 
