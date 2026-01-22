@@ -180,45 +180,46 @@ struct ModelParameters
 {
   SolverControl control;
 
-  double         penalty_constant   = 10.;
-  unsigned int   fe_degree          = 1;
-  double         dt                 = 1e-2;
-  double         final_time         = 1.;
-  double         final_time_current = 1.;
-  double         chi                = 1;
-  double         Cm                 = 1.;
-  double         sigma              = 1e-4;
-  double         V1                 = 0.3;
-  double         V1m                = 0.015;
-  double         V2                 = 0.015;
-  double         V2m                = 0.03;
-  double         V3                 = 0.9087;
-  double         Vhat               = 1.58;
-  double         Vo                 = 0.006;
-  double         Vso                = 0.65;
-  double         tauop              = 6e-3;
-  double         tauopp             = 6e-3;
-  double         tausop             = 43e-3;
-  double         tausopp            = 0.2e-3;
-  double         tausi              = 2.8723e-3;
-  double         taufi              = 0.11e-3;
-  double         tau1plus           = 1.4506e-3;
-  double         tau2plus           = 0.28;
-  double         tau2inf            = 0.07;
-  double         tau1p              = 0.06;
-  double         tau1pp             = 1.15;
-  double         tau2p              = 0.07;
-  double         tau2pp             = 0.02;
-  double         tau3p              = 2.7342e-3;
-  double         tau3pp             = 0.003;
-  double         w_star_inf         = 0.94;
-  double         k2                 = 65.0;
-  double         k3                 = 2.0994;
-  double         kso                = 2.0;
-  Preconditioner preconditioner     = Preconditioner::AMG;
-  std::string    output_directory   = ".";
-  unsigned int   output_frequency   = 1;
-  bool           compute_min_value  = false;
+  double         penalty_constant          = 10.;
+  unsigned int   fe_degree                 = 1;
+  double         dt                        = 1e-2;
+  double         final_time                = 1.;
+  double         final_time_current        = 1.;
+  double         chi                       = 1;
+  double         Cm                        = 1.;
+  double         sigma                     = 1e-4;
+  double         V1                        = 0.3;
+  double         V1m                       = 0.015;
+  double         V2                        = 0.015;
+  double         V2m                       = 0.03;
+  double         V3                        = 0.9087;
+  double         Vhat                      = 1.58;
+  double         Vo                        = 0.006;
+  double         Vso                       = 0.65;
+  double         tauop                     = 6e-3;
+  double         tauopp                    = 6e-3;
+  double         tausop                    = 43e-3;
+  double         tausopp                   = 0.2e-3;
+  double         tausi                     = 2.8723e-3;
+  double         taufi                     = 0.11e-3;
+  double         tau1plus                  = 1.4506e-3;
+  double         tau2plus                  = 0.28;
+  double         tau2inf                   = 0.07;
+  double         tau1p                     = 0.06;
+  double         tau1pp                    = 1.15;
+  double         tau2p                     = 0.07;
+  double         tau2pp                    = 0.02;
+  double         tau3p                     = 2.7342e-3;
+  double         tau3pp                    = 0.003;
+  double         w_star_inf                = 0.94;
+  double         k2                        = 65.0;
+  double         k3                        = 2.0994;
+  double         kso                       = 2.0;
+  Preconditioner preconditioner            = Preconditioner::AMG;
+  std::string    output_directory          = ".";
+  unsigned int   output_frequency          = 1;
+  bool           compute_min_value         = false;
+  bool           estimate_condition_number = false;
 
   enum TestCase test_case = TestCase::Idealized;
 };
@@ -681,6 +682,14 @@ MonodomainProblem<dim>::MonodomainProblem(const ModelParameters &parameters)
     }
   else
     std::filesystem::create_directory(param.output_directory);
+
+  if (param.estimate_condition_number)
+    solver.connect_condition_number_slot(std::bind(
+      [](double input, const std::string &text) {
+        std::cout << text << input << std::endl;
+      },
+      std::placeholders::_1,
+      "Condition number estimate: "));
 }
 
 
@@ -1871,15 +1880,16 @@ main(int argc, char *argv[])
     parameters.control.set_tolerance(1e-13); // used in CG solver
     parameters.control.set_max_steps(2000);
 
-    parameters.preconditioner     = Preconditioner::AGGLOMG;
-    parameters.test_case          = TestCase::Realistic;
-    parameters.fe_degree          = degree_finite_element;
-    parameters.dt                 = 1e-4;
-    parameters.final_time         = 0.4;
-    parameters.final_time_current = 3e-3;
-    parameters.compute_min_value  = false;
-    parameters.output_frequency   = 1;
-    parameters.output_directory   = "results/";
+    parameters.preconditioner            = Preconditioner::AMG;
+    parameters.test_case                 = TestCase::Realistic;
+    parameters.fe_degree                 = degree_finite_element;
+    parameters.dt                        = 1e-4;
+    parameters.final_time                = 0.4;
+    parameters.final_time_current        = 3e-3;
+    parameters.compute_min_value         = false;
+    parameters.estimate_condition_number = true;
+    parameters.output_frequency          = 1;
+    parameters.output_directory          = "results/";
 
     MonodomainProblem<3> problem(parameters);
     problem.run();
