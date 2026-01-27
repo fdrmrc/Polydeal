@@ -66,7 +66,7 @@ static constexpr unsigned int starting_level      = 1;
 
 // matrix-free related parameters
 static constexpr bool         use_matrix_free_action = true;
-static constexpr unsigned int degree_finite_element  = 3;
+static constexpr unsigned int degree_finite_element  = 4;
 constexpr unsigned int        n_qpoints    = degree_finite_element + 1;
 static constexpr unsigned int n_components = 1;
 
@@ -124,7 +124,7 @@ namespace Utils
       if constexpr (std::is_same_v<PreconditionerType,
                                    TrilinosWrappers::PreconditionAMG>)
         {
-          ReductionControl solver_control(1e4, 1e-50, 1e-14);
+          ReductionControl solver_control(1e4, 1e-6, 1e-6);
           SolverCG<LinearAlgebra::distributed::Vector<double>> solver_coarse(
             solver_control);
 #ifdef AGGLO_DEBUG
@@ -174,11 +174,11 @@ namespace Utils
 struct ModelParameters
 {
   SolverControl control;
-  bool          use_amg_preconditioner = false;
-  unsigned int  output_frequency       = 1;
+  bool          use_amg_preconditioner = true;
+  unsigned int  output_frequency       = 4001;
   bool          output_results         = true;
   double        dt                     = 1e-4;
-  double        final_time             = 0.4;
+  double        final_time             = dt * 20;
   double        final_time_current     = 3e-3;
 
 
@@ -428,8 +428,6 @@ private:
   assemble_time_terms();
   void
   update_w_and_ion();
-  void
-  solve_w();
   void
   solve();
   void
@@ -1404,7 +1402,7 @@ IonicModel<dim>::run()
       if (dg_fe.degree > 1)
         amg_data.higher_order_elements = true;
 
-      amg_data.aggregation_threshold = 0.2;
+      amg_data.aggregation_threshold = 0.1; // 0.15;
       amg_data.smoother_type         = "Chebyshev";
       amg_data.smoother_sweeps       = 3;
       amg_data.output_details        = true;

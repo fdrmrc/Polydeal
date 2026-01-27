@@ -505,8 +505,6 @@ private:
   void
   update_w_and_ion();
   void
-  solve_w();
-  void
   solve();
   void
   output_results();
