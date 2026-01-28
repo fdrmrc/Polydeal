@@ -15,7 +15,7 @@ var searchData=
   ['unconstrained_5fcompressed_5fconstraint_5fkind_12',['unconstrained_compressed_constraint_kind',['http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1MatrixFreeFunctions.html#ae40e60719dc874fa3a92a227ba7a4ad3',1,'internal::MatrixFreeFunctions']]],
   ['undefine_5fmacros_2eh_13',['undefine_macros.h',['http://www.dealii.org/developer/doxygen/deal.II/undefine__macros_8h.html',1,'']]],
   ['uniform_5fchannel_5fwith_5fcylinder_14',['uniform_channel_with_cylinder',['http://www.dealii.org/developer/doxygen/deal.II/namespaceGridGenerator.html#a597c9be74279f9e825674efe6aaa95da',1,'GridGenerator']]],
-  ['unify_5fdof_5findices_15',['unify_dof_indices',['http://www.dealii.org/developer/doxygen/deal.II/structinternal_1_1DoFHandlerImplementation_1_1Policy_1_1Implementation.html#a56edd8f7678bbcfb91c02278815679ed',1,'internal::DoFHandlerImplementation::Policy::Implementation']]],
+  ['unify_5fdof_5findices_15',['unify_dof_indices',['http://www.dealii.org/developer/doxygen/deal.II/structinternal_1_1DoFHandlerImplementation_1_1Policy_1_1Implementation.html#a95c9ad5c5a9b3813606f401e3f891e8b',1,'internal::DoFHandlerImplementation::Policy::Implementation']]],
   ['unique_5fcomponent_5fmasks_16',['unique_component_masks',['http://www.dealii.org/developer/doxygen/deal.II/classParsedConvergenceTable.html#af0980200bb971a07f2547a39c1dd13a9',1,'ParsedConvergenceTable']]],
   ['unique_5fcomponent_5fnames_17',['unique_component_names',['http://www.dealii.org/developer/doxygen/deal.II/classParsedConvergenceTable.html#ad5dc7aa88120e23af1f98d42feb65e00',1,'ParsedConvergenceTable']]],
   ['unique_5fmapping_18',['unique_mapping',['http://www.dealii.org/developer/doxygen/deal.II/classUtilities_1_1MPI_1_1RemotePointEvaluation.html#aeba99eac6a94024233302d1f6396b56c',1,'Utilities::MPI::RemotePointEvaluation']]],
@@ -225,5 +225,7 @@ var searchData=
   ['utilities_3a_3atrilinos_3a_3ainternal_222',['internal',['http://www.dealii.org/developer/doxygen/deal.II/namespaceUtilities_1_1Trilinos_1_1internal.html',1,'Utilities::Trilinos']]],
   ['utility_20functions_20and_20classes_223',['Utility functions and classes',['http://www.dealii.org/developer/doxygen/deal.II/group__utilities.html',1,'']]],
   ['utils_224',['Utils',['../namespace_utils.html',1,'']]],
-  ['utils_2eh_225',['utils.h',['../utils_8h.html',1,'']]]
+  ['utils_2eh_225',['utils.h',['../utils_8h.html',1,'']]],
+  ['utils_3a_3amatrixfreeoperators_226',['MatrixFreeOperators',['../namespace_utils_1_1_matrix_free_operators.html',1,'Utils']]],
+  ['utils_3a_3aphysics_227',['Physics',['../namespace_utils_1_1_physics.html',1,'Utils']]]
 ];

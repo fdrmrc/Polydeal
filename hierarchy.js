@@ -5,6 +5,7 @@ var hierarchy =
     [ "AgglomerationIterator< dim, spacedim >", "class_agglomeration_iterator.html", null ],
     [ "Agglomerator< dim, RtreeType >", "class_agglomerator.html", null ],
     [ "dealii::AmgProjector< dim, MatrixType, Number >", "classdealii_1_1_amg_projector.html", null ],
+    [ "Utils::Physics::BilinearFormParameters", "struct_utils_1_1_physics_1_1_bilinear_form_parameters.html", null ],
     [ "dealii::CellsAgglomerator< dim, RtreeType >", "classdealii_1_1_cells_agglomerator.html", null ],
     [ "internal::LinearOperatorMGImplementation::EmptyPayload", "classinternal_1_1_linear_operator_m_g_implementation_1_1_empty_payload.html", null ],
     [ "EnableObserverPointer", "http://www.dealii.org/developer/doxygen/deal.II/classEnableObserverPointer.html", [
@@ -30,7 +31,8 @@ var hierarchy =
         ] ]
       ] ],
       [ "LinearOperatorMG< Range, Domain, Payload >", "class_linear_operator_m_g.html", null ],
-      [ "Utils::LaplaceOperatorDG< dim, degree, n_qpoints, n_components, number >", "class_utils_1_1_laplace_operator_d_g.html", null ]
+      [ "Utils::MatrixFreeOperators::LaplaceOperatorDG< dim, degree, n_q_points, n_components, number >", "class_utils_1_1_matrix_free_operators_1_1_laplace_operator_d_g.html", null ],
+      [ "Utils::MatrixFreeOperators::MonodomainOperatorDG< dim, degree, n_q_points, n_components, number >", "class_utils_1_1_matrix_free_operators_1_1_monodomain_operator_d_g.html", null ]
     ] ],
     [ "FiniteElementData< int dim >", "http://www.dealii.org/developer/doxygen/deal.II/classFiniteElementData.html", [
       [ "FiniteElement< int dim, int spacedim >", "http://www.dealii.org/developer/doxygen/deal.II/classFiniteElement.html", null ]

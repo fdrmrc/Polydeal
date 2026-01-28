@@ -24,8 +24,14 @@ var annotated_dup =
       ] ]
     ] ],
     [ "Utils", "namespace_utils.html", [
+      [ "MatrixFreeOperators", "namespace_utils_1_1_matrix_free_operators.html", [
+        [ "LaplaceOperatorDG", "class_utils_1_1_matrix_free_operators_1_1_laplace_operator_d_g.html", "class_utils_1_1_matrix_free_operators_1_1_laplace_operator_d_g" ],
+        [ "MonodomainOperatorDG", "class_utils_1_1_matrix_free_operators_1_1_monodomain_operator_d_g.html", "class_utils_1_1_matrix_free_operators_1_1_monodomain_operator_d_g" ]
+      ] ],
+      [ "Physics", "namespace_utils_1_1_physics.html", [
+        [ "BilinearFormParameters", "struct_utils_1_1_physics_1_1_bilinear_form_parameters.html", "struct_utils_1_1_physics_1_1_bilinear_form_parameters" ]
+      ] ],
       [ "Graph", "struct_utils_1_1_graph.html", "struct_utils_1_1_graph" ],
-      [ "LaplaceOperatorDG", "class_utils_1_1_laplace_operator_d_g.html", "class_utils_1_1_laplace_operator_d_g" ],
       [ "MGCoarseDirect", "class_utils_1_1_m_g_coarse_direct.html", "class_utils_1_1_m_g_coarse_direct" ]
     ] ],
     [ "AgglomerationAccessor", "class_agglomeration_accessor.html", "class_agglomeration_accessor" ],

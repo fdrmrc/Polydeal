@@ -16,7 +16,6 @@ var namespaceinternal =
     ] ],
     [ "DoFAccessorImplementation", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1DoFAccessorImplementation.html", [
       [ "Implementation", "http://www.dealii.org/developer/doxygen/deal.II/structinternal_1_1DoFAccessorImplementation_1_1Implementation_1_1DoFIndexProcessor.html", null ],
-      [ "get_cell_dof_indices", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1DoFAccessorImplementation.html#a08d8357939bbb47711415fcd7b5653f2", null ],
       [ "get_cell_dof_indices", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1DoFAccessorImplementation.html#ae73b994e5a72a98aff466c6a4ca20637", null ],
       [ "get_fe_index_or_default", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1DoFAccessorImplementation.html#a50a1fb03f13240c165dd9ead963cb99d", null ]
     ] ],
@@ -301,12 +300,12 @@ var namespaceinternal =
       [ "TriaObjects", "http://www.dealii.org/developer/doxygen/deal.II/structinternal_1_1TriangulationImplementation_1_1TriaObjects_1_1BoundaryOrMaterialId.html", [
         [ "ExcPointerIndexClash", "http://www.dealii.org/developer/doxygen/deal.II/group__Exceptions.html#ga679f9e8ea705ff8bafe11553e704571b", null ]
       ] ],
-      [ "build_connectivity", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1TriangulationImplementation.html#a174c981861ed80b685c0569595cf12ac", null ],
-      [ "build_connectivity", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1TriangulationImplementation.html#a1888196170df22c1e892ab31abb0f147", null ],
-      [ "build_face_entities", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1TriangulationImplementation.html#aef3cf3cf276761c36a32ea1bcfb69e74", null ],
-      [ "build_face_entities_templated", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1TriangulationImplementation.html#a67328a45f33e71be8e3667b2e0975051", null ],
-      [ "build_intersection", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1TriangulationImplementation.html#aeed075a73c8605017039827b85d469b4", null ],
-      [ "determine_neighbors", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1TriangulationImplementation.html#a33434dc16bae6adf4f1d6248d1d8fbe8", null ],
+      [ "build_connectivity", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1TriangulationImplementation.html#aeb818244a0e6eabcb81d17f2e8457369", null ],
+      [ "build_connectivity", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1TriangulationImplementation.html#a710807ba2b6a0f275c570664ba0c30ba", null ],
+      [ "build_face_entities", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1TriangulationImplementation.html#a03913dfc73c45ebfef75a5e61f0957c5", null ],
+      [ "build_face_entities_templated", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1TriangulationImplementation.html#af28ed6f38c4d2f5a4388ee9a4f2c8d46", null ],
+      [ "build_intersection", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1TriangulationImplementation.html#a0ed6bd7b43fd7c548ecd927a7268a366", null ],
+      [ "determine_neighbors", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1TriangulationImplementation.html#a19dd5fd5695f6602fe684dbecb7d1b68", null ],
       [ "ExcCellHasNegativeMeasure", "http://www.dealii.org/developer/doxygen/deal.II/group__Exceptions.html#ga678d6f7da4c6ba3dd3beb01f2c63d69a", null ],
       [ "ExcCellHasNegativeMeasure", "http://www.dealii.org/developer/doxygen/deal.II/group__Exceptions.html#ga678d6f7da4c6ba3dd3beb01f2c63d69a", null ],
       [ "ExcInconsistentLineInfoOfLine", "http://www.dealii.org/developer/doxygen/deal.II/group__Exceptions.html#ga57165450e8a38324b84e06737174adb5", null ],

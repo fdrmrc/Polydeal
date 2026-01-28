@@ -15,5 +15,7 @@ var searchData=
   ['utilities_3a_3asystem_12',['System',['http://www.dealii.org/developer/doxygen/deal.II/namespaceUtilities_1_1System.html',1,'Utilities']]],
   ['utilities_3a_3atrilinos_13',['Trilinos',['http://www.dealii.org/developer/doxygen/deal.II/namespaceUtilities_1_1Trilinos.html',1,'Utilities']]],
   ['utilities_3a_3atrilinos_3a_3ainternal_14',['internal',['http://www.dealii.org/developer/doxygen/deal.II/namespaceUtilities_1_1Trilinos_1_1internal.html',1,'Utilities::Trilinos']]],
-  ['utils_15',['Utils',['../namespace_utils.html',1,'']]]
+  ['utils_15',['Utils',['../namespace_utils.html',1,'']]],
+  ['utils_3a_3amatrixfreeoperators_16',['MatrixFreeOperators',['../namespace_utils_1_1_matrix_free_operators.html',1,'Utils']]],
+  ['utils_3a_3aphysics_17',['Physics',['../namespace_utils_1_1_physics.html',1,'Utils']]]
 ];
