@@ -291,10 +291,7 @@ namespace dealii
       for (unsigned int l = max_level; l-- > min_level;)
         {
           // Set parallel layout of intermediate operators AP
-          MatrixType level_operator(
-            transfer_matrices[l]->locally_owned_range_indices(),
-            transfer_matrices[l]->locally_owned_domain_indices(),
-            communicator);
+          MatrixType level_operator;
 
           mg_matrices[l] = std::make_unique<MatrixType>();
 
@@ -335,10 +332,7 @@ namespace dealii
       for (unsigned int l = max_level; l-- > min_level;)
         {
           // Set parallel layout of intermediate operators AP
-          MatrixType level_operator(
-            transfer_matrices[l]->locally_owned_range_indices(),
-            transfer_matrices[l]->locally_owned_domain_indices(),
-            communicator);
+          MatrixType level_operator;
 
           mg_matrices[l] = std::make_unique<MatrixType>();
 
@@ -358,6 +352,48 @@ namespace dealii
             };
           multigrid_matrices_lo[l].n_rows = mg_matrices[l]->m();
           multigrid_matrices_lo[l].n_cols = mg_matrices[l]->n();
+        }
+    }
+
+
+    /*
+     * Same as above, but with a vector of matrices.
+     */
+    void
+    compute_level_matrices_as_linear_operators(
+      MGLevelObject<MatrixType> &mg_matrices,
+      MGLevelObject<
+        LinearOperatorMG<LinearAlgebra::distributed::Vector<Number>,
+                         LinearAlgebra::distributed::Vector<Number>>>
+        &multigrid_matrices_lo)
+    {
+      Assert(mg_matrices.n_levels() > 1,
+             ExcMessage("Vector of matrices set to invalid size."));
+      using VectorType = LinearAlgebra::distributed::Vector<Number>;
+
+      const unsigned int min_level = mg_matrices.min_level();
+      const unsigned int max_level = mg_matrices.max_level();
+
+      for (unsigned int l = max_level; l-- > min_level;)
+        {
+          // Set intermediate operators "AP"
+          MatrixType level_operator;
+
+          // First, compute AP
+          mg_matrices[l + 1].mmult(
+            level_operator,
+            *transfer_matrices[l]); // result stored in level_operators[l]
+                                    // Multiply by the transpose
+          transfer_matrices[l]->Tmmult(mg_matrices[l], level_operator);
+          // Wrap every matrix into a linear operator now.
+          multigrid_matrices_lo[l] =
+            linear_operator_mg<VectorType, VectorType>(mg_matrices[l]);
+          multigrid_matrices_lo[l].vmult =
+            [&mg_matrices, l](VectorType &dst, const VectorType &src) {
+              mg_matrices[l].vmult(dst, src);
+            };
+          multigrid_matrices_lo[l].n_rows = mg_matrices[l].m();
+          multigrid_matrices_lo[l].n_cols = mg_matrices[l].n();
         }
     }
 
