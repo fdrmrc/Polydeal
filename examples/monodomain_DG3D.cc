@@ -175,6 +175,12 @@ enum class Preconditioner
   AGGLOMG
 };
 
+enum class TimeStepping
+{
+  BDF1,
+  BDF2
+};
+
 // Model parameters for Bueno Orovio
 struct ModelParameters
 {
@@ -216,6 +222,7 @@ struct ModelParameters
   double         k3                        = 2.0994;
   double         kso                       = 2.0;
   Preconditioner preconditioner            = Preconditioner::AMG;
+  TimeStepping   time_stepping_scheme      = TimeStepping::BDF2;
   std::string    output_directory          = ".";
   unsigned int   output_frequency          = 1;
   bool           compute_min_value         = false;
@@ -544,12 +551,18 @@ private:
   VectorType locally_relevant_solution_pre;
   VectorType locally_relevant_solution_current;
 
-  VectorType locally_relevant_w0_pre;
-  VectorType locally_relevant_w0_current;
-  VectorType locally_relevant_w1_pre;
-  VectorType locally_relevant_w1_current;
-  VectorType locally_relevant_w2_pre;
-  VectorType locally_relevant_w2_current;
+  VectorType locally_relevant_w0_np1; // w_{n+1}
+  VectorType locally_relevant_w0_n;   // w_n
+  VectorType locally_relevant_w0_nm1; // w_{n-1}
+
+  // Same for other gating variables
+  VectorType locally_relevant_w1_n;
+  VectorType locally_relevant_w1_np1;
+  VectorType locally_relevant_w1_nm1;
+
+  VectorType locally_relevant_w2_n;
+  VectorType locally_relevant_w2_np1;
+  VectorType locally_relevant_w2_nm1;
 
   VectorType ion_at_dofs;
 
@@ -811,12 +824,17 @@ MonodomainProblem<dim>::setup_problem()
   system_rhs.reinit(locally_owned_dofs, communicator);
 
   // Parallel layout of gating variables
-  locally_relevant_w0_pre.reinit(locally_owned_dofs, communicator);
-  locally_relevant_w0_current.reinit(locally_owned_dofs, communicator);
-  locally_relevant_w1_pre.reinit(locally_owned_dofs, communicator);
-  locally_relevant_w1_current.reinit(locally_owned_dofs, communicator);
-  locally_relevant_w2_pre.reinit(locally_owned_dofs, communicator);
-  locally_relevant_w2_current.reinit(locally_owned_dofs, communicator);
+  locally_relevant_w0_n.reinit(locally_owned_dofs, communicator);
+  locally_relevant_w0_np1.reinit(locally_owned_dofs, communicator);
+  locally_relevant_w0_nm1.reinit(locally_owned_dofs, communicator);
+
+  locally_relevant_w1_n.reinit(locally_owned_dofs, communicator);
+  locally_relevant_w1_np1.reinit(locally_owned_dofs, communicator);
+  locally_relevant_w1_nm1.reinit(locally_owned_dofs, communicator);
+
+  locally_relevant_w2_nm1.reinit(locally_owned_dofs, communicator);
+  locally_relevant_w2_n.reinit(locally_owned_dofs, communicator);
+  locally_relevant_w2_np1.reinit(locally_owned_dofs, communicator);
 
   ion_at_dofs.reinit(locally_owned_dofs, communicator);
 
@@ -1164,6 +1182,8 @@ MonodomainProblem<dim>::update_w_and_ion()
 
   // update w from t_n to t_{n+1} on the locally owned DoFs for all w's
   // On top of that, evaluate Iion at DoFs
+
+  // We use BDF1 or BDF2 formula for time integration of gating variables
   for (const types::global_dof_index i : locally_owned_dofs)
     {
       // First, update w's
@@ -1171,23 +1191,67 @@ MonodomainProblem<dim>::update_w_and_ion()
       std::array<double, 3> b      = beta(locally_relevant_solution_pre[i]);
       std::array<double, 3> w_infs = w_inf(locally_relevant_solution_pre[i]);
 
-      locally_relevant_w0_current[i] =
-        locally_relevant_w0_pre[i] +
-        dt * ((b[0] - a[0]) * locally_relevant_w0_pre[i] + a[0] * w_infs[0]);
+      if (param.time_stepping_scheme == TimeStepping::BDF1)
+        {
+          locally_relevant_w0_np1[i] =
+            locally_relevant_w0_n[i] +
+            dt * ((b[0] - a[0]) * locally_relevant_w0_n[i] + a[0] * w_infs[0]);
 
-      locally_relevant_w1_current[i] =
-        locally_relevant_w1_pre[i] +
-        dt * ((b[1] - a[1]) * locally_relevant_w1_pre[i] + a[1] * w_infs[1]);
+          locally_relevant_w1_np1[i] =
+            locally_relevant_w1_n[i] +
+            dt * ((b[1] - a[1]) * locally_relevant_w1_n[i] + a[1] * w_infs[1]);
 
-      locally_relevant_w2_current[i] =
-        locally_relevant_w2_pre[i] +
-        dt * ((b[2] - a[2]) * locally_relevant_w2_pre[i] + a[2] * w_infs[2]);
+          locally_relevant_w2_np1[i] =
+            locally_relevant_w2_n[i] +
+            dt * ((b[2] - a[2]) * locally_relevant_w2_n[i] + a[2] * w_infs[2]);
 
-      // Evaluate ion at u_n, w_{n+1}
-      ion_at_dofs[i] = Iion(locally_relevant_solution_pre[i],
-                            {locally_relevant_w0_current[i],
-                             locally_relevant_w1_current[i],
-                             locally_relevant_w2_current[i]});
+          // Evaluate ion at u_n, w_{n+1}
+          ion_at_dofs[i] = Iion(locally_relevant_solution_pre[i],
+                                {locally_relevant_w0_np1[i],
+                                 locally_relevant_w1_np1[i],
+                                 locally_relevant_w2_np1[i]});
+        }
+      else if (param.time_stepping_scheme == TimeStepping::BDF2)
+        {
+          // Backward Euler for the first step
+          if (time == 0)
+            {
+              locally_relevant_w0_np1[i] =
+                (locally_relevant_w0_n[i] + dt * a[0] * w_infs[0]) /
+                (1.0 - dt * (b[0] - a[0]));
+
+              locally_relevant_w1_np1[i] =
+                (locally_relevant_w1_n[i] + dt * a[1] * w_infs[1]) /
+                (1.0 - dt * (b[1] - a[1]));
+
+              locally_relevant_w2_np1[i] =
+                (locally_relevant_w2_n[i] + dt * a[2] * w_infs[2]) /
+                (1.0 - dt * (b[2] - a[2]));
+            }
+          else
+            {
+              locally_relevant_w0_np1[i] = (4.0 * locally_relevant_w0_n[i] -
+                                            1.0 * locally_relevant_w0_nm1[i] +
+                                            2.0 * dt * (a[0] * w_infs[0])) /
+                                           (3. - 2.0 * dt * (b[0] - a[0]));
+
+              locally_relevant_w1_np1[i] = (4.0 * locally_relevant_w1_n[i] -
+                                            1.0 * locally_relevant_w1_nm1[i] +
+                                            2.0 * dt * (a[1] * w_infs[1])) /
+                                           (3. - 2.0 * dt * (b[1] - a[1]));
+
+              locally_relevant_w2_np1[i] = (4.0 * locally_relevant_w2_n[i] -
+                                            1.0 * locally_relevant_w2_nm1[i] +
+                                            2.0 * dt * (a[2] * w_infs[2])) /
+                                           (3. - 2.0 * dt * (b[2] - a[2]));
+            }
+
+          // Evaluate ion at u_n, w_{n+1}
+          ion_at_dofs[i] = Iion(locally_relevant_solution_pre[i],
+                                {locally_relevant_w0_np1[i],
+                                 locally_relevant_w1_np1[i],
+                                 locally_relevant_w2_np1[i]});
+        }
     }
 }
 
@@ -1291,9 +1355,9 @@ MonodomainProblem<dim>::assemble_time_independent_matrix()
 
                       // FEFaceValues::inverse_jacobian returns J^{-1}. To
                       // emulate matrix-free (which sees J^{-T} with reference
-                      // normal aligned to the last coordinate) pick the row of
-                      // J^{-1} corresponding to this face’s reference normal
-                      // and dot it with the physical normal.
+                      // normal aligned to the last coordinate) pick the row
+                      // of J^{-1} corresponding to this face’s reference
+                      // normal and dot it with the physical normal.
                       const unsigned int ref_normal_0 =
                         GeometryInfo<dim>::unit_normal_direction[f];
                       const unsigned int ref_normal_1 = GeometryInfo<dim>::
@@ -1311,9 +1375,9 @@ MonodomainProblem<dim>::assemble_time_independent_matrix()
                             fe_faces1->normal_vector(0)[j];
                         }
 
-                      // Notice: in case of cartesian meshes, this is equivalent
-                      // to
-                      // const double penalty = penalty_constant*(1. / extent1
+                      // Notice: in case of cartesian meshes, this is
+                      // equivalent to const double penalty =
+                      // penalty_constant*(1. / extent1
                       // + 1. / extent2);
                       const double penalty =
                         penalty_constant *
@@ -1551,7 +1615,7 @@ MonodomainProblem<dim>::output_results()
                            "transmembrane_potential",
                            DataOut<dim>::type_dof_data);
 
-  data_out.add_data_vector(locally_relevant_w0_current,
+  data_out.add_data_vector(locally_relevant_w0_np1,
                            "gating_variable",
                            DataOut<dim>::type_dof_data);
 
@@ -1639,14 +1703,14 @@ MonodomainProblem<dim>::run()
   locally_relevant_solution_pre     = -84e-3;
   locally_relevant_solution_current = locally_relevant_solution_pre;
 
-  locally_relevant_w0_pre     = 1.;
-  locally_relevant_w0_current = locally_relevant_w0_pre;
+  locally_relevant_w0_n   = 1.;
+  locally_relevant_w0_np1 = locally_relevant_w0_n;
 
-  locally_relevant_w1_pre     = 1.;
-  locally_relevant_w1_current = locally_relevant_w1_pre;
+  locally_relevant_w1_n   = 1.;
+  locally_relevant_w1_np1 = locally_relevant_w1_n;
 
-  locally_relevant_w2_pre     = 0.;
-  locally_relevant_w2_current = locally_relevant_w2_pre;
+  locally_relevant_w2_n   = 0.;
+  locally_relevant_w2_np1 = locally_relevant_w2_n;
   output_results();
 
   // Assemble time independent term
@@ -1709,9 +1773,6 @@ MonodomainProblem<dim>::run()
 
   while (time <= end_time)
     {
-      time += dt;
-      Iext->set_time(time);
-
       // Solve the ODEs for w
       update_w_and_ion();
 
@@ -1736,6 +1797,8 @@ MonodomainProblem<dim>::run()
       solve();
       pcout << "Solved at t= " << time << std::endl;
       ++iter_count;
+      time += dt;
+      Iext->set_time(time);
 
       // output results
       if (iter_count % param.output_frequency == 0)
@@ -1755,9 +1818,15 @@ MonodomainProblem<dim>::run()
 
       // update solutions
       locally_relevant_solution_pre = locally_relevant_solution_current;
-      locally_relevant_w0_pre       = locally_relevant_w0_current;
-      locally_relevant_w1_pre       = locally_relevant_w1_current;
-      locally_relevant_w2_pre       = locally_relevant_w2_current;
+
+      locally_relevant_w0_nm1 = locally_relevant_w0_n;
+      locally_relevant_w0_n   = locally_relevant_w0_np1;
+
+      locally_relevant_w1_nm1 = locally_relevant_w1_n;
+      locally_relevant_w1_n   = locally_relevant_w1_np1;
+
+      locally_relevant_w2_nm1 = locally_relevant_w2_n;
+      locally_relevant_w2_n   = locally_relevant_w2_np1;
 
       // reset time dependent terms
       system_rhs = 0.;
@@ -1879,15 +1948,16 @@ main(int argc, char *argv[])
     parameters.control.set_max_steps(2000);
 
     parameters.preconditioner            = Preconditioner::AMG;
-    parameters.test_case                 = TestCase::Realistic;
+    parameters.test_case                 = TestCase::Idealized;
+    parameters.time_stepping_scheme      = TimeStepping::BDF1;
     parameters.fe_degree                 = degree_finite_element;
     parameters.dt                        = 1e-4;
     parameters.final_time                = 0.4;
     parameters.final_time_current        = 3e-3;
     parameters.compute_min_value         = false;
     parameters.estimate_condition_number = false;
-    parameters.output_frequency          = 1;
-    parameters.output_directory          = "results/";
+    parameters.output_frequency          = 10;
+    parameters.output_directory          = "./";
 
     MonodomainProblem<3> problem(parameters);
     problem.run();
