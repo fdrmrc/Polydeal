@@ -526,9 +526,8 @@ private:
   SparsityPattern                                sparsity;
   AffineConstraints<double>                      constraints;
   TrilinosWrappers::PreconditionAMG              amg_preconditioner;
-  // TrilinosWrappers::SparseMatrix                 mass_matrix;
-  TrilinosWrappers::SparseMatrix system_matrix;
-  TrilinosWrappers::SparseMatrix bdf1_matrix;
+  TrilinosWrappers::SparseMatrix                 system_matrix;
+  TrilinosWrappers::SparseMatrix                 bdf1_matrix;
 
   std::unique_ptr<
     Utils::MatrixFreeOperators::
@@ -818,8 +817,6 @@ MonodomainProblem<dim>::setup_problem()
                                              communicator,
                                              locally_relevant_dofs);
 
-  // mass_matrix.reinit(locally_owned_dofs, locally_owned_dofs, dsp,
-  // communicator);
   if (param.preconditioner == Preconditioner::AMG)
     system_matrix.reinit(locally_owned_dofs,
                          locally_owned_dofs,
@@ -1512,12 +1509,8 @@ MonodomainProblem<dim>::assemble_time_independent_matrix()
             param.preconditioner == Preconditioner::AMG ?
               system_matrix :
               multigrid_matrices[multigrid_matrices.max_level()]);
-          // constraints.distribute_local_to_global(cell_mass_matrix,
-          //                                        local_dof_indices,
-          //                                        mass_matrix);
         }
     }
-  // mass_matrix.compress(VectorOperation::add);
 
   if (param.preconditioner == Preconditioner::AMG)
     system_matrix.compress(VectorOperation::add);
@@ -2078,7 +2071,6 @@ MonodomainProblem<dim>::run()
       // Solver for transmembrane potential
       if (time == 0)
         {
-          pcout << "Solving at t= " << time << " (initial step)" << std::endl;
           TrilinosWrappers::PreconditionAMG amg_preconditioner_bdf1;
           typename TrilinosWrappers::PreconditionAMG::AdditionalData amg_data;
           if (dg_fe.degree > 1)
@@ -2086,9 +2078,10 @@ MonodomainProblem<dim>::run()
 
           amg_data.smoother_type         = "Chebyshev";
           amg_data.smoother_sweeps       = 3;
-          amg_data.output_details        = true;
+          amg_data.output_details        = false;
           amg_data.aggregation_threshold = 0.2;
           amg_preconditioner_bdf1.initialize(bdf1_matrix, amg_data);
+          pcout << "Initialized AMG for first time-step" << std::endl;
 
           SolverCG<VectorType> solver_bdf1(
             const_cast<SolverControl &>(param.control));
