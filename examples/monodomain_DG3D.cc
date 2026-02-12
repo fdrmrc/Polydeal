@@ -42,8 +42,6 @@
 
 #include <deal.II/numerics/vector_tools_interpolate.h>
 
-#include <boost/geometry/index/rtree.hpp>
-
 #include <agglomeration_handler.h>
 #include <agglomerator.h>
 #include <multigrid_amg.h>
@@ -175,51 +173,54 @@ enum class Preconditioner
   AGGLOMG
 };
 
+
 // Model parameters for Bueno Orovio
 struct ModelParameters
 {
   SolverControl control;
 
-  double         penalty_constant          = 10.;
-  unsigned int   fe_degree                 = 1;
-  double         dt                        = 1e-2;
-  double         final_time                = 1.;
-  double         final_time_current        = 1.;
-  double         chi                       = 1;
-  double         Cm                        = 1.;
-  double         sigma                     = 1e-4;
-  double         V1                        = 0.3;
-  double         V1m                       = 0.015;
-  double         V2                        = 0.015;
-  double         V2m                       = 0.03;
-  double         V3                        = 0.9087;
-  double         Vhat                      = 1.58;
-  double         Vo                        = 0.006;
-  double         Vso                       = 0.65;
-  double         tauop                     = 6e-3;
-  double         tauopp                    = 6e-3;
-  double         tausop                    = 43e-3;
-  double         tausopp                   = 0.2e-3;
-  double         tausi                     = 2.8723e-3;
-  double         taufi                     = 0.11e-3;
-  double         tau1plus                  = 1.4506e-3;
-  double         tau2plus                  = 0.28;
-  double         tau2inf                   = 0.07;
-  double         tau1p                     = 0.06;
-  double         tau1pp                    = 1.15;
-  double         tau2p                     = 0.07;
-  double         tau2pp                    = 0.02;
-  double         tau3p                     = 2.7342e-3;
-  double         tau3pp                    = 0.003;
-  double         w_star_inf                = 0.94;
-  double         k2                        = 65.0;
-  double         k3                        = 2.0994;
-  double         kso                       = 2.0;
-  Preconditioner preconditioner            = Preconditioner::AMG;
-  std::string    output_directory          = ".";
-  unsigned int   output_frequency          = 1;
-  bool           compute_min_value         = false;
-  bool           estimate_condition_number = false;
+  double                       penalty_constant   = 10.;
+  unsigned int                 fe_degree          = 1;
+  double                       dt                 = 1e-2;
+  double                       final_time         = 1.;
+  double                       final_time_current = 1.;
+  double                       chi                = 1;
+  double                       Cm                 = 1.;
+  double                       sigma              = 1e-4;
+  double                       V1                 = 0.3;
+  double                       V1m                = 0.015;
+  double                       V2                 = 0.015;
+  double                       V2m                = 0.03;
+  double                       V3                 = 0.9087;
+  double                       Vhat               = 1.58;
+  double                       Vo                 = 0.006;
+  double                       Vso                = 0.65;
+  double                       tauop              = 6e-3;
+  double                       tauopp             = 6e-3;
+  double                       tausop             = 43e-3;
+  double                       tausopp            = 0.2e-3;
+  double                       tausi              = 2.8723e-3;
+  double                       taufi              = 0.11e-3;
+  double                       tau1plus           = 1.4506e-3;
+  double                       tau2plus           = 0.28;
+  double                       tau2inf            = 0.07;
+  double                       tau1p              = 0.06;
+  double                       tau1pp             = 1.15;
+  double                       tau2p              = 0.07;
+  double                       tau2pp             = 0.02;
+  double                       tau3p              = 2.7342e-3;
+  double                       tau3pp             = 0.003;
+  double                       w_star_inf         = 0.94;
+  double                       k2                 = 65.0;
+  double                       k3                 = 2.0994;
+  double                       kso                = 2.0;
+  Preconditioner               preconditioner     = Preconditioner::AMG;
+  Utils::Physics::TimeStepping time_stepping_scheme =
+    Utils::Physics::TimeStepping::BDF2;
+  std::string  output_directory          = ".";
+  unsigned int output_frequency          = 1;
+  bool         compute_min_value         = false;
+  bool         estimate_condition_number = false;
 
   enum TestCase test_case = TestCase::Idealized;
 };
@@ -486,6 +487,9 @@ private:
   setup_multigrid();
 
   void
+  assemble_time_independent_matrix_bdf1();
+
+  void
   assemble_time_independent_matrix();
 
   std::array<double, 3>
@@ -501,14 +505,19 @@ private:
   Iion(const double u_old, const std::vector<double> &w) const;
 
   void
-  assemble_time_terms();
+  assemble_time_terms_bdf1();
+
+  void
+  assemble_time_terms_bdf2();
+
   void
   update_w_and_ion();
+
   void
   solve();
+
   void
   output_results();
-
 
   const MPI_Comm                                 communicator;
   parallel::fullydistributed::Triangulation<dim> tria;
@@ -520,8 +529,8 @@ private:
   SparsityPattern                                sparsity;
   AffineConstraints<double>                      constraints;
   TrilinosWrappers::PreconditionAMG              amg_preconditioner;
-  TrilinosWrappers::SparseMatrix                 mass_matrix;
   TrilinosWrappers::SparseMatrix                 system_matrix;
+  TrilinosWrappers::SparseMatrix                 bdf1_matrix;
 
   std::unique_ptr<
     Utils::MatrixFreeOperators::
@@ -541,15 +550,26 @@ private:
 
   // Related to update solution
   using VectorType = LinearAlgebra::distributed::Vector<double>;
-  VectorType locally_relevant_solution_pre;
-  VectorType locally_relevant_solution_current;
 
-  VectorType locally_relevant_w0_pre;
-  VectorType locally_relevant_w0_current;
-  VectorType locally_relevant_w1_pre;
-  VectorType locally_relevant_w1_current;
-  VectorType locally_relevant_w2_pre;
-  VectorType locally_relevant_w2_current;
+  // u_n, u_{n-1}, u_{n+1}
+  VectorType locally_relevant_solution_nm1;
+  VectorType locally_relevant_solution_n;
+  VectorType locally_relevant_solution_np1;
+
+  VectorType extrapoled_solution;
+
+  VectorType locally_relevant_w0_np1; // w_{n+1}
+  VectorType locally_relevant_w0_n;   // w_n
+  VectorType locally_relevant_w0_nm1; // w_{n-1}
+
+  // Same for other gating variables
+  VectorType locally_relevant_w1_n;
+  VectorType locally_relevant_w1_np1;
+  VectorType locally_relevant_w1_nm1;
+
+  VectorType locally_relevant_w2_n;
+  VectorType locally_relevant_w2_np1;
+  VectorType locally_relevant_w2_nm1;
 
   VectorType ion_at_dofs;
 
@@ -660,6 +680,7 @@ MonodomainProblem<dim>::MonodomainProblem(const ModelParameters &parameters)
   bilinear_form_parameters.chi              = param.chi;
   bilinear_form_parameters.Cm               = param.Cm;
   bilinear_form_parameters.sigma            = param.sigma;
+  bilinear_form_parameters.time_stepping    = param.time_stepping_scheme;
 
   monodomain_operator = std::make_unique<
     Utils::MatrixFreeOperators::MonodomainOperatorDG<dim,
@@ -799,24 +820,31 @@ MonodomainProblem<dim>::setup_problem()
                                              communicator,
                                              locally_relevant_dofs);
 
-  mass_matrix.reinit(locally_owned_dofs, locally_owned_dofs, dsp, communicator);
   if (param.preconditioner == Preconditioner::AMG)
     system_matrix.reinit(locally_owned_dofs,
                          locally_owned_dofs,
                          dsp,
                          communicator);
 
-  locally_relevant_solution_pre.reinit(locally_owned_dofs, communicator);
-  locally_relevant_solution_current.reinit(locally_owned_dofs, communicator);
+  bdf1_matrix.reinit(locally_owned_dofs, locally_owned_dofs, dsp, communicator);
+
+  locally_relevant_solution_n.reinit(locally_owned_dofs, communicator);
+  locally_relevant_solution_np1.reinit(locally_owned_dofs, communicator);
+  extrapoled_solution.reinit(locally_owned_dofs, communicator);
   system_rhs.reinit(locally_owned_dofs, communicator);
 
   // Parallel layout of gating variables
-  locally_relevant_w0_pre.reinit(locally_owned_dofs, communicator);
-  locally_relevant_w0_current.reinit(locally_owned_dofs, communicator);
-  locally_relevant_w1_pre.reinit(locally_owned_dofs, communicator);
-  locally_relevant_w1_current.reinit(locally_owned_dofs, communicator);
-  locally_relevant_w2_pre.reinit(locally_owned_dofs, communicator);
-  locally_relevant_w2_current.reinit(locally_owned_dofs, communicator);
+  locally_relevant_w0_n.reinit(locally_owned_dofs, communicator);
+  locally_relevant_w0_np1.reinit(locally_owned_dofs, communicator);
+  locally_relevant_w0_nm1.reinit(locally_owned_dofs, communicator);
+
+  locally_relevant_w1_n.reinit(locally_owned_dofs, communicator);
+  locally_relevant_w1_np1.reinit(locally_owned_dofs, communicator);
+  locally_relevant_w1_nm1.reinit(locally_owned_dofs, communicator);
+
+  locally_relevant_w2_nm1.reinit(locally_owned_dofs, communicator);
+  locally_relevant_w2_n.reinit(locally_owned_dofs, communicator);
+  locally_relevant_w2_np1.reinit(locally_owned_dofs, communicator);
 
   ion_at_dofs.reinit(locally_owned_dofs, communicator);
 
@@ -1164,37 +1192,89 @@ MonodomainProblem<dim>::update_w_and_ion()
 
   // update w from t_n to t_{n+1} on the locally owned DoFs for all w's
   // On top of that, evaluate Iion at DoFs
+
+  // We use BDF1 or BDF2 formula for time integration of gating variables
   for (const types::global_dof_index i : locally_owned_dofs)
     {
       // First, update w's
-      std::array<double, 3> a      = alpha(locally_relevant_solution_pre[i]);
-      std::array<double, 3> b      = beta(locally_relevant_solution_pre[i]);
-      std::array<double, 3> w_infs = w_inf(locally_relevant_solution_pre[i]);
 
-      locally_relevant_w0_current[i] =
-        locally_relevant_w0_pre[i] +
-        dt * ((b[0] - a[0]) * locally_relevant_w0_pre[i] + a[0] * w_infs[0]);
+      if (param.time_stepping_scheme == Utils::Physics::TimeStepping::BDF1)
+        {
+          std::array<double, 3> a      = alpha(locally_relevant_solution_n[i]);
+          std::array<double, 3> b      = beta(locally_relevant_solution_n[i]);
+          std::array<double, 3> w_infs = w_inf(locally_relevant_solution_n[i]);
 
-      locally_relevant_w1_current[i] =
-        locally_relevant_w1_pre[i] +
-        dt * ((b[1] - a[1]) * locally_relevant_w1_pre[i] + a[1] * w_infs[1]);
+          locally_relevant_w0_np1[i] =
+            locally_relevant_w0_n[i] +
+            dt * ((b[0] - a[0]) * locally_relevant_w0_n[i] + a[0] * w_infs[0]);
 
-      locally_relevant_w2_current[i] =
-        locally_relevant_w2_pre[i] +
-        dt * ((b[2] - a[2]) * locally_relevant_w2_pre[i] + a[2] * w_infs[2]);
+          locally_relevant_w1_np1[i] =
+            locally_relevant_w1_n[i] +
+            dt * ((b[1] - a[1]) * locally_relevant_w1_n[i] + a[1] * w_infs[1]);
 
-      // Evaluate ion at u_n, w_{n+1}
-      ion_at_dofs[i] = Iion(locally_relevant_solution_pre[i],
-                            {locally_relevant_w0_current[i],
-                             locally_relevant_w1_current[i],
-                             locally_relevant_w2_current[i]});
+          locally_relevant_w2_np1[i] =
+            locally_relevant_w2_n[i] +
+            dt * ((b[2] - a[2]) * locally_relevant_w2_n[i] + a[2] * w_infs[2]);
+
+          // Evaluate ion at u_n, w_{n+1}
+          ion_at_dofs[i] = Iion(locally_relevant_solution_n[i],
+                                {locally_relevant_w0_np1[i],
+                                 locally_relevant_w1_np1[i],
+                                 locally_relevant_w2_np1[i]});
+        }
+      else if (param.time_stepping_scheme == Utils::Physics::TimeStepping::BDF2)
+        {
+          std::array<double, 3> a      = alpha(extrapoled_solution[i]);
+          std::array<double, 3> b      = beta(extrapoled_solution[i]);
+          std::array<double, 3> w_infs = w_inf(extrapoled_solution[i]);
+
+          // Backward Euler for the first step
+          if (time == 0)
+            {
+              locally_relevant_w0_np1[i] =
+                (locally_relevant_w0_n[i] + dt * a[0] * w_infs[0]) /
+                (1.0 - dt * (b[0] - a[0]));
+
+              locally_relevant_w1_np1[i] =
+                (locally_relevant_w1_n[i] + dt * a[1] * w_infs[1]) /
+                (1.0 - dt * (b[1] - a[1]));
+
+              locally_relevant_w2_np1[i] =
+                (locally_relevant_w2_n[i] + dt * a[2] * w_infs[2]) /
+                (1.0 - dt * (b[2] - a[2]));
+            }
+          else
+            {
+              locally_relevant_w0_np1[i] = (4.0 * locally_relevant_w0_n[i] -
+                                            1.0 * locally_relevant_w0_nm1[i] +
+                                            2.0 * dt * (a[0] * w_infs[0])) /
+                                           (3. - 2.0 * dt * (b[0] - a[0]));
+
+              locally_relevant_w1_np1[i] = (4.0 * locally_relevant_w1_n[i] -
+                                            1.0 * locally_relevant_w1_nm1[i] +
+                                            2.0 * dt * (a[1] * w_infs[1])) /
+                                           (3. - 2.0 * dt * (b[1] - a[1]));
+
+              locally_relevant_w2_np1[i] = (4.0 * locally_relevant_w2_n[i] -
+                                            1.0 * locally_relevant_w2_nm1[i] +
+                                            2.0 * dt * (a[2] * w_infs[2])) /
+                                           (3. - 2.0 * dt * (b[2] - a[2]));
+            }
+
+          // Evaluate ion at u*, w_{n+1}
+          ion_at_dofs[i] = Iion(extrapoled_solution[i],
+                                {locally_relevant_w0_np1[i],
+                                 locally_relevant_w1_np1[i],
+                                 locally_relevant_w2_np1[i]});
+        }
     }
 }
 
 
 
 /*
- * Assemble the time independent block chi*c*M/dt + A
+ * Assemble the time independent term chi*c*M/dt + A or 1.5*chi*c*M/dt + A
+ * depending on the time stepping scheme
  */
 template <int dim>
 void
@@ -1215,6 +1295,10 @@ MonodomainProblem<dim>::assemble_time_independent_matrix()
 
   std::vector<types::global_dof_index> local_dof_indices(dofs_per_cell);
 
+  const double coefficient_time_step =
+    param.time_stepping_scheme == Utils::Physics::TimeStepping::BDF2 ?
+      (param.chi * param.Cm * 1.5 / dt) :
+      (param.chi * param.Cm / dt);
 
   // Loop over standard deal.II cells
   for (const auto &cell : classical_dh.active_cell_iterators())
@@ -1234,12 +1318,12 @@ MonodomainProblem<dim>::assemble_time_independent_matrix()
                   const double Aii =
                     (param.sigma * fe_values->shape_grad(i, q_index) *
                        fe_values->shape_grad(i, q_index) +
-                     (param.chi * param.Cm / dt) *
+                     coefficient_time_step *
                        fe_values->shape_value(i, q_index) *
                        fe_values->shape_value(i, q_index)) *
                     fe_values->JxW(q_index);
 
-                  const double Mii = (param.chi * param.Cm / dt) *
+                  const double Mii = coefficient_time_step *
                                      fe_values->shape_value(i, q_index) *
                                      fe_values->shape_value(i, q_index) *
                                      fe_values->JxW(q_index);
@@ -1252,12 +1336,12 @@ MonodomainProblem<dim>::assemble_time_independent_matrix()
                       const double Aij =
                         (param.sigma * fe_values->shape_grad(i, q_index) *
                            fe_values->shape_grad(j, q_index) +
-                         (param.chi * param.Cm / dt) *
+                         coefficient_time_step *
                            fe_values->shape_value(i, q_index) *
                            fe_values->shape_value(j, q_index)) *
                         fe_values->JxW(q_index);
 
-                      const double Mij = (param.chi * param.Cm / dt) *
+                      const double Mij = coefficient_time_step *
                                          fe_values->shape_value(i, q_index) *
                                          fe_values->shape_value(j, q_index) *
                                          fe_values->JxW(q_index);
@@ -1291,9 +1375,9 @@ MonodomainProblem<dim>::assemble_time_independent_matrix()
 
                       // FEFaceValues::inverse_jacobian returns J^{-1}. To
                       // emulate matrix-free (which sees J^{-T} with reference
-                      // normal aligned to the last coordinate) pick the row of
-                      // J^{-1} corresponding to this face’s reference normal
-                      // and dot it with the physical normal.
+                      // normal aligned to the last coordinate) pick the row
+                      // of J^{-1} corresponding to this face’s reference
+                      // normal and dot it with the physical normal.
                       const unsigned int ref_normal_0 =
                         GeometryInfo<dim>::unit_normal_direction[f];
                       const unsigned int ref_normal_1 = GeometryInfo<dim>::
@@ -1311,9 +1395,9 @@ MonodomainProblem<dim>::assemble_time_independent_matrix()
                             fe_faces1->normal_vector(0)[j];
                         }
 
-                      // Notice: in case of cartesian meshes, this is equivalent
-                      // to
-                      // const double penalty = penalty_constant*(1. / extent1
+                      // Notice: in case of cartesian meshes, this is
+                      // equivalent to const double penalty =
+                      // penalty_constant*(1. / extent1
                       // + 1. / extent2);
                       const double penalty =
                         penalty_constant *
@@ -1433,12 +1517,8 @@ MonodomainProblem<dim>::assemble_time_independent_matrix()
             param.preconditioner == Preconditioner::AMG ?
               system_matrix :
               multigrid_matrices[multigrid_matrices.max_level()]);
-          constraints.distribute_local_to_global(cell_mass_matrix,
-                                                 local_dof_indices,
-                                                 mass_matrix);
         }
     }
-  mass_matrix.compress(VectorOperation::add);
 
   if (param.preconditioner == Preconditioner::AMG)
     system_matrix.compress(VectorOperation::add);
@@ -1449,15 +1529,249 @@ MonodomainProblem<dim>::assemble_time_independent_matrix()
 
 
 
+/*
+ * Assemble the time independent block chi*c*M/dt + A
+ */
 template <int dim>
 void
-MonodomainProblem<dim>::assemble_time_terms()
+MonodomainProblem<dim>::assemble_time_independent_matrix_bdf1()
+{
+  TimerOutput::Scope t(computing_timer, "Assemble time independent terms");
+
+  const unsigned int dofs_per_cell = dg_fe.n_dofs_per_cell();
+
+  FullMatrix<double> cell_matrix(dofs_per_cell, dofs_per_cell);
+  FullMatrix<double> cell_mass_matrix(dofs_per_cell, dofs_per_cell);
+
+  //   Jump matrices needed for DG
+  FullMatrix<double> M11(dofs_per_cell, dofs_per_cell);
+  FullMatrix<double> M12(dofs_per_cell, dofs_per_cell);
+  FullMatrix<double> M21(dofs_per_cell, dofs_per_cell);
+  FullMatrix<double> M22(dofs_per_cell, dofs_per_cell);
+
+  std::vector<types::global_dof_index> local_dof_indices(dofs_per_cell);
+
+
+  // Loop over standard deal.II cells
+  for (const auto &cell : classical_dh.active_cell_iterators())
+    {
+      if (cell->is_locally_owned())
+        {
+          cell_matrix      = 0.;
+          cell_mass_matrix = 0.;
+          fe_values->reinit(cell);
+
+          cell->get_dof_indices(local_dof_indices);
+
+          for (unsigned int q_index : fe_values->quadrature_point_indices())
+            {
+              for (unsigned int i = 0; i < dofs_per_cell; ++i)
+                {
+                  const double Aii =
+                    (param.sigma * fe_values->shape_grad(i, q_index) *
+                       fe_values->shape_grad(i, q_index) +
+                     (param.chi * param.Cm / dt) *
+                       fe_values->shape_value(i, q_index) *
+                       fe_values->shape_value(i, q_index)) *
+                    fe_values->JxW(q_index);
+
+                  const double Mii = (param.chi * param.Cm / dt) *
+                                     fe_values->shape_value(i, q_index) *
+                                     fe_values->shape_value(i, q_index) *
+                                     fe_values->JxW(q_index);
+
+                  cell_matrix(i, i) += Aii;
+                  cell_mass_matrix(i, i) += Mii;
+
+                  for (unsigned int j = i + 1; j < dofs_per_cell; ++j)
+                    {
+                      const double Aij =
+                        (param.sigma * fe_values->shape_grad(i, q_index) *
+                           fe_values->shape_grad(j, q_index) +
+                         (param.chi * param.Cm / dt) *
+                           fe_values->shape_value(i, q_index) *
+                           fe_values->shape_value(j, q_index)) *
+                        fe_values->JxW(q_index);
+
+                      const double Mij = (param.chi * param.Cm / dt) *
+                                         fe_values->shape_value(i, q_index) *
+                                         fe_values->shape_value(j, q_index) *
+                                         fe_values->JxW(q_index);
+
+                      cell_matrix(i, j) += Aij;
+                      cell_matrix(j, i) += Aij;
+                      cell_mass_matrix(i, j) += Mij;
+                      cell_mass_matrix(j, i) += Mij;
+                    }
+                }
+            }
+
+          for (const auto f : cell->face_indices())
+            {
+              // Do nothing at boundary, we have Neumann homogeneous BC
+              if (!cell->face(f)->at_boundary())
+                {
+                  const auto &neigh_cell = cell->neighbor(f);
+
+                  if (cell->global_active_cell_index() <
+                      neigh_cell->global_active_cell_index())
+                    {
+                      // const double extent1 = cell->measure() /
+                      // cell->face(f)->measure(); const double extent2 =
+                      // neigh_cell->measure() /
+                      // neigh_cell->face(cell->neighbor_of_neighbor(f))
+                      // ->measure();
+                      fe_faces0->reinit(cell, f);
+                      fe_faces1->reinit(neigh_cell,
+                                        cell->neighbor_of_neighbor(f));
+
+                      // FEFaceValues::inverse_jacobian returns J^{-1}. To
+                      // emulate matrix-free (which sees J^{-T} with reference
+                      // normal aligned to the last coordinate) pick the row
+                      // of J^{-1} corresponding to this face’s reference
+                      // normal and dot it with the physical normal.
+                      const unsigned int ref_normal_0 =
+                        GeometryInfo<dim>::unit_normal_direction[f];
+                      const unsigned int ref_normal_1 = GeometryInfo<dim>::
+                        unit_normal_direction[cell->neighbor_of_neighbor(f)];
+
+                      double h_inverse_0 = 0.;
+                      double h_inverse_1 = 0.;
+                      for (unsigned int j = 0; j < dim; ++j)
+                        {
+                          h_inverse_0 +=
+                            fe_faces0->inverse_jacobian(0)[ref_normal_0][j] *
+                            fe_faces0->normal_vector(0)[j];
+                          h_inverse_1 +=
+                            fe_faces1->inverse_jacobian(0)[ref_normal_1][j] *
+                            fe_faces1->normal_vector(0)[j];
+                        }
+
+                      // Notice: in case of cartesian meshes, this is
+                      // equivalent to const double penalty =
+                      // penalty_constant*(1. / extent1
+                      // + 1. / extent2);
+                      const double penalty =
+                        penalty_constant *
+                        (std::abs(h_inverse_0) + std::abs(h_inverse_1));
+
+                      std::vector<types::global_dof_index>
+                        local_dof_indices_neighbor(dofs_per_cell);
+
+                      M11 = 0.;
+                      M12 = 0.;
+                      M21 = 0.;
+                      M22 = 0.;
+
+                      const auto &normals = fe_faces0->get_normal_vectors();
+                      // M11
+                      for (unsigned int q_index :
+                           fe_faces0->quadrature_point_indices())
+                        {
+                          for (unsigned int i = 0; i < dofs_per_cell; ++i)
+                            {
+                              for (unsigned int j = 0; j < dofs_per_cell; ++j)
+                                {
+                                  M11(i, j) +=
+                                    +param.sigma *
+                                    (-0.5 * fe_faces0->shape_grad(i, q_index) *
+                                       normals[q_index] *
+                                       fe_faces0->shape_value(j, q_index) -
+                                     0.5 * fe_faces0->shape_grad(j, q_index) *
+                                       normals[q_index] *
+                                       fe_faces0->shape_value(i, q_index) +
+                                     (penalty)*fe_faces0->shape_value(i,
+                                                                      q_index) *
+                                       fe_faces0->shape_value(j, q_index)) *
+                                    fe_faces0->JxW(q_index);
+
+                                  M12(i, j) +=
+                                    +param.sigma *
+                                    (0.5 * fe_faces0->shape_grad(i, q_index) *
+                                       normals[q_index] *
+                                       fe_faces1->shape_value(j, q_index) -
+                                     0.5 * fe_faces1->shape_grad(j, q_index) *
+                                       normals[q_index] *
+                                       fe_faces0->shape_value(i, q_index) -
+                                     (penalty)*fe_faces0->shape_value(i,
+                                                                      q_index) *
+                                       fe_faces1->shape_value(j, q_index)) *
+                                    fe_faces1->JxW(q_index);
+
+                                  // A10
+                                  M21(i, j) +=
+                                    +param.sigma *
+                                    (-0.5 * fe_faces1->shape_grad(i, q_index) *
+                                       normals[q_index] *
+                                       fe_faces0->shape_value(j, q_index) +
+                                     0.5 * fe_faces0->shape_grad(j, q_index) *
+                                       normals[q_index] *
+                                       fe_faces1->shape_value(i, q_index) -
+                                     (penalty)*fe_faces1->shape_value(i,
+                                                                      q_index) *
+                                       fe_faces0->shape_value(j, q_index)) *
+                                    fe_faces1->JxW(q_index);
+
+                                  // A11
+                                  M22(i, j) +=
+                                    +param.sigma *
+                                    (0.5 * fe_faces1->shape_grad(i, q_index) *
+                                       normals[q_index] *
+                                       fe_faces1->shape_value(j, q_index) +
+                                     0.5 * fe_faces1->shape_grad(j, q_index) *
+                                       normals[q_index] *
+                                       fe_faces1->shape_value(i, q_index) +
+                                     (penalty)*fe_faces1->shape_value(i,
+                                                                      q_index) *
+                                       fe_faces1->shape_value(j, q_index)) *
+                                    fe_faces1->JxW(q_index);
+                                }
+                            }
+                        }
+
+                      // distribute DoFs accordingly
+
+                      neigh_cell->get_dof_indices(local_dof_indices_neighbor);
+
+                      constraints.distribute_local_to_global(M11,
+                                                             local_dof_indices,
+                                                             bdf1_matrix);
+                      constraints.distribute_local_to_global(
+                        M12,
+                        local_dof_indices,
+                        local_dof_indices_neighbor,
+                        bdf1_matrix);
+                      constraints.distribute_local_to_global(
+                        M21,
+                        local_dof_indices_neighbor,
+                        local_dof_indices,
+                        bdf1_matrix);
+                      constraints.distribute_local_to_global(
+                        M22, local_dof_indices_neighbor, bdf1_matrix);
+
+                    } // check idx neighbors
+                }     // over faces
+            }
+          constraints.distribute_local_to_global(cell_matrix,
+                                                 local_dof_indices,
+                                                 bdf1_matrix);
+        }
+    }
+
+  bdf1_matrix.compress(VectorOperation::add);
+}
+
+
+
+template <int dim>
+void
+MonodomainProblem<dim>::assemble_time_terms_bdf1()
 {
   const unsigned int dofs_per_cell = dg_fe.n_dofs_per_cell();
   Vector<double>     cell_rhs(dofs_per_cell);
 
   std::vector<types::global_dof_index> local_dof_indices(dofs_per_cell);
-  const double                         factor = param.chi * param.Cm / dt;
+  const double                         bdf1_factor = param.chi * param.Cm / dt;
 
   // Loop over standard deal.II cells
   for (const auto &cell : classical_dh.active_cell_iterators())
@@ -1478,7 +1792,7 @@ MonodomainProblem<dim>::assemble_time_terms()
           fe_values->get_function_values(ion_at_dofs, ion_at_qpoints);
 
           std::vector<double> solution_current(n_qpoints);
-          fe_values->get_function_values(locally_relevant_solution_pre,
+          fe_values->get_function_values(locally_relevant_solution_n,
                                          solution_current);
 
           // Get local values of current solution, to be used inside the non
@@ -1491,8 +1805,71 @@ MonodomainProblem<dim>::assemble_time_terms()
               for (unsigned int i = 0; i < dofs_per_cell; ++i)
                 {
                   cell_rhs(i) += (applied_currents[q_index] -
-                                  param.Cm * ion_at_qpoints[q_index] +
-                                  factor * solution_current[q_index]) *
+                                  param.chi * ion_at_qpoints[q_index] +
+                                  bdf1_factor * solution_current[q_index]) *
+                                 fe_values->shape_value(i, q_index) *
+                                 fe_values->JxW(q_index);
+                }
+            }
+
+          constraints.distribute_local_to_global(cell_rhs,
+                                                 local_dof_indices,
+                                                 system_rhs);
+        }
+    }
+  system_rhs.compress(VectorOperation::add);
+}
+
+
+
+template <int dim>
+void
+MonodomainProblem<dim>::assemble_time_terms_bdf2()
+{
+  const unsigned int dofs_per_cell = dg_fe.n_dofs_per_cell();
+  Vector<double>     cell_rhs(dofs_per_cell);
+
+  std::vector<types::global_dof_index> local_dof_indices(dofs_per_cell);
+  const double bdf2_factor = param.chi * param.Cm / (2. * dt);
+
+  // Loop over standard deal.II cells
+  for (const auto &cell : classical_dh.active_cell_iterators())
+    {
+      if (cell->is_locally_owned())
+        {
+          cell_rhs = 0.;
+
+          fe_values->reinit(cell);
+
+          const auto        &q_points  = fe_values->get_quadrature_points();
+          const unsigned int n_qpoints = q_points.size();
+
+          std::vector<double> applied_currents(n_qpoints);
+          Iext->value_list(q_points, applied_currents);
+
+          std::vector<double> ion_at_qpoints(n_qpoints);
+          fe_values->get_function_values(ion_at_dofs, ion_at_qpoints);
+
+          std::vector<double> solution_previous(n_qpoints);
+          fe_values->get_function_values(locally_relevant_solution_nm1,
+                                         solution_previous);
+
+          std::vector<double> solution_current(n_qpoints);
+          fe_values->get_function_values(locally_relevant_solution_n,
+                                         solution_current);
+
+          // Get local values of current solution, to be used inside the non
+          // linear reaction matrix
+          cell->get_dof_indices(local_dof_indices);
+
+          for (unsigned int q_index : fe_values->quadrature_point_indices())
+            {
+              for (unsigned int i = 0; i < dofs_per_cell; ++i)
+                {
+                  cell_rhs(i) += (applied_currents[q_index] -
+                                  param.chi * ion_at_qpoints[q_index] +
+                                  bdf2_factor * (4 * solution_current[q_index] -
+                                                 solution_previous[q_index])) *
                                  fe_values->shape_value(i, q_index) *
                                  fe_values->JxW(q_index);
                 }
@@ -1518,12 +1895,12 @@ MonodomainProblem<dim>::solve()
     start_solver = MPI_Wtime();
   if (param.preconditioner == Preconditioner::AMG)
     solver.solve(system_operator,
-                 locally_relevant_solution_current,
+                 locally_relevant_solution_np1,
                  system_rhs,
                  amg_preconditioner);
   else
     solver.solve(system_operator,
-                 locally_relevant_solution_current,
+                 locally_relevant_solution_np1,
                  system_rhs,
                  *preconditioner);
   if constexpr (measure_solve_times)
@@ -1547,11 +1924,11 @@ MonodomainProblem<dim>::output_results()
 
   DataOut<dim> data_out;
   data_out.attach_dof_handler(classical_dh);
-  data_out.add_data_vector(locally_relevant_solution_current,
+  data_out.add_data_vector(locally_relevant_solution_np1,
                            "transmembrane_potential",
                            DataOut<dim>::type_dof_data);
 
-  data_out.add_data_vector(locally_relevant_w0_current,
+  data_out.add_data_vector(locally_relevant_w0_np1,
                            "gating_variable",
                            DataOut<dim>::type_dof_data);
 
@@ -1636,17 +2013,27 @@ MonodomainProblem<dim>::run()
         << std::endl;
 
   // Set initial conditions
-  locally_relevant_solution_pre     = -84e-3;
-  locally_relevant_solution_current = locally_relevant_solution_pre;
+  locally_relevant_solution_n   = -84e-3;
+  locally_relevant_solution_np1 = locally_relevant_solution_n;
 
-  locally_relevant_w0_pre     = 1.;
-  locally_relevant_w0_current = locally_relevant_w0_pre;
+  locally_relevant_w0_n   = 1.;
+  locally_relevant_w0_np1 = locally_relevant_w0_n;
 
-  locally_relevant_w1_pre     = 1.;
-  locally_relevant_w1_current = locally_relevant_w1_pre;
+  locally_relevant_w1_n   = 1.;
+  locally_relevant_w1_np1 = locally_relevant_w1_n;
 
-  locally_relevant_w2_pre     = 0.;
-  locally_relevant_w2_current = locally_relevant_w2_pre;
+  locally_relevant_w2_n   = 0.;
+  locally_relevant_w2_np1 = locally_relevant_w2_n;
+
+  // Needed only by BDF2 time stepping
+  if (param.time_stepping_scheme == Utils::Physics::TimeStepping::BDF2)
+    {
+      extrapoled_solution           = locally_relevant_solution_n;
+      locally_relevant_w2_nm1       = locally_relevant_w2_n;
+      locally_relevant_solution_nm1 = locally_relevant_solution_n;
+      locally_relevant_w0_nm1       = locally_relevant_w0_n;
+      locally_relevant_w1_nm1       = locally_relevant_w1_n;
+    }
   output_results();
 
   // Assemble time independent term
@@ -1709,9 +2096,6 @@ MonodomainProblem<dim>::run()
 
   while (time <= end_time)
     {
-      time += dt;
-      Iext->set_time(time);
-
       // Solve the ODEs for w
       update_w_and_ion();
 
@@ -1720,22 +2104,101 @@ MonodomainProblem<dim>::run()
         {
           TimerOutput::Scope t(computing_timer,
                                "Assemble time dependent terms (matrix-free)");
-          solution_minus_ion = locally_relevant_solution_pre;
-          solution_minus_ion *= (param.Cm / dt);
-          solution_minus_ion -= ion_at_dofs;
-          monodomain_operator->rhs(system_rhs, solution_minus_ion, *Iext);
+          if (param.time_stepping_scheme == Utils::Physics::TimeStepping::BDF1)
+            {
+              solution_minus_ion = locally_relevant_solution_n;
+              solution_minus_ion *= (param.Cm / dt);
+              solution_minus_ion -= ion_at_dofs;
+              monodomain_operator->rhs(system_rhs, solution_minus_ion, *Iext);
+            }
+          else if (param.time_stepping_scheme ==
+                   Utils::Physics::TimeStepping::BDF2)
+            {
+              if (time == 0)
+                {
+                  // first time step is BDF1
+                  solution_minus_ion = locally_relevant_solution_n;
+                  solution_minus_ion *= (param.Cm / dt);
+                  solution_minus_ion -= ion_at_dofs;
+                  monodomain_operator->rhs(system_rhs,
+                                           solution_minus_ion,
+                                           *Iext);
+
+                  assemble_time_independent_matrix_bdf1();
+                }
+              else
+                {
+                  solution_minus_ion = locally_relevant_solution_n;
+                  solution_minus_ion *= 4.;
+                  solution_minus_ion -= locally_relevant_solution_nm1;
+
+                  solution_minus_ion *= (param.Cm / (2. * dt));
+                  solution_minus_ion -= ion_at_dofs;
+                  monodomain_operator->rhs(system_rhs,
+                                           solution_minus_ion,
+                                           *Iext);
+                }
+            }
+          else
+            DEAL_II_NOT_IMPLEMENTED();
         }
       else
         {
+          // matrix-based variant
+
           TimerOutput::Scope t(computing_timer,
                                "Assemble time dependent terms (matrix-based)");
-          assemble_time_terms();
+
+          if (param.time_stepping_scheme == Utils::Physics::TimeStepping::BDF1)
+            assemble_time_terms_bdf1();
+          else if (param.time_stepping_scheme ==
+                   Utils::Physics::TimeStepping::BDF2)
+            {
+              if (time == 0)
+                {
+                  assemble_time_terms_bdf1();
+                  assemble_time_independent_matrix_bdf1();
+                }
+              else
+                assemble_time_terms_bdf2();
+            }
+          else
+            DEAL_II_NOT_IMPLEMENTED();
         }
 
-      // Solver for transmembrane potential
-      solve();
+      // Solve for transmembrane potential
+      if (time == 0 &&
+          param.time_stepping_scheme == Utils::Physics::TimeStepping::BDF2)
+        {
+          TrilinosWrappers::PreconditionAMG amg_preconditioner_bdf1;
+          typename TrilinosWrappers::PreconditionAMG::AdditionalData amg_data;
+          if (dg_fe.degree > 1)
+            amg_data.higher_order_elements = true;
+
+          amg_data.smoother_type         = "Chebyshev";
+          amg_data.smoother_sweeps       = 3;
+          amg_data.output_details        = false;
+          amg_data.aggregation_threshold = 0.2;
+          amg_preconditioner_bdf1.initialize(bdf1_matrix, amg_data);
+          pcout << "Using AMG for first time-step (BDF2 time-stepping)"
+                << std::endl;
+
+          SolverCG<VectorType> solver_bdf1(
+            const_cast<SolverControl &>(param.control));
+          solver_bdf1.solve(bdf1_matrix,
+                            locally_relevant_solution_np1,
+                            system_rhs,
+                            amg_preconditioner_bdf1);
+        }
+      else
+        {
+          solve();
+        }
+
       pcout << "Solved at t= " << time << std::endl;
       ++iter_count;
+      time += dt;
+      Iext->set_time(time);
 
       // output results
       if (iter_count % param.output_frequency == 0)
@@ -1744,8 +2207,8 @@ MonodomainProblem<dim>::run()
       // Store minimum value current action potential on each processor
       if (param.compute_min_value)
         {
-          min_value = *locally_relevant_solution_current.begin();
-          for (const double v : locally_relevant_solution_current)
+          min_value = *locally_relevant_solution_np1.begin();
+          for (const double v : locally_relevant_solution_np1)
             if (v < min_value)
               min_value = v;
 
@@ -1754,17 +2217,39 @@ MonodomainProblem<dim>::run()
         }
 
       // update solutions
-      locally_relevant_solution_pre = locally_relevant_solution_current;
-      locally_relevant_w0_pre       = locally_relevant_w0_current;
-      locally_relevant_w1_pre       = locally_relevant_w1_current;
-      locally_relevant_w2_pre       = locally_relevant_w2_current;
+      if (param.time_stepping_scheme == Utils::Physics::TimeStepping::BDF1)
+        {
+          // update solutions and gating variables for BDF1
+          locally_relevant_solution_n = locally_relevant_solution_np1;
+
+          locally_relevant_w0_n = locally_relevant_w0_np1;
+          locally_relevant_w1_n = locally_relevant_w1_np1;
+          locally_relevant_w2_n = locally_relevant_w2_np1;
+        }
+      else if (param.time_stepping_scheme == Utils::Physics::TimeStepping::BDF2)
+        {
+          locally_relevant_solution_nm1 = locally_relevant_solution_n;
+          locally_relevant_solution_n   = locally_relevant_solution_np1;
+
+          // update extrapolated solution for BDF2
+          extrapoled_solution = locally_relevant_solution_n;
+          extrapoled_solution *= 2.;
+          extrapoled_solution -= locally_relevant_solution_nm1;
+
+          locally_relevant_w0_nm1 = locally_relevant_w0_n;
+          locally_relevant_w0_n   = locally_relevant_w0_np1;
+
+          locally_relevant_w1_nm1 = locally_relevant_w1_n;
+          locally_relevant_w1_n   = locally_relevant_w1_np1;
+
+          locally_relevant_w2_nm1 = locally_relevant_w2_n;
+          locally_relevant_w2_n   = locally_relevant_w2_np1;
+        }
 
       // reset time dependent terms
       system_rhs = 0.;
     }
   pcout << std::endl;
-
-
 
   if (Utilities::MPI::this_mpi_process(communicator) == 0)
     {
@@ -1880,14 +2365,15 @@ main(int argc, char *argv[])
 
     parameters.preconditioner            = Preconditioner::AMG;
     parameters.test_case                 = TestCase::Realistic;
+    parameters.time_stepping_scheme      = Utils::Physics::TimeStepping::BDF2;
     parameters.fe_degree                 = degree_finite_element;
     parameters.dt                        = 1e-4;
     parameters.final_time                = 0.4;
     parameters.final_time_current        = 3e-3;
-    parameters.compute_min_value         = false;
+    parameters.compute_min_value         = true;
     parameters.estimate_condition_number = false;
-    parameters.output_frequency          = 1;
-    parameters.output_directory          = "results/";
+    parameters.output_frequency          = 10;
+    parameters.output_directory          = "./";
 
     MonodomainProblem<3> problem(parameters);
     problem.run();

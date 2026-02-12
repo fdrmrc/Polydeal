@@ -353,13 +353,21 @@ namespace Utils
 
   namespace Physics
   {
+
+    enum class TimeStepping
+    {
+      BDF1,
+      BDF2
+    };
+
     struct BilinearFormParameters
     {
-      double dt               = 1e-4;
-      double penalty_constant = 10.;
-      double chi              = 1e5;
-      double Cm               = 1e-2;
-      double sigma            = 12e-2;
+      double       dt               = 1e-4;
+      double       penalty_constant = 10.;
+      double       chi              = 1e5;
+      double       Cm               = 1e-2;
+      double       sigma            = 12e-2;
+      TimeStepping time_stepping    = TimeStepping::BDF1;
     };
 
   } // namespace Physics
@@ -1120,6 +1128,12 @@ namespace Utils
       MonodomainOperatorDG(const Physics::BilinearFormParameters &parameters_)
       {
         parameters = parameters_;
+        if (parameters.time_stepping == Utils::Physics::TimeStepping::BDF1)
+          factor = (parameters.chi * parameters.Cm) / parameters.dt;
+        else if (parameters.time_stepping == Utils::Physics::TimeStepping::BDF2)
+          factor = (parameters.chi * parameters.Cm * 1.5) / parameters.dt;
+        else
+          DEAL_II_NOT_IMPLEMENTED();
       };
 
       void
@@ -1271,13 +1285,14 @@ namespace Utils
       {
         // Boilerplate for SIP-DG form. TODO: unify interface.
         //////////////////////////////////////////////////
-        const double factor = (parameters.chi * parameters.Cm) / parameters.dt;
 
         const auto cell_operation = [&](auto &phi) {
           phi.evaluate(EvaluationFlags::gradients | EvaluationFlags::values);
           for (unsigned int q = 0; q < phi.n_q_points; ++q)
             {
+              // chi*Cm/dt M
               phi.submit_value(phi.get_value(q) * factor, q);
+              // sigma K
               phi.submit_gradient(phi.get_gradient(q) * parameters.sigma, q);
             }
           phi.integrate(EvaluationFlags::gradients | EvaluationFlags::values);
@@ -1375,7 +1390,6 @@ namespace Utils
       {
         // Boilerplate for SIP-DG form. TODO: unify interface.
         //////////////////////////////////////////////////
-        const double factor = (parameters.chi * parameters.Cm) / parameters.dt;
 
         const auto cell_operation = [&](auto &phi) {
           phi.evaluate(EvaluationFlags::gradients | EvaluationFlags::values);
@@ -1488,7 +1502,6 @@ namespace Utils
         const LinearAlgebra::distributed::Vector<number> &src) const
       {
         FEEvaluation<dim, degree, n_q_points, n_components, number> phi(data);
-        const double factor = (parameters.chi * parameters.Cm) / parameters.dt;
 
         for (unsigned int cell = 0; cell < data.n_cell_batches(); ++cell)
           {
@@ -1555,7 +1568,6 @@ namespace Utils
                   const std::pair<unsigned int, unsigned int> &cell_range) const
       {
         FEEvaluation<dim, degree, n_q_points, n_components, number> phi(data);
-        const double factor = (parameters.chi * parameters.Cm) / parameters.dt;
 
         for (unsigned int cell = cell_range.first; cell < cell_range.second;
              ++cell)
@@ -1657,7 +1669,6 @@ namespace Utils
         FEEvaluation<dim, degree, n_q_points, n_components, number> phi(data);
         AlignedVector<VectorizedArray<number>> local_diagonal_vector(
           phi.dofs_per_cell);
-        const double factor = (parameters.chi * parameters.Cm) / parameters.dt;
 
         for (unsigned int cell = cell_range.first; cell < cell_range.second;
              ++cell)
@@ -1806,6 +1817,7 @@ namespace Utils
       mutable TrilinosWrappers::SparseMatrix     system_matrix;
       AffineConstraints<number>                  constraints;
       Physics::BilinearFormParameters            parameters;
+      double                                     factor;
     };
 
 
