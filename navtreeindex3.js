@@ -1,5 +1,7 @@
 var NAVTREEINDEX3 =
 {
+"group__Exceptions.html#gab8acfb75b7e4089f442a4a7f368de5b6":[1,0,57,66,13],
+"group__Exceptions.html#gab9b9d756a784bf687dcfd7d7d3a375f6":[1,0,148,10],
 "group__Exceptions.html#gabbb9a9d5e6817248657be42b69290721":[1,0,25,16],
 "group__Exceptions.html#gabbeaf5b4b6b4a6d17db9ecbdbe3554a0":[1,0,97,13],
 "group__Exceptions.html#gabe11f3d60f079b1a7cdb956e0735ccb0":[1,0,57,137],
@@ -247,7 +249,5 @@ var NAVTREEINDEX3 =
 "namespaceDataOutBase.html#a43d630f74f0f5bac0178e3f7a16614ec":[1,0,15,20],
 "namespaceDataOutBase.html#a46e8edf69620ff3c9d9d034cff4fd7e1":[1,0,15,38],
 "namespaceDataOutBase.html#a5728cfc190440ab2f620f5ebf11dc7a0":[1,0,15,37],
-"namespaceDataOutBase.html#a6441687a28d4ed1d33ba46fb6ff091a9":[1,0,15,40],
-"namespaceDataOutBase.html#a6b08d12d6f24127f048f3e008f6344fa":[1,0,15,21],
-"namespaceDataOutBase.html#a6cb8c60785a483ffaf2644ab93508da9":[1,0,15,44]
+"namespaceDataOutBase.html#a6441687a28d4ed1d33ba46fb6ff091a9":[1,0,15,40]
 };

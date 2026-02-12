@@ -30,6 +30,7 @@ var class_utils_1_1_matrix_free_operators_1_1_monodomain_operator_d_g =
     [ "vmult_add", "class_utils_1_1_matrix_free_operators_1_1_monodomain_operator_d_g.html#ace094b70ddcb8fbf85f4c294bd0f7338", null ],
     [ "constraints", "class_utils_1_1_matrix_free_operators_1_1_monodomain_operator_d_g.html#a7532b89125b760131e9ee33d1d3e162d", null ],
     [ "data", "class_utils_1_1_matrix_free_operators_1_1_monodomain_operator_d_g.html#a54257523746aa1caaecf838109f59af8", null ],
+    [ "factor", "class_utils_1_1_matrix_free_operators_1_1_monodomain_operator_d_g.html#a70b860d6477759109f98a399b0613a59", null ],
     [ "fe_degree", "class_utils_1_1_matrix_free_operators_1_1_monodomain_operator_d_g.html#a6a3d8bf24b8d99e0b20a42a8af2b1a5b", null ],
     [ "inverse_diagonal_entries", "class_utils_1_1_matrix_free_operators_1_1_monodomain_operator_d_g.html#a5850aeee32a3df5eed2c575f25d9fe00", null ],
     [ "parameters", "class_utils_1_1_matrix_free_operators_1_1_monodomain_operator_d_g.html#a1191ea99caa919737bdd39077c2ccacc", null ],
