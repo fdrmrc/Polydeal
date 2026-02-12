@@ -59,9 +59,12 @@ class SparseDirectMUMPS
 #endif
 
 // solver-related parameters
-static constexpr double       TOL                 = 3e-3;
 static constexpr bool         measure_solve_times = true;
 static constexpr unsigned int starting_level      = 2;
+
+// Stimulus application parameters
+static constexpr double stimulus_radius = 5e-3; // 3e-3;
+
 
 // matrix-free related parameters
 static constexpr bool         use_matrix_free_action = true;
@@ -287,16 +290,23 @@ AppliedCurrent<dim>::value(const Point<dim> &point,
                            const unsigned int /*component*/) const
 {
   const double t = this->get_time();
-  if ((p1.distance(point) < TOL || p2.distance(point) < TOL ||
-       p3.distance(point) < TOL) &&
-      (t >= 0. && t <= t_end_current))
+
+  // Check if we're in the stimulus time window
+  if (t > t_end_current)
+    return 0.;
+
+  // Check if point is within stimulus region (sphere around any stimulus point)
+  const bool in_stimulus_region = (p1.distance(point) < stimulus_radius ||
+                                   p2.distance(point) < stimulus_radius ||
+                                   p3.distance(point) < stimulus_radius);
+
+  if (in_stimulus_region)
     {
 #ifdef AGGLO_DEBUG
       if (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
         std::cout << "Applying stimuli" << std::endl;
 #endif
       return 300.;
-      // return 34.28;
     }
   else
     return 0.;
@@ -555,6 +565,9 @@ private:
   VectorType locally_relevant_solution_nm1;
   VectorType locally_relevant_solution_n;
   VectorType locally_relevant_solution_np1;
+
+  // solution expressed in mV
+  VectorType post_processed_solution;
 
   VectorType extrapoled_solution;
 
@@ -830,6 +843,7 @@ MonodomainProblem<dim>::setup_problem()
 
   locally_relevant_solution_n.reinit(locally_owned_dofs, communicator);
   locally_relevant_solution_np1.reinit(locally_owned_dofs, communicator);
+  post_processed_solution.reinit(locally_owned_dofs, communicator);
   extrapoled_solution.reinit(locally_owned_dofs, communicator);
   system_rhs.reinit(locally_owned_dofs, communicator);
 
@@ -1162,24 +1176,26 @@ MonodomainProblem<dim>::setup_multigrid()
 
 template <int dim>
 double
-MonodomainProblem<dim>::Iion(const double               u_old,
-                             const std::vector<double> &w) const
+MonodomainProblem<dim>::Iion(const double u, const std::vector<double> &w) const
 {
-  double Iion_val =
-    Utils::heaviside_sharp(u_old, param.V1) * (u_old - param.V1) *
-      (param.Vhat - u_old) * w[0] / param.taufi -
-    (1.0 - Utils::heaviside_sharp(u_old, param.V2)) * (u_old - 0.) /
-      (Utils::heaviside_sharp(u_old, param.Vo) * (param.tauopp - param.tauop) +
-       param.tauop) -
-    Utils::heaviside_sharp(u_old, param.V2) /
-      (Utils::heaviside(u_old, param.Vso, param.kso) *
+  const double Iion_fi = (-Utils::heaviside_sharp(u, param.V1) *
+                          (u - param.V1) * (param.Vhat - u) * w[0]) /
+                         param.taufi;
+
+  const double Iion_so =
+    ((1.0 - Utils::heaviside_sharp(u, param.V2)) * (u - param.Vo)) /
+      (Utils::heaviside_sharp(u, param.Vo) * (param.tauopp - param.tauop) +
+       param.tauop) +
+    Utils::heaviside_sharp(u, param.V2) /
+      (Utils::heaviside(u, param.Vso, param.kso) *
          (param.tausopp - param.tausop) +
-       param.tausop) +
-    Utils::heaviside_sharp(u_old, param.V2) * w[1] * w[2] / param.tausi;
+       param.tausop);
 
-  Iion_val = -Iion_val;
+  const double Iion_si =
+    -(Utils::heaviside_sharp(u, param.V2) * w[1] * w[2]) / param.tausi;
 
-  return Iion_val;
+
+  return Iion_fi + Iion_so + Iion_si;
 }
 
 
@@ -1922,10 +1938,18 @@ MonodomainProblem<dim>::output_results()
 {
   TimerOutput::Scope t(computing_timer, "Output results");
 
+  for (const types::global_dof_index i :
+       locally_relevant_solution_np1.locally_owned_elements())
+    post_processed_solution[i] = 85.7 * locally_relevant_solution_np1[i] - 84.0;
+
   DataOut<dim> data_out;
   data_out.attach_dof_handler(classical_dh);
   data_out.add_data_vector(locally_relevant_solution_np1,
                            "transmembrane_potential",
+                           DataOut<dim>::type_dof_data);
+
+  data_out.add_data_vector(post_processed_solution,
+                           "transmembrane_potential [mV]",
                            DataOut<dim>::type_dof_data);
 
   data_out.add_data_vector(locally_relevant_w0_np1,
@@ -2013,7 +2037,7 @@ MonodomainProblem<dim>::run()
         << std::endl;
 
   // Set initial conditions
-  locally_relevant_solution_n   = -84e-3;
+  locally_relevant_solution_n   = 0.; //-84e-3;
   locally_relevant_solution_np1 = locally_relevant_solution_n;
 
   locally_relevant_w0_n   = 1.;
@@ -2360,11 +2384,12 @@ main(int argc, char *argv[])
 
   {
     ModelParameters parameters;
-    parameters.control.set_tolerance(1e-13); // used in CG solver
+    parameters.control.set_tolerance(1e-15); // used in CG solver
     parameters.control.set_max_steps(2000);
+    parameters.control.log_history(true);
 
     parameters.preconditioner            = Preconditioner::AMG;
-    parameters.test_case                 = TestCase::Realistic;
+    parameters.test_case                 = TestCase::Idealized;
     parameters.time_stepping_scheme      = Utils::Physics::TimeStepping::BDF2;
     parameters.fe_degree                 = degree_finite_element;
     parameters.dt                        = 1e-4;
