@@ -70,7 +70,7 @@ subsection Monodomain Solver
   end
 
   subsection Test case
-    set Final time                                  = 3e-3
+    set Final time                                  = 0.4
     # Final time for external current application. After this time, the
     # stimulus will be turned off.
     set Final time for external current application = 3e-3
