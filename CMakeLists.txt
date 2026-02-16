@@ -28,6 +28,10 @@ ENDIF()
 DEAL_II_INITIALIZE_CACHED_VARIABLES()
 PROJECT(polydeal)
 
+# Define mesh directory path
+SET(MESH_DIR "${CMAKE_SOURCE_DIR}/meshes")
+MESSAGE(STATUS "Mesh directory: ${MESH_DIR}")
+
 # Enable testing and descent into tests/ subdirectory:
 ENABLE_TESTING()
 INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/include)

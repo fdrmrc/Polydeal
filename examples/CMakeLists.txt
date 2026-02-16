@@ -41,8 +41,12 @@ FOREACH(_build_type ${_d2_build_types})
 
             add_executable( ${testname} ${testsourcefile} )
 
-            # Make sure YourLib is linked to each app
+            # Make sure the library is linked to each app
             target_link_libraries(${testname} ${_lib})
+            
+            # Define MESH_DIR for the executable
+            target_compile_definitions(${testname} PRIVATE MESH_DIR="${MESH_DIR}")
+            
             DEAL_II_SETUP_TARGET(${testname} ${_BUILD_TYPE})
             INSTALL(TARGETS ${testname})
             set(testname ${testname}${_p})

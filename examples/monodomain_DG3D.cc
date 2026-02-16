@@ -2089,9 +2089,9 @@ MonodomainProblem<dim>::run()
     grid_in.attach_triangulation(tria_dummy);
     std::string mesh_path;
     if (param.test_case == "Idealized")
-      mesh_path = "../../meshes/idealized_lv.msh";
+      mesh_path = std::string(MESH_DIR) + "/idealized_lv.msh";
     else if (param.test_case == "Realistic")
-      mesh_path = "../../meshes/realistic_lv.msh";
+      mesh_path = std::string(MESH_DIR) + "/realistic_lv.msh";
     else
       AssertThrow(false, ExcMessage("No mesh selected!"));
     std::ifstream mesh_file(mesh_path);
