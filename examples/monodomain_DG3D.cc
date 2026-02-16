@@ -2,6 +2,9 @@
 
 #include <deal.II/base/conditional_ostream.h>
 #include <deal.II/base/function.h>
+#include <deal.II/base/parameter_acceptor.h>
+#include <deal.II/base/parameter_handler.h>
+#include <deal.II/base/parsed_function.h>
 #include <deal.II/base/table_handler.h>
 #include <deal.II/base/timer.h>
 
@@ -20,15 +23,11 @@
 #include <deal.II/grid/grid_out.h>
 #include <deal.II/grid/tria.h>
 
+#include <deal.II/lac/precondition.h>
+#include <deal.II/lac/solver_cg.h>
 #include <deal.II/lac/sparse_direct.h>
 #include <deal.II/lac/sparse_matrix.h>
 #include <deal.II/lac/sparsity_tools.h>
-
-#include <deal.II/numerics/data_out.h>
-
-// Trilinos linear algebra is employed for parallel computations
-#include <deal.II/lac/precondition.h>
-#include <deal.II/lac/solver_cg.h>
 #include <deal.II/lac/trilinos_precondition.h>
 #include <deal.II/lac/trilinos_solver.h>
 #include <deal.II/lac/trilinos_sparse_matrix.h>
@@ -40,6 +39,7 @@
 #include <deal.II/multigrid/mg_tools.h>
 #include <deal.II/multigrid/multigrid.h>
 
+#include <deal.II/numerics/data_out.h>
 #include <deal.II/numerics/vector_tools_interpolate.h>
 
 #include <agglomeration_handler.h>
@@ -58,16 +58,14 @@ class SparseDirectMUMPS
 {};
 #endif
 
-// solver-related parameters
-static constexpr double       TOL                 = 3e-3;
-static constexpr bool         measure_solve_times = true;
-static constexpr unsigned int starting_level      = 2;
+
 
 // matrix-free related parameters
 static constexpr bool         use_matrix_free_action = true;
 static constexpr unsigned int degree_finite_element  = 1;
-static constexpr unsigned int n_qpoints    = degree_finite_element + 1;
-static constexpr unsigned int n_components = 1;
+static constexpr unsigned int n_qpoints           = degree_finite_element + 1;
+static constexpr unsigned int n_components        = 1;
+static constexpr bool         measure_solve_times = true;
 
 
 namespace Utils
@@ -159,71 +157,185 @@ namespace Utils
 
 
 
-enum class TestCase
+template <int dim>
+class ProblemParameters : public ParameterAcceptor
 {
-  Idealized,
-  Realistic
-};
+public:
+  ProblemParameters();
 
+  std::string  output_directory = ".";
+  unsigned int output_frequency = 1;
 
+  // Grid and model parameters
+  double       stimulus_radius            = 5e-3;
+  std::string  test_case                  = "Idealized";
+  double       scale_factor               = 1e-3;
+  unsigned int n_refinements_initial_grid = 0;
+  std::string  time_stepping_scheme       = "BDF2";
+  double       dt                         = 1e-4;
+  double       end_time_current           = 3e-3;
+  double       final_time                 = 0.4;
 
-enum class Preconditioner
-{
-  AMG,
-  AGGLOMG
-};
-
-
-// Model parameters for Bueno Orovio
-struct ModelParameters
-{
-  SolverControl control;
-
-  double                       penalty_constant   = 10.;
-  unsigned int                 fe_degree          = 1;
-  double                       dt                 = 1e-2;
-  double                       final_time         = 1.;
-  double                       final_time_current = 1.;
-  double                       chi                = 1;
-  double                       Cm                 = 1.;
-  double                       sigma              = 1e-4;
-  double                       V1                 = 0.3;
-  double                       V1m                = 0.015;
-  double                       V2                 = 0.015;
-  double                       V2m                = 0.03;
-  double                       V3                 = 0.9087;
-  double                       Vhat               = 1.58;
-  double                       Vo                 = 0.006;
-  double                       Vso                = 0.65;
-  double                       tauop              = 6e-3;
-  double                       tauopp             = 6e-3;
-  double                       tausop             = 43e-3;
-  double                       tausopp            = 0.2e-3;
-  double                       tausi              = 2.8723e-3;
-  double                       taufi              = 0.11e-3;
-  double                       tau1plus           = 1.4506e-3;
-  double                       tau2plus           = 0.28;
-  double                       tau2inf            = 0.07;
-  double                       tau1p              = 0.06;
-  double                       tau1pp             = 1.15;
-  double                       tau2p              = 0.07;
-  double                       tau2pp             = 0.02;
-  double                       tau3p              = 2.7342e-3;
-  double                       tau3pp             = 0.003;
-  double                       w_star_inf         = 0.94;
-  double                       k2                 = 65.0;
-  double                       k3                 = 2.0994;
-  double                       kso                = 2.0;
-  Preconditioner               preconditioner     = Preconditioner::AMG;
-  Utils::Physics::TimeStepping time_stepping_scheme =
-    Utils::Physics::TimeStepping::BDF2;
-  std::string  output_directory          = ".";
-  unsigned int output_frequency          = 1;
+  // Preconditioner parameters
+  std::string  preconditioner            = "AMG";
+  bool         output_details_amg        = true;
+  unsigned int starting_level            = 2;
+  unsigned int n_smoothing_steps         = 3;
+  double       aggregation_threshold     = 0.2;
   bool         compute_min_value         = false;
   bool         estimate_condition_number = false;
 
-  enum TestCase test_case = TestCase::Idealized;
+  // Bueno-Orovio parameters
+  double chi        = 1;
+  double Cm         = 1.;
+  double sigma      = 1e-4;
+  double V1         = 0.3;
+  double V1m        = 0.015;
+  double V2         = 0.015;
+  double V2m        = 0.03;
+  double V3         = 0.9087;
+  double Vhat       = 1.58;
+  double Vo         = 0.006;
+  double Vso        = 0.65;
+  double tauop      = 6e-3;
+  double tauopp     = 6e-3;
+  double tausop     = 43e-3;
+  double tausopp    = 0.2e-3;
+  double tausi      = 2.8723e-3;
+  double taufi      = 0.11e-3;
+  double tau1plus   = 1.4506e-3;
+  double tau2plus   = 0.28;
+  double tau2inf    = 0.07;
+  double tau1p      = 0.06;
+  double tau1pp     = 1.15;
+  double tau2p      = 0.07;
+  double tau2pp     = 0.02;
+  double tau3p      = 2.7342e-3;
+  double tau3pp     = 0.003;
+  double w_star_inf = 0.94;
+  double k2         = 65.0;
+  double k3         = 2.0994;
+  double kso        = 2.0;
+
+  mutable ParameterAcceptorProxy<SolverControl> outer_solver_control;
 };
+
+template <int dim>
+ProblemParameters<dim>::ProblemParameters()
+  : ParameterAcceptor("Monodomain Solver/")
+  , outer_solver_control("Solver control")
+
+{
+  enter_subsection("Test case");
+  {
+    add_parameter(
+      "Test case",
+      test_case,
+      "Type of test case to use. Options are 'Idealized' and 'Realistic'.");
+    add_parameter(
+      "Number of refinements for initial grid",
+      n_refinements_initial_grid,
+      "Number of global refinements to perform on the initial mesh.");
+    add_parameter("Scale factor",
+                  scale_factor,
+                  "Scale factor for the geometry.");
+    add_parameter("Stimulus radius", stimulus_radius);
+    add_parameter(
+      "Time stepping scheme",
+      time_stepping_scheme,
+      "Time stepping scheme to use. Options are 'BDF1' and 'BDF2'. Default is 'BDF2'.");
+    add_parameter(
+      "Final time for external current application",
+      end_time_current,
+      "Final time for external current application. After this time, the stimulus will be turned off.");
+    add_parameter("Final time", final_time);
+    add_parameter("Time step size", dt);
+  }
+  leave_subsection();
+
+
+  enter_subsection("Bueno Orovio model parameters");
+  {
+    add_parameter("chi", chi);
+    add_parameter("Cm", Cm);
+    add_parameter("sigma", sigma);
+    add_parameter("V1", V1);
+    add_parameter("V1m", V1m);
+    add_parameter("V2", V2);
+    add_parameter("V2m", V2m);
+    add_parameter("V3", V3);
+    add_parameter("Vhat", Vhat);
+    add_parameter("Vo", Vo);
+    add_parameter("Vso", Vso);
+    add_parameter("tauop", tauop);
+    add_parameter("tauopp", tauopp);
+    add_parameter("tausop", tausop);
+    add_parameter("tausopp", tausopp);
+    add_parameter("tausi", tausi);
+    add_parameter("taufi", taufi);
+    add_parameter("tau1plus", tau1plus);
+    add_parameter("tau2plus", tau2plus);
+    add_parameter("tau2inf", tau2inf);
+    add_parameter("tau1p", tau1p);
+    add_parameter("tau1pp", tau1pp);
+    add_parameter("tau2p", tau2p);
+    add_parameter("tau2pp", tau2pp);
+    add_parameter("tau3p", tau3p);
+    add_parameter("tau3pp", tau3pp);
+    add_parameter("w_star_inf", w_star_inf);
+    add_parameter("k2", k2);
+    add_parameter("k3", k3);
+    add_parameter("kso", kso);
+  }
+  leave_subsection();
+
+
+  enter_subsection("Preconditioner");
+  {
+    add_parameter(
+      "Preconditioner type",
+      preconditioner,
+      "Preconditioner to use. Options are 'AMG' and 'AGGLOMG'. Default is 'AMG'.");
+    add_parameter("Smoother steps", n_smoothing_steps);
+    add_parameter("Estimate condition number", estimate_condition_number);
+  }
+  leave_subsection();
+
+  enter_subsection("R3MG");
+  {
+    add_parameter("MG Starting level", starting_level);
+  }
+  leave_subsection();
+
+  enter_subsection("AMG");
+  {
+    add_parameter("Output details", output_details_amg);
+    add_parameter("Aggregation threshold", aggregation_threshold);
+  }
+  leave_subsection();
+
+
+  outer_solver_control.declare_parameters_call_back.connect([]() -> void {
+    ParameterAcceptor::prm.set("Max steps", "100");
+    ParameterAcceptor::prm.set("Tolerance", "1.e-14");
+    ParameterAcceptor::prm.set("Log history", "false");
+    ParameterAcceptor::prm.set("Log result", "false");
+  });
+
+  enter_subsection("Output");
+  {
+    add_parameter("Output directory", output_directory);
+    add_parameter(
+      "Output frequency",
+      output_frequency,
+      "Frequency of output. Output will be written every output_frequency time steps.");
+    add_parameter(
+      "Compute minimum value",
+      compute_min_value,
+      "Whether to compute the minimum value of the solution at each time step.");
+  }
+  leave_subsection();
+}
 
 
 
@@ -231,20 +343,22 @@ template <int dim>
 class AppliedCurrent : public Function<dim>
 {
 public:
-  AppliedCurrent(const double final_time_current, const TestCase test_case)
+  AppliedCurrent(const double       end_time_current,
+                 const std::string &test_case,
+                 const double       stimulus_radius)
     : Function<dim>()
-    , p1{test_case == TestCase::Idealized ?
+    , p1{test_case == "Idealized" ?
            Point<dim>{-0.015598, -0.0173368, 0.0307704} :
            Point<dim>{0.0981402, -0.0970197, -0.0406029}}
-    , p2{test_case == TestCase::Idealized ?
+    , p2{test_case == "Idealized" ?
            Point<dim>{0.0264292, -0.0043322, 0.0187656} :
            Point<dim>{0.0981402, -0.0580452, -0.000723225}}
-    , p3{test_case == TestCase::Idealized ?
+    , p3{test_case == "Idealized" ?
            Point<dim>{0.00155326, 0.0252701, 0.0248006} :
            Point<dim>{0.0770339, -0.101529, -0.00292254}}
-
+    , stimulus_radius(stimulus_radius)
   {
-    t_end_current = final_time_current;
+    t_end_current = end_time_current;
     p.push_back(p1);
     p.push_back(p2);
     p.push_back(p3);
@@ -267,6 +381,7 @@ private:
   Point<dim>              p1;
   Point<dim>              p2;
   Point<dim>              p3;
+  double                  stimulus_radius;
 };
 
 
@@ -287,16 +402,23 @@ AppliedCurrent<dim>::value(const Point<dim> &point,
                            const unsigned int /*component*/) const
 {
   const double t = this->get_time();
-  if ((p1.distance(point) < TOL || p2.distance(point) < TOL ||
-       p3.distance(point) < TOL) &&
-      (t >= 0. && t <= t_end_current))
+
+  // Check if we're in the stimulus time window
+  if (t > t_end_current)
+    return 0.;
+
+  // Check if point is within stimulus region (sphere around any stimulus point)
+  const bool in_stimulus_region = (p1.distance(point) < stimulus_radius ||
+                                   p2.distance(point) < stimulus_radius ||
+                                   p3.distance(point) < stimulus_radius);
+
+  if (in_stimulus_region)
     {
 #ifdef AGGLO_DEBUG
       if (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
         std::cout << "Applying stimuli" << std::endl;
 #endif
       return 300.;
-      // return 34.28;
     }
   else
     return 0.;
@@ -521,6 +643,7 @@ private:
 
   const MPI_Comm                                 communicator;
   parallel::fullydistributed::Triangulation<dim> tria;
+  const ProblemParameters<dim>                  &param;
   MappingQ<dim>                                  mapping;
   FE_DGQ<dim>                                    dg_fe;
   DoFHandler<dim>                                classical_dh;
@@ -556,6 +679,9 @@ private:
   VectorType locally_relevant_solution_n;
   VectorType locally_relevant_solution_np1;
 
+  // solution expressed in mV
+  VectorType post_processed_solution;
+
   VectorType extrapoled_solution;
 
   VectorType locally_relevant_w0_np1; // w_{n+1}
@@ -577,11 +703,9 @@ private:
   double       time;
   const double dt;
   const double end_time;
-  const double end_time_current; // final time external application
 
   SolverCG<VectorType> solver;
   // SolverFlexibleCG<VectorType> solver;
-  const ModelParameters &param;
 
   // Agglomeration related
   dealii::RTree<
@@ -641,7 +765,7 @@ private:
   double                    start_solver, stop_solver;
 
 public:
-  MonodomainProblem(const ModelParameters &parameters);
+  MonodomainProblem(const ProblemParameters<dim> &parameters);
   void
   run();
 
@@ -651,28 +775,27 @@ public:
 
 
 template <int dim>
-MonodomainProblem<dim>::MonodomainProblem(const ModelParameters &parameters)
+MonodomainProblem<dim>::MonodomainProblem(
+  const ProblemParameters<dim> &parameters)
   : communicator(MPI_COMM_WORLD)
   , tria(communicator)
+  , param(parameters)
   , mapping(1)
-  , dg_fe(parameters.fe_degree)
+  , dg_fe(degree_finite_element)
   , classical_dh(tria)
   , pcout(std::cout, Utilities::MPI::this_mpi_process(communicator) == 0)
   , computing_timer(communicator,
                     pcout,
                     TimerOutput::summary,
                     TimerOutput::wall_times)
-  , dt(parameters.dt)
-  , end_time(parameters.final_time)
-  , end_time_current(parameters.final_time_current)
-  , solver(const_cast<SolverControl &>(parameters.control))
-  , param(parameters)
+  , dt(param.dt)
+  , end_time(param.final_time)
+  , solver(param.outer_solver_control)
 {
   static_assert(dim == 3);
   time = 0.;
   penalty_constant =
     (double)(std::max(1u, degree_finite_element) * (degree_finite_element + 1));
-  // param.penalty_constant * parameters.fe_degree * (parameters.fe_degree + 1);
   total_tree_levels = 0;
 
   bilinear_form_parameters.dt               = dt;
@@ -680,7 +803,9 @@ MonodomainProblem<dim>::MonodomainProblem(const ModelParameters &parameters)
   bilinear_form_parameters.chi              = param.chi;
   bilinear_form_parameters.Cm               = param.Cm;
   bilinear_form_parameters.sigma            = param.sigma;
-  bilinear_form_parameters.time_stepping    = param.time_stepping_scheme;
+  bilinear_form_parameters.time_stepping =
+    param.time_stepping_scheme == "BDF1" ? Utils::Physics::TimeStepping::BDF1 :
+                                           Utils::Physics::TimeStepping::BDF2;
 
   monodomain_operator = std::make_unique<
     Utils::MatrixFreeOperators::MonodomainOperatorDG<dim,
@@ -820,7 +945,7 @@ MonodomainProblem<dim>::setup_problem()
                                              communicator,
                                              locally_relevant_dofs);
 
-  if (param.preconditioner == Preconditioner::AMG)
+  if (param.preconditioner == "AMG")
     system_matrix.reinit(locally_owned_dofs,
                          locally_owned_dofs,
                          dsp,
@@ -830,6 +955,7 @@ MonodomainProblem<dim>::setup_problem()
 
   locally_relevant_solution_n.reinit(locally_owned_dofs, communicator);
   locally_relevant_solution_np1.reinit(locally_owned_dofs, communicator);
+  post_processed_solution.reinit(locally_owned_dofs, communicator);
   extrapoled_solution.reinit(locally_owned_dofs, communicator);
   system_rhs.reinit(locally_owned_dofs, communicator);
 
@@ -848,8 +974,9 @@ MonodomainProblem<dim>::setup_problem()
 
   ion_at_dofs.reinit(locally_owned_dofs, communicator);
 
-  Iext =
-    std::make_unique<AppliedCurrent<dim>>(end_time_current, param.test_case);
+  Iext = std::make_unique<AppliedCurrent<dim>>(param.end_time_current,
+                                               param.test_case,
+                                               param.stimulus_radius);
 
   // // Start building R-tree
 
@@ -872,8 +999,8 @@ MonodomainProblem<dim>::setup_problem()
   Assert(n_levels(tree) >= 2, ExcMessage("At least two levels are needed."));
   pcout << "Total number of available levels: " << n_levels(tree) << std::endl;
 
-  pcout << "Starting level: " << starting_level << std::endl;
-  total_tree_levels = n_levels(tree) - starting_level + 1;
+  pcout << "Starting level: " << param.starting_level << std::endl;
+  total_tree_levels = n_levels(tree) - param.starting_level + 1;
 
   multigrid_matrices.resize(0, total_tree_levels);
   // The layout of the coarser level will be computed a'la AMG. Hence, we only
@@ -898,13 +1025,12 @@ MonodomainProblem<dim>::setup_multigrid()
 
   agglomeration_handlers.resize(total_tree_levels);
 
-
   // Loop through the available levels and set AgglomerationHandlers up.
-  for (unsigned int extraction_level = starting_level;
+  for (unsigned int extraction_level = param.starting_level;
        extraction_level <= n_levels(tree);
        ++extraction_level)
     {
-      agglomeration_handlers[extraction_level - starting_level] =
+      agglomeration_handlers[extraction_level - param.starting_level] =
         std::make_unique<AgglomerationHandler<dim>>(cached_tria);
       CellsAgglomerator<dim, decltype(tree)> agglomerator{tree,
                                                           extraction_level};
@@ -912,27 +1038,16 @@ MonodomainProblem<dim>::setup_multigrid()
       {
         TimerOutput::Scope t(computing_timer, "[R-tree]: Define agglomerates");
         const auto         agglomerates = agglomerator.extract_agglomerates();
-        agglomeration_handlers[extraction_level - starting_level]
+        agglomeration_handlers[extraction_level - param.starting_level]
           ->connect_hierarchy(agglomerator);
 
         for (const auto &agglo : agglomerates)
           {
-            agglomeration_handlers[extraction_level - starting_level]
+            agglomeration_handlers[extraction_level - param.starting_level]
               ->define_agglomerate(agglo);
             ++agglo_index;
           }
       }
-      // Flag elements for agglomeration
-      // unsigned int agglo_index = 0;
-      // for (unsigned int i = 0; i < agglomerates.size(); ++i)
-      //   {
-      //     const auto &agglo = agglomerates[i]; // i-th agglomerate
-      //     for (const auto &el : agglo)
-      //       {
-      //         el->set_material_id(agglo_index);
-      //       }
-      //     ++agglo_index;
-      //   }
 
       const unsigned int n_local_agglomerates = agglo_index;
       unsigned int       total_agglomerates =
@@ -940,35 +1055,20 @@ MonodomainProblem<dim>::setup_multigrid()
       pcout << "Total agglomerates per (tree) level: " << extraction_level
             << ": " << total_agglomerates << std::endl;
 
-      // Now, perform agglomeration within each locally owned partition
-      // std::vector<
-      //   std::vector<typename Triangulation<dim>::active_cell_iterator>>
-      //   cells_per_subdomain(n_local_agglomerates);
-      // for (const auto &cell : tria.active_cell_iterators())
-      //   if (cell->is_locally_owned())
-      //     cells_per_subdomain[cell->material_id()].push_back(cell);
-
-      // For every subdomain, agglomerate elements together
-      // for (std::size_t i = 0; i < cells_per_subdomain.size(); ++i)
-      //   agglomeration_handlers[extraction_level - starting_level]
-      //     ->define_agglomerate(cells_per_subdomain[i]);
       {
         TimerOutput::Scope t(computing_timer,
                              "[R-tree]: Compute transfers matrices");
-        agglomeration_handlers[extraction_level - starting_level]
+        agglomeration_handlers[extraction_level - param.starting_level]
           ->initialize_fe_values(QGauss<dim>(dg_fe.degree + 1),
                                  update_values | update_gradients |
                                    update_JxW_values | update_quadrature_points,
                                  QGauss<dim - 1>(dg_fe.degree + 1),
                                  update_JxW_values);
-        agglomeration_handlers[extraction_level - starting_level]
+        agglomeration_handlers[extraction_level - param.starting_level]
           ->distribute_agglomerated_dofs(dg_fe);
       }
     }
 
-  // Compute two-level transfers between agglomeration handlers
-  // pcout << "Fill injection matrices between agglomerated levels" <<
-  // std::endl;
   const unsigned int max_level = multigrid_matrices.max_level();
 
   {
@@ -984,9 +1084,6 @@ MonodomainProblem<dim>::setup_multigrid()
                                      sparsity,
                                      injection_matrices_two_level[l - 1]);
       }
-    // pcout << "Computed two-level matrices between agglomerated levels"
-    //<< std::endl;
-
 
     // Define transfer between levels.
     transfer_matrices.resize(total_tree_levels);
@@ -1002,9 +1099,6 @@ MonodomainProblem<dim>::setup_multigrid()
       &injection_matrices_two_level.back();
   }
 
-  // pcout << injection_matrices_two_level.back().m() << " and "
-  //     << injection_matrices_two_level.back().n() << std::endl;
-
   AmgProjector<dim, TrilinosWrappers::SparseMatrix, double> amg_projector(
     injection_matrices_two_level);
 
@@ -1013,7 +1107,6 @@ MonodomainProblem<dim>::setup_multigrid()
   // Once the level operators are built, use the finest in a matrix-free way,
   // the others matrix-based
   multigrid_matrices_lo.resize(0, max_level);
-
 
   {
     TimerOutput::Scope t(computing_timer, "[R-tree]: Compute level operators");
@@ -1034,7 +1127,6 @@ MonodomainProblem<dim>::setup_multigrid()
 
 
   // Setup multigrid
-
   // Multigrid matrices
   mg_matrix = std::make_unique<mg::Matrix<VectorType>>(multigrid_matrices_lo);
 
@@ -1077,14 +1169,15 @@ MonodomainProblem<dim>::setup_multigrid()
     {
       if (level > 0)
         {
-          smoother_data[level].smoothing_range     = 20.; // 15.;
-          smoother_data[level].degree              = 3;   // 5;
+          smoother_data[level].smoothing_range = 20.;            // 15.;
+          smoother_data[level].degree = param.n_smoothing_steps; // 3, 5;
           smoother_data[level].eig_cg_n_iterations = 20;
         }
       else
         {
           smoother_data[0].smoothing_range = 1e-3;
-          smoother_data[0].degree = 3; // numbers::invalid_unsigned_int;
+          smoother_data[0].degree =
+            param.n_smoothing_steps; // 3; // numbers::invalid_unsigned_int;
           smoother_data[0].eig_cg_n_iterations = classical_dh.n_dofs();
         }
     }
@@ -1162,24 +1255,26 @@ MonodomainProblem<dim>::setup_multigrid()
 
 template <int dim>
 double
-MonodomainProblem<dim>::Iion(const double               u_old,
-                             const std::vector<double> &w) const
+MonodomainProblem<dim>::Iion(const double u, const std::vector<double> &w) const
 {
-  double Iion_val =
-    Utils::heaviside_sharp(u_old, param.V1) * (u_old - param.V1) *
-      (param.Vhat - u_old) * w[0] / param.taufi -
-    (1.0 - Utils::heaviside_sharp(u_old, param.V2)) * (u_old - 0.) /
-      (Utils::heaviside_sharp(u_old, param.Vo) * (param.tauopp - param.tauop) +
-       param.tauop) -
-    Utils::heaviside_sharp(u_old, param.V2) /
-      (Utils::heaviside(u_old, param.Vso, param.kso) *
+  const double Iion_fi = (-Utils::heaviside_sharp(u, param.V1) *
+                          (u - param.V1) * (param.Vhat - u) * w[0]) /
+                         param.taufi;
+
+  const double Iion_so =
+    ((1.0 - Utils::heaviside_sharp(u, param.V2)) * (u - param.Vo)) /
+      (Utils::heaviside_sharp(u, param.Vo) * (param.tauopp - param.tauop) +
+       param.tauop) +
+    Utils::heaviside_sharp(u, param.V2) /
+      (Utils::heaviside(u, param.Vso, param.kso) *
          (param.tausopp - param.tausop) +
-       param.tausop) +
-    Utils::heaviside_sharp(u_old, param.V2) * w[1] * w[2] / param.tausi;
+       param.tausop);
 
-  Iion_val = -Iion_val;
+  const double Iion_si =
+    -(Utils::heaviside_sharp(u, param.V2) * w[1] * w[2]) / param.tausi;
 
-  return Iion_val;
+
+  return Iion_fi + Iion_so + Iion_si;
 }
 
 
@@ -1198,7 +1293,7 @@ MonodomainProblem<dim>::update_w_and_ion()
     {
       // First, update w's
 
-      if (param.time_stepping_scheme == Utils::Physics::TimeStepping::BDF1)
+      if (param.time_stepping_scheme == "BDF1")
         {
           std::array<double, 3> a      = alpha(locally_relevant_solution_n[i]);
           std::array<double, 3> b      = beta(locally_relevant_solution_n[i]);
@@ -1222,7 +1317,7 @@ MonodomainProblem<dim>::update_w_and_ion()
                                  locally_relevant_w1_np1[i],
                                  locally_relevant_w2_np1[i]});
         }
-      else if (param.time_stepping_scheme == Utils::Physics::TimeStepping::BDF2)
+      else if (param.time_stepping_scheme == "BDF2")
         {
           std::array<double, 3> a      = alpha(extrapoled_solution[i]);
           std::array<double, 3> b      = beta(extrapoled_solution[i]);
@@ -1295,10 +1390,9 @@ MonodomainProblem<dim>::assemble_time_independent_matrix()
 
   std::vector<types::global_dof_index> local_dof_indices(dofs_per_cell);
 
-  const double coefficient_time_step =
-    param.time_stepping_scheme == Utils::Physics::TimeStepping::BDF2 ?
-      (param.chi * param.Cm * 1.5 / dt) :
-      (param.chi * param.Cm / dt);
+  const double coefficient_time_step = param.time_stepping_scheme == "BDF2" ?
+                                         (param.chi * param.Cm * 1.5 / dt) :
+                                         (param.chi * param.Cm / dt);
 
   // Loop over standard deal.II cells
   for (const auto &cell : classical_dh.active_cell_iterators())
@@ -1484,27 +1578,27 @@ MonodomainProblem<dim>::assemble_time_independent_matrix()
                       constraints.distribute_local_to_global(
                         M11,
                         local_dof_indices,
-                        param.preconditioner == Preconditioner::AMG ?
+                        param.preconditioner == "AMG" ?
                           system_matrix :
                           multigrid_matrices[multigrid_matrices.max_level()]);
                       constraints.distribute_local_to_global(
                         M12,
                         local_dof_indices,
                         local_dof_indices_neighbor,
-                        param.preconditioner == Preconditioner::AMG ?
+                        param.preconditioner == "AMG" ?
                           system_matrix :
                           multigrid_matrices[multigrid_matrices.max_level()]);
                       constraints.distribute_local_to_global(
                         M21,
                         local_dof_indices_neighbor,
                         local_dof_indices,
-                        param.preconditioner == Preconditioner::AMG ?
+                        param.preconditioner == "AMG" ?
                           system_matrix :
                           multigrid_matrices[multigrid_matrices.max_level()]);
                       constraints.distribute_local_to_global(
                         M22,
                         local_dof_indices_neighbor,
-                        param.preconditioner == Preconditioner::AMG ?
+                        param.preconditioner == "AMG" ?
                           system_matrix :
                           multigrid_matrices[multigrid_matrices.max_level()]);
 
@@ -1514,13 +1608,13 @@ MonodomainProblem<dim>::assemble_time_independent_matrix()
           constraints.distribute_local_to_global(
             cell_matrix,
             local_dof_indices,
-            param.preconditioner == Preconditioner::AMG ?
+            param.preconditioner == "AMG" ?
               system_matrix :
               multigrid_matrices[multigrid_matrices.max_level()]);
         }
     }
 
-  if (param.preconditioner == Preconditioner::AMG)
+  if (param.preconditioner == "AMG")
     system_matrix.compress(VectorOperation::add);
   else
     multigrid_matrices[multigrid_matrices.max_level()].compress(
@@ -1893,7 +1987,7 @@ MonodomainProblem<dim>::solve()
 
   if constexpr (measure_solve_times)
     start_solver = MPI_Wtime();
-  if (param.preconditioner == Preconditioner::AMG)
+  if (param.preconditioner == "AMG")
     solver.solve(system_operator,
                  locally_relevant_solution_np1,
                  system_rhs,
@@ -1909,9 +2003,9 @@ MonodomainProblem<dim>::solve()
       iteration_times.push_back(stop_solver - start_solver);
     }
 
-  pcout << "Number of outer iterations: " << param.control.last_step()
-        << std::endl;
-  iterations.push_back(param.control.last_step());
+  pcout << "Number of outer iterations: "
+        << param.outer_solver_control.last_step() << std::endl;
+  iterations.push_back(param.outer_solver_control.last_step());
 }
 
 
@@ -1922,10 +2016,18 @@ MonodomainProblem<dim>::output_results()
 {
   TimerOutput::Scope t(computing_timer, "Output results");
 
+  for (const types::global_dof_index i :
+       locally_relevant_solution_np1.locally_owned_elements())
+    post_processed_solution[i] = 85.7 * locally_relevant_solution_np1[i] - 84.0;
+
   DataOut<dim> data_out;
   data_out.attach_dof_handler(classical_dh);
   data_out.add_data_vector(locally_relevant_solution_np1,
                            "transmembrane_potential",
+                           DataOut<dim>::type_dof_data);
+
+  data_out.add_data_vector(post_processed_solution,
+                           "transmembrane_potential [mV]",
                            DataOut<dim>::type_dof_data);
 
   data_out.add_data_vector(locally_relevant_w0_np1,
@@ -1976,6 +2078,9 @@ MonodomainProblem<dim>::run()
   pcout << "Running on " << Utilities::MPI::n_mpi_processes(communicator)
         << " MPI rank(s)." << std::endl;
 
+  pcout << "Solving until time T = " << end_time << " with time step " << dt
+        << std::endl;
+
   // Create mesh
   {
     TimerOutput::Scope t(computing_timer, "Import and partition mesh");
@@ -1983,16 +2088,20 @@ MonodomainProblem<dim>::run()
     GridIn<dim>        grid_in;
     grid_in.attach_triangulation(tria_dummy);
     std::string mesh_path;
-    if (param.test_case == TestCase::Idealized)
+    if (param.test_case == "Idealized")
       mesh_path = "../../meshes/idealized_lv.msh";
-    else if (param.test_case == TestCase::Realistic)
+    else if (param.test_case == "Realistic")
       mesh_path = "../../meshes/realistic_lv.msh";
+    else
+      AssertThrow(false, ExcMessage("No mesh selected!"));
     std::ifstream mesh_file(mesh_path);
     grid_in.read_msh(mesh_file);
 
+    if (param.n_refinements_initial_grid > 0)
+      tria_dummy.refine_global(param.n_refinements_initial_grid);
+
     // scale triangulation by a suitable factor in order to work with mm
-    const double scale_factor = 1e-3;
-    GridTools::scale(scale_factor, tria_dummy);
+    GridTools::scale(param.scale_factor, tria_dummy);
 
     // Partition serial triangulation:
     const unsigned int n_ranks = Utilities::MPI::n_mpi_processes(communicator);
@@ -2013,7 +2122,7 @@ MonodomainProblem<dim>::run()
         << std::endl;
 
   // Set initial conditions
-  locally_relevant_solution_n   = -84e-3;
+  locally_relevant_solution_n   = 0.; //-84e-3;
   locally_relevant_solution_np1 = locally_relevant_solution_n;
 
   locally_relevant_w0_n   = 1.;
@@ -2026,7 +2135,7 @@ MonodomainProblem<dim>::run()
   locally_relevant_w2_np1 = locally_relevant_w2_n;
 
   // Needed only by BDF2 time stepping
-  if (param.time_stepping_scheme == Utils::Physics::TimeStepping::BDF2)
+  if (param.time_stepping_scheme == "BDF2")
     {
       extrapoled_solution           = locally_relevant_solution_n;
       locally_relevant_w2_nm1       = locally_relevant_w2_n;
@@ -2064,12 +2173,12 @@ MonodomainProblem<dim>::run()
     system_operator = linear_operator<VectorType>(*monodomain_operator);
   else
     system_operator = linear_operator<VectorType>(
-      param.preconditioner == Preconditioner::AMG ?
+      param.preconditioner == "AMG" ?
         system_matrix :
         multigrid_matrices[multigrid_matrices.max_level()]);
 
   // Depending on the preconditioner type, use AMG or polytopal multigrid.
-  if (param.preconditioner == Preconditioner::AMG)
+  if (param.preconditioner == "AMG")
     {
       TimerOutput::Scope t(computing_timer, "Initialize AMG preconditioner");
       typename TrilinosWrappers::PreconditionAMG::AdditionalData amg_data;
@@ -2077,9 +2186,9 @@ MonodomainProblem<dim>::run()
         amg_data.higher_order_elements = true;
 
       amg_data.smoother_type         = "Chebyshev";
-      amg_data.smoother_sweeps       = 3;
-      amg_data.output_details        = true;
-      amg_data.aggregation_threshold = 0.2;
+      amg_data.smoother_sweeps       = param.n_smoothing_steps;
+      amg_data.output_details        = param.output_details_amg;
+      amg_data.aggregation_threshold = param.aggregation_threshold;
       amg_preconditioner.initialize(system_matrix, amg_data);
     }
   else
@@ -2104,15 +2213,14 @@ MonodomainProblem<dim>::run()
         {
           TimerOutput::Scope t(computing_timer,
                                "Assemble time dependent terms (matrix-free)");
-          if (param.time_stepping_scheme == Utils::Physics::TimeStepping::BDF1)
+          if (param.time_stepping_scheme == "BDF1")
             {
               solution_minus_ion = locally_relevant_solution_n;
               solution_minus_ion *= (param.Cm / dt);
               solution_minus_ion -= ion_at_dofs;
               monodomain_operator->rhs(system_rhs, solution_minus_ion, *Iext);
             }
-          else if (param.time_stepping_scheme ==
-                   Utils::Physics::TimeStepping::BDF2)
+          else if (param.time_stepping_scheme == "BDF2")
             {
               if (time == 0)
                 {
@@ -2149,10 +2257,9 @@ MonodomainProblem<dim>::run()
           TimerOutput::Scope t(computing_timer,
                                "Assemble time dependent terms (matrix-based)");
 
-          if (param.time_stepping_scheme == Utils::Physics::TimeStepping::BDF1)
+          if (param.time_stepping_scheme == "BDF1")
             assemble_time_terms_bdf1();
-          else if (param.time_stepping_scheme ==
-                   Utils::Physics::TimeStepping::BDF2)
+          else if (param.time_stepping_scheme == "BDF2")
             {
               if (time == 0)
                 {
@@ -2167,8 +2274,7 @@ MonodomainProblem<dim>::run()
         }
 
       // Solve for transmembrane potential
-      if (time == 0 &&
-          param.time_stepping_scheme == Utils::Physics::TimeStepping::BDF2)
+      if (time == 0 && param.time_stepping_scheme == "BDF2")
         {
           TrilinosWrappers::PreconditionAMG amg_preconditioner_bdf1;
           typename TrilinosWrappers::PreconditionAMG::AdditionalData amg_data;
@@ -2176,15 +2282,14 @@ MonodomainProblem<dim>::run()
             amg_data.higher_order_elements = true;
 
           amg_data.smoother_type         = "Chebyshev";
-          amg_data.smoother_sweeps       = 3;
+          amg_data.smoother_sweeps       = param.n_smoothing_steps;
           amg_data.output_details        = false;
           amg_data.aggregation_threshold = 0.2;
           amg_preconditioner_bdf1.initialize(bdf1_matrix, amg_data);
           pcout << "Using AMG for first time-step (BDF2 time-stepping)"
                 << std::endl;
 
-          SolverCG<VectorType> solver_bdf1(
-            const_cast<SolverControl &>(param.control));
+          SolverCG<VectorType> solver_bdf1(param.outer_solver_control);
           solver_bdf1.solve(bdf1_matrix,
                             locally_relevant_solution_np1,
                             system_rhs,
@@ -2217,7 +2322,7 @@ MonodomainProblem<dim>::run()
         }
 
       // update solutions
-      if (param.time_stepping_scheme == Utils::Physics::TimeStepping::BDF1)
+      if (param.time_stepping_scheme == "BDF1")
         {
           // update solutions and gating variables for BDF1
           locally_relevant_solution_n = locally_relevant_solution_np1;
@@ -2226,7 +2331,7 @@ MonodomainProblem<dim>::run()
           locally_relevant_w1_n = locally_relevant_w1_np1;
           locally_relevant_w2_n = locally_relevant_w2_np1;
         }
-      else if (param.time_stepping_scheme == Utils::Physics::TimeStepping::BDF2)
+      else if (param.time_stepping_scheme == "BDF2")
         {
           locally_relevant_solution_nm1 = locally_relevant_solution_n;
           locally_relevant_solution_n   = locally_relevant_solution_np1;
@@ -2254,12 +2359,11 @@ MonodomainProblem<dim>::run()
   if (Utilities::MPI::this_mpi_process(communicator) == 0)
     {
       std::ofstream file_iterations;
-      file_iterations.open(param.output_directory + "/" + "iterations_" +
-                           (param.preconditioner == Preconditioner::AMG ?
-                              std::string("AMG_") :
-                              std::string("AGGLOMG_")) +
-                           "degree_" + std::to_string(param.fe_degree) +
-                           ".txt");
+      file_iterations.open(
+        param.output_directory + "/" + "iterations_" +
+        (param.preconditioner == "AMG" ? std::string("AMG_") :
+                                         std::string("AGGLOMG_")) +
+        "degree_" + std::to_string(degree_finite_element) + ".txt");
 
       for (size_t i = 0; i < iterations.size(); ++i)
         {
@@ -2273,10 +2377,9 @@ MonodomainProblem<dim>::run()
       std::ofstream file_iteration_times;
       file_iteration_times.open(
         param.output_directory + "/" + "iteration_times_" +
-        (param.preconditioner == Preconditioner::AMG ?
-           std::string("AMG_") :
-           std::string("AGGLOMG_")) +
-        "degree_" + std::to_string(param.fe_degree) + ".txt");
+        (param.preconditioner == "AMG" ? std::string("AMG_") :
+                                         std::string("AGGLOMG_")) +
+        "degree_" + std::to_string(degree_finite_element) + ".txt");
 
       for (size_t i = 0; i < iteration_times.size(); ++i)
         {
@@ -2323,12 +2426,11 @@ MonodomainProblem<dim>::run()
                                      iterations.size());
 
       statistics_table.write_text(std::cout, TableHandler::org_mode_table);
-      std::ofstream output_file(param.output_directory + "/" + "statistics_" +
-                                (param.preconditioner == Preconditioner::AMG ?
-                                   std::string("AMG_") :
-                                   std::string("AGGLOMG_")) +
-                                "degree_" + std::to_string(param.fe_degree) +
-                                ".txt");
+      std::ofstream output_file(
+        param.output_directory + "/" + "statistics_" +
+        (param.preconditioner == "AMG" ? std::string("AMG_") :
+                                         std::string("AGGLOMG_")) +
+        "degree_" + std::to_string(degree_finite_element) + ".txt");
       statistics_table.write_text(output_file, TableHandler::org_mode_table);
 
       std::cout
@@ -2358,23 +2460,15 @@ main(int argc, char *argv[])
               << std::endl;
     }
 
+  ProblemParameters<3> parameters;
+  std::string          parameter_file;
+  if (argc > 1)
+    parameter_file = argv[1];
+  else
+    parameter_file = "monodomain_parameters.prm";
+  ParameterAcceptor::initialize(parameter_file, "used_parameters.prm");
+
   {
-    ModelParameters parameters;
-    parameters.control.set_tolerance(1e-13); // used in CG solver
-    parameters.control.set_max_steps(2000);
-
-    parameters.preconditioner            = Preconditioner::AMG;
-    parameters.test_case                 = TestCase::Realistic;
-    parameters.time_stepping_scheme      = Utils::Physics::TimeStepping::BDF2;
-    parameters.fe_degree                 = degree_finite_element;
-    parameters.dt                        = 1e-4;
-    parameters.final_time                = 0.4;
-    parameters.final_time_current        = 3e-3;
-    parameters.compute_min_value         = true;
-    parameters.estimate_condition_number = false;
-    parameters.output_frequency          = 10;
-    parameters.output_directory          = "./";
-
     MonodomainProblem<3> problem(parameters);
     problem.run();
   }

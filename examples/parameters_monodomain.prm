@@ -1,0 +1,95 @@
+# Listing of Parameters
+# ---------------------
+subsection Monodomain Solver
+  subsection AMG
+    set Aggregation threshold = 0.2
+    set Output details        = true
+  end
+
+  subsection Bueno Orovio model parameters
+    set Cm         = 1
+    set V1         = 0.3
+    set V1m        = 0.015
+    set V2         = 0.015
+    set V2m        = 0.03
+    set V3         = 0.9087
+    set Vhat       = 1.58
+    set Vo         = 0.006
+    set Vso        = 0.65
+    set chi        = 1
+    set k2         = 65
+    set k3         = 2.0994
+    set kso        = 2
+    set sigma      = 0.0001
+    set tau1p      = 0.06
+    set tau1plus   = 0.0014506
+    set tau1pp     = 1.15
+    set tau2inf    = 0.07
+    set tau2p      = 0.07
+    set tau2plus   = 0.28
+    set tau2pp     = 0.02
+    set tau3p      = 0.0027342
+    set tau3pp     = 0.003
+    set taufi      = 0.00011
+    set tauop      = 0.006
+    set tauopp     = 0.006
+    set tausi      = 0.0028723
+    set tausop     = 0.043
+    set tausopp    = 0.0002
+    set w_star_inf = 0.94
+  end
+
+  subsection Output
+    # Whether to compute the minimum value of the solution at each time step.
+    set Compute minimum value = false
+    set Output directory      = .
+
+    # Frequency of output. Output will be written every output_frequency time
+    # steps.
+    set Output frequency      = 1
+  end
+
+  subsection Preconditioner
+    set Estimate condition number = false
+    # Preconditioner to use. Options are 'AMG' and 'AGGLOMG'. Default is
+    # 'AMG'.
+    set Preconditioner type       = AMG
+    set Smoother steps            = 3
+  end
+
+  subsection R3MG
+    set MG Starting level = 2
+  end
+
+  subsection Solver control
+    set Log frequency = 1
+    set Log history   = false
+    set Log result    = false  # default: true
+    set Max steps     = 100
+    set Tolerance     = 1.e-14 # default: 1.e-10
+  end
+
+  subsection Test case
+    set Final time                                  = 0.4
+    # Final time for external current application. After this time, the
+    # stimulus will be turned off.
+    set Final time for external current application = 3e-3
+
+    # Number of global refinements to perform on the initial mesh.
+    set Number of refinements for initial grid      = 0
+
+    # Scale factor for the geometry.
+    set Scale factor                                = 1e-3
+    set Stimulus radius                             = 5e-3
+
+    # Type of test case to use. Options are 'idealized' and 'realistic'.
+    set Test case                                   = Idealized
+    set Time step size                              = 1e-4
+
+    # Time stepping scheme to use. Options are 'BDF1' and 'BDF2'. Default is
+    # 'BDF2'.
+    set Time stepping scheme                        = BDF2
+  end
+
+end
+
