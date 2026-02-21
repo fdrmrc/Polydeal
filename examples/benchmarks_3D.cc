@@ -95,7 +95,8 @@ AgglomerationBenchmark<dim>::make_grid()
         {
           grid_in.attach_triangulation(tria);
           std::ifstream gmsh_file(
-            "../../meshes/t3.msh"); // unstructured square [0,1]^2
+            std::string(MESH_DIR) +
+            "/meshes/t3.msh"); // unstructured square [0,1]^2
           grid_in.read_msh(gmsh_file);
           tria.refine_global(5); // 4
         }
@@ -108,10 +109,12 @@ AgglomerationBenchmark<dim>::make_grid()
           // }
           grid_in.attach_triangulation(tria);
           std::ifstream mesh_file(
-            "../../meshes/gray_level_image1.vtk"); // liver mesh
+            std::string(MESH_DIR) +
+            "/meshes/gray_level_image1.vtk"); // liver mesh
           grid_in.read_vtk(mesh_file);
           // grid_in.read_ucd(mesh_file);
-          // "../../meshes/csf_brain_filled_centered_UCD.inp"); // brain mesh
+          // std::string(MESH_DIR) +
+          // "/meshes/csf_brain_filled_centered_UCD.inp"); // brain mesh
           // tria.refine_global(1);
         }
     }

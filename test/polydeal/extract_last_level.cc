@@ -82,7 +82,8 @@ TestExtractor<dim>::run()
         {
           grid_in.attach_triangulation(tria);
           std::ifstream gmsh_file(
-            "../../meshes/t3.msh"); // unstructured square [0,1]^2
+            std::string(MESH_DIR) +
+            "/meshes/t3.msh"); // unstructured square [0,1]^2
           grid_in.read_msh(gmsh_file);
           tria.refine_global(5); // 4
         }

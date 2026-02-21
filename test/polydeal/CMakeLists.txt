@@ -22,6 +22,9 @@ FOREACH(_build_type ${_d2_build_types})
     SET(_lib "polydeal${_p}")
     MESSAGE("-- Configuring test for ${_lib}")
 
+    # Define MESH_DIR for tests
+    add_compile_definitions(MESH_DIR="${MESH_DIR}")
+
     SET(TEST_LIBRARIES ${_lib})
     DEAL_II_PICKUP_TESTS()
     set(SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}")

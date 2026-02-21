@@ -92,11 +92,10 @@ Poisson<dim>::make_grid()
   if (grid_type == GridType::unstructured)
     {
       grid_in.attach_triangulation(tria);
-      // std::ifstream gmsh_file("../../meshes/t2.msh"); // rectangular domain
-      // grid_in.read_msh(gmsh_file);
-      // tria.refine_global(4);
-      std::ifstream gmsh_file(
-        "../../meshes/piston_2.inp"); // rectangular domain
+      // std::ifstream gmsh_file(std::string(MESH_DIR) + "meshes/t2.msh"); //
+      // rectangular domain grid_in.read_msh(gmsh_file); tria.refine_global(4);
+      std::ifstream gmsh_file(std::string(MESH_DIR) +
+                              "/meshes/piston_2.inp"); // rectangular domain
       grid_in.read_abaqus(gmsh_file);
     }
   else
@@ -196,7 +195,7 @@ Poisson<dim>::setup_agglomeration()
       std::vector<typename Triangulation<dim>::active_cell_iterator>
         cells_to_be_agglomerated;
       // Get all the elements associated with the present subdomain_id
-      for (const auto element : cells_per_subdomain[i])
+      for (const auto &element : cells_per_subdomain[i])
         {
           idxs_to_be_agglomerated.push_back(element->active_cell_index());
         }
