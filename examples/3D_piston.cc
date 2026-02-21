@@ -395,7 +395,8 @@ DiffusionReactionProblem<dim>::make_fine_grid()
 
   GridIn<dim> grid_in;
   grid_in.attach_triangulation(tria);
-  std::ifstream gmsh_file("../../meshes/piston_3.inp"); // piston mesh
+  std::ifstream gmsh_file(std::string(MESH_DIR) +
+                          "/piston_3.inp"); // piston mesh
   grid_in.read_abaqus(gmsh_file);
   // tria.refine_global(1);
 

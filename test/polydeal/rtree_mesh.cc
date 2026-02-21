@@ -63,7 +63,7 @@ Poisson<dim>::make_grid()
   if (grid_type == GridTypes::unstructured)
     {
       grid_in.attach_triangulation(tria);
-      std::ifstream gmsh_file("../../meshes/t2.msh");
+      std::ifstream gmsh_file(std::string(MESH_DIR) + "/meshes/t2.msh");
       grid_in.read_msh(gmsh_file);
       tria.refine_global(4);
     }

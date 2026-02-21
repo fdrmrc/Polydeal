@@ -133,13 +133,15 @@ AgglomeratedMG<dim>::make_fine_grid(const unsigned int n_global_refinements)
       if constexpr (dim == 2)
         {
           std::ifstream gmsh_file(
-            "../../meshes/t3.msh"); // unstructured square [0,1]^2
+            std::string(MESH_DIR) +
+            "/meshes/t3.msh"); // unstructured square [0,1]^2
           grid_in.read_msh(gmsh_file);
           tria.refine_global(n_global_refinements + 2);
         }
       else
         {
-          std::ifstream abaqus_file("../../meshes/piston_3.inp"); // piston mesh
+          std::ifstream abaqus_file(std::string(MESH_DIR) +
+                                    "/meshes/piston_3.inp"); // piston mesh
           grid_in.read_abaqus(abaqus_file);
         }
     }

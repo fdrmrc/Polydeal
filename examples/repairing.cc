@@ -89,7 +89,8 @@ Test<dim>::make_grid()
     {
       grid_in.attach_triangulation(tria);
       std::cout << "########### Reading mesh file... ###########" << std::endl;
-      std::ifstream filename("../../meshes/ernie.msh"); // liver or brain domain
+      std::ifstream filename(std::string(MESH_DIR) +
+                             "/meshes/ernie.msh"); // liver or brain domain
       grid_in.read_msh(filename);
       std::cout << "########### Done ###########" << std::endl;
     }

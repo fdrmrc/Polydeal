@@ -180,8 +180,9 @@ AgglomeratedMultigridSimplex<dim>::make_fine_grid(
       if constexpr (dim == 2)
         {
           std::ifstream gmsh_file(
-            "../../meshes/square_simplex_coarser.msh"); // unstructured square
-                                                        // made by triangles
+            std::string(MESH_DIR) +
+            "/meshes/square_simplex_coarser.msh"); // unstructured square
+                                                   // made by triangles
           grid_in.read_msh(gmsh_file);
           tria.refine_global(n_global_refinements + 2);
         }
