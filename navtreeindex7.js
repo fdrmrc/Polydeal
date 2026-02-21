@@ -130,10 +130,11 @@ var NAVTREEINDEX7 =
 "namespacePhysics.html":[1,0,103],
 "namespacePipeSegment.html":[1,0,104],
 "namespacePolynomials.html":[1,0,105],
-"namespacePolynomials.html#a1cb749462a4b600923ea340c55f703df":[1,0,105,5],
+"namespacePolynomials.html#a2a0a30778bafa5f97d929e21e5433951":[1,0,105,4],
 "namespacePolynomials.html#a5c1b874ba6a891f806ed53234600bf0a":[1,0,105,1],
 "namespacePolynomials.html#aa0c0b5c9c7df57f5c30ec41326488906":[1,0,105,3],
-"namespacePolynomials.html#adc782b64b1a5c3d009eb24dd372be6e4":[1,0,105,4],
+"namespacePolynomials.html#adc782b64b1a5c3d009eb24dd372be6e4":[1,0,105,5],
+"namespacePolynomials.html#ae3daaf8289fb97e7b2c35989ada73d82":[1,0,105,6],
 "namespacePolynomials.html#ae66b65dc61a9dca786ec84a122651ab9":[1,0,105,2],
 "namespacePolynomials_1_1internal.html":[1,0,105,0],
 "namespacePortable.html":[1,0,106],
@@ -248,6 +249,5 @@ var NAVTREEINDEX7 =
 "namespaceTimeStepping.html#abff97b5326e452552f108a379dd6cff4a2102ce2c5306320faa2eb291b505d495":[1,0,158,24],
 "namespaceTimeStepping.html#abff97b5326e452552f108a379dd6cff4a2c9983d26b0e7884012397c87bb3809a":[1,0,158,25],
 "namespaceTimeStepping.html#abff97b5326e452552f108a379dd6cff4a32b4e44cc3d0746c448d48f3fcb6f633":[1,0,158,20],
-"namespaceTimeStepping.html#abff97b5326e452552f108a379dd6cff4a48a2da10d70ded640369a80770aa8279":[1,0,158,11],
-"namespaceTimeStepping.html#abff97b5326e452552f108a379dd6cff4a5cc8559104243d25be4380b76ae5aa62":[1,0,158,12]
+"namespaceTimeStepping.html#abff97b5326e452552f108a379dd6cff4a48a2da10d70ded640369a80770aa8279":[1,0,158,11]
 };

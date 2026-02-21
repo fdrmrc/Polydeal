@@ -1,5 +1,11 @@
 var NAVTREEINDEX10 =
 {
+"namespacehp_1_1Refinement.html#a4ee925e92855d61dafee9de572a850b0":[1,0,55,1,9],
+"namespacehp_1_1Refinement.html#a4f1c9991fc50d5b952a90dcc164a2539":[1,0,55,1,4],
+"namespacehp_1_1Refinement.html#a7e0a3e2eef28a0af3a6ca7c60b273706":[1,0,55,1,11],
+"namespacehp_1_1Refinement.html#a8d1c7911e81d777123483a83b2fe1eda":[1,0,55,1,6],
+"namespacehp_1_1Refinement.html#a98a9d9d1450456815b8ed4892041065c":[1,0,55,1,1],
+"namespacehp_1_1Refinement.html#aa51769e5a5752781cd5aa9ec00b82a5c":[1,0,55,1,5],
 "namespacehp_1_1Refinement.html#ad0ca178ceaa3fbd70627d23d2adabeeb":[1,0,55,1,0],
 "namespacehp_1_1Refinement.html#adbb65ed7b6a97961a69967eaa0bb170b":[1,0,55,1,10],
 "namespacehp_1_1Refinement.html#aefd3adee5f867c94814028c0949da9de":[1,0,55,1,7],
@@ -243,11 +249,5 @@ var NAVTREEINDEX10 =
 "namespaceinternal_1_1MappingQImplementation.html#ad648bea4099bb2a7d109bfee232d8278":[1,0,57,33,0],
 "namespaceinternal_1_1MappingQImplementation.html#ae9bbe59a39a0f8a72ef8b5003b266175":[1,0,57,33,7],
 "namespaceinternal_1_1MappingQImplementation.html#aec23c03ae9866f2d366141af25e9cc0b":[1,0,57,33,10],
-"namespaceinternal_1_1MappingQImplementation.html#aef729dbaea1b5d2ca5d41468f5f53f5b":[1,0,57,33,11],
-"namespaceinternal_1_1MatrixFreeFunctions.html":[1,0,57,34],
-"namespaceinternal_1_1MatrixFreeFunctions.html#a1ed4d2659c5a60ccb9b2030ad4dde8c1":[1,0,57,34,19],
-"namespaceinternal_1_1MatrixFreeFunctions.html#a2295bd876d887af244aa07832fee8ce0":[1,0,57,34,9],
-"namespaceinternal_1_1MatrixFreeFunctions.html#a3327f271325e5e1ec60e0799daa1c0a8":[1,0,57,34,15],
-"namespaceinternal_1_1MatrixFreeFunctions.html#a4d00c0d5884021f25691d6be7b4d6d21":[1,0,57,34,11],
-"namespaceinternal_1_1MatrixFreeFunctions.html#a62b375322271de5ebfd1b4b3bf7f0a04":[1,0,57,34,8]
+"namespaceinternal_1_1MappingQImplementation.html#aef729dbaea1b5d2ca5d41468f5f53f5b":[1,0,57,33,11]
 };
