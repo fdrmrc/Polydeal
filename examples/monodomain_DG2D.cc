@@ -56,11 +56,6 @@
 
 using namespace dealii;
 
-#ifndef DEAL_II_WITH_MUMPS
-class SparseDirectMUMPS
-{};
-#endif
-
 static constexpr bool         measure_solve_times = true;
 static constexpr unsigned int starting_level      = 1;
 
