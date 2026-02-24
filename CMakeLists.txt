@@ -28,6 +28,26 @@ ENDIF()
 DEAL_II_INITIALIZE_CACHED_VARIABLES()
 PROJECT(polydeal)
 
+# Trilinos, METIS, and p4est are required
+IF(NOT DEAL_II_WITH_TRILINOS OR NOT DEAL_II_WITH_METIS OR NOT DEAL_II_WITH_P4EST)
+  IF(NOT DEAL_II_WITH_TRILINOS)
+    MESSAGE(STATUS "  - Trilinos: NOT found (required)")
+  ENDIF()
+  IF(NOT DEAL_II_WITH_METIS)
+    MESSAGE(STATUS "  - METIS: NOT found (required)")
+  ENDIF()
+  IF(NOT DEAL_II_WITH_P4EST)
+    MESSAGE(STATUS "  - p4est: NOT found (required)")
+  ENDIF()
+  MESSAGE(FATAL_ERROR "\n"
+    "*** deal.II is missing required dependencies (see above). ***\n\n"
+    "Polydeal requires deal.II to be compiled with Trilinos, METIS, and p4est.\n"
+    "Please recompile deal.II with -DDEAL_II_WITH_TRILINOS=ON -DDEAL_II_WITH_METIS=ON -DDEAL_II_WITH_P4EST=ON."
+  )
+ELSE()
+  MESSAGE(STATUS "Trilinos, METIS, and p4est support detected.")
+ENDIF()
+
 # Define mesh directory path
 SET(MESH_DIR "${CMAKE_SOURCE_DIR}/meshes")
 MESSAGE(STATUS "Mesh directory: ${MESH_DIR}")
