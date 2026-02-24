@@ -1,6 +1,6 @@
 var group__fe =
 [
-    [ "FE_AggloDGP< dim, spacedim >", "class_f_e___agglo_d_g_p.html", [
+    [ "FE_AggloDGP&lt; dim, spacedim &gt;", "class_f_e___agglo_d_g_p.html", [
       [ "FE_AggloDGP", "class_f_e___agglo_d_g_p.html#abc6f186b5969a785b89248154b9d6dc4", null ],
       [ "clone", "class_f_e___agglo_d_g_p.html#a163aa4b19458b5c305b32056631defb7", null ],
       [ "compare_for_domination", "class_f_e___agglo_d_g_p.html#ad15d823ce6848911bc7b20badc29ace5", null ],

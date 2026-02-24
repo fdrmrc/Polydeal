@@ -9,27 +9,27 @@ var annotated_dup =
       [ "PolyUtils", "namespacedealii_1_1_poly_utils.html", [
         [ "Rtree_visitor", "structdealii_1_1_poly_utils_1_1_rtree__visitor.html", "structdealii_1_1_poly_utils_1_1_rtree__visitor" ]
       ] ],
-      [ "AmgProjector", "classdealii_1_1_amg_projector.html", "classdealii_1_1_amg_projector" ],
       [ "CellsAgglomerator", "classdealii_1_1_cells_agglomerator.html", "classdealii_1_1_cells_agglomerator" ],
       [ "MatrixFreeProjector", "classdealii_1_1_matrix_free_projector.html", "classdealii_1_1_matrix_free_projector" ],
+      [ "AmgProjector", "classdealii_1_1_amg_projector.html", "classdealii_1_1_amg_projector" ],
       [ "MGTransferAgglomeration", "classdealii_1_1_m_g_transfer_agglomeration.html", "classdealii_1_1_m_g_transfer_agglomeration" ]
     ] ],
     [ "internal", null, [
       [ "LinearOperatorMGImplementation", "namespaceinternal_1_1_linear_operator_m_g_implementation.html", [
+        [ "ReinitHelper", "classinternal_1_1_linear_operator_m_g_implementation_1_1_reinit_helper.html", "classinternal_1_1_linear_operator_m_g_implementation_1_1_reinit_helper" ],
         [ "EmptyPayload", "classinternal_1_1_linear_operator_m_g_implementation_1_1_empty_payload.html", "classinternal_1_1_linear_operator_m_g_implementation_1_1_empty_payload" ],
         [ "has_vmult_add_and_Tvmult_add", "classinternal_1_1_linear_operator_m_g_implementation_1_1has__vmult__add__and___tvmult__add.html", "classinternal_1_1_linear_operator_m_g_implementation_1_1has__vmult__add__and___tvmult__add" ],
         [ "MatrixInterfaceWithoutVmultAdd", "classinternal_1_1_linear_operator_m_g_implementation_1_1_matrix_interface_without_vmult_add.html", "classinternal_1_1_linear_operator_m_g_implementation_1_1_matrix_interface_without_vmult_add" ],
-        [ "MatrixInterfaceWithVmultAdd", "classinternal_1_1_linear_operator_m_g_implementation_1_1_matrix_interface_with_vmult_add.html", "classinternal_1_1_linear_operator_m_g_implementation_1_1_matrix_interface_with_vmult_add" ],
-        [ "ReinitHelper", "classinternal_1_1_linear_operator_m_g_implementation_1_1_reinit_helper.html", "classinternal_1_1_linear_operator_m_g_implementation_1_1_reinit_helper" ]
+        [ "MatrixInterfaceWithVmultAdd", "classinternal_1_1_linear_operator_m_g_implementation_1_1_matrix_interface_with_vmult_add.html", "classinternal_1_1_linear_operator_m_g_implementation_1_1_matrix_interface_with_vmult_add" ]
       ] ]
     ] ],
     [ "Utils", "namespace_utils.html", [
+      [ "Physics", "namespace_utils_1_1_physics.html", [
+        [ "BilinearFormParameters", "struct_utils_1_1_physics_1_1_bilinear_form_parameters.html", "struct_utils_1_1_physics_1_1_bilinear_form_parameters" ]
+      ] ],
       [ "MatrixFreeOperators", "namespace_utils_1_1_matrix_free_operators.html", [
         [ "LaplaceOperatorDG", "class_utils_1_1_matrix_free_operators_1_1_laplace_operator_d_g.html", "class_utils_1_1_matrix_free_operators_1_1_laplace_operator_d_g" ],
         [ "MonodomainOperatorDG", "class_utils_1_1_matrix_free_operators_1_1_monodomain_operator_d_g.html", "class_utils_1_1_matrix_free_operators_1_1_monodomain_operator_d_g" ]
-      ] ],
-      [ "Physics", "namespace_utils_1_1_physics.html", [
-        [ "BilinearFormParameters", "struct_utils_1_1_physics_1_1_bilinear_form_parameters.html", "struct_utils_1_1_physics_1_1_bilinear_form_parameters" ]
       ] ],
       [ "Graph", "struct_utils_1_1_graph.html", "struct_utils_1_1_graph" ],
       [ "MGCoarseDirect", "class_utils_1_1_m_g_coarse_direct.html", "class_utils_1_1_m_g_coarse_direct" ]

@@ -1,6 +1,6 @@
 var group__mapping =
 [
-    [ "MappingBox< dim, spacedim >", "class_mapping_box.html", [
+    [ "MappingBox&lt; dim, spacedim &gt;", "class_mapping_box.html", [
       [ "InternalData", "class_mapping_box_1_1_internal_data.html", [
         [ "InternalData", "class_mapping_box_1_1_internal_data.html#ad04e65f4e53900598869679991911ccc", null ],
         [ "InternalData", "class_mapping_box_1_1_internal_data.html#aedcbbafe270a6754ecda384171974933", null ],

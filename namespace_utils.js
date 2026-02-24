@@ -1,7 +1,7 @@
 var namespace_utils =
 [
-    [ "MatrixFreeOperators", "namespace_utils_1_1_matrix_free_operators.html", "namespace_utils_1_1_matrix_free_operators" ],
     [ "Physics", "namespace_utils_1_1_physics.html", "namespace_utils_1_1_physics" ],
+    [ "MatrixFreeOperators", "namespace_utils_1_1_matrix_free_operators.html", "namespace_utils_1_1_matrix_free_operators" ],
     [ "Graph", "struct_utils_1_1_graph.html", "struct_utils_1_1_graph" ],
     [ "MGCoarseDirect", "class_utils_1_1_m_g_coarse_direct.html", "class_utils_1_1_m_g_coarse_direct" ],
     [ "compute_connected_components", "namespace_utils.html#aa4232d6367b5618dd8e181c9a8918591", null ],

@@ -1,7 +1,7 @@
 var structdealii_1_1_poly_utils_1_1_rtree__visitor =
 [
-    [ "InternalNode", "structdealii_1_1_poly_utils_1_1_rtree__visitor.html#aff5aa81a0403b5fd097e048f7abf231d", null ],
-    [ "Leaf", "structdealii_1_1_poly_utils_1_1_rtree__visitor.html#adc01e30a472edd988bacd1f562dcee4c", null ],
+    [ "InternalNode", "structdealii_1_1_poly_utils_1_1_rtree__visitor.html#aeca36065517a597cea34ad2b6220543d", null ],
+    [ "Leaf", "structdealii_1_1_poly_utils_1_1_rtree__visitor.html#a7b967fe2f7753ed2ee4f7d8fb9a4819d", null ],
     [ "Rtree_visitor", "structdealii_1_1_poly_utils_1_1_rtree__visitor.html#a62612d8e800bde4457294938160ed408", null ],
     [ "operator()", "structdealii_1_1_poly_utils_1_1_rtree__visitor.html#a4886bfaa5d06aa2eeb62950cc1836ce5", null ],
     [ "operator()", "structdealii_1_1_poly_utils_1_1_rtree__visitor.html#a723e7c9e319c7846548af79ddb079242", null ],

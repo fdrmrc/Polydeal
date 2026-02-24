@@ -1,10 +1,10 @@
 var utils_8h =
 [
     [ "Utils::Graph", "struct_utils_1_1_graph.html", "struct_utils_1_1_graph" ],
-    [ "Utils::MGCoarseDirect< VectorType, MatrixType, SolverType >", "class_utils_1_1_m_g_coarse_direct.html", "class_utils_1_1_m_g_coarse_direct" ],
+    [ "Utils::MGCoarseDirect&lt; VectorType, MatrixType, SolverType &gt;", "class_utils_1_1_m_g_coarse_direct.html", "class_utils_1_1_m_g_coarse_direct" ],
     [ "Utils::Physics::BilinearFormParameters", "struct_utils_1_1_physics_1_1_bilinear_form_parameters.html", "struct_utils_1_1_physics_1_1_bilinear_form_parameters" ],
-    [ "Utils::MatrixFreeOperators::LaplaceOperatorDG< dim, degree, n_q_points, n_components, number >", "class_utils_1_1_matrix_free_operators_1_1_laplace_operator_d_g.html", "class_utils_1_1_matrix_free_operators_1_1_laplace_operator_d_g" ],
-    [ "Utils::MatrixFreeOperators::MonodomainOperatorDG< dim, degree, n_q_points, n_components, number >", "class_utils_1_1_matrix_free_operators_1_1_monodomain_operator_d_g.html", "class_utils_1_1_matrix_free_operators_1_1_monodomain_operator_d_g" ],
+    [ "Utils::MatrixFreeOperators::LaplaceOperatorDG&lt; dim, degree, n_q_points, n_components, number &gt;", "class_utils_1_1_matrix_free_operators_1_1_laplace_operator_d_g.html", "class_utils_1_1_matrix_free_operators_1_1_laplace_operator_d_g" ],
+    [ "Utils::MatrixFreeOperators::MonodomainOperatorDG&lt; dim, degree, n_q_points, n_components, number &gt;", "class_utils_1_1_matrix_free_operators_1_1_monodomain_operator_d_g.html", "class_utils_1_1_matrix_free_operators_1_1_monodomain_operator_d_g" ],
     [ "Utils::Physics::TimeStepping", "namespace_utils_1_1_physics.html#a96eb29ec0f914d609ef922ec31aff9d6", [
       [ "Utils::Physics::TimeStepping::BDF1", "namespace_utils_1_1_physics.html#a96eb29ec0f914d609ef922ec31aff9d6abbec671208b40d67e1f5ae9ef82c3377", null ],
       [ "Utils::Physics::TimeStepping::BDF2", "namespace_utils_1_1_physics.html#a96eb29ec0f914d609ef922ec31aff9d6abbee23d8755020956d188ee92325ce09", null ]

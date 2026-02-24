@@ -15,7 +15,6 @@ var namespaceinternal =
       [ "append_patch_to_list", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1DataOutRotationImplementation.html#ad148136c236f89348962324fc3ed0cf3", null ]
     ] ],
     [ "DoFAccessorImplementation", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1DoFAccessorImplementation.html", [
-      [ "Implementation", "http://www.dealii.org/developer/doxygen/deal.II/structinternal_1_1DoFAccessorImplementation_1_1Implementation_1_1DoFIndexProcessor.html", null ],
       [ "get_cell_dof_indices", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1DoFAccessorImplementation.html#ae73b994e5a72a98aff466c6a4ca20637", null ],
       [ "get_fe_index_or_default", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1DoFAccessorImplementation.html#a50a1fb03f13240c165dd9ead963cb99d", null ]
     ] ],
@@ -84,7 +83,6 @@ var namespaceinternal =
       [ "operator*", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1LinearOperatorImplementation.html#afa4dff3b52776d22414dbdb1f3b0dffc", null ],
       [ "operator+", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1LinearOperatorImplementation.html#a57b5abe16e045d935c60397f830f065c", null ]
     ] ],
-    [ "LinearOperatorMGImplementation", "namespaceinternal_1_1_linear_operator_m_g_implementation.html", "namespaceinternal_1_1_linear_operator_m_g_implementation" ],
     [ "MappingFEImplementation", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1MappingFEImplementation.html", null ],
     [ "MappingManifoldImplementation", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1MappingManifoldImplementation.html", null ],
     [ "MappingQ1", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1MappingQ1.html", [
@@ -297,9 +295,6 @@ var namespaceinternal =
     [ "TimerImplementation", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1TimerImplementation.html", null ],
     [ "TriaAccessorImplementation", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1TriaAccessorImplementation.html", null ],
     [ "TriangulationImplementation", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1TriangulationImplementation.html", [
-      [ "TriaObjects", "http://www.dealii.org/developer/doxygen/deal.II/structinternal_1_1TriangulationImplementation_1_1TriaObjects_1_1BoundaryOrMaterialId.html", [
-        [ "ExcPointerIndexClash", "http://www.dealii.org/developer/doxygen/deal.II/group__Exceptions.html#ga679f9e8ea705ff8bafe11553e704571b", null ]
-      ] ],
       [ "build_connectivity", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1TriangulationImplementation.html#aeb818244a0e6eabcb81d17f2e8457369", null ],
       [ "build_connectivity", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1TriangulationImplementation.html#a710807ba2b6a0f275c570664ba0c30ba", null ],
       [ "build_face_entities", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1TriangulationImplementation.html#a292b776590149f194f1b620591dd027f", null ],
@@ -325,7 +320,7 @@ var namespaceinternal =
       [ "ExcMultiplySetLineInfoOfLine", "http://www.dealii.org/developer/doxygen/deal.II/group__Exceptions.html#gaaa393b358422d0557097303789f88316", null ],
       [ "ExcMultiplySetLineInfoOfLine", "http://www.dealii.org/developer/doxygen/deal.II/group__Exceptions.html#gaaa393b358422d0557097303789f88316", null ],
       [ "get_default_flat_manifold", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1TriangulationImplementation.html#a7983348faf880f81c6f729f6bdefaa5a", null ],
-      [ "monitor_memory", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1TriangulationImplementation.html#af67f6bd5429664c145ec5b507eac5216", null ],
+      [ "monitor_memory", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1TriangulationImplementation.html#ae776fef5ee6485e62c58db91ad960cf3", null ],
       [ "monitor_memory", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1TriangulationImplementation.html#ab912a458a374aa378575cefde59d63a3", null ],
       [ "n_active_cells", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1TriangulationImplementation.html#a3344398031a9e10cb9eef0784f8da1be", null ],
       [ "n_active_cells", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1TriangulationImplementation.html#a04f9bba336d907091d5c3b6e632d8648", null ],
@@ -334,7 +329,7 @@ var namespaceinternal =
       [ "n_cells", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1TriangulationImplementation.html#af7741abe7d6d11f56b29a555f1afb2d5", null ],
       [ "n_cells", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1TriangulationImplementation.html#a26bf383b0f54799d7882a2867add1f02", null ],
       [ "reserve_space", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1TriangulationImplementation.html#ab1f99b23dabaeff541204830564738e5", null ],
-      [ "reserve_space", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1TriangulationImplementation.html#a2766aebb7b6dade91477e908faa01aac", null ]
+      [ "reserve_space", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1TriangulationImplementation.html#ad77a3f354565779e04a8e9ff43c61408", null ]
     ] ],
     [ "UtilitiesImplementation", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1UtilitiesImplementation.html", [
       [ "call_stev", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1UtilitiesImplementation.html#a028c87b984cced289275582efedbdca3", null ],
@@ -360,6 +355,7 @@ var namespaceinternal =
       [ "parallel_reduce", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1VectorOperations.html#a36da115fee8c86578259047930480dd8", null ],
       [ "vector_accumulation_recursion_threshold", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1VectorOperations.html#aa53e962206a1926aaed4c1b42bb374c1", null ]
     ] ],
+    [ "LinearOperatorMGImplementation", "namespaceinternal_1_1_linear_operator_m_g_implementation.html", "namespaceinternal_1_1_linear_operator_m_g_implementation" ],
     [ "argument_type_t", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal.html#aa6a0564c9176ee6bf5a14ce4ec10ede1", null ],
     [ "has_block_t", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal.html#a9f70e56c1672248af482b73b33949385", null ],
     [ "has_n_blocks_t", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal.html#a9428fae6440bc3c096068f2a700ceebb", null ],
