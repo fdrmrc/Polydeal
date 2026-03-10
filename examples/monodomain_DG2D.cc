@@ -61,7 +61,7 @@ static constexpr unsigned int starting_level      = 1;
 
 // matrix-free related parameters
 static constexpr bool         use_matrix_free_action = true;
-static constexpr unsigned int degree_finite_element  = 4;
+static constexpr unsigned int degree_finite_element  = 1;
 constexpr unsigned int        n_qpoints    = degree_finite_element + 1;
 static constexpr unsigned int n_components = 1;
 
@@ -82,22 +82,8 @@ namespace Utils
     initialize(const MatrixType &matrix)
     {
       coarse_matrix = &matrix;
-      if constexpr (std::is_same_v<PreconditionerType, SparseDirectMUMPS>)
-        {
-#ifdef DEAL_II_WITH_MUMPS
-          precondition = std::make_unique<SparseDirectMUMPS>(
-            typename SparseDirectMUMPS::AdditionalData(),
-            matrix.get_mpi_communicator());
-          precondition->initialize(*coarse_matrix);
-#else
-          AssertThrow(false,
-                      ExcMessage(
-                        "MUMPS support is required but not available. "
-                        "Please recompile deal.II with MUMPS enabled."));
-#endif
-        }
-      else if constexpr (std::is_same_v<PreconditionerType,
-                                        TrilinosWrappers::PreconditionAMG>)
+      if constexpr (std::is_same_v<PreconditionerType,
+                                   TrilinosWrappers::PreconditionAMG>)
         {
           precondition = std::make_unique<TrilinosWrappers::PreconditionAMG>();
           precondition->initialize(*coarse_matrix);
@@ -130,23 +116,6 @@ namespace Utils
           stop = MPI_Wtime();
 #endif
         }
-      else if constexpr (std::is_same_v<PreconditionerType, SparseDirectMUMPS>)
-        {
-#ifdef AGGLO_DEBUG
-          start = MPI_Wtime();
-#endif
-#ifdef DEAL_II_WITH_MUMPS
-          precondition->vmult(dst, src);
-#else
-          AssertThrow(false,
-                      ExcMessage(
-                        "MUMPS support is required but not available. "
-                        "Please recompile deal.II with MUMPS enabled."));
-#endif
-#ifdef AGGLO_DEBUG
-          stop = MPI_Wtime();
-#endif
-        }
       else
         {
           DEAL_II_NOT_IMPLEMENTED();
@@ -161,6 +130,63 @@ namespace Utils
 
     const MatrixType                   *coarse_matrix;
     std::unique_ptr<PreconditionerType> precondition;
+  };
+
+
+
+  template <typename MatrixType, typename Number, typename DirectSolverType>
+  class MGCoarseDirectMUMPS
+    : public MGCoarseGridBase<LinearAlgebra::distributed::Vector<Number>>
+  {
+  public:
+    MGCoarseDirectMUMPS()
+    {}
+
+    void
+    initialize(const MatrixType &matrix)
+    {
+#ifdef DEAL_II_WITH_MUMPS
+      coarse_matrix = &matrix;
+      direct_solver = std::make_unique<SparseDirectMUMPS>(
+        typename SparseDirectMUMPS::AdditionalData(),
+        matrix.get_mpi_communicator());
+      direct_solver->initialize(*coarse_matrix);
+
+#else
+      DEAL_II_NOT_IMPLEMENTED();
+#endif
+    }
+
+    virtual void
+    operator()(
+      const unsigned int                                level,
+      LinearAlgebra::distributed::Vector<double>       &dst,
+      const LinearAlgebra::distributed::Vector<double> &src) const override
+    {
+#ifdef DEAL_II_WITH_MUMPS
+#  ifdef AGGLO_DEBUG
+      (void)level;
+      [[maybe_unused]] double start, stop;
+      start = MPI_Wtime();
+#  endif
+      direct_solver->vmult(dst, src);
+#  ifdef AGGLO_DEBUG
+      stop = MPI_Wtime();
+#  endif
+
+
+#  ifdef AGGLO_DEBUG
+      if (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
+        std::cout << "Coarse solver elapsed time: " << stop - start << "[s]"
+                  << std::endl;
+#  endif
+#else
+      DEAL_II_NOT_IMPLEMENTED();
+#endif
+    }
+
+    const MatrixType                 *coarse_matrix;
+    std::unique_ptr<DirectSolverType> direct_solver;
   };
 
 } // namespace Utils
@@ -499,9 +525,9 @@ private:
 
 
   // Multigrid related types
-  using LevelMatrixType  = LinearOperatorMG<VectorType, VectorType>;
-  using SmootherType     = PreconditionChebyshev<LevelMatrixType, VectorType>;
-  using CoarseSolverType = TrilinosWrappers::PreconditionAMG;
+  using LevelMatrixType = LinearOperatorMG<VectorType, VectorType>;
+  using SmootherType    = PreconditionChebyshev<LevelMatrixType, VectorType>;
+  using CoarseSolver    = TrilinosWrappers::PreconditionAMG;
 
   MGLevelObject<std::unique_ptr<TrilinosWrappers::SparseMatrix>>
                                  multigrid_matrices;
@@ -520,7 +546,7 @@ private:
 
   std::unique_ptr<Utils::MGCoarseIterative<TrilinosWrappers::SparseMatrix,
                                            double,
-                                           CoarseSolverType>>
+                                           CoarseSolver>>
     mg_coarse;
 
   std::unique_ptr<mg::SmootherRelaxation<SmootherType, VectorType>> mg_smoother;
@@ -894,7 +920,7 @@ IonicModel<dim>::setup_multigrid()
   mg_coarse =
     std::make_unique<Utils::MGCoarseIterative<TrilinosWrappers::SparseMatrix,
                                               double,
-                                              CoarseSolverType>>();
+                                              CoarseSolver>>();
   mg_coarse->initialize(*multigrid_matrices[min_level]);
 
   pcout << "Coarse solver initialized" << std::endl;
