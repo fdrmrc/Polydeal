@@ -119,7 +119,6 @@ var NAVTREEINDEX2 =
 "group__Exceptions.html#ga164db35888d05c5a7589c54fb21f3396":[1,0,107,21],
 "group__Exceptions.html#ga180daa35e4f8cf6ec429163291265055":[1,0,92,31],
 "group__Exceptions.html#ga1af054329605166c3f8c8cb15ee13d93":[1,0,23,19],
-"group__Exceptions.html#ga1e447471726466b163ae971034a0ddc4":[1,0,47,142],
 "group__Exceptions.html#ga215c112ff92f6625e662447d0e52c3a9":[1,0,35,8],
 "group__Exceptions.html#ga222927095708c344673ba22678ae5fe4":[1,0,92,71],
 "group__Exceptions.html#ga26f0866f8b59c128bb0a922c509803e2":[1,0,92,35],
@@ -249,5 +248,6 @@ var NAVTREEINDEX2 =
 "group__constraints.html#ga1465e31e8cb73b6ad0a7b946ef996ff7":[1,0,109,58],
 "group__constraints.html#ga190b302dc1ee7c89727c94c083d132d2":[1,0,109,107],
 "group__constraints.html#ga218e99116a58ab6364da2c204e3c0188":[1,0,109,52],
-"group__constraints.html#ga30e706e72cad912b5398a1d01365fbeb":[1,0,109,109]
+"group__constraints.html#ga30e706e72cad912b5398a1d01365fbeb":[1,0,109,109],
+"group__constraints.html#ga360afb8a757eba8504172d754d36d047":[1,0,109,64]
 };

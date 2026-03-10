@@ -328,7 +328,7 @@ var namespaceinternal =
       [ "n_cells", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1TriangulationImplementation.html#a9f815604be9b560fea00beef8d720480", null ],
       [ "n_cells", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1TriangulationImplementation.html#af7741abe7d6d11f56b29a555f1afb2d5", null ],
       [ "n_cells", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1TriangulationImplementation.html#a26bf383b0f54799d7882a2867add1f02", null ],
-      [ "reserve_space", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1TriangulationImplementation.html#ab1f99b23dabaeff541204830564738e5", null ],
+      [ "reserve_space", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1TriangulationImplementation.html#a6667ee45dbae731320bc24fae5c5fb64", null ],
       [ "reserve_space", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1TriangulationImplementation.html#ad77a3f354565779e04a8e9ff43c61408", null ]
     ] ],
     [ "UtilitiesImplementation", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal_1_1UtilitiesImplementation.html", [
@@ -427,9 +427,7 @@ var namespaceinternal =
     [ "ExcAccessToUninitializedField", "http://www.dealii.org/developer/doxygen/deal.II/group__Exceptions.html#gabe11f3d60f079b1a7cdb956e0735ccb0", null ],
     [ "ExcMatrixFreeAccessToUninitializedMappingField", "http://www.dealii.org/developer/doxygen/deal.II/group__Exceptions.html#gae2ca2ebf1ed124550adf75d872a7dfdd", null ],
     [ "ExcMatrixFreeAccessToUninitializedMappingField", "http://www.dealii.org/developer/doxygen/deal.II/group__Exceptions.html#gae2ca2ebf1ed124550adf75d872a7dfdd", null ],
-    [ "ExcNonMatchingReferenceCellTypes", "http://www.dealii.org/developer/doxygen/deal.II/group__Exceptions.html#ga1e447471726466b163ae971034a0ddc4", null ],
-    [ "ExcNonMatchingReferenceCellTypes", "http://www.dealii.org/developer/doxygen/deal.II/group__Exceptions.html#ga1e447471726466b163ae971034a0ddc4", null ],
-    [ "expand", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal.html#a8882b81216e6d3439ae59bf518ab60f7", null ],
+    [ "expand", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal.html#a584305422b9e899654da0418bab24948", null ],
     [ "fe_face_evaluation_process_and_io", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal.html#a41de75e3aa581da531ba61cabc136687", null ],
     [ "get_abs", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal.html#a9200d5ced8a0c8438f9eb827a115bdb3", null ],
     [ "get_degree", "http://www.dealii.org/developer/doxygen/deal.II/namespaceinternal.html#ac0d307aa3e183e9de7c999e44717618f", null ],

@@ -1403,7 +1403,7 @@ var namespaces_dup =
     [ "Portable", "http://www.dealii.org/developer/doxygen/deal.II/namespacePortable.html", [
       [ "internal", "http://www.dealii.org/developer/doxygen/deal.II/namespacePortable_1_1internal.html", [
         [ "EvaluatorVariant", "http://www.dealii.org/developer/doxygen/deal.II/namespacePortable_1_1internal.html#a18af8f0da5da0e786795993251f514e8", null ],
-        [ "apply", "http://www.dealii.org/developer/doxygen/deal.II/namespacePortable_1_1internal.html#a69d21189e58987604d9f0dc32e3aa153", null ],
+        [ "apply", "http://www.dealii.org/developer/doxygen/deal.II/namespacePortable_1_1internal.html#a7604bec8c2aec67585933482c58cba8d", null ],
         [ "index2", "http://www.dealii.org/developer/doxygen/deal.II/namespacePortable_1_1internal.html#accfede535ac7d5014042d25c3cfe4009", null ],
         [ "index3", "http://www.dealii.org/developer/doxygen/deal.II/namespacePortable_1_1internal.html#a41676746916f0bc44da5f7373725d236", null ],
         [ "interpolate_boundary_2d", "http://www.dealii.org/developer/doxygen/deal.II/namespacePortable_1_1internal.html#acef98739ad67c5da505ae978f0428948", null ],

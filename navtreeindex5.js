@@ -1,6 +1,5 @@
 var NAVTREEINDEX5 =
 {
-"namespaceFiniteElementDomination.html#a65fdbe0cca5954df89a7af4f36769bf9aa84eb0c403f639b0fc6ace52835db1bd":[1,0,34,6],
 "namespaceFiniteElementDomination.html#ac037fc30b4833bca7aea061bc7af85ef":[1,0,34,1],
 "namespaceFunctionTools.html":[1,0,36],
 "namespaceFunctionTools.html#aa8623a76c9c4dd273d1066cf5676b331":[1,0,36,0],
@@ -249,5 +248,6 @@ var NAVTREEINDEX5 =
 "namespaceLAPACKSupport.html#a1a9009db0d9a77923a7031b549b9b638a21228721b531a8dac58d3be08f2a8ad2":[1,0,52,22],
 "namespaceLAPACKSupport.html#a1a9009db0d9a77923a7031b549b9b638a5bc7c54a9c20485772672825c6a73003":[1,0,52,23],
 "namespaceLAPACKSupport.html#a1a9009db0d9a77923a7031b549b9b638a5e000b5629651632beae411d22e0fbac":[1,0,52,31],
-"namespaceLAPACKSupport.html#a1a9009db0d9a77923a7031b549b9b638a73a376f8ddfcc6c94f785567ac05bac9":[1,0,52,18]
+"namespaceLAPACKSupport.html#a1a9009db0d9a77923a7031b549b9b638a73a376f8ddfcc6c94f785567ac05bac9":[1,0,52,18],
+"namespaceLAPACKSupport.html#a1a9009db0d9a77923a7031b549b9b638a778ec03dec986db814da371f6c881ba5":[1,0,52,27]
 };
