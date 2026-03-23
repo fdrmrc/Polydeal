@@ -2027,7 +2027,7 @@ MonodomainProblem<dim>::output_results()
                            DataOut<dim>::type_dof_data);
 
   data_out.add_data_vector(post_processed_solution,
-                           "transmembrane_potential [mV]",
+                           "transmembrane_potential_mV",
                            DataOut<dim>::type_dof_data);
 
   data_out.add_data_vector(locally_relevant_w0_np1,
@@ -2170,7 +2170,48 @@ MonodomainProblem<dim>::run()
   monodomain_operator->reinit(mapping, classical_dh);
 
   if constexpr (use_matrix_free_action)
-    system_operator = linear_operator<VectorType>(*monodomain_operator);
+    {
+      // Re-initialize vectors to be compatible with the MatrixFree
+      // partitioner. The vectors were initially created with just
+      // locally_owned_dofs, but MatrixFree requires its own partitioning
+      // (which includes the correct ghost entries for cell/face loops).
+      monodomain_operator->initialize_dof_vector(locally_relevant_solution_n);
+      monodomain_operator->initialize_dof_vector(locally_relevant_solution_np1);
+      monodomain_operator->initialize_dof_vector(locally_relevant_solution_nm1);
+      monodomain_operator->initialize_dof_vector(system_rhs);
+      monodomain_operator->initialize_dof_vector(ion_at_dofs);
+      monodomain_operator->initialize_dof_vector(extrapoled_solution);
+      monodomain_operator->initialize_dof_vector(post_processed_solution);
+      monodomain_operator->initialize_dof_vector(locally_relevant_w0_n);
+      monodomain_operator->initialize_dof_vector(locally_relevant_w0_np1);
+      monodomain_operator->initialize_dof_vector(locally_relevant_w0_nm1);
+      monodomain_operator->initialize_dof_vector(locally_relevant_w1_n);
+      monodomain_operator->initialize_dof_vector(locally_relevant_w1_np1);
+      monodomain_operator->initialize_dof_vector(locally_relevant_w1_nm1);
+      monodomain_operator->initialize_dof_vector(locally_relevant_w2_n);
+      monodomain_operator->initialize_dof_vector(locally_relevant_w2_np1);
+      monodomain_operator->initialize_dof_vector(locally_relevant_w2_nm1);
+
+      // Re-set initial conditions after re-initialization
+      locally_relevant_solution_n   = 0.;
+      locally_relevant_solution_np1 = locally_relevant_solution_n;
+      locally_relevant_w0_n         = 1.;
+      locally_relevant_w0_np1       = locally_relevant_w0_n;
+      locally_relevant_w1_n         = 1.;
+      locally_relevant_w1_np1       = locally_relevant_w1_n;
+      locally_relevant_w2_n         = 0.;
+      locally_relevant_w2_np1       = locally_relevant_w2_n;
+      if (param.time_stepping_scheme == "BDF2")
+        {
+          extrapoled_solution           = locally_relevant_solution_n;
+          locally_relevant_w2_nm1       = locally_relevant_w2_n;
+          locally_relevant_solution_nm1 = locally_relevant_solution_n;
+          locally_relevant_w0_nm1       = locally_relevant_w0_n;
+          locally_relevant_w1_nm1       = locally_relevant_w1_n;
+        }
+
+      system_operator = linear_operator<VectorType>(*monodomain_operator);
+    }
   else
     system_operator = linear_operator<VectorType>(
       param.preconditioner == "AMG" ?
@@ -2200,8 +2241,11 @@ MonodomainProblem<dim>::run()
   std::vector<double> min_values;
   min_values.push_back(-84e-3);
 
-  VectorType solution_minus_ion(classical_dh.locally_owned_dofs(),
-                                communicator);
+  VectorType solution_minus_ion;
+  if constexpr (use_matrix_free_action)
+    monodomain_operator->initialize_dof_vector(solution_minus_ion);
+  else
+    solution_minus_ion.reinit(classical_dh.locally_owned_dofs(), communicator);
 
   while (time <= end_time)
     {

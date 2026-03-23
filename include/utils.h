@@ -1193,23 +1193,6 @@ namespace Utils
       vmult_add(LinearAlgebra::distributed::Vector<number>       &dst,
                 const LinearAlgebra::distributed::Vector<number> &src) const
       {
-        if (!src.partitioners_are_globally_compatible(
-              *data.get_dof_info(0).vector_partitioner))
-          {
-            LinearAlgebra::distributed::Vector<number> src_copy;
-            src_copy.reinit(data.get_dof_info().vector_partitioner);
-            src_copy = src;
-            const_cast<LinearAlgebra::distributed::Vector<number> &>(src).swap(
-              src_copy);
-          }
-        if (!dst.partitioners_are_globally_compatible(
-              *data.get_dof_info(0).vector_partitioner))
-          {
-            LinearAlgebra::distributed::Vector<number> dst_copy;
-            dst_copy.reinit(data.get_dof_info().vector_partitioner);
-            dst_copy = dst;
-            dst.swap(dst_copy);
-          }
         dst.zero_out_ghost_values();
         data.loop(&MonodomainOperatorDG::local_apply,
                   &MonodomainOperatorDG::local_apply_face,
