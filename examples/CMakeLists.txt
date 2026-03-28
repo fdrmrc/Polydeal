@@ -24,14 +24,15 @@ FOREACH(_build_type ${_d2_build_types})
             
             # Require MUMPS for monodomain examples
             if(exename STREQUAL "monodomain_DG3D" OR exename STREQUAL "monodomain_DG2D")
-              if(NOT DEAL_II_WITH_MUMPS)
+              if(NOT DEAL_II_WITH_MUMPS OR NOT DEAL_II_WITH_HDF5)
                 message(WARNING "\n"
-                  "*** The example '${exename}' requires MUMPS support. ***\n\n"
-                  "Please recompile deal.II with MUMPS enabled for this example to work correctly.\n"
-                  "To enable MUMPS in deal.II, use -DDEAL_II_WITH_MUMPS=ON when configuring deal.II."
+                  "*** The example '${exename}' requires MUMPS and HDF5 support. ***\n\n"
+                  "Please recompile deal.II with MUMPS and HDF5 enabled for this example to work correctly.\n"
+                  "To enable MUMPS in deal.II, use -DDEAL_II_WITH_MUMPS=ON when configuring deal.II.\n"
+                  "To enable HDF5 in deal.II, use -DDEAL_II_WITH_HDF5=ON when configuring deal.II."
                 )
               else()
-                message("-- MUMPS support detected for ${exename}")
+                message("-- MUMPS and HDF5 support detected for ${exename}")
               endif()
             endif()
             

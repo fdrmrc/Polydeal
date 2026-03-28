@@ -21,6 +21,9 @@ subsection Monodomain Solver
     set k3         = 2.0994
     set kso        = 2
     set sigma      = 0.0001
+    set sigma_l    = 1.0e-4
+    set sigma_t    = 0.5e-4
+    set sigma_n    = 0.1e-4
     set tau1p      = 0.06
     set tau1plus   = 0.0014506
     set tau1pp     = 1.15
@@ -41,12 +44,14 @@ subsection Monodomain Solver
 
   subsection Output
     # Whether to compute the minimum value of the solution at each time step.
-    set Compute minimum value = false
-    set Output directory      = .
+    set Compute minimum value     = false
+    set Compute activation time   = true
+    set Compute error indicators  = true
+    set Output directory          = .
 
     # Frequency of output. Output will be written every output_frequency time
     # steps.
-    set Output frequency      = 1
+    set Output frequency      = 10
   end
 
   subsection Preconditioner
@@ -83,7 +88,8 @@ subsection Monodomain Solver
     set Stimulus radius                             = 5e-3
 
     # Type of test case to use. Options are 'idealized' and 'realistic'.
-    set Test case                                   = Idealized
+    set Test case                                   = Idealized#Realistic
+    set Fiber filename                              =  #fibers_BO_LV.h5 #fibers_LV_TTP06_patho.h5
     set Time step size                              = 1e-4
 
     # Time stepping scheme to use. Options are 'BDF1' and 'BDF2'. Default is

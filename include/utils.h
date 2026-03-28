@@ -367,6 +367,10 @@ namespace Utils
       double       chi              = 1e5;
       double       Cm               = 1e-2;
       double       sigma            = 12e-2;
+      double       sigma_l          = 0.;
+      double       sigma_t          = 0.;
+      double       sigma_n          = 0.;
+      bool         use_fibers       = false;
       TimeStepping time_stepping    = TimeStepping::BDF1;
     };
 
@@ -1124,6 +1128,7 @@ namespace Utils
       using value_type          = number;
       using VectorizedArrayType = VectorizedArray<number>;
       using VectorType          = LinearAlgebra::distributed::Vector<number>;
+      using FiberArray = AlignedVector<Tensor<1, dim, VectorizedArrayType>>;
 
       MonodomainOperatorDG(const Physics::BilinearFormParameters &parameters_)
       {
@@ -1166,6 +1171,165 @@ namespace Utils
         compute_inverse_diagonal();
       }
 
+      /**
+       * Reinit with a fiber DoFHandler (FESystem with dim components) for
+       * anisotropic diffusion. The MatrixFree object is set up with two
+       * DoFHandler indices: 0 = scalar DG, 1 = fiber field.
+       */
+      void
+      reinit(const Mapping<dim>    &mapping,
+             const DoFHandler<dim> &dof_handler,
+             const DoFHandler<dim> &fiber_dof_handler,
+             const unsigned int     level = numbers::invalid_unsigned_int)
+      {
+        Assert(
+          degree == dof_handler.get_fe().degree,
+          ExcMessage(
+            "Degree of the operator must match the degree of the DoFHandler"));
+        fe_degree = dof_handler.get_fe().degree;
+
+        const QGauss<1>                                  quad(n_q_points);
+        typename MatrixFree<dim, number>::AdditionalData addit_data;
+        addit_data.tasks_parallel_scheme =
+          MatrixFree<dim, number>::AdditionalData::none;
+        addit_data.tasks_block_size = 3;
+        addit_data.mg_level         = level;
+        addit_data.mapping_update_flags =
+          (update_values | update_gradients | update_quadrature_points);
+        addit_data.mapping_update_flags_inner_faces =
+          (update_gradients | update_JxW_values);
+        addit_data.mapping_update_flags_boundary_faces =
+          (update_gradients | update_JxW_values);
+        constraints.close();
+
+        AffineConstraints<number> fiber_constraints;
+        fiber_constraints.close();
+
+        data.reinit(mapping,
+                    std::vector<const DoFHandler<dim> *>{&dof_handler,
+                                                         &fiber_dof_handler},
+                    std::vector<const AffineConstraints<number> *>{
+                      &constraints, &fiber_constraints},
+                    quad,
+                    addit_data);
+
+        compute_inverse_diagonal();
+      }
+
+
+      /**
+       * Precompute normalized fiber directions at every cell quadrature
+       * point.  Must be called after reinit() with the fiber DoFHandler
+       * overload. The three vectors must have been initialized via
+       * MatrixFree::initialize_dof_vector(v, 1) and filled with the
+       * corresponding HDF5 fiber data.
+       */
+      void
+      precompute_fibers(const LinearAlgebra::distributed::Vector<number> &f0,
+                        const LinearAlgebra::distributed::Vector<number> &s0,
+                        const LinearAlgebra::distributed::Vector<number> &n0)
+      {
+        // FEEvaluation for the fiber FESystem (dof_handler_index = 1).
+        // Degree 1 is hardcoded for FE_Q(1) fibers; n_q_points from the
+        // scalar operator is reused (over-integration is harmless).
+        FEEvaluation<dim, 1, n_q_points, dim, number> phi_fiber(data, 1);
+        const unsigned int n_q       = phi_fiber.n_q_points;
+        const unsigned int n_batches = data.n_cell_batches();
+
+        fiber_f_data.resize(n_batches * n_q);
+        fiber_s_data.resize(n_batches * n_q);
+        fiber_n_data.resize(n_batches * n_q);
+
+        for (unsigned int cell = 0; cell < n_batches; ++cell)
+          {
+            phi_fiber.reinit(cell);
+            const unsigned int base = cell * n_q;
+
+            // Read all three fiber fields for this cell batch
+            phi_fiber.read_dof_values_plain(f0);
+            phi_fiber.evaluate(EvaluationFlags::values);
+            for (unsigned int q = 0; q < n_q; ++q)
+              fiber_f_data[base + q] = phi_fiber.get_value(q);
+
+            phi_fiber.read_dof_values_plain(s0);
+            phi_fiber.evaluate(EvaluationFlags::values);
+            for (unsigned int q = 0; q < n_q; ++q)
+              fiber_s_data[base + q] = phi_fiber.get_value(q);
+
+            phi_fiber.read_dof_values_plain(n0);
+            phi_fiber.evaluate(EvaluationFlags::values);
+            for (unsigned int q = 0; q < n_q; ++q)
+              fiber_n_data[base + q] = phi_fiber.get_value(q);
+
+            // Gram-Schmidt orthonormalization at each quadrature point
+            for (unsigned int q = 0; q < n_q; ++q)
+              {
+                auto &fq = fiber_f_data[base + q];
+                auto &sq = fiber_s_data[base + q];
+                auto &nq = fiber_n_data[base + q];
+
+                fq /= fq.norm();
+                sq -= (fq * sq) * fq;
+                sq /= sq.norm();
+                nq -= (fq * nq) * fq;
+                nq -= (sq * nq) * sq;
+                nq /= nq.norm();
+              }
+          }
+
+        // Precompute fiber directions at inner face quadrature points.
+        // Since the fiber field is in continuous FE_Q(1), we can evaluate
+        // from the interior side; the trace is unique.
+        {
+          FEFaceEvaluation<dim, 1, n_q_points, dim, number> phi_face(data,
+                                                                     true,
+                                                                     1);
+          const unsigned int n_fq      = phi_face.n_q_points;
+          const unsigned int n_f_inner = data.n_inner_face_batches();
+
+          fiber_f_face_data.resize(n_f_inner * n_fq);
+          fiber_s_face_data.resize(n_f_inner * n_fq);
+          fiber_n_face_data.resize(n_f_inner * n_fq);
+
+          for (unsigned int face = 0; face < n_f_inner; ++face)
+            {
+              phi_face.reinit(face);
+              const unsigned int fbase = face * n_fq;
+
+              // Read all three fiber fields for this face batch
+              phi_face.read_dof_values_plain(f0);
+              phi_face.evaluate(EvaluationFlags::values);
+              for (unsigned int q = 0; q < n_fq; ++q)
+                fiber_f_face_data[fbase + q] = phi_face.get_value(q);
+
+              phi_face.read_dof_values_plain(s0);
+              phi_face.evaluate(EvaluationFlags::values);
+              for (unsigned int q = 0; q < n_fq; ++q)
+                fiber_s_face_data[fbase + q] = phi_face.get_value(q);
+
+              phi_face.read_dof_values_plain(n0);
+              phi_face.evaluate(EvaluationFlags::values);
+              for (unsigned int q = 0; q < n_fq; ++q)
+                fiber_n_face_data[fbase + q] = phi_face.get_value(q);
+
+              // Gram-Schmidt orthonormalization at each face quadrature point
+              for (unsigned int q = 0; q < n_fq; ++q)
+                {
+                  auto &fq = fiber_f_face_data[fbase + q];
+                  auto &sq = fiber_s_face_data[fbase + q];
+                  auto &nq = fiber_n_face_data[fbase + q];
+
+                  fq /= fq.norm();
+                  sq -= (fq * sq) * fq;
+                  sq /= sq.norm();
+                  nq -= (fq * nq) * fq;
+                  nq -= (sq * nq) * sq;
+                  nq /= nq.norm();
+                }
+            }
+        }
+      }
+
       void
       vmult(LinearAlgebra::distributed::Vector<number>       &dst,
             const LinearAlgebra::distributed::Vector<number> &src) const
@@ -1193,6 +1357,28 @@ namespace Utils
       vmult_add(LinearAlgebra::distributed::Vector<number>       &dst,
                 const LinearAlgebra::distributed::Vector<number> &src) const
       {
+        // When the operator is used inside a multigrid V-cycle the
+        // smoother may hand us vectors whose partitioner comes from the
+        // DoFHandler (locally_owned_dofs) rather than from the MatrixFree
+        // object.  In that case we transparently re-partition.
+        if (!src.partitioners_are_globally_compatible(
+              *data.get_dof_info(0).vector_partitioner))
+          {
+            LinearAlgebra::distributed::Vector<number> src_copy;
+            src_copy.reinit(data.get_dof_info(0).vector_partitioner);
+            src_copy.copy_locally_owned_data_from(src);
+            src_copy.update_ghost_values();
+            const_cast<LinearAlgebra::distributed::Vector<number> &>(src).swap(
+              src_copy);
+          }
+        if (!dst.partitioners_are_globally_compatible(
+              *data.get_dof_info(0).vector_partitioner))
+          {
+            LinearAlgebra::distributed::Vector<number> dst_copy;
+            dst_copy.reinit(data.get_dof_info(0).vector_partitioner);
+            dst_copy.copy_locally_owned_data_from(dst);
+            dst.swap(dst_copy);
+          }
         dst.zero_out_ghost_values();
         data.loop(&MonodomainOperatorDG::local_apply,
                   &MonodomainOperatorDG::local_apply_face,
@@ -1266,6 +1452,11 @@ namespace Utils
       const TrilinosWrappers::SparseMatrix &
       get_system_matrix() const
       {
+        static_assert(dim != 3,
+                      "get_system_matrix() uses isotropic sigma and is only "
+                      "meant for the 2D example. Use the matrix-based "
+                      "assembly in monodomain_DG3D instead.");
+
         // Boilerplate for SIP-DG form. TODO: unify interface.
         //////////////////////////////////////////////////
 
@@ -1371,6 +1562,11 @@ namespace Utils
       void
       get_system_matrix(TrilinosWrappers::SparseMatrix &mg_matrix) const
       {
+        static_assert(dim != 3,
+                      "get_system_matrix() uses isotropic sigma and is only "
+                      "meant for the 2D example. Use the matrix-based "
+                      "assembly in monodomain_DG3D instead.");
+
         // Boilerplate for SIP-DG form. TODO: unify interface.
         //////////////////////////////////////////////////
 
@@ -1561,7 +1757,8 @@ namespace Utils
             for (unsigned int q = 0; q < phi.n_q_points; ++q)
               {
                 phi.submit_value(phi.get_value(q) * factor, q);
-                phi.submit_gradient(phi.get_gradient(q) * parameters.sigma, q);
+                phi.submit_gradient(
+                  apply_diffusion(phi.get_gradient(q), cell, q), q);
               }
             phi.integrate(EvaluationFlags::gradients | EvaluationFlags::values);
             phi.distribute_local_to_global(dst);
@@ -1599,24 +1796,38 @@ namespace Utils
                          fe_eval_neighbor.inverse_jacobian(0))[dim - 1])) *
               (number)(std::max(fe_degree, 1) * (fe_degree + 1.0));
 
+            const number sigma_f = face_sigma();
             for (unsigned int q = 0; q < fe_eval.n_q_points; ++q)
               {
-                VectorizedArray<number> jump_value =
-                  (fe_eval.get_value(q) - fe_eval_neighbor.get_value(q)) * 0.5;
-                VectorizedArray<number> average_valgrad =
-                  fe_eval.get_normal_derivative(q) +
-                  fe_eval_neighbor.get_normal_derivative(q);
-                average_valgrad =
-                  jump_value * 2. * sigmaF - average_valgrad * 0.5;
-                fe_eval.submit_normal_derivative(-parameters.sigma * jump_value,
-                                                 q);
-                fe_eval_neighbor.submit_normal_derivative(-parameters.sigma *
-                                                            jump_value,
-                                                          q);
-                fe_eval.submit_value(parameters.sigma * average_valgrad, q);
-                fe_eval_neighbor.submit_value(-parameters.sigma *
-                                                average_valgrad,
-                                              q);
+                const auto u_plus  = fe_eval.get_value(q);
+                const auto u_minus = fe_eval_neighbor.get_value(q);
+                const auto jump_u  = (u_plus - u_minus) * 0.5;
+                const auto normal  = fe_eval.normal_vector(q);
+
+                // Apply D to gradients from both sides and dot with normal
+                // → {D ∇u · n} = 0.5*(D∇u⁺·n + D∇u⁻·n)
+                const auto D_grad_plus =
+                  apply_diffusion_face(fe_eval.get_gradient(q), face, q);
+                const auto D_grad_minus =
+                  apply_diffusion_face(fe_eval_neighbor.get_gradient(q),
+                                       face,
+                                       q);
+                const auto avg_D_grad_n =
+                  (D_grad_plus * normal + D_grad_minus * normal) * 0.5;
+
+                // D·n for the symmetry term:
+                // -[u]·{D∇v·n} = -[u]·∇v·(Dn) (D is symmetric)
+                const auto Dn = apply_diffusion_face(normal, face, q);
+
+                // Consistency: −{D∇u·n}[v]
+                // Penalty:     σ_pen [u][v],  σ_pen = sigma_f · sigmaF
+                const auto penalty_val = sigma_f * sigmaF * jump_u * 2.;
+                fe_eval.submit_value(penalty_val - avg_D_grad_n, q);
+                fe_eval_neighbor.submit_value(-penalty_val + avg_D_grad_n, q);
+
+                // Symmetry:  −{D∇v·n}[u] = −∇v·(Dn) [u]/2
+                fe_eval.submit_gradient(Dn * (-jump_u), q);
+                fe_eval_neighbor.submit_gradient(Dn * (-jump_u), q);
               }
             fe_eval.integrate(EvaluationFlags::values |
                               EvaluationFlags::gradients);
@@ -1668,8 +1879,8 @@ namespace Utils
                 for (unsigned int q = 0; q < phi.n_q_points; ++q)
                   {
                     phi.submit_value(phi.get_value(q) * factor, q);
-                    phi.submit_gradient(phi.get_gradient(q) * parameters.sigma,
-                                        q);
+                    phi.submit_gradient(
+                      apply_diffusion(phi.get_gradient(q), cell, q), q);
                   }
                 phi.integrate(EvaluationFlags::gradients |
                               EvaluationFlags::values);
@@ -1708,7 +1919,9 @@ namespace Utils
                          phi_outer.inverse_jacobian(0))[dim - 1])) *
               (number)(std::max(fe_degree, 1) * (fe_degree + 1.0));
 
-            // Compute phi part
+            const number sigma_f = face_sigma();
+
+            // Compute phi part (u⁺ = φ_i, u⁻ = 0)
             for (unsigned int j = 0; j < phi.dofs_per_cell; ++j)
               phi_outer.begin_dof_values()[j] = VectorizedArray<number>();
             phi_outer.evaluate(EvaluationFlags::values |
@@ -1723,16 +1936,23 @@ namespace Utils
 
                 for (unsigned int q = 0; q < phi.n_q_points; ++q)
                   {
-                    VectorizedArray<number> jump_value =
-                      (phi.get_value(q) - phi_outer.get_value(q)) * 0.5;
-                    VectorizedArray<number> average_valgrad =
-                      phi.get_normal_derivative(q) +
-                      phi_outer.get_normal_derivative(q);
-                    average_valgrad =
-                      jump_value * 2. * sigmaF - average_valgrad * 0.5;
-                    phi.submit_normal_derivative(-parameters.sigma * jump_value,
-                                                 q);
-                    phi.submit_value(parameters.sigma * average_valgrad, q);
+                    const auto u_plus  = phi.get_value(q);
+                    const auto u_minus = phi_outer.get_value(q);
+                    const auto jump_u  = (u_plus - u_minus) * 0.5;
+                    const auto normal  = phi.normal_vector(q);
+
+                    const auto D_grad_plus =
+                      apply_diffusion_face(phi.get_gradient(q), face, q);
+                    const auto D_grad_minus =
+                      apply_diffusion_face(phi_outer.get_gradient(q), face, q);
+                    const auto avg_D_grad_n =
+                      (D_grad_plus * normal + D_grad_minus * normal) * 0.5;
+
+                    const auto Dn = apply_diffusion_face(normal, face, q);
+
+                    const auto penalty_val = sigma_f * sigmaF * jump_u * 2.;
+                    phi.submit_value(penalty_val - avg_D_grad_n, q);
+                    phi.submit_gradient(Dn * (-jump_u), q);
                   }
                 phi.integrate(EvaluationFlags::values |
                               EvaluationFlags::gradients);
@@ -1742,7 +1962,7 @@ namespace Utils
               phi.begin_dof_values()[i] = local_diagonal_vector[i];
             phi.distribute_local_to_global(dst);
 
-            // Compute phi_outer part
+            // Compute phi_outer part (u⁺ = 0, u⁻ = φ_i)
             for (unsigned int j = 0; j < phi.dofs_per_cell; ++j)
               phi.begin_dof_values()[j] = VectorizedArray<number>();
             phi.evaluate(EvaluationFlags::values | EvaluationFlags::gradients);
@@ -1756,18 +1976,23 @@ namespace Utils
 
                 for (unsigned int q = 0; q < phi.n_q_points; ++q)
                   {
-                    VectorizedArray<number> jump_value =
-                      (phi.get_value(q) - phi_outer.get_value(q)) * 0.5;
-                    VectorizedArray<number> average_valgrad =
-                      phi.get_normal_derivative(q) +
-                      phi_outer.get_normal_derivative(q);
-                    average_valgrad =
-                      jump_value * 2. * sigmaF - average_valgrad * 0.5;
-                    phi_outer.submit_normal_derivative(-parameters.sigma *
-                                                         jump_value,
-                                                       q);
-                    phi_outer.submit_value(-parameters.sigma * average_valgrad,
-                                           q);
+                    const auto u_plus  = phi.get_value(q);
+                    const auto u_minus = phi_outer.get_value(q);
+                    const auto jump_u  = (u_plus - u_minus) * 0.5;
+                    const auto normal  = phi.normal_vector(q);
+
+                    const auto D_grad_plus =
+                      apply_diffusion_face(phi.get_gradient(q), face, q);
+                    const auto D_grad_minus =
+                      apply_diffusion_face(phi_outer.get_gradient(q), face, q);
+                    const auto avg_D_grad_n =
+                      (D_grad_plus * normal + D_grad_minus * normal) * 0.5;
+
+                    const auto Dn = apply_diffusion_face(normal, face, q);
+
+                    const auto penalty_val = sigma_f * sigmaF * jump_u * 2.;
+                    phi_outer.submit_value(-penalty_val + avg_D_grad_n, q);
+                    phi_outer.submit_gradient(Dn * (-jump_u), q);
                   }
                 phi_outer.integrate(EvaluationFlags::values |
                                     EvaluationFlags::gradients);
@@ -1794,6 +2019,86 @@ namespace Utils
 
 
 
+      // Total quadrature points per cell (compile-time constant)
+      static constexpr unsigned int n_q_points_total =
+        constexpr_pow(static_cast<unsigned int>(n_q_points),
+                      static_cast<unsigned int>(dim));
+
+      // Total quadrature points per face (compile-time constant)
+      static constexpr unsigned int n_face_q_points_total =
+        constexpr_pow(static_cast<unsigned int>(n_q_points),
+                      static_cast<unsigned int>(dim - 1));
+
+      /**
+       * Apply the diffusion tensor to a gradient. When fibers are present,
+       * computes D*grad = sigma_l*(f.grad)*f + sigma_t*(s.grad)*s +
+       *                   sigma_n*(n.grad)*n.
+       * Otherwise returns sigma*grad (isotropic).
+       */
+      Tensor<1, dim, VectorizedArrayType>
+      apply_diffusion(const Tensor<1, dim, VectorizedArrayType> &grad,
+                      const unsigned int                         cell,
+                      const unsigned int                         q) const
+      {
+        if (parameters.use_fibers && !fiber_f_data.empty())
+          {
+            const unsigned int idx = cell * n_q_points_total + q;
+            const auto        &f   = fiber_f_data[idx];
+            const auto        &s   = fiber_s_data[idx];
+            const auto        &nv  = fiber_n_data[idx];
+            return VectorizedArrayType(parameters.sigma_l) * (f * grad) * f +
+                   VectorizedArrayType(parameters.sigma_t) * (s * grad) * s +
+                   VectorizedArrayType(parameters.sigma_n) * (nv * grad) * nv;
+          }
+        else
+          {
+            return grad * VectorizedArrayType(parameters.sigma);
+          }
+      }
+
+      /**
+       * Return the scalar penalty weight for face terms.
+       * When fibers are active the penalty is scaled by
+       *   {Sigma_K}_A  with  Sigma_K = ||sqrt(D|_K)||^2_F = tr(D)
+       * i.e. sigma_l + sigma_t + sigma_n (arithmetic average of both
+       * sides is the same value since eigenvalues are spatially
+       * constant).  In the isotropic case it returns sigma.
+       */
+      number
+      face_sigma() const
+      {
+        return parameters.use_fibers ?
+                 parameters.sigma_l + parameters.sigma_t + parameters.sigma_n :
+                 parameters.sigma;
+      }
+
+      /**
+       * Apply the diffusion tensor to a vector at a face quadrature point.
+       * Uses precomputed face fiber data. When fibers are not present,
+       * returns sigma*vec (isotropic).
+       */
+      Tensor<1, dim, VectorizedArrayType>
+      apply_diffusion_face(const Tensor<1, dim, VectorizedArrayType> &vec,
+                           const unsigned int                         face,
+                           const unsigned int                         q) const
+      {
+        if (parameters.use_fibers && !fiber_f_face_data.empty())
+          {
+            const unsigned int idx = face * n_face_q_points_total + q;
+            const auto        &f   = fiber_f_face_data[idx];
+            const auto        &s   = fiber_s_face_data[idx];
+            const auto        &nv  = fiber_n_face_data[idx];
+            return VectorizedArrayType(parameters.sigma_l) * (f * vec) * f +
+                   VectorizedArrayType(parameters.sigma_t) * (s * vec) * s +
+                   VectorizedArrayType(parameters.sigma_n) * (nv * vec) * nv;
+          }
+        else
+          {
+            return vec * VectorizedArrayType(parameters.sigma);
+          }
+      }
+
+
       MatrixFree<dim, number>                    data;
       LinearAlgebra::distributed::Vector<number> inverse_diagonal_entries;
       int                                        fe_degree;
@@ -1801,6 +2106,16 @@ namespace Utils
       AffineConstraints<number>                  constraints;
       Physics::BilinearFormParameters            parameters;
       double                                     factor;
+
+      // Precomputed fiber directions at cell quadrature points
+      FiberArray fiber_f_data;
+      FiberArray fiber_s_data;
+      FiberArray fiber_n_data;
+
+      // Precomputed fiber directions at inner face quadrature points
+      FiberArray fiber_f_face_data;
+      FiberArray fiber_s_face_data;
+      FiberArray fiber_n_face_data;
     };
 
 
