@@ -46,7 +46,12 @@ subsection Monodomain Solver
     # Whether to compute the minimum value of the solution at each time step.
     set Compute minimum value     = false
     set Compute activation time   = true
+    set Compute conduction velocity = true
     set Compute error indicators  = true
+
+    set CV points A = 0.00252665, 0.0248899, 0.0258821; 0.00321276, -0.0315937,0.0245324
+    set CV points B = 0.00144502, 0.0284934, -0.00486412; 0.00351235,-0.0345397, 0.00862664
+
     set Output directory          = .
 
     # Frequency of output. Output will be written every output_frequency time
@@ -59,7 +64,8 @@ subsection Monodomain Solver
     # Preconditioner to use. Options are 'AMG' and 'AGGLOMG'. Default is
     # 'AMG'.
     set Preconditioner type       = AMG
-    set Smoother steps            = 3
+    set Smoother steps            = 3 #ignored if BlockJacobi is used
+    set Block Jacobi block size    = 27
   end
 
   subsection R3MG
