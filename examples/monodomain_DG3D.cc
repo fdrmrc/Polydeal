@@ -180,16 +180,22 @@ public:
   double       final_time                 = 0.4;
   std::string  fiber_filename             = "";
 
-  // Preconditioner parameters
-  std::string  preconditioner            = "AMG";
-  bool         output_details_amg        = true;
-  unsigned int starting_level            = 2;
-  unsigned int n_smoothing_steps         = 3;
-  double       aggregation_threshold     = 0.2;
-  bool         compute_min_value         = false;
-  bool         compute_activation_time   = false;
-  bool         compute_error_indicators  = false;
-  bool         estimate_condition_number = false;
+  // Preconditioners parameters
+  std::string  preconditioner              = "AMG";
+  bool         output_details_amg          = true;
+  unsigned int starting_level              = 2;
+  unsigned int n_smoothing_steps           = 3;
+  unsigned int block_jacobi_block_size     = 1;
+  double       aggregation_threshold       = 0.2;
+  bool         compute_min_value           = false;
+  bool         compute_activation_time     = false;
+  bool         compute_conduction_velocity = false;
+  bool         compute_error_indicators    = false;
+  bool         estimate_condition_number   = false;
+
+  // Conduction velocity measurement point pairs
+  std::vector<Point<dim>> cv_points_a;
+  std::vector<Point<dim>> cv_points_b;
 
   // Bueno-Orovio parameters
   double chi        = 1;
@@ -320,6 +326,10 @@ ProblemParameters<dim>::ProblemParameters()
       preconditioner,
       "Preconditioner to use. Options are 'AMG' and 'AGGLOMG'. Default is 'AMG'.");
     add_parameter("Smoother steps", n_smoothing_steps);
+    add_parameter(
+      "Block Jacobi block size",
+      block_jacobi_block_size,
+      "Block size for Block Jacobi preconditioner. Default is 1, i.e. a point-Jacobi scheme.");
     add_parameter("Estimate condition number", estimate_condition_number);
   }
   leave_subsection();
@@ -359,6 +369,19 @@ ProblemParameters<dim>::ProblemParameters()
     add_parameter("Compute activation time",
                   compute_activation_time,
                   "Whether to compute the activation time of the solution.");
+    add_parameter(
+      "Compute conduction velocity",
+      compute_conduction_velocity,
+      "Whether to compute the conduction velocity of the solution.");
+    add_parameter("CV points A",
+                  cv_points_a,
+                  "First points of each pair for CV measurement. "
+                  "Format: x1,y1,z1; x2,y2,z2; ...");
+    add_parameter("CV points B",
+                  cv_points_b,
+                  "Second points of each pair for CV measurement. "
+                  "Format: x1,y1,z1; x2,y2,z2; ..."
+                  " (must have the same number of entries as 'CV points A').");
     add_parameter(
       "Compute error indicators",
       compute_error_indicators,
@@ -689,6 +712,7 @@ private:
   SparsityPattern                                sparsity;
   AffineConstraints<double>                      constraints;
   TrilinosWrappers::PreconditionAMG              amg_preconditioner;
+  TrilinosWrappers::PreconditionILU              block_jacobi_preconditioner;
   TrilinosWrappers::SparseMatrix                 system_matrix;
   TrilinosWrappers::SparseMatrix                 bdf1_matrix;
 
@@ -716,7 +740,7 @@ private:
   // Related to update solution
   using VectorType = LinearAlgebra::distributed::Vector<double>;
 
-  // Fiber field vectors (declared after VectorType alias)
+  // Fiber field vectors
   VectorType f0_field;
   VectorType s0_field;
   VectorType n0_field;
@@ -821,6 +845,11 @@ private:
   std::vector<double> min_values;
   std::vector<double> mean_values;
 
+  // flag to indicate whether we use Trilinos preconditioners (AMG or
+  // BlockJacobi) or not. In both cases, we need to assemble the system matrix
+  // explicitly, plus a call to initialize()
+  bool use_trilinos_precs;
+
 public:
   MonodomainProblem(const ProblemParameters<dim> &parameters);
   void
@@ -903,6 +932,21 @@ MonodomainProblem<dim>::MonodomainProblem(
       },
       std::placeholders::_1,
       "Condition number estimate: "));
+
+  // Check we selected a valid preconditioner
+  const std::initializer_list<bool> valid_prec_options{
+    param.preconditioner == "AMG",
+    param.preconditioner == "BlockJacobi",
+    param.preconditioner == "AGGLOMG"};
+  AssertThrow(
+    std::any_of(valid_prec_options.begin(),
+                valid_prec_options.end(),
+                [](bool v) { return v; }),
+    ExcMessage(
+      "Invalid preconditioner type. Options are 'AMG', 'BlockJacobi', and 'AGGLOMG'."));
+
+  use_trilinos_precs =
+    (param.preconditioner == "AMG") || (param.preconditioner == "BlockJacobi");
 }
 
 
@@ -1014,7 +1058,7 @@ MonodomainProblem<dim>::setup_problem()
                                              communicator,
                                              locally_relevant_dofs);
 
-  if (param.preconditioner == "AMG")
+  if (use_trilinos_precs)
     system_matrix.reinit(locally_owned_dofs,
                          locally_owned_dofs,
                          dsp,
@@ -1094,10 +1138,10 @@ MonodomainProblem<dim>::setup_fibers(const Triangulation<dim> &serial_tria)
 #ifdef DEAL_II_WITH_HDF5
   TimerOutput::Scope t(computing_timer, "Setup fibers");
 
-  AssertThrow(
-    param.n_refinements_initial_grid == 0,
-    ExcMessage(
-      "Fiber data loading with mesh refinement is not yet supported."));
+  // AssertThrow(
+  //   param.n_refinements_initial_grid == 0,
+  //   ExcMessage(
+  //     "Fiber data loading with mesh refinement is not yet supported."));
 
   // Read HDF5 fiber data
   HDF5::File fiber_file(param.fiber_filename,
@@ -1135,21 +1179,6 @@ MonodomainProblem<dim>::setup_fibers(const Triangulation<dim> &serial_tria)
                          " vertices). Make sure the fiber file was "
                          "generated from the same mesh."));
 
-  // Build coordinate-to-vertex-index map from serial triangulation.
-  // The vertex indices in the serial tria correspond to the HDF5 node ordering.
-  // Since vertices are copied bit-for-bit into the distributed tria,
-  // exact floating-point comparison is safe.
-  std::map<std::array<double, dim>, unsigned int> coord_to_vertex;
-  for (const auto &cell : serial_tria.active_cell_iterators())
-    for (const auto v : cell->vertex_indices())
-      {
-        const auto             &p = cell->vertex(v);
-        std::array<double, dim> key;
-        for (unsigned int d = 0; d < dim; ++d)
-          key[d] = p[d];
-        coord_to_vertex[key] = cell->vertex_index(v);
-      }
-
   // Setup fiber FE and DoFHandler on the distributed triangulation
   fiber_fe = std::make_unique<FESystem<dim>>(FE_Q<dim>(1), dim);
   fiber_dh.distribute_dofs(*fiber_fe);
@@ -1164,7 +1193,10 @@ MonodomainProblem<dim>::setup_fibers(const Triangulation<dim> &serial_tria)
   s0_field.reinit(fiber_owned, fiber_relevant, communicator);
   n0_field.reinit(fiber_owned, fiber_relevant, communicator);
 
-  // Fill fiber vectors using coordinate-based vertex lookup
+  // Fill fiber vectors using vertex indices directly.
+  // The fullydistributed::Triangulation preserves vertex indices from the
+  // serial triangulation (via create_description_from_triangulation), so
+  // cell->vertex_index() on the distributed tria matches the serial tria.
   std::vector<types::global_dof_index> fiber_dof_indices(
     fiber_fe->dofs_per_cell);
 
@@ -1176,16 +1208,11 @@ MonodomainProblem<dim>::setup_fibers(const Triangulation<dim> &serial_tria)
           {
             const auto [component, local_vertex] =
               fiber_fe->system_to_component_index(i);
-            const auto             &p = cell->vertex(local_vertex);
-            std::array<double, dim> key;
-            for (unsigned int d = 0; d < dim; ++d)
-              key[d] = p[d];
-            const auto it = coord_to_vertex.find(key);
-            Assert(it != coord_to_vertex.end(),
-                   ExcMessage("Vertex not found in coordinate map"));
-            const unsigned int serial_vidx = it->second;
+            const unsigned int serial_vidx = cell->vertex_index(local_vertex);
             Assert(serial_vidx < n_nodes_hdf5,
-                   ExcMessage("Vertex index exceeds HDF5 data range"));
+                   ExcMessage("Vertex index " + std::to_string(serial_vidx) +
+                              " exceeds HDF5 data range (" +
+                              std::to_string(n_nodes_hdf5) + ")"));
 
             f0_field[fiber_dof_indices[i]] =
               f0_data[dim * serial_vidx + component];
@@ -1608,7 +1635,7 @@ MonodomainProblem<dim>::assemble_time_independent_matrix()
                                          (param.chi * param.Cm / dt);
 
   const bool has_fibers = !param.fiber_filename.empty();
-  // Penalty weight: tr(D) = sigma_l + sigma_t + sigma_n  (= ||sqrt(D)||^2_F)
+  // Penalty weight: tr(D) = sigma_l + sigma_t + sigma_n  (= norm(sqrt(D))_F^2)
   const double sigma_face =
     has_fibers ? param.sigma_l + param.sigma_t + param.sigma_n : param.sigma;
 
@@ -1891,27 +1918,27 @@ MonodomainProblem<dim>::assemble_time_independent_matrix()
                       constraints.distribute_local_to_global(
                         M11,
                         local_dof_indices,
-                        param.preconditioner == "AMG" ?
+                        use_trilinos_precs ?
                           system_matrix :
                           multigrid_matrices[multigrid_matrices.max_level()]);
                       constraints.distribute_local_to_global(
                         M12,
                         local_dof_indices,
                         local_dof_indices_neighbor,
-                        param.preconditioner == "AMG" ?
+                        use_trilinos_precs ?
                           system_matrix :
                           multigrid_matrices[multigrid_matrices.max_level()]);
                       constraints.distribute_local_to_global(
                         M21,
                         local_dof_indices_neighbor,
                         local_dof_indices,
-                        param.preconditioner == "AMG" ?
+                        use_trilinos_precs ?
                           system_matrix :
                           multigrid_matrices[multigrid_matrices.max_level()]);
                       constraints.distribute_local_to_global(
                         M22,
                         local_dof_indices_neighbor,
-                        param.preconditioner == "AMG" ?
+                        use_trilinos_precs ?
                           system_matrix :
                           multigrid_matrices[multigrid_matrices.max_level()]);
 
@@ -1921,13 +1948,13 @@ MonodomainProblem<dim>::assemble_time_independent_matrix()
           constraints.distribute_local_to_global(
             cell_matrix,
             local_dof_indices,
-            param.preconditioner == "AMG" ?
+            use_trilinos_precs ?
               system_matrix :
               multigrid_matrices[multigrid_matrices.max_level()]);
         }
     }
 
-  if (param.preconditioner == "AMG")
+  if (use_trilinos_precs)
     system_matrix.compress(VectorOperation::add);
   else
     multigrid_matrices[multigrid_matrices.max_level()].compress(
@@ -1959,7 +1986,7 @@ MonodomainProblem<dim>::assemble_time_independent_matrix_bdf1()
   std::vector<types::global_dof_index> local_dof_indices(dofs_per_cell);
 
   const bool has_fibers = !param.fiber_filename.empty();
-  // Penalty weight: tr(D) = sigma_l + sigma_t + sigma_n  (= ||sqrt(D)||^2_F)
+  // Penalty weight: tr(D) = sigma_l + sigma_t + sigma_n  (= norm(sqrt(D))_F^2)
   const double sigma_face =
     has_fibers ? param.sigma_l + param.sigma_t + param.sigma_n : param.sigma;
 
@@ -2404,11 +2431,17 @@ MonodomainProblem<dim>::solve()
                  locally_relevant_solution_np1,
                  system_rhs,
                  amg_preconditioner);
-  else
+  else if (param.preconditioner == "AGGLOMG")
     solver.solve(system_operator,
                  locally_relevant_solution_np1,
                  system_rhs,
                  *preconditioner);
+  else if (param.preconditioner == "BlockJacobi")
+    solver.solve(system_operator,
+                 locally_relevant_solution_np1,
+                 system_rhs,
+                 block_jacobi_preconditioner);
+
   if constexpr (measure_solve_times)
     {
       stop_solver = MPI_Wtime();
@@ -2705,13 +2738,13 @@ MonodomainProblem<dim>::run()
     }
   else
     system_operator = linear_operator<VectorType>(
-      param.preconditioner == "AMG" ?
-        system_matrix :
-        multigrid_matrices[multigrid_matrices.max_level()]);
+      use_trilinos_precs ? system_matrix :
+                           multigrid_matrices[multigrid_matrices.max_level()]);
 
-  // Depending on the preconditioner type, use AMG or polytopal multigrid.
+// Depending on the preconditioner type, use AMG or polytopal multigrid.
 
-  // ── Sanity check: compare matrix-free and matrix-based vmult ──
+// Sanity check: compare matrix-free and matrix-based vmult
+#ifdef DEBUG
   {
     // Build a source vector with the MatrixFree partitioner.
     VectorType src_mf, dst_mf;
@@ -2729,9 +2762,8 @@ MonodomainProblem<dim>::run()
 
     // Matrix-based product using TrilinosWrappers::MPI::Vector.
     const auto &mat_based =
-      param.preconditioner == "AMG" ?
-        system_matrix :
-        multigrid_matrices[multigrid_matrices.max_level()];
+      use_trilinos_precs ? system_matrix :
+                           multigrid_matrices[multigrid_matrices.max_level()];
     TrilinosWrappers::MPI::Vector src_tril(locally_owned_dofs, communicator);
     TrilinosWrappers::MPI::Vector dst_tril(locally_owned_dofs, communicator);
     for (const auto idx : src_tril.locally_owned_elements())
@@ -2762,6 +2794,7 @@ MonodomainProblem<dim>::run()
                 ExcMessage("Matrix-free and matrix-based vmult do not match!"));
     pcout << "  Matrix-free and matrix-based vmult match." << std::endl;
   }
+#endif
 
   if (param.preconditioner == "AMG")
     {
@@ -2776,14 +2809,25 @@ MonodomainProblem<dim>::run()
       amg_data.aggregation_threshold = param.aggregation_threshold;
       amg_preconditioner.initialize(system_matrix, amg_data);
     }
-  else
+  else if (param.preconditioner == "BlockJacobi")
+    {
+      TimerOutput::Scope t(computing_timer,
+                           "Initialize BlockJacobi preconditioner");
+      typename TrilinosWrappers::PreconditionILU::AdditionalData
+        block_jacobi_data;
+      // block_jacobi_data.block_size = param.block_jacobi_block_size;
+      block_jacobi_preconditioner.initialize(system_matrix, block_jacobi_data);
+    }
+  else if (param.preconditioner == "AGGLOMG")
     setup_multigrid();
+  else
+    DEAL_II_NOT_IMPLEMENTED();
 
   pcout << "Setup preconditioner: done " << std::endl;
 
   double              min_value = std::numeric_limits<double>::max();
   std::vector<double> min_AP_values;
-  min_AP_values.push_back(-84e-3);
+  min_AP_values.push_back(0.);
 
   VectorType solution_minus_ion;
   if constexpr (use_matrix_free_action)
@@ -2988,6 +3032,141 @@ MonodomainProblem<dim>::run()
       double TAT = global_TAT_max - global_TAT_min;
 
       pcout << "Total activation time (TAT) = " << TAT << " ms" << std::endl;
+
+      // Conduction velocity for user-specified pairs of points.
+      // For each pair, find the nearest DoF to each target,
+      // read its activation time, and compute
+      //   CV = ||P_a - P_b|| / |AT(dof_a) - AT(dof_b)|
+      if (param.compute_conduction_velocity)
+        {
+          AssertThrow(param.cv_points_a.size() == param.cv_points_b.size(),
+                      ExcMessage("CV points A and CV points B must have the "
+                                 "same number of entries."));
+          AssertThrow(param.cv_points_a.size() > 0,
+                      ExcMessage(
+                        "At least one pair of CV points is required."));
+
+          const unsigned int n_pairs = param.cv_points_a.size();
+
+          // Map locally owned DoFs to their support points
+          std::map<types::global_dof_index, Point<dim>> support_points =
+            DoFTools::map_dofs_to_support_points(mapping, classical_dh);
+
+          const int my_rank = Utilities::MPI::this_mpi_process(communicator);
+
+          pcout << std::endl;
+          for (unsigned int p = 0; p < n_pairs; ++p)
+            {
+              const Point<dim> &target_a = param.cv_points_a[p];
+              const Point<dim> &target_b = param.cv_points_b[p];
+
+              // Each rank finds the locally owned DoF closest to each
+              // target
+              double local_best_dist_a = std::numeric_limits<double>::max();
+              double local_best_dist_b = std::numeric_limits<double>::max();
+              types::global_dof_index local_best_dof_a =
+                numbers::invalid_dof_index;
+              types::global_dof_index local_best_dof_b =
+                numbers::invalid_dof_index;
+
+              for (const auto &[dof_index, pt] : support_points)
+                {
+                  const double da = target_a.distance(pt);
+                  if (da < local_best_dist_a)
+                    {
+                      local_best_dist_a = da;
+                      local_best_dof_a  = dof_index;
+                    }
+                  const double db = target_b.distance(pt);
+                  if (db < local_best_dist_b)
+                    {
+                      local_best_dist_b = db;
+                      local_best_dof_b  = dof_index;
+                    }
+                }
+
+              // MPI_MINLOC to find the rank owning the globally closest
+              // DoF for each target
+              struct
+              {
+                double val;
+                int    rank;
+              } local_data_a, global_data_a, local_data_b, global_data_b;
+
+              local_data_a.val  = local_best_dist_a;
+              local_data_a.rank = my_rank;
+              local_data_b.val  = local_best_dist_b;
+              local_data_b.rank = my_rank;
+
+              MPI_Allreduce(&local_data_a,
+                            &global_data_a,
+                            1,
+                            MPI_DOUBLE_INT,
+                            MPI_MINLOC,
+                            communicator);
+              MPI_Allreduce(&local_data_b,
+                            &global_data_b,
+                            1,
+                            MPI_DOUBLE_INT,
+                            MPI_MINLOC,
+                            communicator);
+
+              // Broadcast activation time and DoF coordinates from the
+              // owning ranks
+              double                  at_a = 0., at_b = 0.;
+              std::array<double, dim> coords_a{}, coords_b{};
+
+              if (my_rank == global_data_a.rank)
+                {
+                  at_a = activation_time_owned[local_best_dof_a];
+                  const Point<dim> &sp = support_points[local_best_dof_a];
+                  for (unsigned int d = 0; d < dim; ++d)
+                    coords_a[d] = sp[d];
+                }
+              MPI_Bcast(&at_a, 1, MPI_DOUBLE, global_data_a.rank, communicator);
+              MPI_Bcast(coords_a.data(),
+                        dim,
+                        MPI_DOUBLE,
+                        global_data_a.rank,
+                        communicator);
+
+              if (my_rank == global_data_b.rank)
+                {
+                  at_b = activation_time_owned[local_best_dof_b];
+                  const Point<dim> &sp = support_points[local_best_dof_b];
+                  for (unsigned int d = 0; d < dim; ++d)
+                    coords_b[d] = sp[d];
+                }
+              MPI_Bcast(&at_b, 1, MPI_DOUBLE, global_data_b.rank, communicator);
+              MPI_Bcast(coords_b.data(),
+                        dim,
+                        MPI_DOUBLE,
+                        global_data_b.rank,
+                        communicator);
+
+              Point<dim> Pa, Pb;
+              for (unsigned int d = 0; d < dim; ++d)
+                {
+                  Pa[d] = coords_a[d];
+                  Pb[d] = coords_b[d];
+                }
+
+              const double distance = Pa.distance(Pb);
+              const double delta_at = std::abs(at_a - at_b);
+              const double CV       = distance / delta_at;
+
+              pcout << "Conduction velocity (pair " << p + 1 << "/" << n_pairs
+                    << "):" << std::endl;
+              pcout << "  Target A = " << target_a << "  ->  nearest DoF at "
+                    << Pa << ", AT = " << at_a << " ms" << std::endl;
+              pcout << "  Target B = " << target_b << "  ->  nearest DoF at "
+                    << Pb << ", AT = " << at_b << " ms" << std::endl;
+              pcout << "  ||Pa - Pb||  = " << distance << std::endl;
+              pcout << "  Delta AT     = " << delta_at << " ms" << std::endl;
+              pcout << "  CV           = " << CV << std::endl;
+              pcout << std::endl;
+            }
+        }
     }
 
   if (Utilities::MPI::this_mpi_process(communicator) == 0)

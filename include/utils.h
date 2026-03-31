@@ -1805,7 +1805,7 @@ namespace Utils
                 const auto normal  = fe_eval.normal_vector(q);
 
                 // Apply D to gradients from both sides and dot with normal
-                // → {D ∇u · n} = 0.5*(D∇u⁺·n + D∇u⁻·n)
+                // → {D gradu * n} = 0.5*(D gradu_plus*n + D gradu_minus*n)
                 const auto D_grad_plus =
                   apply_diffusion_face(fe_eval.get_gradient(q), face, q);
                 const auto D_grad_minus =
@@ -1816,16 +1816,16 @@ namespace Utils
                   (D_grad_plus * normal + D_grad_minus * normal) * 0.5;
 
                 // D·n for the symmetry term:
-                // -[u]·{D∇v·n} = -[u]·∇v·(Dn) (D is symmetric)
+                // -[u]*{D grad v*n} = -[u]*v*(Dn) (D is symmetric)
                 const auto Dn = apply_diffusion_face(normal, face, q);
 
-                // Consistency: −{D∇u·n}[v]
-                // Penalty:     σ_pen [u][v],  σ_pen = sigma_f · sigmaF
+                // Consistency: −{D gradu*n}[v]
+                // Penalty:     sigma_pen [u][v],  sigma_pen = sigma_f * sigmaF
                 const auto penalty_val = sigma_f * sigmaF * jump_u * 2.;
                 fe_eval.submit_value(penalty_val - avg_D_grad_n, q);
                 fe_eval_neighbor.submit_value(-penalty_val + avg_D_grad_n, q);
 
-                // Symmetry:  −{D∇v·n}[u] = −∇v·(Dn) [u]/2
+                // Symmetry:  −{D gradv*n}[u] = -grad v*(Dn) [u]/2
                 fe_eval.submit_gradient(Dn * (-jump_u), q);
                 fe_eval_neighbor.submit_gradient(Dn * (-jump_u), q);
               }
@@ -1921,7 +1921,7 @@ namespace Utils
 
             const number sigma_f = face_sigma();
 
-            // Compute phi part (u⁺ = φ_i, u⁻ = 0)
+            // Compute phi part (u_plus = phi_i, u_minus = 0)
             for (unsigned int j = 0; j < phi.dofs_per_cell; ++j)
               phi_outer.begin_dof_values()[j] = VectorizedArray<number>();
             phi_outer.evaluate(EvaluationFlags::values |
@@ -1962,7 +1962,7 @@ namespace Utils
               phi.begin_dof_values()[i] = local_diagonal_vector[i];
             phi.distribute_local_to_global(dst);
 
-            // Compute phi_outer part (u⁺ = 0, u⁻ = φ_i)
+            // Compute phi_outer part (u_plus = 0, u_minus = phi_i)
             for (unsigned int j = 0; j < phi.dofs_per_cell; ++j)
               phi.begin_dof_values()[j] = VectorizedArray<number>();
             phi.evaluate(EvaluationFlags::values | EvaluationFlags::gradients);
