@@ -712,7 +712,7 @@ private:
   SparsityPattern                                sparsity;
   AffineConstraints<double>                      constraints;
   TrilinosWrappers::PreconditionAMG              amg_preconditioner;
-  TrilinosWrappers::PreconditionBlockJacobi      block_jacobi_preconditioner;
+  TrilinosWrappers::PreconditionILU              block_jacobi_preconditioner;
   TrilinosWrappers::SparseMatrix                 system_matrix;
   TrilinosWrappers::SparseMatrix                 bdf1_matrix;
 
@@ -1138,10 +1138,10 @@ MonodomainProblem<dim>::setup_fibers(const Triangulation<dim> &serial_tria)
 #ifdef DEAL_II_WITH_HDF5
   TimerOutput::Scope t(computing_timer, "Setup fibers");
 
-  AssertThrow(
-    param.n_refinements_initial_grid == 0,
-    ExcMessage(
-      "Fiber data loading with mesh refinement is not yet supported."));
+  // AssertThrow(
+  //   param.n_refinements_initial_grid == 0,
+  //   ExcMessage(
+  //     "Fiber data loading with mesh refinement is not yet supported."));
 
   // Read HDF5 fiber data
   HDF5::File fiber_file(param.fiber_filename,
@@ -1179,21 +1179,6 @@ MonodomainProblem<dim>::setup_fibers(const Triangulation<dim> &serial_tria)
                          " vertices). Make sure the fiber file was "
                          "generated from the same mesh."));
 
-  // Build coordinate-to-vertex-index map from serial triangulation.
-  // The vertex indices in the serial tria correspond to the HDF5 node ordering.
-  // Since vertices are copied bit-for-bit into the distributed tria,
-  // exact floating-point comparison is safe.
-  std::map<std::array<double, dim>, unsigned int> coord_to_vertex;
-  for (const auto &cell : serial_tria.active_cell_iterators())
-    for (const auto v : cell->vertex_indices())
-      {
-        const auto             &p = cell->vertex(v);
-        std::array<double, dim> key;
-        for (unsigned int d = 0; d < dim; ++d)
-          key[d] = p[d];
-        coord_to_vertex[key] = cell->vertex_index(v);
-      }
-
   // Setup fiber FE and DoFHandler on the distributed triangulation
   fiber_fe = std::make_unique<FESystem<dim>>(FE_Q<dim>(1), dim);
   fiber_dh.distribute_dofs(*fiber_fe);
@@ -1208,7 +1193,10 @@ MonodomainProblem<dim>::setup_fibers(const Triangulation<dim> &serial_tria)
   s0_field.reinit(fiber_owned, fiber_relevant, communicator);
   n0_field.reinit(fiber_owned, fiber_relevant, communicator);
 
-  // Fill fiber vectors using coordinate-based vertex lookup
+  // Fill fiber vectors using vertex indices directly.
+  // The fullydistributed::Triangulation preserves vertex indices from the
+  // serial triangulation (via create_description_from_triangulation), so
+  // cell->vertex_index() on the distributed tria matches the serial tria.
   std::vector<types::global_dof_index> fiber_dof_indices(
     fiber_fe->dofs_per_cell);
 
@@ -1220,16 +1208,11 @@ MonodomainProblem<dim>::setup_fibers(const Triangulation<dim> &serial_tria)
           {
             const auto [component, local_vertex] =
               fiber_fe->system_to_component_index(i);
-            const auto             &p = cell->vertex(local_vertex);
-            std::array<double, dim> key;
-            for (unsigned int d = 0; d < dim; ++d)
-              key[d] = p[d];
-            const auto it = coord_to_vertex.find(key);
-            Assert(it != coord_to_vertex.end(),
-                   ExcMessage("Vertex not found in coordinate map"));
-            const unsigned int serial_vidx = it->second;
+            const unsigned int serial_vidx = cell->vertex_index(local_vertex);
             Assert(serial_vidx < n_nodes_hdf5,
-                   ExcMessage("Vertex index exceeds HDF5 data range"));
+                   ExcMessage("Vertex index " + std::to_string(serial_vidx) +
+                              " exceeds HDF5 data range (" +
+                              std::to_string(n_nodes_hdf5) + ")"));
 
             f0_field[fiber_dof_indices[i]] =
               f0_data[dim * serial_vidx + component];
@@ -2828,9 +2811,9 @@ MonodomainProblem<dim>::run()
     {
       TimerOutput::Scope t(computing_timer,
                            "Initialize BlockJacobi preconditioner");
-      typename TrilinosWrappers::PreconditionBlockJacobi::AdditionalData
+      typename TrilinosWrappers::PreconditionILU::AdditionalData
         block_jacobi_data;
-      block_jacobi_data.block_size = param.block_jacobi_block_size;
+      // block_jacobi_data.block_size = param.block_jacobi_block_size;
       block_jacobi_preconditioner.initialize(system_matrix, block_jacobi_data);
     }
   else if (param.preconditioner == "AGGLOMG")

@@ -61,7 +61,7 @@ static constexpr unsigned int starting_level      = 1;
 
 // matrix-free related parameters
 static constexpr bool         use_matrix_free_action = true;
-static constexpr unsigned int degree_finite_element  = 1;
+static constexpr unsigned int degree_finite_element  = 4;
 constexpr unsigned int        n_qpoints    = degree_finite_element + 1;
 static constexpr unsigned int n_components = 1;
 
@@ -191,16 +191,40 @@ namespace Utils
 
 } // namespace Utils
 
+enum class PreconditionerType
+{
+  amg,
+  agglomg,
+  block_jacobi
+};
+
+inline std::string
+preconditioner_type_to_string(const PreconditionerType type)
+{
+  switch (type)
+    {
+      case PreconditionerType::amg:
+        return "AMG";
+      case PreconditionerType::agglomg:
+        return "AGGLOMG";
+      case PreconditionerType::block_jacobi:
+        return "BLOCKJACOBI";
+      default:
+        DEAL_II_NOT_IMPLEMENTED();
+        return "";
+    }
+}
+
 // Model parameters for FitzHugh-Nagumo
 struct ModelParameters
 {
-  SolverControl control;
-  bool          use_amg_preconditioner = true;
-  unsigned int  output_frequency       = 4001;
-  bool          output_results         = true;
-  double        dt                     = 1e-4;
-  double        final_time             = dt * 20;
-  double        final_time_current     = 3e-3;
+  SolverControl      control;
+  PreconditionerType preconditioner_type = PreconditionerType::block_jacobi;
+  unsigned int       output_frequency    = 4001;
+  bool               output_results      = false;
+  double             dt                  = 1e-4;
+  double             final_time          = 0.4;
+  double             final_time_current  = 3e-3;
 
 
   double penalty_constant = 10.;
@@ -466,6 +490,7 @@ private:
   SparsityPattern                                sparsity;
   AffineConstraints<double>                      constraints;
   TrilinosWrappers::PreconditionAMG              amg_preconditioner;
+  TrilinosWrappers::PreconditionILU              block_jacobi_preconditioner;
   TrilinosWrappers::SparseMatrix                 mass_matrix;
   TrilinosWrappers::SparseMatrix                 laplace_matrix;
 
@@ -721,9 +746,8 @@ IonicModel<dim>::setup_problem()
                                                              communicator);
 
   file_iterations.open(
-    "iterations_" +
-    std::string(param.use_amg_preconditioner ? "AMG" : "AGGLOMG") + "_level_" +
-    std::to_string(total_tree_levels + 1) + "_" +
+    "iterations_" + preconditioner_type_to_string(param.preconditioner_type) +
+    "_level_" + std::to_string(total_tree_levels + 1) + "_" +
     std::to_string(Utilities::MPI::n_mpi_processes(communicator)) +
     "_procs_deg_" + std::to_string(dg_fe.degree) + ".txt");
 }
@@ -1264,16 +1288,27 @@ IonicModel<dim>::solve()
 
   if constexpr (measure_solve_times)
     start_solver = MPI_Wtime();
-  if (param.use_amg_preconditioner)
-    solver.solve(system_operator,
-                 locally_relevant_solution_current,
-                 system_rhs,
-                 amg_preconditioner);
-  else
-    solver.solve(system_operator,
-                 locally_relevant_solution_current,
-                 system_rhs,
-                 *preconditioner);
+  switch (param.preconditioner_type)
+    {
+      case PreconditionerType::amg:
+        solver.solve(system_operator,
+                     locally_relevant_solution_current,
+                     system_rhs,
+                     amg_preconditioner);
+        break;
+      case PreconditionerType::block_jacobi:
+        solver.solve(system_operator,
+                     locally_relevant_solution_current,
+                     system_rhs,
+                     block_jacobi_preconditioner);
+        break;
+      case PreconditionerType::agglomg:
+        solver.solve(system_operator,
+                     locally_relevant_solution_current,
+                     system_rhs,
+                     *preconditioner);
+        break;
+    }
 
   if constexpr (measure_solve_times)
     {
@@ -1416,23 +1451,34 @@ IonicModel<dim>::run()
 
   pcout << "Max mesh size: " << mesh_size << std::endl;
 
-  // Use AMG or agglomeration-based multigrid
-  if (param.use_amg_preconditioner)
+  // Use AMG, block-Jacobi, or agglomeration-based multigrid
+  switch (param.preconditioner_type)
     {
-      typename TrilinosWrappers::PreconditionAMG::AdditionalData amg_data;
-      if (dg_fe.degree > 1)
-        amg_data.higher_order_elements = true;
+      case PreconditionerType::amg:
+        {
+          typename TrilinosWrappers::PreconditionAMG::AdditionalData amg_data;
+          if (dg_fe.degree > 1)
+            amg_data.higher_order_elements = true;
 
-      amg_data.aggregation_threshold = 0.1; // 0.15;
-      amg_data.smoother_type         = "Chebyshev";
-      amg_data.smoother_sweeps       = 3;
-      amg_data.output_details        = true;
-      amg_preconditioner.initialize(*system_matrix, amg_data);
+          amg_data.aggregation_threshold = 0.1; // 0.15;
+          amg_data.smoother_type         = "Chebyshev";
+          amg_data.smoother_sweeps       = 3;
+          amg_data.output_details        = true;
+          amg_preconditioner.initialize(*system_matrix, amg_data);
+          break;
+        }
+      case PreconditionerType::block_jacobi:
+        {
+          typename TrilinosWrappers::PreconditionILU::AdditionalData ilu_data;
+          block_jacobi_preconditioner.initialize(*system_matrix, ilu_data);
+          break;
+        }
+      case PreconditionerType::agglomg:
+        setup_multigrid();
+        break;
     }
-  else
-    setup_multigrid();
 
-  pcout << "Setup multigrid preconditioner: done " << std::endl;
+  pcout << "Setup preconditioner: done " << std::endl;
 
   while (time <= end_time)
     {
