@@ -93,8 +93,13 @@ public:
   virtual bool
   preserves_vertex_locations() const override;
 
+#if DEAL_II_VERSION_GTE(9, 8, 0)
+  virtual bool
+  is_compatible_with(const ReferenceCell<dim> &reference_cell) const override;
+#else
   virtual bool
   is_compatible_with(const ReferenceCell &reference_cell) const override;
+#endif
 
   /**
    * @name Mapping points between reference and real cells

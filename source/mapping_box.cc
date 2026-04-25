@@ -130,8 +130,13 @@ MappingBox<dim, spacedim>::preserves_vertex_locations() const
 
 template <int dim, int spacedim>
 bool
+#if DEAL_II_VERSION_GTE(9, 8, 0)
+MappingBox<dim, spacedim>::is_compatible_with(
+  const ReferenceCell<dim> &reference_cell) const
+#else
 MappingBox<dim, spacedim>::is_compatible_with(
   const ReferenceCell &reference_cell) const
+#endif
 {
   Assert(dim == reference_cell.get_dimension(),
          ExcMessage("The dimension of your mapping (" +
