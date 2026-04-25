@@ -142,7 +142,7 @@ Public Attributes</h2></td></tr>
 class MappingBox&lt; dim, spacedim &gt;::InternalData</div><p>Storage for internal data of the mapping. See <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classMapping_1_1InternalDataBase.html">Mapping::InternalDataBase</a> for an extensive description.</p>
 <p>This includes data that is computed once when the object is created (in <a class="el" href="class_mapping_box.html#a788e06155bbb839232e089817dbb261e">get_data()</a>) as well as data the class wants to store from between the call to <a class="el" href="class_mapping_box.html#a563c8705d3adfa266feb528a9e6c4901">fill_fe_values()</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classMapping.html#a592a9196a0a0910bc5b46244933d816d">fill_fe_face_values()</a>, or <a class="el" href="class_mapping_box.html#a90f2244c4213e062d5c6204be6806275">fill_fe_subface_values()</a> until possible later calls from the finite element to functions such as <a class="el" href="class_mapping_box.html#accfd05417b9ee3e480dd349e1fe1c0c6">transform()</a>. The latter class of member variables are marked as 'mutable'. </p>
 
-<p class="definition">Definition at line <a class="el" href="mapping__box_8h_source.html#l00187">187</a> of file <a class="el" href="mapping__box_8h_source.html">mapping_box.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mapping__box_8h_source.html#l00192">192</a> of file <a class="el" href="mapping__box_8h_source.html">mapping_box.h</a>.</p>
 </div><a name="doc-constructors" id="doc-constructors"></a><h2 id="header-doc-constructors" class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="ad04e65f4e53900598869679991911ccc" name="ad04e65f4e53900598869679991911ccc"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ad04e65f4e53900598869679991911ccc">&#9670;&#160;</a></span>InternalData() <span class="overload">[1/2]</span></h2>
@@ -192,7 +192,7 @@ template&lt;int dim, int spacedim&gt; </div>
 
 <p class="definition">Definition at line <a class="el" href="mapping__box_8cc_source.html#l00086">86</a> of file <a class="el" href="mapping__box_8cc_source.html">mapping_box.cc</a>.</p>
 
-<p class="reference">References <a class="el" href="mapping__box_8h_source.html#l00215">cell_extents</a>, <a class="el" href="mapping__box_8h_source.html#l00227">inverse_cell_extents</a>, <a class="el" href="mapping__box_8h_source.html#l00239">quadrature_points</a>, <a class="el" href="mapping__box_8h_source.html#l00220">traslation</a>, and <a class="el" href="mapping__box_8h_source.html#l00232">volume_element</a>.</p>
+<p class="reference">References <a class="el" href="mapping__box_8h_source.html#l00220">cell_extents</a>, <a class="el" href="mapping__box_8h_source.html#l00232">inverse_cell_extents</a>, <a class="el" href="mapping__box_8h_source.html#l00244">quadrature_points</a>, <a class="el" href="mapping__box_8h_source.html#l00225">traslation</a>, and <a class="el" href="mapping__box_8h_source.html#l00237">volume_element</a>.</p>
 
 </div>
 </div>
@@ -227,7 +227,7 @@ template&lt;int dim, int spacedim&gt; </div>
 
 <p class="definition">Definition at line <a class="el" href="mapping__box_8cc_source.html#l00111">111</a> of file <a class="el" href="mapping__box_8cc_source.html">mapping_box.cc</a>.</p>
 
-<p class="reference">References <a class="el" href="mapping__box_8h_source.html#l00215">cell_extents</a>, <a class="el" href="mapping__box_8h_source.html#l00227">inverse_cell_extents</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classMapping_1_1InternalDataBase.html#ab7b920cdcb2c10bc4d1df0515c20d7c8">Mapping&lt; int dim, int spacedim &gt;::InternalDataBase::memory_consumption()</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/namespaceMemoryConsumption.html#a34f3bc5ab5164e98443627b89ee0f424">MemoryConsumption::memory_consumption()</a>, <a class="el" href="mapping__box_8h_source.html#l00220">traslation</a>, and <a class="el" href="mapping__box_8h_source.html#l00232">volume_element</a>.</p>
+<p class="reference">References <a class="el" href="mapping__box_8h_source.html#l00220">cell_extents</a>, <a class="el" href="mapping__box_8h_source.html#l00232">inverse_cell_extents</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classMapping_1_1InternalDataBase.html#ab7b920cdcb2c10bc4d1df0515c20d7c8">Mapping&lt; int dim, int spacedim &gt;::InternalDataBase::memory_consumption()</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/namespaceMemoryConsumption.html#a34f3bc5ab5164e98443627b89ee0f424">MemoryConsumption::memory_consumption()</a>, <a class="el" href="mapping__box_8h_source.html#l00225">traslation</a>, and <a class="el" href="mapping__box_8h_source.html#l00237">volume_element</a>.</p>
 
 </div>
 </div>
@@ -292,7 +292,7 @@ template&lt;int dim, int spacedim = dim&gt; </div>
 </div><div class="memdoc">
 <p>Extents of the last cell we have seen in the coordinate directions, i.e., <em>h<sub>x</sub></em>, <em>h<sub>y</sub></em>, <em>h<sub>z</sub></em>. </p>
 
-<p class="definition">Definition at line <a class="el" href="mapping__box_8h_source.html#l00215">215</a> of file <a class="el" href="mapping__box_8h_source.html">mapping_box.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mapping__box_8h_source.html#l00220">220</a> of file <a class="el" href="mapping__box_8h_source.html">mapping_box.h</a>.</p>
 
 <p class="reference">Referenced by <a class="el" href="mapping__box_8cc_source.html#l00086">InternalData()</a>, and <a class="el" href="mapping__box_8cc_source.html#l00111">memory_consumption()</a>.</p>
 
@@ -321,7 +321,7 @@ template&lt;int dim, int spacedim = dim&gt; </div>
 </div><div class="memdoc">
 <p>Reciprocal of the extents of the last cell we have seen in the coordinate directions, i.e., <em>h<sub>x</sub></em>, <em>h<sub>y</sub></em>, <em>h<sub>z</sub></em>. </p>
 
-<p class="definition">Definition at line <a class="el" href="mapping__box_8h_source.html#l00227">227</a> of file <a class="el" href="mapping__box_8h_source.html">mapping_box.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mapping__box_8h_source.html#l00232">232</a> of file <a class="el" href="mapping__box_8h_source.html">mapping_box.h</a>.</p>
 
 <p class="reference">Referenced by <a class="el" href="mapping__box_8cc_source.html#l00086">InternalData()</a>, and <a class="el" href="mapping__box_8cc_source.html#l00111">memory_consumption()</a>.</p>
 
@@ -342,7 +342,7 @@ template&lt;int dim, int spacedim = dim&gt; </div>
 </div><div class="memdoc">
 <p>Location of quadrature points of faces or subfaces in 3d with all possible orientations. Can be accessed with the correct offset provided via <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classQProjector_1_1DataSetDescriptor.html">QProjector::DataSetDescriptor</a>. Not needed/used for cells. </p>
 
-<p class="definition">Definition at line <a class="el" href="mapping__box_8h_source.html#l00239">239</a> of file <a class="el" href="mapping__box_8h_source.html">mapping_box.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mapping__box_8h_source.html#l00244">244</a> of file <a class="el" href="mapping__box_8h_source.html">mapping_box.h</a>.</p>
 
 <p class="reference">Referenced by <a class="el" href="mapping__box_8cc_source.html#l00086">InternalData()</a>.</p>
 
@@ -371,7 +371,7 @@ template&lt;int dim, int spacedim = dim&gt; </div>
 </div><div class="memdoc">
 <p>Traslation term in F(\hat{x})=J\hat{x} + c. </p>
 
-<p class="definition">Definition at line <a class="el" href="mapping__box_8h_source.html#l00220">220</a> of file <a class="el" href="mapping__box_8h_source.html">mapping_box.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mapping__box_8h_source.html#l00225">225</a> of file <a class="el" href="mapping__box_8h_source.html">mapping_box.h</a>.</p>
 
 <p class="reference">Referenced by <a class="el" href="mapping__box_8cc_source.html#l00086">InternalData()</a>, and <a class="el" href="mapping__box_8cc_source.html#l00111">memory_consumption()</a>.</p>
 
@@ -400,7 +400,7 @@ template&lt;int dim, int spacedim = dim&gt; </div>
 </div><div class="memdoc">
 <p>The volume element </p>
 
-<p class="definition">Definition at line <a class="el" href="mapping__box_8h_source.html#l00232">232</a> of file <a class="el" href="mapping__box_8h_source.html">mapping_box.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mapping__box_8h_source.html#l00237">237</a> of file <a class="el" href="mapping__box_8h_source.html">mapping_box.h</a>.</p>
 
 <p class="reference">Referenced by <a class="el" href="mapping__box_8cc_source.html#l00086">InternalData()</a>, and <a class="el" href="mapping__box_8cc_source.html#l00111">memory_consumption()</a>.</p>
 

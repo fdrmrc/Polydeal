@@ -32,9 +32,10 @@ var searchData=
   ['physics_3a_3atransformations_3a_3arotations_29',['Rotations',['http://www.dealii.org/developer/doxygen/deal.II/namespacePhysics_1_1Transformations_1_1Rotations.html',1,'Physics::Transformations']]],
   ['physics_3a_3avectorrelations_30',['VectorRelations',['http://www.dealii.org/developer/doxygen/deal.II/namespacePhysics_1_1VectorRelations.html',1,'Physics']]],
   ['pipesegment_31',['PipeSegment',['http://www.dealii.org/developer/doxygen/deal.II/namespacePipeSegment.html',1,'']]],
-  ['polynomials_32',['Polynomials',['http://www.dealii.org/developer/doxygen/deal.II/namespacePolynomials.html',1,'']]],
-  ['polynomials_3a_3ainternal_33',['internal',['http://www.dealii.org/developer/doxygen/deal.II/namespacePolynomials_1_1internal.html',1,'Polynomials']]],
-  ['polynomials_3a_3ainternal_3a_3alagrangeequidistantimplementation_34',['LagrangeEquidistantImplementation',['http://www.dealii.org/developer/doxygen/deal.II/namespacePolynomials_1_1internal_1_1LagrangeEquidistantImplementation.html',1,'Polynomials::internal']]],
-  ['portable_35',['Portable',['http://www.dealii.org/developer/doxygen/deal.II/namespacePortable.html',1,'']]],
-  ['portable_3a_3ainternal_36',['internal',['http://www.dealii.org/developer/doxygen/deal.II/namespacePortable_1_1internal.html',1,'Portable']]]
+  ['plasticitylab_32',['PlasticityLab',['http://www.dealii.org/developer/doxygen/deal.II/namespacePlasticityLab.html',1,'']]],
+  ['polynomials_33',['Polynomials',['http://www.dealii.org/developer/doxygen/deal.II/namespacePolynomials.html',1,'']]],
+  ['polynomials_3a_3ainternal_34',['internal',['http://www.dealii.org/developer/doxygen/deal.II/namespacePolynomials_1_1internal.html',1,'Polynomials']]],
+  ['polynomials_3a_3ainternal_3a_3alagrangeequidistantimplementation_35',['LagrangeEquidistantImplementation',['http://www.dealii.org/developer/doxygen/deal.II/namespacePolynomials_1_1internal_1_1LagrangeEquidistantImplementation.html',1,'Polynomials::internal']]],
+  ['portable_36',['Portable',['http://www.dealii.org/developer/doxygen/deal.II/namespacePortable.html',1,'']]],
+  ['portable_3a_3ainternal_37',['internal',['http://www.dealii.org/developer/doxygen/deal.II/namespacePortable_1_1internal.html',1,'Portable']]]
 ];

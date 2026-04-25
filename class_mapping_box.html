@@ -126,7 +126,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a203c1b15410467da13bb1fc93331aa03" id="r_a203c1b15410467da13bb1fc93331aa03"><td class="memItemLeft">&#160;</td><td class="memItemRight"><a class="el" href="#a203c1b15410467da13bb1fc93331aa03">MappingBox</a> (const std::vector&lt; <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classBoundingBox.html">BoundingBox</a>&lt; dim &gt; &gt; &amp;local_boxes, const std::map&lt; <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/namespacetypes.html#a88f8129eb3e40ecc8022e92a1e15d70e">types::global_cell_index</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/namespacetypes.html#a88f8129eb3e40ecc8022e92a1e15d70e">types::global_cell_index</a> &gt; &amp;<a class="el" href="#adf3870b67413feb324c684b42f11e475">polytope_translator</a>)</td></tr>
 <tr class="memitem:a9faeea9d1404b34f77a387e857e9fc53" id="r_a9faeea9d1404b34f77a387e857e9fc53"><td class="memItemLeft">virtual std::unique_ptr&lt; <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classMapping.html">Mapping</a>&lt; dim, spacedim &gt; &gt;&#160;</td><td class="memItemRight"><a class="el" href="#a9faeea9d1404b34f77a387e857e9fc53">clone</a> () const override</td></tr>
 <tr class="memitem:a492a698486ea16a66ef96e55d959096d" id="r_a492a698486ea16a66ef96e55d959096d"><td class="memItemLeft">virtual bool&#160;</td><td class="memItemRight"><a class="el" href="#a492a698486ea16a66ef96e55d959096d">preserves_vertex_locations</a> () const override</td></tr>
-<tr class="memitem:a00cba5c063d1fd5b7d09743a2d4f644f" id="r_a00cba5c063d1fd5b7d09743a2d4f644f"><td class="memItemLeft">virtual bool&#160;</td><td class="memItemRight"><a class="el" href="#a00cba5c063d1fd5b7d09743a2d4f644f">is_compatible_with</a> (const <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classReferenceCell.html">ReferenceCell</a> &amp;<a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/namespaceGridGenerator.html#aeb9a83e353f8d69ce49ebdd191a3a51f">reference_cell</a>) const override</td></tr>
+<tr class="memitem:a00cba5c063d1fd5b7d09743a2d4f644f" id="r_a00cba5c063d1fd5b7d09743a2d4f644f"><td class="memItemLeft">virtual bool&#160;</td><td class="memItemRight"><a class="el" href="#a00cba5c063d1fd5b7d09743a2d4f644f">is_compatible_with</a> (const <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classReferenceCell.html">ReferenceCell</a> &amp;<a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/namespaceGridGenerator.html#ac61c06f7ffaa99f3ad4c17cae0af36ee">reference_cell</a>) const override</td></tr>
 <tr id="pub-methods-0" class="groupHeader"><td colspan="2"><div class="groupHeader">Mapping points between reference and real cells</div></td></tr>
 <tr class="memitem:a83ede5b79a0d1c0b9b4240422f0decf3" id="r_a83ede5b79a0d1c0b9b4240422f0decf3"><td class="memItemLeft">virtual <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classPoint.html">Point</a>&lt; spacedim &gt;&#160;</td><td class="memItemRight"><a class="el" href="#a83ede5b79a0d1c0b9b4240422f0decf3">transform_unit_to_real_cell</a> (const typename <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classTriangulation.html">Triangulation</a>&lt; dim, spacedim &gt;::cell_iterator &amp;cell, const <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classPoint.html">Point</a>&lt; dim &gt; &amp;p) const override</td></tr>
 <tr class="memitem:a6e111df3bce8888a7a22a9a7cb6ff17b" id="r_a6e111df3bce8888a7a22a9a7cb6ff17b"><td class="memItemLeft">virtual <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classPoint.html">Point</a>&lt; dim &gt;&#160;</td><td class="memItemRight"><a class="el" href="#a6e111df3bce8888a7a22a9a7cb6ff17b">transform_real_to_unit_cell</a> (const typename <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classTriangulation.html">Triangulation</a>&lt; dim, spacedim &gt;::cell_iterator &amp;cell, const <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classPoint.html">Point</a>&lt; spacedim &gt; &amp;p) const override</td></tr>
@@ -142,6 +142,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:aa43f4faa4f85177887ae67c547edeb49 inherit pub_methods_classMapping" id="r_aa43f4faa4f85177887ae67c547edeb49"><td class="memItemLeft">virtual boost::container::small_vector&lt; <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classPoint.html">Point</a>&lt; spacedim &gt;, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/namespaceReferenceCells.html#a78f7fa1cec8060181ba13f46abde2009">ReferenceCells::max_n_vertices</a>&lt; dim &gt;() &gt;&#160;</td><td class="memItemRight"><a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classMapping.html#aa43f4faa4f85177887ae67c547edeb49">get_vertices</a> (const typename <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classTriangulation.html">Triangulation</a>&lt; dim, spacedim &gt;::cell_iterator &amp;cell) const</td></tr>
 <tr class="memitem:ae8e21c31d9d800a275eedd64967a94e3 inherit pub_methods_classMapping" id="r_ae8e21c31d9d800a275eedd64967a94e3"><td class="memItemLeft">virtual <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classPoint.html">Point</a>&lt; spacedim &gt;&#160;</td><td class="memItemRight"><a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classMapping.html#ae8e21c31d9d800a275eedd64967a94e3">get_center</a> (const typename <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classTriangulation.html">Triangulation</a>&lt; dim, spacedim &gt;::cell_iterator &amp;cell, const bool map_barycenter_of_reference_cell=true) const</td></tr>
 <tr class="memitem:a4c7e58a3e6c82b4c1a30cadbd7db9420 inherit pub_methods_classMapping" id="r_a4c7e58a3e6c82b4c1a30cadbd7db9420"><td class="memItemLeft">virtual <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classBoundingBox.html">BoundingBox</a>&lt; spacedim &gt;&#160;</td><td class="memItemRight"><a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classMapping.html#a4c7e58a3e6c82b4c1a30cadbd7db9420">get_bounding_box</a> (const typename <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classTriangulation.html">Triangulation</a>&lt; dim, spacedim &gt;::cell_iterator &amp;cell) const</td></tr>
+<tr class="memitem:a62c8eb804fb6cca986ed74c75785ceef inherit pub_methods_classMapping" id="r_a62c8eb804fb6cca986ed74c75785ceef"><td class="memItemLeft">virtual bool&#160;</td><td class="memItemRight"><a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classMapping.html#a62c8eb804fb6cca986ed74c75785ceef">is_compatible_with</a> (const <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classReferenceCell.html">ReferenceCell</a>&lt; dim &gt; &amp;<a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/namespaceGridGenerator.html#ac61c06f7ffaa99f3ad4c17cae0af36ee">reference_cell</a>) const =0</td></tr>
 <tr class="memitem:a79050c43c043d560651dab7ddc2e6c5a inherit pub_methods_classMapping" id="r_a79050c43c043d560651dab7ddc2e6c5a"><td class="memItemLeft">void&#160;</td><td class="memItemRight"><a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classEnableObserverPointer.html#a79050c43c043d560651dab7ddc2e6c5a">serialize</a> (Archive &amp;ar, const unsigned int version)</td></tr>
 <tr class="memitem:a078f4e617fdb287e1dc7a5efa227b0ae inherit pub_methods_classMapping" id="r_a078f4e617fdb287e1dc7a5efa227b0ae"><td class="memItemLeft"><a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classPoint.html">Point</a>&lt; dim - 1 &gt;&#160;</td><td class="memItemRight"><a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classMapping.html#a078f4e617fdb287e1dc7a5efa227b0ae">project_real_point_to_unit_point_on_face</a> (const typename <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classTriangulation.html">Triangulation</a>&lt; dim, spacedim &gt;::cell_iterator &amp;cell, const unsigned int face_no, const <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classPoint.html">Point</a>&lt; spacedim &gt; &amp;p) const</td></tr>
 <tr class="memitem:affdf36afda77bfd1c6b3c7f1d794f119 inherit pub_methods_classMapping" id="r_affdf36afda77bfd1c6b3c7f1d794f119"><td class="memItemLeft">unsigned int&#160;</td><td class="memItemRight"><a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classEnableObserverPointer.html#affdf36afda77bfd1c6b3c7f1d794f119">n_subscriptions</a> () const</td></tr>
@@ -252,7 +253,7 @@ template&lt;int dim, int spacedim&gt; </div>
 
 <p class="definition">Definition at line <a class="el" href="mapping__box_8cc_source.html#l00068">68</a> of file <a class="el" href="mapping__box_8cc_source.html">mapping_box.cc</a>.</p>
 
-<p class="reference">References <a class="el" href="mapping__box_8h_source.html#l00372">boxes</a>, and <a class="el" href="mapping__box_8h_source.html#l00378">polytope_translator</a>.</p>
+<p class="reference">References <a class="el" href="mapping__box_8h_source.html#l00377">boxes</a>, and <a class="el" href="mapping__box_8h_source.html#l00383">polytope_translator</a>.</p>
 
 </div>
 </div>
@@ -284,7 +285,7 @@ template&lt;int dim, int spacedim&gt; </div>
 
 <p>Implements <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classMapping.html#a5e67185a25c0bdc898881f4a9f5fcaf7">Mapping&lt; dim, dim &gt;</a>.</p>
 
-<p class="definition">Definition at line <a class="el" href="mapping__box_8cc_source.html#l00975">975</a> of file <a class="el" href="mapping__box_8cc_source.html">mapping_box.cc</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mapping__box_8cc_source.html#l00980">980</a> of file <a class="el" href="mapping__box_8cc_source.html">mapping_box.cc</a>.</p>
 
 </div>
 </div>
@@ -329,9 +330,9 @@ template&lt;int dim, int spacedim&gt; </div>
 
 <p>Reimplemented from <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classMapping.html#a4d120f691fd0fafb6e9cfb8034fdc521">Mapping&lt; dim, dim &gt;</a>.</p>
 
-<p class="definition">Definition at line <a class="el" href="mapping__box_8cc_source.html#l00467">467</a> of file <a class="el" href="mapping__box_8cc_source.html">mapping_box.cc</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mapping__box_8cc_source.html#l00472">472</a> of file <a class="el" href="mapping__box_8cc_source.html">mapping_box.cc</a>.</p>
 
-<p class="reference">References <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classQuadrature.html#ae29a26fd566cf4521320618096b46cf5">Quadrature&lt; int dim &gt;::get_points()</a>, <a class="el" href="mapping__box_8cc_source.html#l00052">has_box()</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classinternal_1_1FEValuesImplementation_1_1MappingRelatedData.html#ab006cd6dc2dc32398d6202b1ebeccc6a">internal::FEValuesImplementation::MappingRelatedData&lt; int dim, int spacedim &gt;::JxW_values</a>, <a class="el" href="mapping__box_8cc_source.html#l00246">maybe_update_cell_quadrature_points()</a>, <a class="el" href="mapping__box_8cc_source.html#l00372">maybe_update_inverse_jacobians()</a>, <a class="el" href="mapping__box_8cc_source.html#l00282">maybe_update_jacobian_derivatives()</a>, <a class="el" href="mapping__box_8cc_source.html#l00350">maybe_update_jacobians()</a>, <a class="el" href="mapping__box_8cc_source.html#l00334">maybe_update_volume_elements()</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/namespaceCellSimilarity.html#abbf8aa4eab099bd2356cb51200494c13ae9f6ab1203106b0a76aa144e907cab85">CellSimilarity::none</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classNonMatching_1_1ImmersedSurfaceQuadrature.html#ac78ecbae61b4603ebc9836887e775f46">NonMatching::ImmersedSurfaceQuadrature&lt; int dim, int spacedim &gt;::normal_vector()</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classinternal_1_1FEValuesImplementation_1_1MappingRelatedData.html#a6f6f35b56cb0c08ff276ec4c1247f865">internal::FEValuesImplementation::MappingRelatedData&lt; int dim, int spacedim &gt;::normal_vectors</a>, <a class="el" href="mapping__box_8h_source.html#l00378">polytope_translator</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classinternal_1_1FEValuesImplementation_1_1MappingRelatedData.html#a9cfaf98fd3d137b8e4bb96e966b3eeb9">internal::FEValuesImplementation::MappingRelatedData&lt; int dim, int spacedim &gt;::quadrature_points</a>, <a class="el" href="mapping__box_8cc_source.html#l00196">update_cell_extents()</a>, and <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classQuadrature.html#a980ca408d8c9eeeb3b3a38dc955b0124">Quadrature&lt; int dim &gt;::weight()</a>.</p>
+<p class="reference">References <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classQuadrature.html#ae29a26fd566cf4521320618096b46cf5">Quadrature&lt; int dim &gt;::get_points()</a>, <a class="el" href="mapping__box_8cc_source.html#l00052">has_box()</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classinternal_1_1FEValuesImplementation_1_1MappingRelatedData.html#ab006cd6dc2dc32398d6202b1ebeccc6a">internal::FEValuesImplementation::MappingRelatedData&lt; int dim, int spacedim &gt;::JxW_values</a>, <a class="el" href="mapping__box_8cc_source.html#l00251">maybe_update_cell_quadrature_points()</a>, <a class="el" href="mapping__box_8cc_source.html#l00377">maybe_update_inverse_jacobians()</a>, <a class="el" href="mapping__box_8cc_source.html#l00287">maybe_update_jacobian_derivatives()</a>, <a class="el" href="mapping__box_8cc_source.html#l00355">maybe_update_jacobians()</a>, <a class="el" href="mapping__box_8cc_source.html#l00339">maybe_update_volume_elements()</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/namespaceCellSimilarity.html#abbf8aa4eab099bd2356cb51200494c13ae9f6ab1203106b0a76aa144e907cab85">CellSimilarity::none</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classNonMatching_1_1ImmersedSurfaceQuadrature.html#ac78ecbae61b4603ebc9836887e775f46">NonMatching::ImmersedSurfaceQuadrature&lt; int dim, int spacedim &gt;::normal_vector()</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classinternal_1_1FEValuesImplementation_1_1MappingRelatedData.html#a6f6f35b56cb0c08ff276ec4c1247f865">internal::FEValuesImplementation::MappingRelatedData&lt; int dim, int spacedim &gt;::normal_vectors</a>, <a class="el" href="mapping__box_8h_source.html#l00383">polytope_translator</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classinternal_1_1FEValuesImplementation_1_1MappingRelatedData.html#a9cfaf98fd3d137b8e4bb96e966b3eeb9">internal::FEValuesImplementation::MappingRelatedData&lt; int dim, int spacedim &gt;::quadrature_points</a>, <a class="el" href="mapping__box_8cc_source.html#l00201">update_cell_extents()</a>, and <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classQuadrature.html#a980ca408d8c9eeeb3b3a38dc955b0124">Quadrature&lt; int dim &gt;::weight()</a>.</p>
 
 </div>
 </div>
@@ -386,7 +387,7 @@ template&lt;int dim, int spacedim&gt; </div>
 
 <p>Implements <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classMapping.html#a3bd18876316cf71bb52b95664bf8718b">Mapping&lt; dim, dim &gt;</a>.</p>
 
-<p class="definition">Definition at line <a class="el" href="mapping__box_8cc_source.html#l00445">445</a> of file <a class="el" href="mapping__box_8cc_source.html">mapping_box.cc</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mapping__box_8cc_source.html#l00450">450</a> of file <a class="el" href="mapping__box_8cc_source.html">mapping_box.cc</a>.</p>
 
 </div>
 </div>
@@ -436,9 +437,9 @@ template&lt;int dim, int spacedim&gt; </div>
 
 <p>Implements <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classMapping.html#add4a7af8fc07e6d15e4aafb4f372a9c7">Mapping&lt; dim, dim &gt;</a>.</p>
 
-<p class="definition">Definition at line <a class="el" href="mapping__box_8cc_source.html#l00395">395</a> of file <a class="el" href="mapping__box_8cc_source.html">mapping_box.cc</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mapping__box_8cc_source.html#l00400">400</a> of file <a class="el" href="mapping__box_8cc_source.html">mapping_box.cc</a>.</p>
 
-<p class="reference">References <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classQuadrature.html#ae29a26fd566cf4521320618096b46cf5">Quadrature&lt; int dim &gt;::get_points()</a>, <a class="el" href="mapping__box_8cc_source.html#l00052">has_box()</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classinternal_1_1FEValuesImplementation_1_1MappingRelatedData.html#ab006cd6dc2dc32398d6202b1ebeccc6a">internal::FEValuesImplementation::MappingRelatedData&lt; int dim, int spacedim &gt;::JxW_values</a>, <a class="el" href="mapping__box_8cc_source.html#l00246">maybe_update_cell_quadrature_points()</a>, <a class="el" href="mapping__box_8cc_source.html#l00372">maybe_update_inverse_jacobians()</a>, <a class="el" href="mapping__box_8cc_source.html#l00282">maybe_update_jacobian_derivatives()</a>, <a class="el" href="mapping__box_8cc_source.html#l00350">maybe_update_jacobians()</a>, <a class="el" href="mapping__box_8h_source.html#l00378">polytope_translator</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classinternal_1_1FEValuesImplementation_1_1MappingRelatedData.html#a9cfaf98fd3d137b8e4bb96e966b3eeb9">internal::FEValuesImplementation::MappingRelatedData&lt; int dim, int spacedim &gt;::quadrature_points</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/namespaceCellSimilarity.html#abbf8aa4eab099bd2356cb51200494c13a4f8507015c458575753e0a45e0c3544a">CellSimilarity::translation</a>, <a class="el" href="mapping__box_8cc_source.html#l00196">update_cell_extents()</a>, and <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classQuadrature.html#a980ca408d8c9eeeb3b3a38dc955b0124">Quadrature&lt; int dim &gt;::weight()</a>.</p>
+<p class="reference">References <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classQuadrature.html#ae29a26fd566cf4521320618096b46cf5">Quadrature&lt; int dim &gt;::get_points()</a>, <a class="el" href="mapping__box_8cc_source.html#l00052">has_box()</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classinternal_1_1FEValuesImplementation_1_1MappingRelatedData.html#ab006cd6dc2dc32398d6202b1ebeccc6a">internal::FEValuesImplementation::MappingRelatedData&lt; int dim, int spacedim &gt;::JxW_values</a>, <a class="el" href="mapping__box_8cc_source.html#l00251">maybe_update_cell_quadrature_points()</a>, <a class="el" href="mapping__box_8cc_source.html#l00377">maybe_update_inverse_jacobians()</a>, <a class="el" href="mapping__box_8cc_source.html#l00287">maybe_update_jacobian_derivatives()</a>, <a class="el" href="mapping__box_8cc_source.html#l00355">maybe_update_jacobians()</a>, <a class="el" href="mapping__box_8h_source.html#l00383">polytope_translator</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classinternal_1_1FEValuesImplementation_1_1MappingRelatedData.html#a9cfaf98fd3d137b8e4bb96e966b3eeb9">internal::FEValuesImplementation::MappingRelatedData&lt; int dim, int spacedim &gt;::quadrature_points</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/namespaceCellSimilarity.html#abbf8aa4eab099bd2356cb51200494c13a4f8507015c458575753e0a45e0c3544a">CellSimilarity::translation</a>, <a class="el" href="mapping__box_8cc_source.html#l00201">update_cell_extents()</a>, and <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classQuadrature.html#a980ca408d8c9eeeb3b3a38dc955b0124">Quadrature&lt; int dim &gt;::weight()</a>.</p>
 
 </div>
 </div>
@@ -473,9 +474,9 @@ template&lt;int dim, int spacedim&gt; </div>
 
 <p>Implements <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classMapping.html#a4a6a3a7dca2b0ece5387d01c49774312">Mapping&lt; dim, dim &gt;</a>.</p>
 
-<p class="definition">Definition at line <a class="el" href="mapping__box_8cc_source.html#l00168">168</a> of file <a class="el" href="mapping__box_8cc_source.html">mapping_box.cc</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mapping__box_8cc_source.html#l00173">173</a> of file <a class="el" href="mapping__box_8cc_source.html">mapping_box.cc</a>.</p>
 
-<p class="reference">References <a class="el" href="mapping__box_8cc_source.html#l00150">requires_update_flags()</a>.</p>
+<p class="reference">References <a class="el" href="mapping__box_8cc_source.html#l00155">requires_update_flags()</a>.</p>
 
 </div>
 </div>
@@ -510,7 +511,7 @@ template&lt;int dim, int spacedim&gt; </div>
 
 <p>Implements <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classMapping.html#afeea58f36955c7b83dda0a8b85d8e052">Mapping&lt; dim, dim &gt;</a>.</p>
 
-<p class="definition">Definition at line <a class="el" href="mapping__box_8cc_source.html#l00182">182</a> of file <a class="el" href="mapping__box_8cc_source.html">mapping_box.cc</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mapping__box_8cc_source.html#l00187">187</a> of file <a class="el" href="mapping__box_8cc_source.html">mapping_box.cc</a>.</p>
 
 </div>
 </div>
@@ -539,9 +540,7 @@ template&lt;int dim, int spacedim&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p>Implements <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classMapping.html#a0d8ac8be12bd87c4e7f529778ec317de">Mapping&lt; dim, dim &gt;</a>.</p>
-
-<p class="definition">Definition at line <a class="el" href="mapping__box_8cc_source.html#l00133">133</a> of file <a class="el" href="mapping__box_8cc_source.html">mapping_box.cc</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mapping__box_8cc_source.html#l00137">137</a> of file <a class="el" href="mapping__box_8cc_source.html">mapping_box.cc</a>.</p>
 
 <p class="reference">References <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/namespaceUtilities.html#a56cb23f1982e4aa0bec09b60903303ce">Utilities::to_string()</a>.</p>
 
@@ -588,11 +587,11 @@ template&lt;int dim, int spacedim&gt; </div>
 <p>Compute the quadrature points if the <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/group__feaccess.html#gaa94b67d2fdcc390690c523f28019e52f">UpdateFlags</a> of the incoming <a class="el" href="class_mapping_box_1_1_internal_data.html">InternalData</a> object say that they should be updated.</p>
 <p>Called from fill_fe_values. </p>
 
-<p class="definition">Definition at line <a class="el" href="mapping__box_8cc_source.html#l00246">246</a> of file <a class="el" href="mapping__box_8cc_source.html">mapping_box.cc</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mapping__box_8cc_source.html#l00251">251</a> of file <a class="el" href="mapping__box_8cc_source.html">mapping_box.cc</a>.</p>
 
-<p class="reference">References <a class="el" href="mapping__box_8h_source.html#l00372">boxes</a>, and <a class="el" href="mapping__box_8h_source.html#l00378">polytope_translator</a>.</p>
+<p class="reference">References <a class="el" href="mapping__box_8h_source.html#l00377">boxes</a>, and <a class="el" href="mapping__box_8h_source.html#l00383">polytope_translator</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="mapping__box_8cc_source.html#l00467">fill_fe_immersed_surface_values()</a>, and <a class="el" href="mapping__box_8cc_source.html#l00395">fill_fe_values()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="mapping__box_8cc_source.html#l00472">fill_fe_immersed_surface_values()</a>, and <a class="el" href="mapping__box_8cc_source.html#l00400">fill_fe_values()</a>.</p>
 
 </div>
 </div>
@@ -631,11 +630,11 @@ template&lt;int dim, int spacedim&gt; </div>
 </div><div class="memdoc">
 <p>Compute the inverse Jacobians if the <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/group__feaccess.html#gaa94b67d2fdcc390690c523f28019e52f">UpdateFlags</a> of the incoming <a class="el" href="class_mapping_box_1_1_internal_data.html">InternalData</a> object say that they should be updated. </p>
 
-<p class="definition">Definition at line <a class="el" href="mapping__box_8cc_source.html#l00372">372</a> of file <a class="el" href="mapping__box_8cc_source.html">mapping_box.cc</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mapping__box_8cc_source.html#l00377">377</a> of file <a class="el" href="mapping__box_8cc_source.html">mapping_box.cc</a>.</p>
 
 <p class="reference">References <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classinternal_1_1FEValuesImplementation_1_1MappingRelatedData.html#a57c803715adaa99345fd133c16c94f4f">internal::FEValuesImplementation::MappingRelatedData&lt; int dim, int spacedim &gt;::inverse_jacobians</a>, and <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/namespaceCellSimilarity.html#abbf8aa4eab099bd2356cb51200494c13a4f8507015c458575753e0a45e0c3544a">CellSimilarity::translation</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="mapping__box_8cc_source.html#l00467">fill_fe_immersed_surface_values()</a>, and <a class="el" href="mapping__box_8cc_source.html#l00395">fill_fe_values()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="mapping__box_8cc_source.html#l00472">fill_fe_immersed_surface_values()</a>, and <a class="el" href="mapping__box_8cc_source.html#l00400">fill_fe_values()</a>.</p>
 
 </div>
 </div>
@@ -674,11 +673,11 @@ template&lt;int dim, int spacedim&gt; </div>
 </div><div class="memdoc">
 <p>Since the Jacobian is constant for this mapping all derivatives of the Jacobian are identically zero. Fill these quantities with zeros if the corresponding update flags say that they should be updated. </p>
 
-<p class="definition">Definition at line <a class="el" href="mapping__box_8cc_source.html#l00282">282</a> of file <a class="el" href="mapping__box_8cc_source.html">mapping_box.cc</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mapping__box_8cc_source.html#l00287">287</a> of file <a class="el" href="mapping__box_8cc_source.html">mapping_box.cc</a>.</p>
 
 <p class="reference">References <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classinternal_1_1FEValuesImplementation_1_1MappingRelatedData.html#a9a3e24e5c8e99154d3097413a8c2bd6d">internal::FEValuesImplementation::MappingRelatedData&lt; int dim, int spacedim &gt;::jacobian_2nd_derivatives</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classinternal_1_1FEValuesImplementation_1_1MappingRelatedData.html#a9a012d8b6cded6d3391258f3fecb7325">internal::FEValuesImplementation::MappingRelatedData&lt; int dim, int spacedim &gt;::jacobian_3rd_derivatives</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classinternal_1_1FEValuesImplementation_1_1MappingRelatedData.html#aeafe8e13fab73548dde975b3f1f41413">internal::FEValuesImplementation::MappingRelatedData&lt; int dim, int spacedim &gt;::jacobian_grads</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classinternal_1_1FEValuesImplementation_1_1MappingRelatedData.html#abe4d0dea308bb357c2cff516fcbdfd51">internal::FEValuesImplementation::MappingRelatedData&lt; int dim, int spacedim &gt;::jacobian_pushed_forward_2nd_derivatives</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classinternal_1_1FEValuesImplementation_1_1MappingRelatedData.html#a7d6158a71ce6cd07a5bd6a87aca3df6a">internal::FEValuesImplementation::MappingRelatedData&lt; int dim, int spacedim &gt;::jacobian_pushed_forward_3rd_derivatives</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classinternal_1_1FEValuesImplementation_1_1MappingRelatedData.html#ad9492a9541912181251f7d3c0a62de8c">internal::FEValuesImplementation::MappingRelatedData&lt; int dim, int spacedim &gt;::jacobian_pushed_forward_grads</a>, and <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/namespaceCellSimilarity.html#abbf8aa4eab099bd2356cb51200494c13a4f8507015c458575753e0a45e0c3544a">CellSimilarity::translation</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="mapping__box_8cc_source.html#l00467">fill_fe_immersed_surface_values()</a>, and <a class="el" href="mapping__box_8cc_source.html#l00395">fill_fe_values()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="mapping__box_8cc_source.html#l00472">fill_fe_immersed_surface_values()</a>, and <a class="el" href="mapping__box_8cc_source.html#l00400">fill_fe_values()</a>.</p>
 
 </div>
 </div>
@@ -717,11 +716,11 @@ template&lt;int dim, int spacedim&gt; </div>
 </div><div class="memdoc">
 <p>Compute the Jacobians if the <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/group__feaccess.html#gaa94b67d2fdcc390690c523f28019e52f">UpdateFlags</a> of the incoming <a class="el" href="class_mapping_box_1_1_internal_data.html">InternalData</a> object say that they should be updated. </p>
 
-<p class="definition">Definition at line <a class="el" href="mapping__box_8cc_source.html#l00350">350</a> of file <a class="el" href="mapping__box_8cc_source.html">mapping_box.cc</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mapping__box_8cc_source.html#l00355">355</a> of file <a class="el" href="mapping__box_8cc_source.html">mapping_box.cc</a>.</p>
 
 <p class="reference">References <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classinternal_1_1FEValuesImplementation_1_1MappingRelatedData.html#af87eddbecb50168cd50f1071e8a3a899">internal::FEValuesImplementation::MappingRelatedData&lt; int dim, int spacedim &gt;::jacobians</a>, and <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/namespaceCellSimilarity.html#abbf8aa4eab099bd2356cb51200494c13a4f8507015c458575753e0a45e0c3544a">CellSimilarity::translation</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="mapping__box_8cc_source.html#l00467">fill_fe_immersed_surface_values()</a>, and <a class="el" href="mapping__box_8cc_source.html#l00395">fill_fe_values()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="mapping__box_8cc_source.html#l00472">fill_fe_immersed_surface_values()</a>, and <a class="el" href="mapping__box_8cc_source.html#l00400">fill_fe_values()</a>.</p>
 
 </div>
 </div>
@@ -760,7 +759,7 @@ template&lt;int dim, int spacedim&gt; </div>
 </div><div class="memdoc">
 <p>Compute the normal vectors if the <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/group__feaccess.html#gaa94b67d2fdcc390690c523f28019e52f">UpdateFlags</a> of the incoming <a class="el" href="class_mapping_box_1_1_internal_data.html">InternalData</a> object say that they should be updated. </p>
 
-<p class="definition">Definition at line <a class="el" href="mapping__box_8cc_source.html#l00263">263</a> of file <a class="el" href="mapping__box_8cc_source.html">mapping_box.cc</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mapping__box_8cc_source.html#l00268">268</a> of file <a class="el" href="mapping__box_8cc_source.html">mapping_box.cc</a>.</p>
 
 <p class="reference">References <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/structGeometryInfo.html#a5d3e48d5e97a217c149a33c0b42a51c2">GeometryInfo&lt; int dim &gt;::faces_per_cell</a>, and <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/structGeometryInfo.html#aa9b67e58ad8e792e55efc3cbfb274ef7">GeometryInfo&lt; int dim &gt;::unit_normal_vector</a>.</p>
 
@@ -792,9 +791,9 @@ template&lt;int dim, int spacedim&gt; </div>
 </div><div class="memdoc">
 <p>Compute the volume elements if the <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/group__feaccess.html#gaa94b67d2fdcc390690c523f28019e52f">UpdateFlags</a> of the incoming <a class="el" href="class_mapping_box_1_1_internal_data.html">InternalData</a> object say that they should be updated. </p>
 
-<p class="definition">Definition at line <a class="el" href="mapping__box_8cc_source.html#l00334">334</a> of file <a class="el" href="mapping__box_8cc_source.html">mapping_box.cc</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mapping__box_8cc_source.html#l00339">339</a> of file <a class="el" href="mapping__box_8cc_source.html">mapping_box.cc</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="mapping__box_8cc_source.html#l00467">fill_fe_immersed_surface_values()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="mapping__box_8cc_source.html#l00472">fill_fe_immersed_surface_values()</a>.</p>
 
 </div>
 </div>
@@ -857,9 +856,9 @@ template&lt;int dim, int spacedim&gt; </div>
 
 <p>Implements <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classMapping.html#a4c62b5a55ca40e2b38c6a3a1f460d540">Mapping&lt; dim, dim &gt;</a>.</p>
 
-<p class="definition">Definition at line <a class="el" href="mapping__box_8cc_source.html#l00150">150</a> of file <a class="el" href="mapping__box_8cc_source.html">mapping_box.cc</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mapping__box_8cc_source.html#l00155">155</a> of file <a class="el" href="mapping__box_8cc_source.html">mapping_box.cc</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="mapping__box_8cc_source.html#l00168">get_data()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="mapping__box_8cc_source.html#l00173">get_data()</a>.</p>
 
 </div>
 </div>
@@ -902,7 +901,7 @@ template&lt;int dim, int spacedim&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="mapping__box_8cc_source.html#l00569">569</a> of file <a class="el" href="mapping__box_8cc_source.html">mapping_box.cc</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mapping__box_8cc_source.html#l00574">574</a> of file <a class="el" href="mapping__box_8cc_source.html">mapping_box.cc</a>.</p>
 
 <p class="reference">References <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/group__Exceptions.html#ga03f7b95c0c8ad53d613e8bcbcdbedd8b">FEValuesBase&lt; int dim, int spacedim &gt;::ExcAccessToUninitializedField()</a>.</p>
 
@@ -947,7 +946,7 @@ template&lt;int dim, int spacedim&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="mapping__box_8cc_source.html#l00795">795</a> of file <a class="el" href="mapping__box_8cc_source.html">mapping_box.cc</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mapping__box_8cc_source.html#l00800">800</a> of file <a class="el" href="mapping__box_8cc_source.html">mapping_box.cc</a>.</p>
 
 <p class="reference">References <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/group__Exceptions.html#ga03f7b95c0c8ad53d613e8bcbcdbedd8b">FEValuesBase&lt; int dim, int spacedim &gt;::ExcAccessToUninitializedField()</a>.</p>
 
@@ -994,7 +993,7 @@ template&lt;int dim, int spacedim&gt; </div>
 
 <p>Implements <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classMapping.html#a14fa7eb099a9b39bcae71b5aa2de2126">Mapping&lt; dim, dim &gt;</a>.</p>
 
-<p class="definition">Definition at line <a class="el" href="mapping__box_8cc_source.html#l00509">509</a> of file <a class="el" href="mapping__box_8cc_source.html">mapping_box.cc</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mapping__box_8cc_source.html#l00514">514</a> of file <a class="el" href="mapping__box_8cc_source.html">mapping_box.cc</a>.</p>
 
 <p class="reference">References <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/group__Exceptions.html#ga03f7b95c0c8ad53d613e8bcbcdbedd8b">FEValuesBase&lt; int dim, int spacedim &gt;::ExcAccessToUninitializedField()</a>.</p>
 
@@ -1039,7 +1038,7 @@ template&lt;int dim, int spacedim&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="mapping__box_8cc_source.html#l00682">682</a> of file <a class="el" href="mapping__box_8cc_source.html">mapping_box.cc</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mapping__box_8cc_source.html#l00687">687</a> of file <a class="el" href="mapping__box_8cc_source.html">mapping_box.cc</a>.</p>
 
 <p class="reference">References <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/group__Exceptions.html#ga03f7b95c0c8ad53d613e8bcbcdbedd8b">FEValuesBase&lt; int dim, int spacedim &gt;::ExcAccessToUninitializedField()</a>.</p>
 
@@ -1084,7 +1083,7 @@ template&lt;int dim, int spacedim&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="mapping__box_8cc_source.html#l00834">834</a> of file <a class="el" href="mapping__box_8cc_source.html">mapping_box.cc</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mapping__box_8cc_source.html#l00839">839</a> of file <a class="el" href="mapping__box_8cc_source.html">mapping_box.cc</a>.</p>
 
 <p class="reference">References <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/group__Exceptions.html#ga03f7b95c0c8ad53d613e8bcbcdbedd8b">FEValuesBase&lt; int dim, int spacedim &gt;::ExcAccessToUninitializedField()</a>.</p>
 
@@ -1126,9 +1125,9 @@ template&lt;int dim, int spacedim&gt; </div>
 
 <p>Reimplemented from <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classMapping.html#a6c6e404fe55baf01d5e516af6b17a759">Mapping&lt; dim, dim &gt;</a>.</p>
 
-<p class="definition">Definition at line <a class="el" href="mapping__box_8cc_source.html#l00955">955</a> of file <a class="el" href="mapping__box_8cc_source.html">mapping_box.cc</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mapping__box_8cc_source.html#l00960">960</a> of file <a class="el" href="mapping__box_8cc_source.html">mapping_box.cc</a>.</p>
 
-<p class="reference">References <a class="el" href="mapping__box_8h_source.html#l00372">boxes</a>, <a class="el" href="mapping__box_8cc_source.html#l00052">has_box()</a>, and <a class="el" href="mapping__box_8h_source.html#l00378">polytope_translator</a>.</p>
+<p class="reference">References <a class="el" href="mapping__box_8h_source.html#l00377">boxes</a>, <a class="el" href="mapping__box_8cc_source.html#l00052">has_box()</a>, and <a class="el" href="mapping__box_8h_source.html#l00383">polytope_translator</a>.</p>
 
 </div>
 </div>
@@ -1163,9 +1162,9 @@ template&lt;int dim, int spacedim&gt; </div>
 
 <p>Implements <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classMapping.html#a7e322d14c2800734d071a48a95b00d35">Mapping&lt; dim, dim &gt;</a>.</p>
 
-<p class="definition">Definition at line <a class="el" href="mapping__box_8cc_source.html#l00940">940</a> of file <a class="el" href="mapping__box_8cc_source.html">mapping_box.cc</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mapping__box_8cc_source.html#l00945">945</a> of file <a class="el" href="mapping__box_8cc_source.html">mapping_box.cc</a>.</p>
 
-<p class="reference">References <a class="el" href="mapping__box_8h_source.html#l00372">boxes</a>, <a class="el" href="mapping__box_8cc_source.html#l00052">has_box()</a>, and <a class="el" href="mapping__box_8h_source.html#l00378">polytope_translator</a>.</p>
+<p class="reference">References <a class="el" href="mapping__box_8h_source.html#l00377">boxes</a>, <a class="el" href="mapping__box_8cc_source.html#l00052">has_box()</a>, and <a class="el" href="mapping__box_8h_source.html#l00383">polytope_translator</a>.</p>
 
 </div>
 </div>
@@ -1200,9 +1199,9 @@ template&lt;int dim, int spacedim&gt; </div>
 
 <p>Implements <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classMapping.html#a62cfb48d548203c988d265b6837f50cd">Mapping&lt; dim, dim &gt;</a>.</p>
 
-<p class="definition">Definition at line <a class="el" href="mapping__box_8cc_source.html#l00925">925</a> of file <a class="el" href="mapping__box_8cc_source.html">mapping_box.cc</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mapping__box_8cc_source.html#l00930">930</a> of file <a class="el" href="mapping__box_8cc_source.html">mapping_box.cc</a>.</p>
 
-<p class="reference">References <a class="el" href="mapping__box_8h_source.html#l00372">boxes</a>, <a class="el" href="mapping__box_8cc_source.html#l00052">has_box()</a>, and <a class="el" href="mapping__box_8h_source.html#l00378">polytope_translator</a>.</p>
+<p class="reference">References <a class="el" href="mapping__box_8h_source.html#l00377">boxes</a>, <a class="el" href="mapping__box_8cc_source.html#l00052">has_box()</a>, and <a class="el" href="mapping__box_8h_source.html#l00383">polytope_translator</a>.</p>
 
 </div>
 </div>
@@ -1241,11 +1240,11 @@ template&lt;int dim, int spacedim&gt; </div>
 </div><div class="memdoc">
 <p>Update the cell_extents field of the incoming <a class="el" href="class_mapping_box_1_1_internal_data.html">InternalData</a> object with the size of the incoming cell. </p>
 
-<p class="definition">Definition at line <a class="el" href="mapping__box_8cc_source.html#l00196">196</a> of file <a class="el" href="mapping__box_8cc_source.html">mapping_box.cc</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mapping__box_8cc_source.html#l00201">201</a> of file <a class="el" href="mapping__box_8cc_source.html">mapping_box.cc</a>.</p>
 
-<p class="reference">References <a class="el" href="mapping__box_8h_source.html#l00372">boxes</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classBoundingBox.html#a47a2a604f3bd517553dffe6dff628df9">BoundingBox&lt; int spacedim, typename Number &gt;::get_boundary_points()</a>, <a class="el" href="mapping__box_8h_source.html#l00378">polytope_translator</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classBoundingBox.html#a86442359b0696c8e88d95208e5945705">BoundingBox&lt; int spacedim, typename Number &gt;::side_length()</a>, and <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/namespaceCellSimilarity.html#abbf8aa4eab099bd2356cb51200494c13a4f8507015c458575753e0a45e0c3544a">CellSimilarity::translation</a>.</p>
+<p class="reference">References <a class="el" href="mapping__box_8h_source.html#l00377">boxes</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classBoundingBox.html#a47a2a604f3bd517553dffe6dff628df9">BoundingBox&lt; int spacedim, typename Number &gt;::get_boundary_points()</a>, <a class="el" href="mapping__box_8h_source.html#l00383">polytope_translator</a>, <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classBoundingBox.html#a86442359b0696c8e88d95208e5945705">BoundingBox&lt; int spacedim, typename Number &gt;::side_length()</a>, and <a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/namespaceCellSimilarity.html#abbf8aa4eab099bd2356cb51200494c13a4f8507015c458575753e0a45e0c3544a">CellSimilarity::translation</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="mapping__box_8cc_source.html#l00467">fill_fe_immersed_surface_values()</a>, and <a class="el" href="mapping__box_8cc_source.html#l00395">fill_fe_values()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="mapping__box_8cc_source.html#l00472">fill_fe_immersed_surface_values()</a>, and <a class="el" href="mapping__box_8cc_source.html#l00400">fill_fe_values()</a>.</p>
 
 </div>
 </div>
@@ -1273,9 +1272,9 @@ template&lt;int dim, int spacedim = dim&gt; </div>
 </div><div class="memdoc">
 <p><a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/classVector.html">Vector</a> of (local) bounding boxes </p>
 
-<p class="definition">Definition at line <a class="el" href="mapping__box_8h_source.html#l00372">372</a> of file <a class="el" href="mapping__box_8h_source.html">mapping_box.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mapping__box_8h_source.html#l00377">377</a> of file <a class="el" href="mapping__box_8h_source.html">mapping_box.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="mapping__box_8cc_source.html#l00068">MappingBox()</a>, <a class="el" href="mapping__box_8cc_source.html#l00246">maybe_update_cell_quadrature_points()</a>, <a class="el" href="mapping__box_8cc_source.html#l00955">transform_points_real_to_unit_cell()</a>, <a class="el" href="mapping__box_8cc_source.html#l00940">transform_real_to_unit_cell()</a>, <a class="el" href="mapping__box_8cc_source.html#l00925">transform_unit_to_real_cell()</a>, and <a class="el" href="mapping__box_8cc_source.html#l00196">update_cell_extents()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="mapping__box_8cc_source.html#l00068">MappingBox()</a>, <a class="el" href="mapping__box_8cc_source.html#l00251">maybe_update_cell_quadrature_points()</a>, <a class="el" href="mapping__box_8cc_source.html#l00960">transform_points_real_to_unit_cell()</a>, <a class="el" href="mapping__box_8cc_source.html#l00945">transform_real_to_unit_cell()</a>, <a class="el" href="mapping__box_8cc_source.html#l00930">transform_unit_to_real_cell()</a>, and <a class="el" href="mapping__box_8cc_source.html#l00201">update_cell_extents()</a>.</p>
 
 </div>
 </div>
@@ -1302,9 +1301,9 @@ template&lt;int dim, int spacedim = dim&gt; </div>
 </div><div class="memdoc">
 <p>Map from global cell index to bounding box index </p>
 
-<p class="definition">Definition at line <a class="el" href="mapping__box_8h_source.html#l00378">378</a> of file <a class="el" href="mapping__box_8h_source.html">mapping_box.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mapping__box_8h_source.html#l00383">383</a> of file <a class="el" href="mapping__box_8h_source.html">mapping_box.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="mapping__box_8cc_source.html#l00467">fill_fe_immersed_surface_values()</a>, <a class="el" href="mapping__box_8cc_source.html#l00395">fill_fe_values()</a>, <a class="el" href="mapping__box_8cc_source.html#l00068">MappingBox()</a>, <a class="el" href="mapping__box_8cc_source.html#l00246">maybe_update_cell_quadrature_points()</a>, <a class="el" href="mapping__box_8cc_source.html#l00955">transform_points_real_to_unit_cell()</a>, <a class="el" href="mapping__box_8cc_source.html#l00940">transform_real_to_unit_cell()</a>, <a class="el" href="mapping__box_8cc_source.html#l00925">transform_unit_to_real_cell()</a>, and <a class="el" href="mapping__box_8cc_source.html#l00196">update_cell_extents()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="mapping__box_8cc_source.html#l00472">fill_fe_immersed_surface_values()</a>, <a class="el" href="mapping__box_8cc_source.html#l00400">fill_fe_values()</a>, <a class="el" href="mapping__box_8cc_source.html#l00068">MappingBox()</a>, <a class="el" href="mapping__box_8cc_source.html#l00251">maybe_update_cell_quadrature_points()</a>, <a class="el" href="mapping__box_8cc_source.html#l00960">transform_points_real_to_unit_cell()</a>, <a class="el" href="mapping__box_8cc_source.html#l00945">transform_real_to_unit_cell()</a>, <a class="el" href="mapping__box_8cc_source.html#l00930">transform_unit_to_real_cell()</a>, and <a class="el" href="mapping__box_8cc_source.html#l00201">update_cell_extents()</a>.</p>
 
 </div>
 </div>

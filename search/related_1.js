@@ -5,5 +5,6 @@ var searchData=
   ['affineconstraints_2',['AffineConstraints',['http://www.dealii.org/developer/doxygen/deal.II/classAffineConstraints.html#a2684c21b09cec978c64ebf43e75a4fcc',1,'AffineConstraints']]],
   ['agglomerationaccessor_3',['AgglomerationAccessor',['../class_agglomeration_handler.html#ab338ac6ef3879ccc98ce0fbb63a635c5',1,'AgglomerationHandler']]],
   ['agglomerationiterator_4',['AgglomerationIterator',['../class_agglomeration_accessor.html#aac27b07b6753ea5c7bff47ad8aa37457',1,'AgglomerationAccessor::AgglomerationIterator()'],['../class_agglomeration_handler.html#aac27b07b6753ea5c7bff47ad8aa37457',1,'AgglomerationHandler::AgglomerationIterator()']]],
-  ['arrayview_5',['ArrayView',['http://www.dealii.org/developer/doxygen/deal.II/classArrayView.html#a89c23a608dc2c0abcd54cce91e7cc58d',1,'ArrayView']]]
+  ['arkode_5',['ARKode',['http://www.dealii.org/developer/doxygen/deal.II/classSUNDIALS_1_1ARKodeStepper.html#a10088425d4682d46cd7afdf530e8432f',1,'SUNDIALS::ARKodeStepper']]],
+  ['arrayview_6',['ArrayView',['http://www.dealii.org/developer/doxygen/deal.II/classArrayView.html#a89c23a608dc2c0abcd54cce91e7cc58d',1,'ArrayView']]]
 ];
