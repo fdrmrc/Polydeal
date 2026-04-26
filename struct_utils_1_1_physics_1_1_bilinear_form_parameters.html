@@ -114,6 +114,10 @@ Public Attributes</h2></td></tr>
 <tr class="memitem:a4287ffb470ab230824f2a04648462ad7" id="r_a4287ffb470ab230824f2a04648462ad7"><td class="memItemLeft">double&#160;</td><td class="memItemRight"><a class="el" href="#a4287ffb470ab230824f2a04648462ad7">chi</a> = 1e5</td></tr>
 <tr class="memitem:a44c577260de74d9b9ab8690f8e50dd5d" id="r_a44c577260de74d9b9ab8690f8e50dd5d"><td class="memItemLeft">double&#160;</td><td class="memItemRight"><a class="el" href="#a44c577260de74d9b9ab8690f8e50dd5d">Cm</a> = 1<a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/namespacePhysics_1_1Elasticity_1_1Kinematics.html#a496b854daac5cca870bc8008f562daad">e</a>-2</td></tr>
 <tr class="memitem:aaf005c6db959fafb0e10c141a861b5f8" id="r_aaf005c6db959fafb0e10c141a861b5f8"><td class="memItemLeft">double&#160;</td><td class="memItemRight"><a class="el" href="#aaf005c6db959fafb0e10c141a861b5f8">sigma</a> = 12<a class="elRef" href="http://www.dealii.org/developer/doxygen/deal.II/namespacePhysics_1_1Elasticity_1_1Kinematics.html#a496b854daac5cca870bc8008f562daad">e</a>-2</td></tr>
+<tr class="memitem:a09185e1fb543f1d4838414d477c59a44" id="r_a09185e1fb543f1d4838414d477c59a44"><td class="memItemLeft">double&#160;</td><td class="memItemRight"><a class="el" href="#a09185e1fb543f1d4838414d477c59a44">sigma_l</a> = 0.</td></tr>
+<tr class="memitem:a6c577aa64aa36a960a89c3a5a9c325fe" id="r_a6c577aa64aa36a960a89c3a5a9c325fe"><td class="memItemLeft">double&#160;</td><td class="memItemRight"><a class="el" href="#a6c577aa64aa36a960a89c3a5a9c325fe">sigma_t</a> = 0.</td></tr>
+<tr class="memitem:ae6e540a600ef66bca974f2fa602840af" id="r_ae6e540a600ef66bca974f2fa602840af"><td class="memItemLeft">double&#160;</td><td class="memItemRight"><a class="el" href="#ae6e540a600ef66bca974f2fa602840af">sigma_n</a> = 0.</td></tr>
+<tr class="memitem:a895dbdf11b9d5f62242c64286442343c" id="r_a895dbdf11b9d5f62242c64286442343c"><td class="memItemLeft">bool&#160;</td><td class="memItemRight"><a class="el" href="#a895dbdf11b9d5f62242c64286442343c">use_fibers</a> = false</td></tr>
 <tr class="memitem:a56feb044182e746d955f01a70b39dd97" id="r_a56feb044182e746d955f01a70b39dd97"><td class="memItemLeft"><a class="el" href="namespace_utils_1_1_physics.html#a96eb29ec0f914d609ef922ec31aff9d6">TimeStepping</a>&#160;</td><td class="memItemRight"><a class="el" href="#a56feb044182e746d955f01a70b39dd97">time_stepping</a> = <a class="el" href="namespace_utils_1_1_physics.html#a96eb29ec0f914d609ef922ec31aff9d6abbec671208b40d67e1f5ae9ef82c3377">TimeStepping::BDF1</a></td></tr>
 </table>
 <a name="details" id="details"></a><h2 id="header-details" class="groupheader">Detailed Description</h2>
@@ -200,6 +204,54 @@ Public Attributes</h2></td></tr>
 
 </div>
 </div>
+<a id="a09185e1fb543f1d4838414d477c59a44" name="a09185e1fb543f1d4838414d477c59a44"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a09185e1fb543f1d4838414d477c59a44">&#9670;&#160;</a></span>sigma_l</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">double Utils::Physics::BilinearFormParameters::sigma_l = 0.</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="utils_8h_source.html#l00370">370</a> of file <a class="el" href="utils_8h_source.html">utils.h</a>.</p>
+
+</div>
+</div>
+<a id="ae6e540a600ef66bca974f2fa602840af" name="ae6e540a600ef66bca974f2fa602840af"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae6e540a600ef66bca974f2fa602840af">&#9670;&#160;</a></span>sigma_n</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">double Utils::Physics::BilinearFormParameters::sigma_n = 0.</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="utils_8h_source.html#l00372">372</a> of file <a class="el" href="utils_8h_source.html">utils.h</a>.</p>
+
+</div>
+</div>
+<a id="a6c577aa64aa36a960a89c3a5a9c325fe" name="a6c577aa64aa36a960a89c3a5a9c325fe"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6c577aa64aa36a960a89c3a5a9c325fe">&#9670;&#160;</a></span>sigma_t</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">double Utils::Physics::BilinearFormParameters::sigma_t = 0.</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="utils_8h_source.html#l00371">371</a> of file <a class="el" href="utils_8h_source.html">utils.h</a>.</p>
+
+</div>
+</div>
 <a id="a56feb044182e746d955f01a70b39dd97" name="a56feb044182e746d955f01a70b39dd97"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a56feb044182e746d955f01a70b39dd97">&#9670;&#160;</a></span>time_stepping</h2>
 
@@ -212,7 +264,23 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="utils_8h_source.html#l00370">370</a> of file <a class="el" href="utils_8h_source.html">utils.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="utils_8h_source.html#l00374">374</a> of file <a class="el" href="utils_8h_source.html">utils.h</a>.</p>
+
+</div>
+</div>
+<a id="a895dbdf11b9d5f62242c64286442343c" name="a895dbdf11b9d5f62242c64286442343c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a895dbdf11b9d5f62242c64286442343c">&#9670;&#160;</a></span>use_fibers</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Utils::Physics::BilinearFormParameters::use_fibers = false</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="utils_8h_source.html#l00373">373</a> of file <a class="el" href="utils_8h_source.html">utils.h</a>.</p>
 
 </div>
 </div>
