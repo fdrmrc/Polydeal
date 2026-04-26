@@ -2,6 +2,7 @@
 
 #include <deal.II/base/conditional_ostream.h>
 #include <deal.II/base/function.h>
+#include <deal.II/base/hdf5.h>
 #include <deal.II/base/parameter_acceptor.h>
 #include <deal.II/base/parameter_handler.h>
 #include <deal.II/base/parsed_function.h>
@@ -15,6 +16,8 @@
 
 #include <deal.II/fe/fe_dgq.h>
 #include <deal.II/fe/fe_face.h>
+#include <deal.II/fe/fe_q.h>
+#include <deal.II/fe/fe_system.h>
 #include <deal.II/fe/fe_values.h>
 #include <deal.II/fe/mapping.h>
 
@@ -175,20 +178,32 @@ public:
   double       dt                         = 1e-4;
   double       end_time_current           = 3e-3;
   double       final_time                 = 0.4;
+  std::string  fiber_filename             = "";
 
-  // Preconditioner parameters
-  std::string  preconditioner            = "AMG";
-  bool         output_details_amg        = true;
-  unsigned int starting_level            = 2;
-  unsigned int n_smoothing_steps         = 3;
-  double       aggregation_threshold     = 0.2;
-  bool         compute_min_value         = false;
-  bool         estimate_condition_number = false;
+  // Preconditioners parameters
+  std::string  preconditioner              = "AMG";
+  bool         output_details_amg          = true;
+  unsigned int starting_level              = 2;
+  unsigned int n_smoothing_steps           = 3;
+  unsigned int block_jacobi_block_size     = 1;
+  double       aggregation_threshold       = 0.2;
+  bool         compute_min_value           = false;
+  bool         compute_activation_time     = false;
+  bool         compute_conduction_velocity = false;
+  bool         compute_error_indicators    = false;
+  bool         estimate_condition_number   = false;
+
+  // Conduction velocity measurement point pairs
+  std::vector<Point<dim>> cv_points_a;
+  std::vector<Point<dim>> cv_points_b;
 
   // Bueno-Orovio parameters
   double chi        = 1;
   double Cm         = 1.;
   double sigma      = 1e-4;
+  double sigma_l    = 0.;
+  double sigma_t    = 0.;
+  double sigma_n    = 0.;
   double V1         = 0.3;
   double V1m        = 0.015;
   double V2         = 0.015;
@@ -233,6 +248,11 @@ ProblemParameters<dim>::ProblemParameters()
       test_case,
       "Type of test case to use. Options are 'Idealized' and 'Realistic'.");
     add_parameter(
+      "Fiber filename",
+      fiber_filename,
+      "Fiber data file. The file should be in HDF5 format and"
+      " contain datasets 'f0', 's0', and 'n0' for the fiber directions.");
+    add_parameter(
       "Number of refinements for initial grid",
       n_refinements_initial_grid,
       "Number of global refinements to perform on the initial mesh.");
@@ -259,6 +279,15 @@ ProblemParameters<dim>::ProblemParameters()
     add_parameter("chi", chi);
     add_parameter("Cm", Cm);
     add_parameter("sigma", sigma);
+    add_parameter("sigma_l",
+                  sigma_l,
+                  "Longitudinal conductivity for fiber-based diffusion.");
+    add_parameter("sigma_t",
+                  sigma_t,
+                  "Transverse conductivity for fiber-based diffusion.");
+    add_parameter("sigma_n",
+                  sigma_n,
+                  "Normal conductivity for fiber-based diffusion.");
     add_parameter("V1", V1);
     add_parameter("V1m", V1m);
     add_parameter("V2", V2);
@@ -297,6 +326,10 @@ ProblemParameters<dim>::ProblemParameters()
       preconditioner,
       "Preconditioner to use. Options are 'AMG' and 'AGGLOMG'. Default is 'AMG'.");
     add_parameter("Smoother steps", n_smoothing_steps);
+    add_parameter(
+      "Block Jacobi block size",
+      block_jacobi_block_size,
+      "Block size for Block Jacobi preconditioner. Default is 1, i.e. a point-Jacobi scheme.");
     add_parameter("Estimate condition number", estimate_condition_number);
   }
   leave_subsection();
@@ -333,6 +366,26 @@ ProblemParameters<dim>::ProblemParameters()
       "Compute minimum value",
       compute_min_value,
       "Whether to compute the minimum value of the solution at each time step.");
+    add_parameter("Compute activation time",
+                  compute_activation_time,
+                  "Whether to compute the activation time of the solution.");
+    add_parameter(
+      "Compute conduction velocity",
+      compute_conduction_velocity,
+      "Whether to compute the conduction velocity of the solution.");
+    add_parameter("CV points A",
+                  cv_points_a,
+                  "First points of each pair for CV measurement. "
+                  "Format: x1,y1,z1; x2,y2,z2; ...");
+    add_parameter("CV points B",
+                  cv_points_b,
+                  "Second points of each pair for CV measurement. "
+                  "Format: x1,y1,z1; x2,y2,z2; ..."
+                  " (must have the same number of entries as 'CV points A').");
+    add_parameter(
+      "Compute error indicators",
+      compute_error_indicators,
+      "Whether to compute error indicators for adaptive mesh refinement.");
   }
   leave_subsection();
 }
@@ -606,6 +659,9 @@ private:
   setup_problem();
 
   void
+  setup_fibers(const Triangulation<dim> &serial_tria);
+
+  void
   setup_multigrid();
 
   void
@@ -641,17 +697,22 @@ private:
   void
   output_results();
 
+  void
+  compute_activation_time();
+
   const MPI_Comm                                 communicator;
   parallel::fullydistributed::Triangulation<dim> tria;
   const ProblemParameters<dim>                  &param;
   MappingQ<dim>                                  mapping;
   FE_DGQ<dim>                                    dg_fe;
   DoFHandler<dim>                                classical_dh;
+  DoFHandler<dim>                                fiber_dh;
   ConditionalOStream                             pcout;
   TimerOutput                                    computing_timer;
   SparsityPattern                                sparsity;
   AffineConstraints<double>                      constraints;
   TrilinosWrappers::PreconditionAMG              amg_preconditioner;
+  TrilinosWrappers::PreconditionILU              block_jacobi_preconditioner;
   TrilinosWrappers::SparseMatrix                 system_matrix;
   TrilinosWrappers::SparseMatrix                 bdf1_matrix;
 
@@ -669,10 +730,20 @@ private:
   std::unique_ptr<FEFaceValues<dim>> fe_faces0;
   std::unique_ptr<FEFaceValues<dim>> fe_faces1;
 
+  // Fiber-related
+  std::unique_ptr<FESystem<dim>>     fiber_fe;
+  std::unique_ptr<FEValues<dim>>     fe_values_fiber;
+  std::unique_ptr<FEFaceValues<dim>> fe_face_values_fiber;
+
   IndexSet locally_owned_dofs;
 
   // Related to update solution
   using VectorType = LinearAlgebra::distributed::Vector<double>;
+
+  // Fiber field vectors
+  VectorType f0_field;
+  VectorType s0_field;
+  VectorType n0_field;
 
   // u_n, u_{n-1}, u_{n+1}
   VectorType locally_relevant_solution_nm1;
@@ -698,6 +769,11 @@ private:
   VectorType locally_relevant_w2_nm1;
 
   VectorType ion_at_dofs;
+
+  // Activation time related
+  VectorType derivative_max;
+  VectorType activation_time_owned;
+  VectorType activation_time;
 
   //   Time stepping parameters
   double       time;
@@ -764,6 +840,16 @@ private:
   std::vector<double>       iteration_times;
   double                    start_solver, stop_solver;
 
+  // Error indicator storage (max, min, mean of u at each time step)
+  std::vector<double> max_values;
+  std::vector<double> min_values;
+  std::vector<double> mean_values;
+
+  // flag to indicate whether we use Trilinos preconditioners (AMG or
+  // BlockJacobi) or not. In both cases, we need to assemble the system matrix
+  // explicitly, plus a call to initialize()
+  bool use_trilinos_precs;
+
 public:
   MonodomainProblem(const ProblemParameters<dim> &parameters);
   void
@@ -783,6 +869,7 @@ MonodomainProblem<dim>::MonodomainProblem(
   , mapping(1)
   , dg_fe(degree_finite_element)
   , classical_dh(tria)
+  , fiber_dh(tria)
   , pcout(std::cout, Utilities::MPI::this_mpi_process(communicator) == 0)
   , computing_timer(communicator,
                     pcout,
@@ -803,6 +890,10 @@ MonodomainProblem<dim>::MonodomainProblem(
   bilinear_form_parameters.chi              = param.chi;
   bilinear_form_parameters.Cm               = param.Cm;
   bilinear_form_parameters.sigma            = param.sigma;
+  bilinear_form_parameters.sigma_l          = param.sigma_l;
+  bilinear_form_parameters.sigma_t          = param.sigma_t;
+  bilinear_form_parameters.sigma_n          = param.sigma_n;
+  bilinear_form_parameters.use_fibers       = !param.fiber_filename.empty();
   bilinear_form_parameters.time_stepping =
     param.time_stepping_scheme == "BDF1" ? Utils::Physics::TimeStepping::BDF1 :
                                            Utils::Physics::TimeStepping::BDF2;
@@ -816,6 +907,13 @@ MonodomainProblem<dim>::MonodomainProblem(
 
   iterations.reserve(static_cast<unsigned int>(end_time / dt));
   iteration_times.reserve(static_cast<unsigned int>(end_time / dt));
+
+  if (param.compute_error_indicators)
+    {
+      max_values.reserve(static_cast<unsigned int>(end_time / dt));
+      min_values.reserve(static_cast<unsigned int>(end_time / dt));
+      mean_values.reserve(static_cast<unsigned int>(end_time / dt));
+    }
 
   if (std::filesystem::exists(param.output_directory))
     {
@@ -834,6 +932,21 @@ MonodomainProblem<dim>::MonodomainProblem(
       },
       std::placeholders::_1,
       "Condition number estimate: "));
+
+  // Check we selected a valid preconditioner
+  const std::initializer_list<bool> valid_prec_options{
+    param.preconditioner == "AMG",
+    param.preconditioner == "BlockJacobi",
+    param.preconditioner == "AGGLOMG"};
+  AssertThrow(
+    std::any_of(valid_prec_options.begin(),
+                valid_prec_options.end(),
+                [](bool v) { return v; }),
+    ExcMessage(
+      "Invalid preconditioner type. Options are 'AMG', 'BlockJacobi', and 'AGGLOMG'."));
+
+  use_trilinos_precs =
+    (param.preconditioner == "AMG") || (param.preconditioner == "BlockJacobi");
 }
 
 
@@ -945,7 +1058,7 @@ MonodomainProblem<dim>::setup_problem()
                                              communicator,
                                              locally_relevant_dofs);
 
-  if (param.preconditioner == "AMG")
+  if (use_trilinos_precs)
     system_matrix.reinit(locally_owned_dofs,
                          locally_owned_dofs,
                          dsp,
@@ -973,6 +1086,11 @@ MonodomainProblem<dim>::setup_problem()
   locally_relevant_w2_np1.reinit(locally_owned_dofs, communicator);
 
   ion_at_dofs.reinit(locally_owned_dofs, communicator);
+
+  // Activation time vectors
+  derivative_max.reinit(locally_owned_dofs, communicator);
+  activation_time_owned.reinit(locally_owned_dofs, communicator);
+  activation_time.reinit(locally_owned_dofs, communicator);
 
   Iext = std::make_unique<AppliedCurrent<dim>>(param.end_time_current,
                                                param.test_case,
@@ -1010,6 +1128,128 @@ MonodomainProblem<dim>::setup_problem()
                                                             dsp,
                                                             communicator);
 }
+
+
+
+template <int dim>
+void
+MonodomainProblem<dim>::setup_fibers(const Triangulation<dim> &serial_tria)
+{
+#ifdef DEAL_II_WITH_HDF5
+  TimerOutput::Scope t(computing_timer, "Setup fibers");
+
+  // AssertThrow(
+  //   param.n_refinements_initial_grid == 0,
+  //   ExcMessage(
+  //     "Fiber data loading with mesh refinement is not yet supported."));
+
+  // Read HDF5 fiber data
+  HDF5::File fiber_file(param.fiber_filename,
+                        HDF5::File::FileAccessMode::open,
+                        communicator);
+
+  const auto f0_data =
+    fiber_file.open_dataset("f0").read<std::vector<double>>();
+  const auto s0_data =
+    fiber_file.open_dataset("s0").read<std::vector<double>>();
+  const auto n0_data =
+    fiber_file.open_dataset("n0").read<std::vector<double>>();
+  const auto         dims = fiber_file.open_dataset("f0").get_dimensions();
+  const unsigned int n_nodes_hdf5 = dims[0];
+
+  pcout << "   Read fiber data from " << param.fiber_filename << " ("
+        << n_nodes_hdf5 << " nodes)" << std::endl;
+
+  // Verify that the HDF5 dataset has the expected shape: N_nodes x dim
+  AssertThrow(dims.size() == 2 && dims[1] == dim,
+              ExcMessage("Fiber dataset has wrong shape. Expected (n_nodes, " +
+                         std::to_string(dim) + ") but got " +
+                         (dims.size() == 2 ?
+                            "(" + std::to_string(dims[0]) + ", " +
+                              std::to_string(dims[1]) + ")" :
+                            "rank " + std::to_string(dims.size()))));
+
+  // Verify that the number of nodes in the HDF5 file matches the
+  // number of vertices in the serial triangulation.
+  AssertThrow(n_nodes_hdf5 == serial_tria.n_vertices(),
+              ExcMessage("Mismatch between HDF5 fiber data (" +
+                         std::to_string(n_nodes_hdf5) +
+                         " nodes) and serial triangulation (" +
+                         std::to_string(serial_tria.n_vertices()) +
+                         " vertices). Make sure the fiber file was "
+                         "generated from the same mesh."));
+
+  // Setup fiber FE and DoFHandler on the distributed triangulation
+  fiber_fe = std::make_unique<FESystem<dim>>(FE_Q<dim>(1), dim);
+  fiber_dh.distribute_dofs(*fiber_fe);
+
+  pcout << "   Fiber DoFs: " << fiber_dh.n_dofs() << std::endl;
+
+  const IndexSet fiber_owned = fiber_dh.locally_owned_dofs();
+  const IndexSet fiber_relevant =
+    DoFTools::extract_locally_relevant_dofs(fiber_dh);
+
+  f0_field.reinit(fiber_owned, fiber_relevant, communicator);
+  s0_field.reinit(fiber_owned, fiber_relevant, communicator);
+  n0_field.reinit(fiber_owned, fiber_relevant, communicator);
+
+  // Fill fiber vectors using vertex indices directly.
+  // The fullydistributed::Triangulation preserves vertex indices from the
+  // serial triangulation (via create_description_from_triangulation), so
+  // cell->vertex_index() on the distributed tria matches the serial tria.
+  std::vector<types::global_dof_index> fiber_dof_indices(
+    fiber_fe->dofs_per_cell);
+
+  for (const auto &cell : fiber_dh.active_cell_iterators())
+    if (cell->is_locally_owned())
+      {
+        cell->get_dof_indices(fiber_dof_indices);
+        for (unsigned int i = 0; i < fiber_fe->dofs_per_cell; ++i)
+          {
+            const auto [component, local_vertex] =
+              fiber_fe->system_to_component_index(i);
+            const unsigned int serial_vidx = cell->vertex_index(local_vertex);
+            Assert(serial_vidx < n_nodes_hdf5,
+                   ExcMessage("Vertex index " + std::to_string(serial_vidx) +
+                              " exceeds HDF5 data range (" +
+                              std::to_string(n_nodes_hdf5) + ")"));
+
+            f0_field[fiber_dof_indices[i]] =
+              f0_data[dim * serial_vidx + component];
+            s0_field[fiber_dof_indices[i]] =
+              s0_data[dim * serial_vidx + component];
+            n0_field[fiber_dof_indices[i]] =
+              n0_data[dim * serial_vidx + component];
+          }
+      }
+
+  f0_field.compress(VectorOperation::insert);
+  s0_field.compress(VectorOperation::insert);
+  n0_field.compress(VectorOperation::insert);
+  f0_field.update_ghost_values();
+  s0_field.update_ghost_values();
+  n0_field.update_ghost_values();
+
+  // Create FEValues for matrix-based assembly with fibers
+  fe_values_fiber = std::make_unique<FEValues<dim>>(
+    mapping, *fiber_fe, QGauss<dim>(dg_fe.degree + 1), update_values);
+  fe_face_values_fiber = std::make_unique<FEFaceValues<dim>>(
+    mapping, *fiber_fe, QGauss<dim - 1>(dg_fe.degree + 1), update_values);
+
+  pcout << "   Fiber setup complete." << std::endl;
+
+#else
+
+  (void)serial_tria;
+  AssertThrow(
+    false,
+    ExcMessage(
+      "HDF5 support is required to load fiber data. Recompile "
+      "deal.II with HDF5 and make sure the library is available. Otherwise, set fiber_filename"
+      " to an empty string in the input file to run without fibers."));
+#endif
+}
+
 
 
 template <int dim>
@@ -1394,6 +1634,34 @@ MonodomainProblem<dim>::assemble_time_independent_matrix()
                                          (param.chi * param.Cm * 1.5 / dt) :
                                          (param.chi * param.Cm / dt);
 
+  const bool has_fibers = !param.fiber_filename.empty();
+  // Penalty weight: tr(D) = sigma_l + sigma_t + sigma_n  (= norm(sqrt(D))_F^2)
+  const double sigma_face =
+    has_fibers ? param.sigma_l + param.sigma_t + param.sigma_n : param.sigma;
+
+  std::vector<Tensor<1, dim>> f_at_q, s_at_q, n_at_q;
+  const auto                  apply_D = [&](const Tensor<1, dim> &grad,
+                           const unsigned int    q) -> Tensor<1, dim> {
+    if (has_fibers)
+      return param.sigma_l * (f_at_q[q] * grad) * f_at_q[q] +
+             param.sigma_t * (s_at_q[q] * grad) * s_at_q[q] +
+             param.sigma_n * (n_at_q[q] * grad) * n_at_q[q];
+    else
+      return param.sigma * grad;
+  };
+
+  // Face fiber directions (evaluated per face below)
+  std::vector<Tensor<1, dim>> f_face_q, s_face_q, n_face_q;
+  const auto                  apply_D_face = [&](const Tensor<1, dim> &vec,
+                                const unsigned int    q) -> Tensor<1, dim> {
+    if (has_fibers)
+      return param.sigma_l * (f_face_q[q] * vec) * f_face_q[q] +
+             param.sigma_t * (s_face_q[q] * vec) * s_face_q[q] +
+             param.sigma_n * (n_face_q[q] * vec) * n_face_q[q];
+    else
+      return param.sigma * vec;
+  };
+
   // Loop over standard deal.II cells
   for (const auto &cell : classical_dh.active_cell_iterators())
     {
@@ -1405,12 +1673,42 @@ MonodomainProblem<dim>::assemble_time_independent_matrix()
 
           cell->get_dof_indices(local_dof_indices);
 
+          // Evaluate fiber directions at cell quadrature points
+          if (has_fibers)
+            {
+              typename DoFHandler<dim>::active_cell_iterator fiber_cell(
+                &tria, cell->level(), cell->index(), &fiber_dh);
+              fe_values_fiber->reinit(fiber_cell);
+              const FEValuesExtractors::Vector vec(0);
+              const unsigned int n_q = fe_values->get_quadrature().size();
+              f_at_q.resize(n_q);
+              s_at_q.resize(n_q);
+              n_at_q.resize(n_q);
+              (*fe_values_fiber)[vec].get_function_values(f0_field, f_at_q);
+              (*fe_values_fiber)[vec].get_function_values(s0_field, s_at_q);
+              (*fe_values_fiber)[vec].get_function_values(n0_field, n_at_q);
+
+              // Gram-Schmidt orthonormalization
+              for (unsigned int qq = 0; qq < n_q; ++qq)
+                {
+                  f_at_q[qq] /= f_at_q[qq].norm();
+                  s_at_q[qq] -=
+                    scalar_product(f_at_q[qq], s_at_q[qq]) * f_at_q[qq];
+                  s_at_q[qq] /= s_at_q[qq].norm();
+                  n_at_q[qq] -=
+                    scalar_product(f_at_q[qq], n_at_q[qq]) * f_at_q[qq];
+                  n_at_q[qq] -=
+                    scalar_product(s_at_q[qq], n_at_q[qq]) * s_at_q[qq];
+                  n_at_q[qq] /= n_at_q[qq].norm();
+                }
+            }
+
           for (unsigned int q_index : fe_values->quadrature_point_indices())
             {
               for (unsigned int i = 0; i < dofs_per_cell; ++i)
                 {
                   const double Aii =
-                    (param.sigma * fe_values->shape_grad(i, q_index) *
+                    (apply_D(fe_values->shape_grad(i, q_index), q_index) *
                        fe_values->shape_grad(i, q_index) +
                      coefficient_time_step *
                        fe_values->shape_value(i, q_index) *
@@ -1428,8 +1726,8 @@ MonodomainProblem<dim>::assemble_time_independent_matrix()
                   for (unsigned int j = i + 1; j < dofs_per_cell; ++j)
                     {
                       const double Aij =
-                        (param.sigma * fe_values->shape_grad(i, q_index) *
-                           fe_values->shape_grad(j, q_index) +
+                        (apply_D(fe_values->shape_grad(j, q_index), q_index) *
+                           fe_values->shape_grad(i, q_index) +
                          coefficient_time_step *
                            fe_values->shape_value(i, q_index) *
                            fe_values->shape_value(j, q_index)) *
@@ -1467,6 +1765,42 @@ MonodomainProblem<dim>::assemble_time_independent_matrix()
                       fe_faces1->reinit(neigh_cell,
                                         cell->neighbor_of_neighbor(f));
 
+
+                      // Evaluate fiber directions at face quadrature points
+                      if (has_fibers)
+                        {
+                          typename DoFHandler<dim>::active_cell_iterator
+                            fiber_cell(&tria,
+                                       cell->level(),
+                                       cell->index(),
+                                       &fiber_dh);
+                          fe_face_values_fiber->reinit(fiber_cell, f);
+                          const FEValuesExtractors::Vector vec(0);
+                          const unsigned int               n_fq =
+                            fe_faces0->get_quadrature().size();
+                          f_face_q.resize(n_fq);
+                          s_face_q.resize(n_fq);
+                          n_face_q.resize(n_fq);
+                          (*fe_face_values_fiber)[vec].get_function_values(
+                            f0_field, f_face_q);
+                          (*fe_face_values_fiber)[vec].get_function_values(
+                            s0_field, s_face_q);
+                          (*fe_face_values_fiber)[vec].get_function_values(
+                            n0_field, n_face_q);
+                          // Gram-Schmidt orthonormalization
+                          for (unsigned int qq = 0; qq < n_fq; ++qq)
+                            {
+                              f_face_q[qq] /= f_face_q[qq].norm();
+                              s_face_q[qq] -=
+                                (f_face_q[qq] * s_face_q[qq]) * f_face_q[qq];
+                              s_face_q[qq] /= s_face_q[qq].norm();
+                              n_face_q[qq] -=
+                                (f_face_q[qq] * n_face_q[qq]) * f_face_q[qq];
+                              n_face_q[qq] -=
+                                (s_face_q[qq] * n_face_q[qq]) * s_face_q[qq];
+                              n_face_q[qq] /= n_face_q[qq].norm();
+                            }
+                        }
                       // FEFaceValues::inverse_jacobian returns J^{-1}. To
                       // emulate matrix-free (which sees J^{-T} with reference
                       // normal aligned to the last coordinate) pick the row
@@ -1506,66 +1840,72 @@ MonodomainProblem<dim>::assemble_time_independent_matrix()
                       M22 = 0.;
 
                       const auto &normals = fe_faces0->get_normal_vectors();
-                      // M11
+                      // M11, M12, M21, M22. Full tensor D in face terms
                       for (unsigned int q_index :
                            fe_faces0->quadrature_point_indices())
                         {
+                          const auto &n_q = normals[q_index];
+
                           for (unsigned int i = 0; i < dofs_per_cell; ++i)
                             {
                               for (unsigned int j = 0; j < dofs_per_cell; ++j)
                                 {
+                                  const double D_grad_j0_dot_n =
+                                    apply_D_face(fe_faces0->shape_grad(j,
+                                                                       q_index),
+                                                 q_index) *
+                                    n_q;
+                                  const double D_grad_i0_dot_n =
+                                    apply_D_face(fe_faces0->shape_grad(i,
+                                                                       q_index),
+                                                 q_index) *
+                                    n_q;
+                                  const double D_grad_j1_dot_n =
+                                    apply_D_face(fe_faces1->shape_grad(j,
+                                                                       q_index),
+                                                 q_index) *
+                                    n_q;
+                                  const double D_grad_i1_dot_n =
+                                    apply_D_face(fe_faces1->shape_grad(i,
+                                                                       q_index),
+                                                 q_index) *
+                                    n_q;
+
+                                  const double vi0 =
+                                    fe_faces0->shape_value(i, q_index);
+                                  const double vj0 =
+                                    fe_faces0->shape_value(j, q_index);
+                                  const double vi1 =
+                                    fe_faces1->shape_value(i, q_index);
+                                  const double vj1 =
+                                    fe_faces1->shape_value(j, q_index);
+
+                                  // M11: test i on cell+, trial j on cell+
                                   M11(i, j) +=
-                                    +param.sigma *
-                                    (-0.5 * fe_faces0->shape_grad(i, q_index) *
-                                       normals[q_index] *
-                                       fe_faces0->shape_value(j, q_index) -
-                                     0.5 * fe_faces0->shape_grad(j, q_index) *
-                                       normals[q_index] *
-                                       fe_faces0->shape_value(i, q_index) +
-                                     (penalty)*fe_faces0->shape_value(i,
-                                                                      q_index) *
-                                       fe_faces0->shape_value(j, q_index)) *
+                                    (-0.5 * D_grad_j0_dot_n * vi0 -
+                                     0.5 * D_grad_i0_dot_n * vj0 +
+                                     sigma_face * penalty * vi0 * vj0) *
                                     fe_faces0->JxW(q_index);
 
+                                  // M12: test i on cell+, trial j on cell-
                                   M12(i, j) +=
-                                    +param.sigma *
-                                    (0.5 * fe_faces0->shape_grad(i, q_index) *
-                                       normals[q_index] *
-                                       fe_faces1->shape_value(j, q_index) -
-                                     0.5 * fe_faces1->shape_grad(j, q_index) *
-                                       normals[q_index] *
-                                       fe_faces0->shape_value(i, q_index) -
-                                     (penalty)*fe_faces0->shape_value(i,
-                                                                      q_index) *
-                                       fe_faces1->shape_value(j, q_index)) *
+                                    (-0.5 * D_grad_j1_dot_n * vi0 +
+                                     0.5 * D_grad_i0_dot_n * vj1 -
+                                     sigma_face * penalty * vi0 * vj1) *
                                     fe_faces1->JxW(q_index);
 
-                                  // A10
+                                  // M21: test i on cell-, trial j on cell+
                                   M21(i, j) +=
-                                    +param.sigma *
-                                    (-0.5 * fe_faces1->shape_grad(i, q_index) *
-                                       normals[q_index] *
-                                       fe_faces0->shape_value(j, q_index) +
-                                     0.5 * fe_faces0->shape_grad(j, q_index) *
-                                       normals[q_index] *
-                                       fe_faces1->shape_value(i, q_index) -
-                                     (penalty)*fe_faces1->shape_value(i,
-                                                                      q_index) *
-                                       fe_faces0->shape_value(j, q_index)) *
+                                    (0.5 * D_grad_j0_dot_n * vi1 -
+                                     0.5 * D_grad_i1_dot_n * vj0 -
+                                     sigma_face * penalty * vi1 * vj0) *
                                     fe_faces1->JxW(q_index);
 
-                                  // A11
+                                  // M22: test i on cell-, trial j on cell-
                                   M22(i, j) +=
-                                    +param.sigma *
-                                    (0.5 * fe_faces1->shape_grad(i, q_index) *
-                                       normals[q_index] *
-                                       fe_faces1->shape_value(j, q_index) +
-                                     0.5 * fe_faces1->shape_grad(j, q_index) *
-                                       normals[q_index] *
-                                       fe_faces1->shape_value(i, q_index) +
-                                     (penalty)*fe_faces1->shape_value(i,
-                                                                      q_index) *
-                                       fe_faces1->shape_value(j, q_index)) *
+                                    (0.5 * D_grad_j1_dot_n * vi1 +
+                                     0.5 * D_grad_i1_dot_n * vj1 +
+                                     sigma_face * penalty * vi1 * vj1) *
                                     fe_faces1->JxW(q_index);
                                 }
                             }
@@ -1578,27 +1918,27 @@ MonodomainProblem<dim>::assemble_time_independent_matrix()
                       constraints.distribute_local_to_global(
                         M11,
                         local_dof_indices,
-                        param.preconditioner == "AMG" ?
+                        use_trilinos_precs ?
                           system_matrix :
                           multigrid_matrices[multigrid_matrices.max_level()]);
                       constraints.distribute_local_to_global(
                         M12,
                         local_dof_indices,
                         local_dof_indices_neighbor,
-                        param.preconditioner == "AMG" ?
+                        use_trilinos_precs ?
                           system_matrix :
                           multigrid_matrices[multigrid_matrices.max_level()]);
                       constraints.distribute_local_to_global(
                         M21,
                         local_dof_indices_neighbor,
                         local_dof_indices,
-                        param.preconditioner == "AMG" ?
+                        use_trilinos_precs ?
                           system_matrix :
                           multigrid_matrices[multigrid_matrices.max_level()]);
                       constraints.distribute_local_to_global(
                         M22,
                         local_dof_indices_neighbor,
-                        param.preconditioner == "AMG" ?
+                        use_trilinos_precs ?
                           system_matrix :
                           multigrid_matrices[multigrid_matrices.max_level()]);
 
@@ -1608,13 +1948,13 @@ MonodomainProblem<dim>::assemble_time_independent_matrix()
           constraints.distribute_local_to_global(
             cell_matrix,
             local_dof_indices,
-            param.preconditioner == "AMG" ?
+            use_trilinos_precs ?
               system_matrix :
               multigrid_matrices[multigrid_matrices.max_level()]);
         }
     }
 
-  if (param.preconditioner == "AMG")
+  if (use_trilinos_precs)
     system_matrix.compress(VectorOperation::add);
   else
     multigrid_matrices[multigrid_matrices.max_level()].compress(
@@ -1645,6 +1985,33 @@ MonodomainProblem<dim>::assemble_time_independent_matrix_bdf1()
 
   std::vector<types::global_dof_index> local_dof_indices(dofs_per_cell);
 
+  const bool has_fibers = !param.fiber_filename.empty();
+  // Penalty weight: tr(D) = sigma_l + sigma_t + sigma_n  (= norm(sqrt(D))_F^2)
+  const double sigma_face =
+    has_fibers ? param.sigma_l + param.sigma_t + param.sigma_n : param.sigma;
+
+  std::vector<Tensor<1, dim>> f_at_q, s_at_q, n_at_q;
+  const auto                  apply_D = [&](const Tensor<1, dim> &grad,
+                           const unsigned int    q) -> Tensor<1, dim> {
+    if (has_fibers)
+      return param.sigma_l * (f_at_q[q] * grad) * f_at_q[q] +
+             param.sigma_t * (s_at_q[q] * grad) * s_at_q[q] +
+             param.sigma_n * (n_at_q[q] * grad) * n_at_q[q];
+    else
+      return param.sigma * grad;
+  };
+
+  // Face fiber directions (evaluated per face below)
+  std::vector<Tensor<1, dim>> f_face_q, s_face_q, n_face_q;
+  const auto                  apply_D_face = [&](const Tensor<1, dim> &vec,
+                                const unsigned int    q) -> Tensor<1, dim> {
+    if (has_fibers)
+      return param.sigma_l * (f_face_q[q] * vec) * f_face_q[q] +
+             param.sigma_t * (s_face_q[q] * vec) * s_face_q[q] +
+             param.sigma_n * (n_face_q[q] * vec) * n_face_q[q];
+    else
+      return param.sigma * vec;
+  };
 
   // Loop over standard deal.II cells
   for (const auto &cell : classical_dh.active_cell_iterators())
@@ -1657,12 +2024,42 @@ MonodomainProblem<dim>::assemble_time_independent_matrix_bdf1()
 
           cell->get_dof_indices(local_dof_indices);
 
+          // Evaluate fiber directions at cell quadrature points
+          if (has_fibers)
+            {
+              typename DoFHandler<dim>::active_cell_iterator fiber_cell(
+                &tria, cell->level(), cell->index(), &fiber_dh);
+              fe_values_fiber->reinit(fiber_cell);
+              const FEValuesExtractors::Vector vec(0);
+              const unsigned int n_q = fe_values->get_quadrature().size();
+              f_at_q.resize(n_q);
+              s_at_q.resize(n_q);
+              n_at_q.resize(n_q);
+              (*fe_values_fiber)[vec].get_function_values(f0_field, f_at_q);
+              (*fe_values_fiber)[vec].get_function_values(s0_field, s_at_q);
+              (*fe_values_fiber)[vec].get_function_values(n0_field, n_at_q);
+
+              // Gram-Schmidt orthonormalization
+              for (unsigned int qq = 0; qq < n_q; ++qq)
+                {
+                  f_at_q[qq] /= f_at_q[qq].norm();
+                  s_at_q[qq] -=
+                    scalar_product(f_at_q[qq], s_at_q[qq]) * f_at_q[qq];
+                  s_at_q[qq] /= s_at_q[qq].norm();
+                  n_at_q[qq] -=
+                    scalar_product(f_at_q[qq], n_at_q[qq]) * f_at_q[qq];
+                  n_at_q[qq] -=
+                    scalar_product(s_at_q[qq], n_at_q[qq]) * s_at_q[qq];
+                  n_at_q[qq] /= n_at_q[qq].norm();
+                }
+            }
+
           for (unsigned int q_index : fe_values->quadrature_point_indices())
             {
               for (unsigned int i = 0; i < dofs_per_cell; ++i)
                 {
                   const double Aii =
-                    (param.sigma * fe_values->shape_grad(i, q_index) *
+                    (apply_D(fe_values->shape_grad(i, q_index), q_index) *
                        fe_values->shape_grad(i, q_index) +
                      (param.chi * param.Cm / dt) *
                        fe_values->shape_value(i, q_index) *
@@ -1680,8 +2077,8 @@ MonodomainProblem<dim>::assemble_time_independent_matrix_bdf1()
                   for (unsigned int j = i + 1; j < dofs_per_cell; ++j)
                     {
                       const double Aij =
-                        (param.sigma * fe_values->shape_grad(i, q_index) *
-                           fe_values->shape_grad(j, q_index) +
+                        (apply_D(fe_values->shape_grad(j, q_index), q_index) *
+                           fe_values->shape_grad(i, q_index) +
                          (param.chi * param.Cm / dt) *
                            fe_values->shape_value(i, q_index) *
                            fe_values->shape_value(j, q_index)) *
@@ -1719,6 +2116,42 @@ MonodomainProblem<dim>::assemble_time_independent_matrix_bdf1()
                       fe_faces1->reinit(neigh_cell,
                                         cell->neighbor_of_neighbor(f));
 
+
+                      // Evaluate fiber directions at face quadrature points
+                      if (has_fibers)
+                        {
+                          typename DoFHandler<dim>::active_cell_iterator
+                            fiber_cell(&tria,
+                                       cell->level(),
+                                       cell->index(),
+                                       &fiber_dh);
+                          fe_face_values_fiber->reinit(fiber_cell, f);
+                          const FEValuesExtractors::Vector vec(0);
+                          const unsigned int               n_fq =
+                            fe_faces0->get_quadrature().size();
+                          f_face_q.resize(n_fq);
+                          s_face_q.resize(n_fq);
+                          n_face_q.resize(n_fq);
+                          (*fe_face_values_fiber)[vec].get_function_values(
+                            f0_field, f_face_q);
+                          (*fe_face_values_fiber)[vec].get_function_values(
+                            s0_field, s_face_q);
+                          (*fe_face_values_fiber)[vec].get_function_values(
+                            n0_field, n_face_q);
+                          // Gram-Schmidt orthonormalization
+                          for (unsigned int qq = 0; qq < n_fq; ++qq)
+                            {
+                              f_face_q[qq] /= f_face_q[qq].norm();
+                              s_face_q[qq] -=
+                                (f_face_q[qq] * s_face_q[qq]) * f_face_q[qq];
+                              s_face_q[qq] /= s_face_q[qq].norm();
+                              n_face_q[qq] -=
+                                (f_face_q[qq] * n_face_q[qq]) * f_face_q[qq];
+                              n_face_q[qq] -=
+                                (s_face_q[qq] * n_face_q[qq]) * s_face_q[qq];
+                              n_face_q[qq] /= n_face_q[qq].norm();
+                            }
+                        }
                       // FEFaceValues::inverse_jacobian returns J^{-1}. To
                       // emulate matrix-free (which sees J^{-T} with reference
                       // normal aligned to the last coordinate) pick the row
@@ -1758,66 +2191,72 @@ MonodomainProblem<dim>::assemble_time_independent_matrix_bdf1()
                       M22 = 0.;
 
                       const auto &normals = fe_faces0->get_normal_vectors();
-                      // M11
+                      // M11, M12, M21, M22. Full tensor D in face terms
                       for (unsigned int q_index :
                            fe_faces0->quadrature_point_indices())
                         {
+                          const auto &n_q = normals[q_index];
+
                           for (unsigned int i = 0; i < dofs_per_cell; ++i)
                             {
                               for (unsigned int j = 0; j < dofs_per_cell; ++j)
                                 {
+                                  const double D_grad_j0_dot_n =
+                                    apply_D_face(fe_faces0->shape_grad(j,
+                                                                       q_index),
+                                                 q_index) *
+                                    n_q;
+                                  const double D_grad_i0_dot_n =
+                                    apply_D_face(fe_faces0->shape_grad(i,
+                                                                       q_index),
+                                                 q_index) *
+                                    n_q;
+                                  const double D_grad_j1_dot_n =
+                                    apply_D_face(fe_faces1->shape_grad(j,
+                                                                       q_index),
+                                                 q_index) *
+                                    n_q;
+                                  const double D_grad_i1_dot_n =
+                                    apply_D_face(fe_faces1->shape_grad(i,
+                                                                       q_index),
+                                                 q_index) *
+                                    n_q;
+
+                                  const double vi0 =
+                                    fe_faces0->shape_value(i, q_index);
+                                  const double vj0 =
+                                    fe_faces0->shape_value(j, q_index);
+                                  const double vi1 =
+                                    fe_faces1->shape_value(i, q_index);
+                                  const double vj1 =
+                                    fe_faces1->shape_value(j, q_index);
+
+                                  // M11: test i on cell+, trial j on cell+
                                   M11(i, j) +=
-                                    +param.sigma *
-                                    (-0.5 * fe_faces0->shape_grad(i, q_index) *
-                                       normals[q_index] *
-                                       fe_faces0->shape_value(j, q_index) -
-                                     0.5 * fe_faces0->shape_grad(j, q_index) *
-                                       normals[q_index] *
-                                       fe_faces0->shape_value(i, q_index) +
-                                     (penalty)*fe_faces0->shape_value(i,
-                                                                      q_index) *
-                                       fe_faces0->shape_value(j, q_index)) *
+                                    (-0.5 * D_grad_j0_dot_n * vi0 -
+                                     0.5 * D_grad_i0_dot_n * vj0 +
+                                     sigma_face * penalty * vi0 * vj0) *
                                     fe_faces0->JxW(q_index);
 
+                                  // M12: test i on cell+, trial j on cell-
                                   M12(i, j) +=
-                                    +param.sigma *
-                                    (0.5 * fe_faces0->shape_grad(i, q_index) *
-                                       normals[q_index] *
-                                       fe_faces1->shape_value(j, q_index) -
-                                     0.5 * fe_faces1->shape_grad(j, q_index) *
-                                       normals[q_index] *
-                                       fe_faces0->shape_value(i, q_index) -
-                                     (penalty)*fe_faces0->shape_value(i,
-                                                                      q_index) *
-                                       fe_faces1->shape_value(j, q_index)) *
+                                    (-0.5 * D_grad_j1_dot_n * vi0 +
+                                     0.5 * D_grad_i0_dot_n * vj1 -
+                                     sigma_face * penalty * vi0 * vj1) *
                                     fe_faces1->JxW(q_index);
 
-                                  // A10
+                                  // M21: test i on cell-, trial j on cell+
                                   M21(i, j) +=
-                                    +param.sigma *
-                                    (-0.5 * fe_faces1->shape_grad(i, q_index) *
-                                       normals[q_index] *
-                                       fe_faces0->shape_value(j, q_index) +
-                                     0.5 * fe_faces0->shape_grad(j, q_index) *
-                                       normals[q_index] *
-                                       fe_faces1->shape_value(i, q_index) -
-                                     (penalty)*fe_faces1->shape_value(i,
-                                                                      q_index) *
-                                       fe_faces0->shape_value(j, q_index)) *
+                                    (0.5 * D_grad_j0_dot_n * vi1 -
+                                     0.5 * D_grad_i1_dot_n * vj0 -
+                                     sigma_face * penalty * vi1 * vj0) *
                                     fe_faces1->JxW(q_index);
 
-                                  // A11
+                                  // M22: test i on cell-, trial j on cell-
                                   M22(i, j) +=
-                                    +param.sigma *
-                                    (0.5 * fe_faces1->shape_grad(i, q_index) *
-                                       normals[q_index] *
-                                       fe_faces1->shape_value(j, q_index) +
-                                     0.5 * fe_faces1->shape_grad(j, q_index) *
-                                       normals[q_index] *
-                                       fe_faces1->shape_value(i, q_index) +
-                                     (penalty)*fe_faces1->shape_value(i,
-                                                                      q_index) *
-                                       fe_faces1->shape_value(j, q_index)) *
+                                    (0.5 * D_grad_j1_dot_n * vi1 +
+                                     0.5 * D_grad_i1_dot_n * vj1 +
+                                     sigma_face * penalty * vi1 * vj1) *
                                     fe_faces1->JxW(q_index);
                                 }
                             }
@@ -1992,11 +2431,17 @@ MonodomainProblem<dim>::solve()
                  locally_relevant_solution_np1,
                  system_rhs,
                  amg_preconditioner);
-  else
+  else if (param.preconditioner == "AGGLOMG")
     solver.solve(system_operator,
                  locally_relevant_solution_np1,
                  system_rhs,
                  *preconditioner);
+  else if (param.preconditioner == "BlockJacobi")
+    solver.solve(system_operator,
+                 locally_relevant_solution_np1,
+                 system_rhs,
+                 block_jacobi_preconditioner);
+
   if constexpr (measure_solve_times)
     {
       stop_solver = MPI_Wtime();
@@ -2027,12 +2472,17 @@ MonodomainProblem<dim>::output_results()
                            DataOut<dim>::type_dof_data);
 
   data_out.add_data_vector(post_processed_solution,
-                           "transmembrane_potential [mV]",
+                           "transmembrane_potential_mV",
                            DataOut<dim>::type_dof_data);
 
   data_out.add_data_vector(locally_relevant_w0_np1,
                            "gating_variable",
                            DataOut<dim>::type_dof_data);
+
+  if (param.compute_activation_time)
+    data_out.add_data_vector(activation_time,
+                             "activation_time_ms",
+                             DataOut<dim>::type_dof_data);
 
   Vector<float> subdomain(tria.n_active_cells());
 
@@ -2073,6 +2523,41 @@ MonodomainProblem<dim>::output_results()
 
 template <int dim>
 void
+MonodomainProblem<dim>::compute_activation_time()
+{
+  double derivative = 0.;
+
+  for (const auto idx : locally_relevant_solution_np1.locally_owned_elements())
+    {
+      // Approximate du/dt with the appropriate BDF formula
+      if (param.time_stepping_scheme == "BDF2")
+        derivative = (3.0 * locally_relevant_solution_np1[idx] -
+                      4.0 * locally_relevant_solution_n[idx] +
+                      locally_relevant_solution_nm1[idx]) /
+                     (2.0 * dt);
+      else // BDF1
+        derivative = (locally_relevant_solution_np1[idx] -
+                      locally_relevant_solution_n[idx]) /
+                     dt;
+
+      if (derivative > derivative_max[idx])
+        {
+          derivative_max[idx] = derivative;
+
+          // Computed in [ms].
+          activation_time_owned[idx] = 1000.0 * time;
+        }
+    }
+
+  derivative_max.compress(VectorOperation::insert);
+  activation_time_owned.compress(VectorOperation::insert);
+  activation_time = activation_time_owned; // export activation time
+}
+
+
+
+template <int dim>
+void
 MonodomainProblem<dim>::run()
 {
   pcout << "Running on " << Utilities::MPI::n_mpi_processes(communicator)
@@ -2082,11 +2567,12 @@ MonodomainProblem<dim>::run()
         << std::endl;
 
   // Create mesh
+  // Keep the serial triangulation alive for fiber vertex index lookup.
+  Triangulation<dim> tria_serial;
   {
     TimerOutput::Scope t(computing_timer, "Import and partition mesh");
-    Triangulation<dim> tria_dummy;
     GridIn<dim>        grid_in;
-    grid_in.attach_triangulation(tria_dummy);
+    grid_in.attach_triangulation(tria_serial);
     std::string mesh_path;
     if (param.test_case == "Idealized")
       mesh_path = std::string(MESH_DIR) + "/idealized_lv.msh";
@@ -2098,19 +2584,19 @@ MonodomainProblem<dim>::run()
     grid_in.read_msh(mesh_file);
 
     if (param.n_refinements_initial_grid > 0)
-      tria_dummy.refine_global(param.n_refinements_initial_grid);
+      tria_serial.refine_global(param.n_refinements_initial_grid);
 
     // scale triangulation by a suitable factor in order to work with mm
-    GridTools::scale(param.scale_factor, tria_dummy);
+    GridTools::scale(param.scale_factor, tria_serial);
 
     // Partition serial triangulation:
     const unsigned int n_ranks = Utilities::MPI::n_mpi_processes(communicator);
-    GridTools::partition_triangulation(n_ranks, tria_dummy);
+    GridTools::partition_triangulation(n_ranks, tria_serial);
 
     // Create building blocks:
     const TriangulationDescription::Description<dim, dim> description =
       TriangulationDescription::Utilities::
-        create_description_from_triangulation(tria_dummy, communicator);
+        create_description_from_triangulation(tria_serial, communicator);
 
     tria.create_triangulation(description);
     pcout << "   Number of active cells:       " << tria.n_global_active_cells()
@@ -2118,6 +2604,19 @@ MonodomainProblem<dim>::run()
   }
 
   setup_problem();
+
+  // Load fiber data from HDF5 (if provided)
+  if (!param.fiber_filename.empty())
+    {
+      setup_fibers(tria_serial);
+    }
+  else
+    {
+      pcout
+        << "WARNING: No fiber data provided. Using default fiber directions."
+        << std::endl;
+    }
+
   pcout << "   Number of degrees of freedom: " << classical_dh.n_dofs()
         << std::endl;
 
@@ -2167,17 +2666,136 @@ MonodomainProblem<dim>::run()
         << std::endl;
 
   // Initialize matrix-free evaluator
-  monodomain_operator->reinit(mapping, classical_dh);
+  if (!param.fiber_filename.empty())
+    monodomain_operator->reinit(mapping, classical_dh, fiber_dh);
+  else
+    monodomain_operator->reinit(mapping, classical_dh);
+
+  // If we have fiber data, precompute fiber directions at cell quadrature
+  // points
+  if (!param.fiber_filename.empty())
+    {
+      VectorType f0_mf, s0_mf, n0_mf;
+      monodomain_operator->get_matrix_free()->initialize_dof_vector(f0_mf, 1);
+      monodomain_operator->get_matrix_free()->initialize_dof_vector(s0_mf, 1);
+      monodomain_operator->get_matrix_free()->initialize_dof_vector(n0_mf, 1);
+      f0_mf.copy_locally_owned_data_from(f0_field);
+      s0_mf.copy_locally_owned_data_from(s0_field);
+      n0_mf.copy_locally_owned_data_from(n0_field);
+      f0_mf.update_ghost_values();
+      s0_mf.update_ghost_values();
+      n0_mf.update_ghost_values();
+      monodomain_operator->precompute_fibers(f0_mf, s0_mf, n0_mf);
+      pcout << "Precomputed fiber data at quadrature points." << std::endl;
+    }
 
   if constexpr (use_matrix_free_action)
-    system_operator = linear_operator<VectorType>(*monodomain_operator);
+    {
+      // Re-initialize vectors to be compatible with the MatrixFree
+      // partitioner. The vectors were initially created with just
+      // locally_owned_dofs, but MatrixFree machinery requires its own
+      // partitioning (which includes the correct ghost entries for cell/face
+      // loops).
+      monodomain_operator->initialize_dof_vector(locally_relevant_solution_n);
+      monodomain_operator->initialize_dof_vector(locally_relevant_solution_np1);
+      monodomain_operator->initialize_dof_vector(locally_relevant_solution_nm1);
+      monodomain_operator->initialize_dof_vector(system_rhs);
+      monodomain_operator->initialize_dof_vector(ion_at_dofs);
+      monodomain_operator->initialize_dof_vector(extrapoled_solution);
+      monodomain_operator->initialize_dof_vector(post_processed_solution);
+      monodomain_operator->initialize_dof_vector(locally_relevant_w0_n);
+      monodomain_operator->initialize_dof_vector(locally_relevant_w0_np1);
+      monodomain_operator->initialize_dof_vector(locally_relevant_w0_nm1);
+      monodomain_operator->initialize_dof_vector(locally_relevant_w1_n);
+      monodomain_operator->initialize_dof_vector(locally_relevant_w1_np1);
+      monodomain_operator->initialize_dof_vector(locally_relevant_w1_nm1);
+      monodomain_operator->initialize_dof_vector(locally_relevant_w2_n);
+      monodomain_operator->initialize_dof_vector(locally_relevant_w2_np1);
+      monodomain_operator->initialize_dof_vector(locally_relevant_w2_nm1);
+      monodomain_operator->initialize_dof_vector(derivative_max);
+      monodomain_operator->initialize_dof_vector(activation_time_owned);
+      monodomain_operator->initialize_dof_vector(activation_time);
+
+      // Re-set initial conditions after re-initialization
+      locally_relevant_solution_n   = 0.;
+      locally_relevant_solution_np1 = locally_relevant_solution_n;
+      locally_relevant_w0_n         = 1.;
+      locally_relevant_w0_np1       = locally_relevant_w0_n;
+      locally_relevant_w1_n         = 1.;
+      locally_relevant_w1_np1       = locally_relevant_w1_n;
+      locally_relevant_w2_n         = 0.;
+      locally_relevant_w2_np1       = locally_relevant_w2_n;
+      if (param.time_stepping_scheme == "BDF2")
+        {
+          extrapoled_solution           = locally_relevant_solution_n;
+          locally_relevant_w2_nm1       = locally_relevant_w2_n;
+          locally_relevant_solution_nm1 = locally_relevant_solution_n;
+          locally_relevant_w0_nm1       = locally_relevant_w0_n;
+          locally_relevant_w1_nm1       = locally_relevant_w1_n;
+        }
+
+      system_operator = linear_operator<VectorType>(*monodomain_operator);
+    }
   else
     system_operator = linear_operator<VectorType>(
-      param.preconditioner == "AMG" ?
-        system_matrix :
-        multigrid_matrices[multigrid_matrices.max_level()]);
+      use_trilinos_precs ? system_matrix :
+                           multigrid_matrices[multigrid_matrices.max_level()]);
 
-  // Depending on the preconditioner type, use AMG or polytopal multigrid.
+// Depending on the preconditioner type, use AMG or polytopal multigrid.
+
+// Sanity check: compare matrix-free and matrix-based vmult
+#ifdef DEBUG
+  {
+    // Build a source vector with the MatrixFree partitioner.
+    VectorType src_mf, dst_mf;
+    monodomain_operator->initialize_dof_vector(src_mf);
+    monodomain_operator->initialize_dof_vector(dst_mf);
+
+    // Fill with a deterministic non-trivial pattern (global dof index).
+    for (const auto idx : src_mf.locally_owned_elements())
+      src_mf[idx] = std::sin(static_cast<double>(idx + 1));
+    src_mf.compress(VectorOperation::insert);
+    src_mf.update_ghost_values();
+
+    // Matrix-free product.
+    monodomain_operator->vmult(dst_mf, src_mf);
+
+    // Matrix-based product using TrilinosWrappers::MPI::Vector.
+    const auto &mat_based =
+      use_trilinos_precs ? system_matrix :
+                           multigrid_matrices[multigrid_matrices.max_level()];
+    TrilinosWrappers::MPI::Vector src_tril(locally_owned_dofs, communicator);
+    TrilinosWrappers::MPI::Vector dst_tril(locally_owned_dofs, communicator);
+    for (const auto idx : src_tril.locally_owned_elements())
+      src_tril[idx] = std::sin(static_cast<double>(idx + 1));
+    src_tril.compress(VectorOperation::insert);
+    mat_based.vmult(dst_tril, src_tril);
+
+    // Copy matrix-based result into an MF-compatible vector for comparison.
+    VectorType dst_mb;
+    monodomain_operator->initialize_dof_vector(dst_mb);
+    for (const auto idx : dst_mb.locally_owned_elements())
+      dst_mb[idx] = dst_tril[idx];
+    dst_mb.compress(VectorOperation::insert);
+
+    // Compute relative difference.
+    VectorType diff;
+    monodomain_operator->initialize_dof_vector(diff);
+    diff = dst_mf;
+    diff -= dst_mb;
+    const double diff_norm   = diff.l2_norm();
+    const double dst_mf_norm = dst_mf.l2_norm();
+    pcout << "  Matrix-free  ||A*x|| = " << dst_mf_norm << std::endl;
+    pcout << "  Matrix-based ||A*x|| = " << dst_tril.l2_norm() << std::endl;
+    pcout << "  ||mf - mb||          = " << diff_norm << std::endl;
+    pcout << "  Relative difference  = " << diff_norm / dst_mf_norm
+          << std::endl;
+    AssertThrow(diff_norm / dst_mf_norm < 1e-10,
+                ExcMessage("Matrix-free and matrix-based vmult do not match!"));
+    pcout << "  Matrix-free and matrix-based vmult match." << std::endl;
+  }
+#endif
+
   if (param.preconditioner == "AMG")
     {
       TimerOutput::Scope t(computing_timer, "Initialize AMG preconditioner");
@@ -2191,17 +2809,31 @@ MonodomainProblem<dim>::run()
       amg_data.aggregation_threshold = param.aggregation_threshold;
       amg_preconditioner.initialize(system_matrix, amg_data);
     }
-  else
+  else if (param.preconditioner == "BlockJacobi")
+    {
+      TimerOutput::Scope t(computing_timer,
+                           "Initialize BlockJacobi preconditioner");
+      typename TrilinosWrappers::PreconditionILU::AdditionalData
+        block_jacobi_data;
+      // block_jacobi_data.block_size = param.block_jacobi_block_size;
+      block_jacobi_preconditioner.initialize(system_matrix, block_jacobi_data);
+    }
+  else if (param.preconditioner == "AGGLOMG")
     setup_multigrid();
+  else
+    DEAL_II_NOT_IMPLEMENTED();
 
   pcout << "Setup preconditioner: done " << std::endl;
 
-  double              min_value = std::numeric_limits<double>::min();
-  std::vector<double> min_values;
-  min_values.push_back(-84e-3);
+  double              min_value = std::numeric_limits<double>::max();
+  std::vector<double> min_AP_values;
+  min_AP_values.push_back(0.);
 
-  VectorType solution_minus_ion(classical_dh.locally_owned_dofs(),
-                                communicator);
+  VectorType solution_minus_ion;
+  if constexpr (use_matrix_free_action)
+    monodomain_operator->initialize_dof_vector(solution_minus_ion);
+  else
+    solution_minus_ion.reinit(classical_dh.locally_owned_dofs(), communicator);
 
   while (time <= end_time)
     {
@@ -2317,9 +2949,39 @@ MonodomainProblem<dim>::run()
             if (v < min_value)
               min_value = v;
 
-          min_values.push_back(Utilities::MPI::min(min_value, communicator));
-          pcout << min_values.back() << std::endl;
+          min_AP_values.push_back(Utilities::MPI::min(min_value, communicator));
+          pcout << min_AP_values.back() << std::endl;
         }
+
+      if (param.compute_activation_time)
+        compute_activation_time();
+
+      if (param.compute_error_indicators)
+        {
+          double local_max = -std::numeric_limits<double>::max();
+          double local_min = std::numeric_limits<double>::max();
+          for (unsigned int i = 0;
+               i < locally_relevant_solution_np1.locally_owned_size();
+               ++i)
+            {
+              const double v = locally_relevant_solution_np1.local_element(i);
+              if (v > local_max)
+                local_max = v;
+              if (v < local_min)
+                local_min = v;
+            }
+
+          const double global_max =
+            Utilities::MPI::max(local_max, communicator);
+          const double global_min =
+            Utilities::MPI::min(local_min, communicator);
+          const double global_mean = locally_relevant_solution_np1.mean_value();
+
+          max_values.push_back(global_max);
+          min_values.push_back(global_min);
+          mean_values.push_back(global_mean);
+        }
+
 
       // update solutions
       if (param.time_stepping_scheme == "BDF1")
@@ -2355,6 +3017,157 @@ MonodomainProblem<dim>::run()
       system_rhs = 0.;
     }
   pcout << std::endl;
+
+
+  if (param.compute_activation_time)
+    {
+      double local_TAT_max = *std::max_element(activation_time_owned.begin(),
+                                               activation_time_owned.end());
+      double local_TAT_min = *std::min_element(activation_time_owned.begin(),
+                                               activation_time_owned.end());
+
+      double global_TAT_max = Utilities::MPI::max(local_TAT_max, communicator);
+      double global_TAT_min = Utilities::MPI::min(local_TAT_min, communicator);
+
+      double TAT = global_TAT_max - global_TAT_min;
+
+      pcout << "Total activation time (TAT) = " << TAT << " ms" << std::endl;
+
+      // Conduction velocity for user-specified pairs of points.
+      // For each pair, find the nearest DoF to each target,
+      // read its activation time, and compute
+      //   CV = ||P_a - P_b|| / |AT(dof_a) - AT(dof_b)|
+      if (param.compute_conduction_velocity)
+        {
+          AssertThrow(param.cv_points_a.size() == param.cv_points_b.size(),
+                      ExcMessage("CV points A and CV points B must have the "
+                                 "same number of entries."));
+          AssertThrow(param.cv_points_a.size() > 0,
+                      ExcMessage(
+                        "At least one pair of CV points is required."));
+
+          const unsigned int n_pairs = param.cv_points_a.size();
+
+          // Map locally owned DoFs to their support points
+          std::map<types::global_dof_index, Point<dim>> support_points =
+            DoFTools::map_dofs_to_support_points(mapping, classical_dh);
+
+          const int my_rank = Utilities::MPI::this_mpi_process(communicator);
+
+          pcout << std::endl;
+          for (unsigned int p = 0; p < n_pairs; ++p)
+            {
+              const Point<dim> &target_a = param.cv_points_a[p];
+              const Point<dim> &target_b = param.cv_points_b[p];
+
+              // Each rank finds the locally owned DoF closest to each
+              // target
+              double local_best_dist_a = std::numeric_limits<double>::max();
+              double local_best_dist_b = std::numeric_limits<double>::max();
+              types::global_dof_index local_best_dof_a =
+                numbers::invalid_dof_index;
+              types::global_dof_index local_best_dof_b =
+                numbers::invalid_dof_index;
+
+              for (const auto &[dof_index, pt] : support_points)
+                {
+                  const double da = target_a.distance(pt);
+                  if (da < local_best_dist_a)
+                    {
+                      local_best_dist_a = da;
+                      local_best_dof_a  = dof_index;
+                    }
+                  const double db = target_b.distance(pt);
+                  if (db < local_best_dist_b)
+                    {
+                      local_best_dist_b = db;
+                      local_best_dof_b  = dof_index;
+                    }
+                }
+
+              // MPI_MINLOC to find the rank owning the globally closest
+              // DoF for each target
+              struct
+              {
+                double val;
+                int    rank;
+              } local_data_a, global_data_a, local_data_b, global_data_b;
+
+              local_data_a.val  = local_best_dist_a;
+              local_data_a.rank = my_rank;
+              local_data_b.val  = local_best_dist_b;
+              local_data_b.rank = my_rank;
+
+              MPI_Allreduce(&local_data_a,
+                            &global_data_a,
+                            1,
+                            MPI_DOUBLE_INT,
+                            MPI_MINLOC,
+                            communicator);
+              MPI_Allreduce(&local_data_b,
+                            &global_data_b,
+                            1,
+                            MPI_DOUBLE_INT,
+                            MPI_MINLOC,
+                            communicator);
+
+              // Broadcast activation time and DoF coordinates from the
+              // owning ranks
+              double                  at_a = 0., at_b = 0.;
+              std::array<double, dim> coords_a{}, coords_b{};
+
+              if (my_rank == global_data_a.rank)
+                {
+                  at_a = activation_time_owned[local_best_dof_a];
+                  const Point<dim> &sp = support_points[local_best_dof_a];
+                  for (unsigned int d = 0; d < dim; ++d)
+                    coords_a[d] = sp[d];
+                }
+              MPI_Bcast(&at_a, 1, MPI_DOUBLE, global_data_a.rank, communicator);
+              MPI_Bcast(coords_a.data(),
+                        dim,
+                        MPI_DOUBLE,
+                        global_data_a.rank,
+                        communicator);
+
+              if (my_rank == global_data_b.rank)
+                {
+                  at_b = activation_time_owned[local_best_dof_b];
+                  const Point<dim> &sp = support_points[local_best_dof_b];
+                  for (unsigned int d = 0; d < dim; ++d)
+                    coords_b[d] = sp[d];
+                }
+              MPI_Bcast(&at_b, 1, MPI_DOUBLE, global_data_b.rank, communicator);
+              MPI_Bcast(coords_b.data(),
+                        dim,
+                        MPI_DOUBLE,
+                        global_data_b.rank,
+                        communicator);
+
+              Point<dim> Pa, Pb;
+              for (unsigned int d = 0; d < dim; ++d)
+                {
+                  Pa[d] = coords_a[d];
+                  Pb[d] = coords_b[d];
+                }
+
+              const double distance = Pa.distance(Pb);
+              const double delta_at = std::abs(at_a - at_b);
+              const double CV       = distance / delta_at;
+
+              pcout << "Conduction velocity (pair " << p + 1 << "/" << n_pairs
+                    << "):" << std::endl;
+              pcout << "  Target A = " << target_a << "  ->  nearest DoF at "
+                    << Pa << ", AT = " << at_a << " ms" << std::endl;
+              pcout << "  Target B = " << target_b << "  ->  nearest DoF at "
+                    << Pb << ", AT = " << at_b << " ms" << std::endl;
+              pcout << "  ||Pa - Pb||  = " << distance << std::endl;
+              pcout << "  Delta AT     = " << delta_at << " ms" << std::endl;
+              pcout << "  CV           = " << CV << std::endl;
+              pcout << std::endl;
+            }
+        }
+    }
 
   if (Utilities::MPI::this_mpi_process(communicator) == 0)
     {
@@ -2437,6 +3250,21 @@ MonodomainProblem<dim>::run()
         << "+-------------------------------------------------------------------------------------"
            "-----------------------------------------------------------------------------------------------------------------+"
         << std::endl;
+
+
+      if (param.compute_error_indicators)
+        {
+          const std::string indicator_filename =
+            param.output_directory + "/" + "error_indicators_" + "nref_" +
+            std::to_string(param.n_refinements_initial_grid) + "_degree_" +
+            std::to_string(degree_finite_element) + "_dt_" +
+            std::to_string(param.dt) + ".txt";
+          std::ofstream out(indicator_filename);
+          out << "# max_u  min_u  mean_u\n";
+          for (unsigned int n = 0; n < max_values.size(); ++n)
+            out << max_values[n] << " " << min_values[n] << " "
+                << mean_values[n] << "\n";
+        }
     }
 }
 
