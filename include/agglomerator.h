@@ -34,7 +34,8 @@ namespace dealii
               typename Options,
               typename Translator,
               typename Box,
-              typename Allocators>
+              typename Allocators,
+              bool use_points = false>
     struct Rtree_visitor
       : public boost::geometry::index::detail::rtree::visitor<
           Value,
@@ -47,8 +48,11 @@ namespace dealii
       inline Rtree_visitor(
         const Translator  &translator,
         const unsigned int target_level,
-        std::vector<std::vector<typename Triangulation<
-          boost::geometry::dimension<Box>::value>::active_cell_iterator>>
+        std::conditional_t<
+          use_points,
+          std::vector<std::vector<types::global_dof_index>>,
+          std::vector<std::vector<typename Triangulation<
+            boost::geometry::dimension<Box>::value>::active_cell_iterator>>>
                                                         &agglomerates_,
         std::vector<types::global_cell_index>           &n_nodes_per_level,
         std::map<std::pair<types::global_cell_index, types::global_cell_index>,
@@ -117,8 +121,11 @@ namespace dealii
        * vector v has the following property: v[i] = vector with all the mesh
        * iterators composing the i-th agglomerate.
        */
-      std::vector<std::vector<typename Triangulation<
-        boost::geometry::dimension<Box>::value>::active_cell_iterator>>
+      std::conditional_t<
+        use_points,
+        std::vector<std::vector<types::global_dof_index>>,
+        std::vector<std::vector<typename Triangulation<
+          boost::geometry::dimension<Box>::value>::active_cell_iterator>>>
         &agglomerates;
 
       /**
@@ -141,16 +148,21 @@ namespace dealii
               typename Options,
               typename Translator,
               typename Box,
-              typename Allocators>
-    Rtree_visitor<Value, Options, Translator, Box, Allocators>::Rtree_visitor(
-      const Translator  &translator,
-      const unsigned int target_level,
-      std::vector<std::vector<typename Triangulation<
-        boost::geometry::dimension<Box>::value>::active_cell_iterator>>
-                                                      &agglomerates_,
-      std::vector<types::global_cell_index>           &n_nodes_per_level_,
-      std::map<std::pair<types::global_cell_index, types::global_cell_index>,
-               std::vector<types::global_cell_index>> &parent_to_children)
+              typename Allocators,
+              bool use_points>
+    Rtree_visitor<Value, Options, Translator, Box, Allocators, use_points>::
+      Rtree_visitor(
+        const Translator  &translator,
+        const unsigned int target_level,
+        std::conditional_t<
+          use_points,
+          std::vector<std::vector<types::global_dof_index>>,
+          std::vector<std::vector<typename Triangulation<
+            boost::geometry::dimension<Box>::value>::active_cell_iterator>>>
+                                                        &agglomerates_,
+        std::vector<types::global_cell_index>           &n_nodes_per_level_,
+        std::map<std::pair<types::global_cell_index, types::global_cell_index>,
+                 std::vector<types::global_cell_index>> &parent_to_children)
       : translator(translator)
       , level(0)
       , node_counter(0)
@@ -166,10 +178,11 @@ namespace dealii
               typename Options,
               typename Translator,
               typename Box,
-              typename Allocators>
+              typename Allocators,
+              bool use_points>
     void
-    Rtree_visitor<Value, Options, Translator, Box, Allocators>::operator()(
-      const Rtree_visitor::InternalNode &node)
+    Rtree_visitor<Value, Options, Translator, Box, Allocators, use_points>::
+    operator()(const Rtree_visitor::InternalNode &node)
     {
       using elements_type =
         typename boost::geometry::index::detail::rtree::elements_type<
@@ -247,10 +260,11 @@ namespace dealii
               typename Options,
               typename Translator,
               typename Box,
-              typename Allocators>
+              typename Allocators,
+              bool use_points>
     void
-    Rtree_visitor<Value, Options, Translator, Box, Allocators>::operator()(
-      const Rtree_visitor::Leaf &leaf)
+    Rtree_visitor<Value, Options, Translator, Box, Allocators, use_points>::
+    operator()(const Rtree_visitor::Leaf &leaf)
     {
       using elements_type =
         typename boost::geometry::index::detail::rtree::elements_type<
@@ -264,17 +278,24 @@ namespace dealii
           // last one where leafs are grouped together.
           const auto offset = agglomerates.size();
           agglomerates.resize(offset + 1);
-
-          for (const auto &it : elements)
-            agglomerates[node_counter].push_back(it.second);
+          if constexpr (use_points)
+            for (const auto &it : elements)
+              agglomerates[node_counter].push_back(it);
+          else
+            for (const auto &it : elements)
+              agglomerates[node_counter].push_back(it.second);
 
           ++node_counter;
           n_nodes_per_level[target_level]++;
         }
       else
         {
-          for (const auto &it : elements)
-            agglomerates[node_counter].push_back(it.second);
+          if constexpr (use_points)
+            for (const auto &it : elements)
+              agglomerates[node_counter].push_back(it);
+          else
+            for (const auto &it : elements)
+              agglomerates[node_counter].push_back(it.second);
 
 
           if (level == target_level + 1)
@@ -296,7 +317,7 @@ namespace dealii
    * Helper class which handles agglomeration based on the R-tree data
    * structure. Notice that the R-tree type is assumed to be an R-star-tree.
    */
-  template <int dim, typename RtreeType>
+  template <int dim, typename RtreeType, bool use_points = false>
   class CellsAgglomerator
   {
   public:
@@ -314,8 +335,11 @@ namespace dealii
      * Extract agglomerates based on the current tree and the extraction level.
      * This function returns a reference to
      */
-    const std::vector<
-      std::vector<typename Triangulation<dim>::active_cell_iterator>> &
+    const std::conditional_t<
+      use_points,
+      std::vector<std::vector<types::global_dof_index>>,
+      std::vector<
+        std::vector<typename Triangulation<dim>::active_cell_iterator>>> &
     extract_agglomerates();
 
     /**
@@ -354,7 +378,10 @@ namespace dealii
      * Store agglomerates obtained after recursive extraction on nodes of
      * level @p extraction_level.
      */
-    std::vector<std::vector<typename Triangulation<dim>::active_cell_iterator>>
+    std::conditional_t<use_points,
+                       std::vector<std::vector<types::global_dof_index>>,
+                       std::vector<std::vector<
+                         typename Triangulation<dim>::active_cell_iterator>>>
       agglomerates_on_level;
 
     /**
@@ -368,14 +395,14 @@ namespace dealii
      * which stores the index of children.
      */
     std::map<std::pair<types::global_cell_index, types::global_cell_index>,
-             std::vector<types::global_cell_index>>
+             std::vector<types::global_dof_index>>
       parent_node_to_children_nodes;
   };
 
 
 
-  template <int dim, typename RtreeType>
-  CellsAgglomerator<dim, RtreeType>::CellsAgglomerator(
+  template <int dim, typename RtreeType, bool use_points>
+  CellsAgglomerator<dim, RtreeType, use_points>::CellsAgglomerator(
     const RtreeType   &tree,
     const unsigned int extraction_level_)
     : extraction_level(extraction_level_)
@@ -386,10 +413,13 @@ namespace dealii
 
 
 
-  template <int dim, typename RtreeType>
-  const std::vector<
-    std::vector<typename Triangulation<dim>::active_cell_iterator>> &
-  CellsAgglomerator<dim, RtreeType>::extract_agglomerates()
+  template <int dim, typename RtreeType, bool use_points>
+  const std::conditional_t<
+    use_points,
+    std::vector<std::vector<types::global_dof_index>>,
+    std::vector<
+      std::vector<typename Triangulation<dim>::active_cell_iterator>>> &
+  CellsAgglomerator<dim, RtreeType, use_points>::extract_agglomerates()
   {
     AssertThrow(extraction_level <= n_levels(*rtree),
                 ExcInternalError("You are trying to extract level " +
@@ -420,7 +450,8 @@ namespace dealii
                                 typename RtreeView::options_type,
                                 typename RtreeView::translator_type,
                                 typename RtreeView::box_type,
-                                typename RtreeView::allocators_type>
+                                typename RtreeView::allocators_type,
+                                use_points>
           extractor_visitor(rtv.translator(),
                             target_level,
                             agglomerates_on_level,
@@ -438,18 +469,18 @@ namespace dealii
   // ------------------------------ inline functions -------------------------
 
 
-  template <int dim, typename RtreeType>
+  template <int dim, typename RtreeType, bool use_points>
   inline unsigned int
-  CellsAgglomerator<dim, RtreeType>::get_n_levels() const
+  CellsAgglomerator<dim, RtreeType, use_points>::get_n_levels() const
   {
     return n_levels(*rtree);
   }
 
 
 
-  template <int dim, typename RtreeType>
+  template <int dim, typename RtreeType, bool use_points>
   inline types::global_cell_index
-  CellsAgglomerator<dim, RtreeType>::get_n_nodes_per_level(
+  CellsAgglomerator<dim, RtreeType, use_points>::get_n_nodes_per_level(
     const unsigned int level) const
   {
     return n_nodes_per_level[level];
@@ -457,11 +488,11 @@ namespace dealii
 
 
 
-  template <int dim, typename RtreeType>
+  template <int dim, typename RtreeType, bool use_points>
   inline const std::map<
     std::pair<types::global_cell_index, types::global_cell_index>,
-    std::vector<types::global_cell_index>> &
-  CellsAgglomerator<dim, RtreeType>::get_hierarchy() const
+    std::vector<types::global_dof_index>> &
+  CellsAgglomerator<dim, RtreeType, use_points>::get_hierarchy() const
   {
     Assert(parent_node_to_children_nodes.size(),
            ExcMessage(
