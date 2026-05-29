@@ -1,0 +1,6 @@
+R-tree built with 4 levels
+Coarse DoFs: 76
+Fine DoFs: 292
+Transfer matrix: 292 x 76
+Linear transfer L2 error: 4.33556e-16
+Continuous transfer matrix test: OK

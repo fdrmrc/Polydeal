@@ -37,8 +37,6 @@
 
 namespace dealii::ContinuousAggloUtils
 {
-  // TODO: For now these are all sequential implementations, need to check what
-  // is different for the parallel implementation
   namespace PointsAgglo
   {
     template <int dim>
@@ -50,7 +48,6 @@ namespace dealii::ContinuousAggloUtils
       const unsigned int n_boxes          = boxes.size();
       const unsigned int vertices_per_box = (dim == 2) ? 4 : 8;
 
-      // Pre-allocate space
       std::vector<Point<dim>>    vertices;
       std::vector<CellData<dim>> cells;
       vertices.reserve(n_boxes * vertices_per_box);
@@ -145,7 +142,218 @@ namespace dealii::ContinuousAggloUtils
       const std::vector<BoundingBox<dim>>      &coarse_level_boxes,
       const std::vector<BoundingBox<dim>>      &fine_level_boxes,
       const unsigned int                        coarse_level)
-    {}
+    {
+      if constexpr (std::is_same_v<MatrixType, SparseMatrix<double>> &&
+                    std::is_same_v<SparsityPatternType, SparsityPattern>)
+        {
+          const FiniteElement<dim> &fe_dgq = coarse_dof_handler.get_fe();
+          const Triangulation<dim> &fine_tria =
+            fine_dof_handler.get_triangulation();
+          AffineConstraints<double> constraints;
+
+          const std::vector<Point<dim>> &unit_support_points =
+            fe_dgq.get_unit_support_points();
+
+          DynamicSparsityPattern dsp;
+          dsp.reinit(fine_dof_handler.n_dofs(), coarse_dof_handler.n_dofs());
+          AffineConstraints<double>            dummy_constraints;
+          std::vector<types::global_dof_index> coarse_dof_indices(
+            fe_dgq.n_dofs_per_cell());
+          std::vector<types::global_dof_index> fine_dof_indices(
+            fe_dgq.n_dofs_per_cell());
+
+
+          // Loop over coarse tria and print DoFs
+          for (const auto &cell : coarse_dof_handler.active_cell_iterators())
+            {
+              cell->get_dof_indices(coarse_dof_indices);
+
+              std::vector<types::global_dof_index> indices_of_children =
+                parent_to_child_info.at(
+                  {cell->active_cell_index(), coarse_level + 1});
+
+              for (const auto &idx : indices_of_children)
+                {
+                  DoFAccessor<dim, dim, dim, false> dof_accessor_child(
+                    &fine_tria, 0, idx, &fine_dof_handler);
+                  dof_accessor_child.get_dof_indices(fine_dof_indices);
+
+                  for (const types::global_dof_index row : fine_dof_indices)
+                    dsp.add_entries(row,
+                                    coarse_dof_indices.begin(),
+                                    coarse_dof_indices.end());
+                }
+            }
+
+          // Filled sparsity pattern
+          sparsity_pattern.copy_from(dsp);
+
+          // Now onto filling the matrix...
+          transfer_matrix.reinit(sparsity_pattern);
+          const unsigned int dofs_per_cell = fe_dgq.n_dofs_per_cell();
+          FullMatrix<double> local_matrix(dofs_per_cell, dofs_per_cell);
+
+          for (const auto &cell : coarse_dof_handler.active_cell_iterators())
+            {
+              cell->get_dof_indices(coarse_dof_indices);
+
+              const BoundingBox<dim> &coarse_box =
+                coarse_level_boxes[cell->active_cell_index()];
+
+              std::vector<types::global_dof_index> indices_of_children =
+                parent_to_child_info.at(
+                  {cell->active_cell_index(), coarse_level + 1});
+
+              for (const auto &idx : indices_of_children)
+                {
+                  DoFAccessor<dim, dim, dim, false> dof_accessor_child(
+                    &fine_tria, 0, idx, &fine_dof_handler);
+                  dof_accessor_child.get_dof_indices(fine_dof_indices);
+                  const BoundingBox<dim> &fine_bbox = fine_level_boxes[idx];
+
+                  local_matrix = 0.;
+
+                  // Now we plot the fine support points
+                  std::vector<Point<dim>> real_qpoints;
+                  real_qpoints.reserve(unit_support_points.size());
+                  for (const Point<dim> &p : unit_support_points)
+                    real_qpoints.push_back(fine_bbox.unit_to_real(p));
+
+                  for (unsigned int i = 0; i < coarse_dof_indices.size(); ++i)
+                    {
+                      const auto &p = coarse_box.real_to_unit(real_qpoints[i]);
+                      for (unsigned int j = 0; j < fine_dof_indices.size(); ++j)
+                        {
+                          local_matrix(i, j) = fe_dgq.shape_value(j, p);
+                        }
+                    }
+
+                  constraints.distribute_local_to_global(local_matrix,
+                                                         fine_dof_indices,
+                                                         coarse_dof_indices,
+                                                         transfer_matrix);
+                }
+            }
+        }
+      else if constexpr (std::is_same_v<MatrixType,
+                                        TrilinosWrappers::SparseMatrix> &&
+                         std::is_same_v<SparsityPatternType,
+                                        TrilinosWrappers::SparsityPattern>)
+        {
+          const FiniteElement<dim> &fe_dgq = coarse_dof_handler.get_fe();
+          const Triangulation<dim> &fine_tria =
+            fine_dof_handler.get_triangulation();
+
+          // Check that the triangulation is distributed
+          Assert(
+            (dynamic_cast<
+               const parallel::fullydistributed::Triangulation<dim, dim> *>(
+               &fine_tria) != nullptr),
+            ExcMessage(
+              "The triangulation should be a parallel::fullydistributed::Triangulation."));
+
+          const MPI_Comm comm = fine_tria.get_mpi_communicator();
+
+          // just for local2global
+          AffineConstraints<double> constraints;
+          constraints.close();
+
+          const IndexSet &owned_fine = fine_dof_handler.locally_owned_dofs();
+          const IndexSet &owned_coarse =
+            coarse_dof_handler.locally_owned_dofs();
+
+          sparsity_pattern.reinit(owned_fine, owned_coarse, comm);
+
+          std::vector<types::global_dof_index> coarse_dof_indices(
+            fe_dgq.n_dofs_per_cell());
+          std::vector<types::global_dof_index> fine_dof_indices(
+            fe_dgq.n_dofs_per_cell());
+
+          for (const auto &cell : coarse_dof_handler.active_cell_iterators())
+            if (cell->is_locally_owned())
+              {
+                cell->get_dof_indices(coarse_dof_indices);
+
+                // std::cout << "Debug: Coarse cell " <<
+                // cell->active_cell_index()
+                //           << " with DoFs: ";
+                // for (const auto &idx : coarse_dof_indices)
+                //   std::cout << idx << " ";
+                // std::cout << std::endl;
+
+                std::vector<types::global_dof_index> indices_of_children =
+                  parent_to_child_info.at(
+                    {cell->active_cell_index(), coarse_level + 1});
+
+                for (const auto child_idx : indices_of_children)
+                  {
+                    DoFAccessor<dim, dim, dim, false> child_accessor(
+                      &fine_tria, 0, child_idx, &fine_dof_handler);
+                    child_accessor.get_dof_indices(fine_dof_indices);
+
+                    for (const auto row : fine_dof_indices)
+                      sparsity_pattern.add_entries(row,
+                                                   coarse_dof_indices.begin(),
+                                                   coarse_dof_indices.end());
+                  }
+              }
+
+          sparsity_pattern.compress();
+          transfer_matrix.reinit(sparsity_pattern);
+
+          FullMatrix<double> local_matrix(fe_dgq.n_dofs_per_cell(),
+                                          fe_dgq.n_dofs_per_cell());
+          const auto &unit_support_points = fe_dgq.get_unit_support_points();
+
+          for (const auto &cell : coarse_dof_handler.active_cell_iterators())
+            if (cell->is_locally_owned())
+              {
+                cell->get_dof_indices(coarse_dof_indices);
+                const BoundingBox<dim> &coarse_box =
+                  coarse_level_boxes[cell->active_cell_index()];
+
+                std::vector<types::global_dof_index> indices_of_children =
+                  parent_to_child_info.at(
+                    {cell->active_cell_index(), coarse_level + 1});
+
+                for (const auto child_idx : indices_of_children)
+                  {
+                    DoFAccessor<dim, dim, dim, false> child_accessor(
+                      &fine_tria, 0, child_idx, &fine_dof_handler);
+                    child_accessor.get_dof_indices(fine_dof_indices);
+
+                    const BoundingBox<dim> &fine_box =
+                      fine_level_boxes[child_idx];
+                    local_matrix = 0.0;
+
+                    std::vector<Point<dim>> real_qpoints;
+                    real_qpoints.reserve(unit_support_points.size());
+                    for (const auto &p : unit_support_points)
+                      real_qpoints.push_back(fine_box.unit_to_real(p));
+
+                    for (unsigned int i = 0; i < coarse_dof_indices.size(); ++i)
+                      {
+                        const Point<dim> p =
+                          coarse_box.real_to_unit(real_qpoints[i]);
+                        for (unsigned int j = 0; j < fine_dof_indices.size();
+                             ++j)
+                          local_matrix(i, j) = fe_dgq.shape_value(j, p);
+                      }
+
+                    constraints.distribute_local_to_global(local_matrix,
+                                                           fine_dof_indices,
+                                                           coarse_dof_indices,
+                                                           transfer_matrix);
+                  }
+              }
+
+          transfer_matrix.compress(VectorOperation::add);
+        }
+      else
+        {
+          Assert(false, ExcNotImplemented());
+        }
+    }
 
 
     // Note for me: we suppose that the support points are ordered in the same
@@ -155,19 +363,22 @@ namespace dealii::ContinuousAggloUtils
     // match the DoF ordering. Deal.II automatically does this.
     template <int dim,
               typename MatrixType,
+              typename SparsityPatternType,
               typename VectorType,
               unsigned int rtree_m,
               unsigned int rtree_M>
     void
     agglomerate_and_compute_injection_matrices(
-      VectorType              &support_points_vector,
-      bool                     skip_leaves,
-      std::vector<MatrixType> &injection_matrices,
-      unsigned int             mg_levels)
+      VectorType                       &support_points_vector,
+      bool                              skip_leaves,
+      std::vector<MatrixType>          &injection_matrices,
+      std::vector<SparsityPatternType> &injection_sparsity_patterns,
+      unsigned int                      mg_levels)
     {
       namespace bgi = boost::geometry::index;
 
-      if constexpr (std::is_same_v<MatrixType, SparseMatrix<double>>)
+      if constexpr (std::is_same_v<MatrixType, SparseMatrix<double>> &&
+                    std::is_same_v<SparsityPatternType, SparsityPattern>)
         {
           auto tree = pack_rtree_of_indices<bgi::rstar<rtree_m, rtree_M>>(
             support_points_vector);
