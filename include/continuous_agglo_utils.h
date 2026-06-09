@@ -386,7 +386,9 @@ namespace dealii::ContinuousAggloUtils
       std::vector<MatrixType>          &injection_matrices,
       std::vector<SparsityPatternType> &injection_sparsity_patterns,
       const unsigned int                mg_levels,
-      const std::vector<unsigned int>  &coarse_space_degrees)
+      const std::vector<unsigned int>  &coarse_space_degrees,
+      std::vector<std::unique_ptr<Triangulation<dim>>> &triangulations,
+      std::vector<std::unique_ptr<DoFHandler<dim>>>    &support_dof_handlers)
     {
       namespace bgi = boost::geometry::index;
 
@@ -456,21 +458,19 @@ namespace dealii::ContinuousAggloUtils
               j++;
             }
 
-          std::vector<std::unique_ptr<Triangulation<dim>>> triangulations(
-            mg_levels - 1);
-          std::vector<std::unique_ptr<DoFHandler<dim>>> support_DoFHandlers(
-            mg_levels - 1);
+          triangulations.resize(mg_levels - 1);
+          support_dof_handlers.resize(mg_levels - 1);
 
           for (unsigned int i = 0; i < mg_levels - 1; ++i)
             {
               triangulations[i] = std::make_unique<Triangulation<dim>>();
               create_triangulation_from_bounding_boxes(*triangulations[i],
                                                        boxes_per_level[i]);
-              support_DoFHandlers[i] =
+              support_dof_handlers[i] =
                 std::make_unique<DoFHandler<dim>>(*triangulations[i]);
 
               FE_DGQ<dim> fe_dgq(coarse_space_degrees[i]);
-              support_DoFHandlers[i]->distribute_dofs(fe_dgq);
+              support_dof_handlers[i]->distribute_dofs(fe_dgq);
             }
           injection_matrices.clear();
           injection_sparsity_patterns.clear();
@@ -478,8 +478,8 @@ namespace dealii::ContinuousAggloUtils
           injection_sparsity_patterns.resize(mg_levels - 1);
 
           for (unsigned int j = 0; j < mg_levels - 2; ++j)
-            fill_injection_matrix(*support_DoFHandlers[j],
-                                  *support_DoFHandlers[j + 1],
+            fill_injection_matrix(*support_dof_handlers[j],
+                                  *support_dof_handlers[j + 1],
                                   injection_sparsity_patterns[j],
                                   injection_matrices[j],
                                   hierarchies_per_level[j],
@@ -505,11 +505,11 @@ namespace dealii::ContinuousAggloUtils
               support_points_vector
                 .size(), // should be equal to the number of DoFs if only  1
                          // DoFs insist per support point
-              support_DoFHandlers[mg_levels - 2]->n_dofs());
+              support_dof_handlers[mg_levels - 2]->n_dofs());
 
             unsigned int agglo_index = 0;
             for (const auto &cell :
-                 support_DoFHandlers[mg_levels - 2]->active_cell_iterators())
+                 support_dof_handlers[mg_levels - 2]->active_cell_iterators())
               {
                 cell->get_dof_indices(dof_indices_agglo_tria);
 
@@ -532,7 +532,7 @@ namespace dealii::ContinuousAggloUtils
 
             agglo_index = 0;
             for (const auto &cell :
-                 support_DoFHandlers[mg_levels - 2]->active_cell_iterators())
+                 support_dof_handlers[mg_levels - 2]->active_cell_iterators())
               {
                 cell->get_dof_indices(dof_indices_agglo_tria);
 

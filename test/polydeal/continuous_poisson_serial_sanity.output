@@ -1,0 +1,13 @@
+Level 0:
+  - Triangulation cells: 18
+  - DoFs: 72
+  - Injection matrix: 276 x 72
+
+Level 1:
+  - Triangulation cells: 69
+  - DoFs: 276
+  - Injection matrix: 1089 x 276
+
+Level 2 (finest level):
+  - Triangulation cells: 1024
+  - DoFs: 1089
