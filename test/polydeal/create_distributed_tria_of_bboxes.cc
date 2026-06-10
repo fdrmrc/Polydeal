@@ -49,10 +49,8 @@ main(int argc, char *argv[])
 
   parallel::fullydistributed::Triangulation<2, 2> distributed_tria(comm);
 
-  dealii::ContinuousAggloUtils::PointsAgglo::
-    create_distributed_tria_from_local_boxes(distributed_tria,
-                                             local_boxes,
-                                             comm);
+  dealii::ContinuousAggloUtils::create_distributed_tria_from_local_boxes(
+    distributed_tria, local_boxes, comm);
 
   assert(distributed_tria.n_global_active_cells() == n_ranks);
   assert(distributed_tria.n_locally_owned_active_cells() == local_boxes.size());

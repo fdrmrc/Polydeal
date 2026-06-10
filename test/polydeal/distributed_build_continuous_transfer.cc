@@ -185,7 +185,7 @@ main(int argc, char *argv[])
         fine_level_boxes.emplace_back(points_in_current_agglomerate);
       }
 
-    ContinuousAggloUtils::PointsAgglo::create_distributed_tria_from_local_boxes(
+    ContinuousAggloUtils::create_distributed_tria_from_local_boxes(
       fine_tria, fine_level_boxes, comm);
 
     const unsigned int fine_local_boxes = fine_level_boxes.size();
@@ -243,7 +243,7 @@ main(int argc, char *argv[])
         coarse_level_boxes.emplace_back(points_in_current_agglomerate);
       }
 
-    ContinuousAggloUtils::PointsAgglo::create_distributed_tria_from_local_boxes(
+    ContinuousAggloUtils::create_distributed_tria_from_local_boxes(
       coarse_tria, coarse_level_boxes, comm);
 
     const unsigned int coarse_local_boxes = coarse_level_boxes.size();
@@ -286,15 +286,14 @@ main(int argc, char *argv[])
     //       }
     //   }
 
-    ContinuousAggloUtils::PointsAgglo::fill_injection_matrix<dim>(
-      coarse_dh,
-      fine_dh,
-      sparsity_pattern,
-      transfer_matrix,
-      parent_to_child_info,
-      coarse_level_boxes,
-      fine_level_boxes,
-      coarse_level - 1);
+    ContinuousAggloUtils::fill_injection_matrix<dim>(coarse_dh,
+                                                     fine_dh,
+                                                     sparsity_pattern,
+                                                     transfer_matrix,
+                                                     parent_to_child_info,
+                                                     coarse_level_boxes,
+                                                     fine_level_boxes,
+                                                     coarse_level - 1);
   }
 
   AssertThrow(transfer_matrix.m() == fine_dh.n_dofs(),

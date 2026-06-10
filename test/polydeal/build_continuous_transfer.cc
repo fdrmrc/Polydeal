@@ -98,7 +98,7 @@ main()
 
         fine_level_boxes.emplace_back(points_in_current_agglomerate);
       }
-    ContinuousAggloUtils::PointsAgglo::create_triangulation_from_bounding_boxes(
+    ContinuousAggloUtils::create_triangulation_from_bounding_boxes(
       fine_tria, fine_level_boxes);
     fine_dof_handler.distribute_dofs(fe_dgq);
   }
@@ -122,7 +122,7 @@ main()
 
         coarse_level_boxes.emplace_back(points_in_current_agglomerate);
       }
-    ContinuousAggloUtils::PointsAgglo::create_triangulation_from_bounding_boxes(
+    ContinuousAggloUtils::create_triangulation_from_bounding_boxes(
       coarse_tria, coarse_level_boxes);
     coarse_dof_handler.distribute_dofs(fe_dgq);
 
@@ -142,15 +142,14 @@ main()
                                          fine_dof_handler,
                                          fine_support_points);
 
-    ContinuousAggloUtils::PointsAgglo::fill_injection_matrix<dim>(
-      coarse_dof_handler,
-      fine_dof_handler,
-      sparsity_pattern,
-      transfer_matrix,
-      parent_to_child_info,
-      coarse_level_boxes,
-      fine_level_boxes,
-      coarse_level - 1);
+    ContinuousAggloUtils::fill_injection_matrix<dim>(coarse_dof_handler,
+                                                     fine_dof_handler,
+                                                     sparsity_pattern,
+                                                     transfer_matrix,
+                                                     parent_to_child_info,
+                                                     coarse_level_boxes,
+                                                     fine_level_boxes,
+                                                     coarse_level - 1);
 
     AssertThrow(transfer_matrix.m() == fine_dof_handler.n_dofs(),
                 ExcDimensionMismatch(transfer_matrix.m(),

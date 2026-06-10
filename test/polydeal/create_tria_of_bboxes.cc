@@ -51,8 +51,8 @@ test_create_tria_2d_single_box()
   boxes.push_back(box);
 
   Triangulation<dim> tria;
-  dealii::ContinuousAggloUtils::PointsAgglo::
-    create_triangulation_from_bounding_boxes(tria, boxes);
+  dealii::ContinuousAggloUtils::create_triangulation_from_bounding_boxes(tria,
+                                                                         boxes);
 
   assert(tria.n_active_cells() == 1);
   assert(tria.n_vertices() == 4);
@@ -83,8 +83,8 @@ test_create_tria_2d_multiple_boxes()
   boxes.push_back(BoundingBox<dim>(std::make_pair(p7, p8)));
 
   Triangulation<dim> tria;
-  dealii::ContinuousAggloUtils::PointsAgglo::
-    create_triangulation_from_bounding_boxes(tria, boxes);
+  dealii::ContinuousAggloUtils::create_triangulation_from_bounding_boxes(tria,
+                                                                         boxes);
 
   assert(tria.n_active_cells() == 4);
   assert(tria.n_vertices() == 16);
@@ -111,8 +111,8 @@ test_create_tria_2d_overlapping_boxes()
   boxes.push_back(BoundingBox<dim>(std::make_pair(p3, p4)));
 
   Triangulation<dim> tria;
-  dealii::ContinuousAggloUtils::PointsAgglo::
-    create_triangulation_from_bounding_boxes(tria, boxes);
+  dealii::ContinuousAggloUtils::create_triangulation_from_bounding_boxes(tria,
+                                                                         boxes);
 
   assert(tria.n_active_cells() == 2);
   assert(tria.n_vertices() == 8);
@@ -132,8 +132,8 @@ test_create_tria_3d_single_box()
   boxes.push_back(box);
 
   Triangulation<dim> tria;
-  dealii::ContinuousAggloUtils::PointsAgglo::
-    create_triangulation_from_bounding_boxes(tria, boxes);
+  dealii::ContinuousAggloUtils::create_triangulation_from_bounding_boxes(tria,
+                                                                         boxes);
 
   assert(tria.n_active_cells() == 1);
   assert(tria.n_vertices() == 8);
@@ -159,8 +159,8 @@ test_create_tria_3d_multiple_boxes()
   boxes.push_back(BoundingBox<dim>(std::make_pair(p3, p4)));
 
   Triangulation<dim> tria;
-  dealii::ContinuousAggloUtils::PointsAgglo::
-    create_triangulation_from_bounding_boxes(tria, boxes);
+  dealii::ContinuousAggloUtils::create_triangulation_from_bounding_boxes(tria,
+                                                                         boxes);
 
   assert(tria.n_active_cells() == 2);
   assert(tria.n_vertices() == 16);
@@ -185,8 +185,8 @@ test_create_tria_3d_rectangular_boxes()
   boxes.push_back(BoundingBox<dim>(std::make_pair(p1, p2)));
 
   Triangulation<dim> tria;
-  dealii::ContinuousAggloUtils::PointsAgglo::
-    create_triangulation_from_bounding_boxes(tria, boxes);
+  dealii::ContinuousAggloUtils::create_triangulation_from_bounding_boxes(tria,
+                                                                         boxes);
 
   assert(tria.n_active_cells() == 1);
 
@@ -207,8 +207,8 @@ test_create_tria_2d_vertex_positions()
   boxes.push_back(BoundingBox<dim>(std::make_pair(p1, p2)));
 
   Triangulation<dim> tria;
-  dealii::ContinuousAggloUtils::PointsAgglo::
-    create_triangulation_from_bounding_boxes(tria, boxes);
+  dealii::ContinuousAggloUtils::create_triangulation_from_bounding_boxes(tria,
+                                                                         boxes);
 
   std::vector<Point<dim>> expected_vertices = {Point<dim>(0.5, 1.5),
                                                Point<dim>(2.5, 1.5),
