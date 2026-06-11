@@ -38,8 +38,8 @@
 
 #include "continuous_agglo_utils.h"
 
-static constexpr double       tolerance  = 1e-12;
-static constexpr unsigned int dim        = 2;
+static constexpr double       tolerance = 1e-12;
+static constexpr unsigned int dim       = 2;
 using namespace dealii;
 
 int
@@ -65,106 +65,216 @@ main()
                                        dof_handler,
                                        support_points_vector);
 
-  std::vector<SparseMatrix<double>> injection_matrices;
-  std::vector<SparsityPattern>      injection_sparsity_patterns;
-  std::vector<unsigned int>         coarse_space_degrees(mg_levels - 1, 1);
-  std::vector<std::unique_ptr<Triangulation<dim>>> triangulations;
-  std::vector<std::unique_ptr<DoFHandler<dim>>>    support_dof_handlers;
+  // Point agglo test
+  {
+    std::vector<SparseMatrix<double>> injection_matrices;
+    std::vector<SparsityPattern>      injection_sparsity_patterns;
+    std::vector<unsigned int>         coarse_space_degrees(mg_levels - 1, 1);
+    std::vector<std::unique_ptr<Triangulation<dim>>> triangulations;
+    std::vector<std::unique_ptr<DoFHandler<dim>>>    support_dof_handlers;
 
-  ContinuousAggloUtils::PointsAgglo::
-    agglomerate_and_compute_injection_matrices<dim,
-                                               min_elem_per_node,
-                                               max_elem_per_node>(
-      support_points_vector,
-      skip_leaves,
-      injection_matrices,
-      injection_sparsity_patterns,
-      mg_levels,
-      coarse_space_degrees,
-      triangulations,
-      support_dof_handlers);
+    ContinuousAggloUtils::PointsAgglo::
+      agglomerate_and_compute_injection_matrices<dim,
+                                                 min_elem_per_node,
+                                                 max_elem_per_node>(
+        support_points_vector,
+        skip_leaves,
+        injection_matrices,
+        injection_sparsity_patterns,
+        mg_levels,
+        coarse_space_degrees,
+        triangulations,
+        support_dof_handlers);
 
-  std::cout << "Built " << injection_matrices.size() << " injection matrices"
-            << std::endl;
+    std::cout << "Built " << injection_matrices.size() << " injection matrices"
+              << std::endl;
 
-  for (unsigned int level = 0; level < injection_matrices.size(); ++level)
-    {
-      const auto &mat = injection_matrices[level];
+    for (unsigned int level = 0; level < injection_matrices.size(); ++level)
+      {
+        const auto &mat = injection_matrices[level];
 
-      std::vector<Point<dim>> coarse_support_points(
-        support_dof_handlers[level]->n_dofs());
-      DoFTools::map_dofs_to_support_points(mapping,
-                                           *support_dof_handlers[level],
-                                           coarse_support_points);
+        std::vector<Point<dim>> coarse_support_points(
+          support_dof_handlers[level]->n_dofs());
+        DoFTools::map_dofs_to_support_points(mapping,
+                                             *support_dof_handlers[level],
+                                             coarse_support_points);
 
-      AssertThrow(mat.n() == coarse_support_points.size(),
-                  ExcDimensionMismatch(mat.n(), coarse_support_points.size()));
+        AssertThrow(mat.n() == coarse_support_points.size(),
+                    ExcDimensionMismatch(mat.n(),
+                                         coarse_support_points.size()));
 
-      Vector<double> coarse_values(coarse_support_points.size());
-      for (unsigned int i = 0; i < coarse_values.size(); ++i)
-        coarse_values[i] =
-          coarse_support_points[i][0] + coarse_support_points[i][1];
+        Vector<double> coarse_values(coarse_support_points.size());
+        for (unsigned int i = 0; i < coarse_values.size(); ++i)
+          coarse_values[i] =
+            coarse_support_points[i][0] + coarse_support_points[i][1];
 
-      if (level < mg_levels - 2)
-        {
-          std::vector<Point<dim>> fine_support_points(
-            support_dof_handlers[level + 1]->n_dofs());
-          DoFTools::map_dofs_to_support_points(
-            mapping, *support_dof_handlers[level + 1], fine_support_points);
+        if (level < mg_levels - 2)
+          {
+            std::vector<Point<dim>> fine_support_points(
+              support_dof_handlers[level + 1]->n_dofs());
+            DoFTools::map_dofs_to_support_points(
+              mapping, *support_dof_handlers[level + 1], fine_support_points);
 
-          AssertThrow(mat.m() == fine_support_points.size(),
-                      ExcDimensionMismatch(mat.m(),
-                                           fine_support_points.size()));
+            AssertThrow(mat.m() == fine_support_points.size(),
+                        ExcDimensionMismatch(mat.m(),
+                                             fine_support_points.size()));
 
-          Vector<double> fine_values(fine_support_points.size());
-          for (unsigned int i = 0; i < fine_values.size(); ++i)
-            fine_values[i] =
-              fine_support_points[i][0] + fine_support_points[i][1];
+            Vector<double> fine_values(fine_support_points.size());
+            for (unsigned int i = 0; i < fine_values.size(); ++i)
+              fine_values[i] =
+                fine_support_points[i][0] + fine_support_points[i][1];
 
-          Vector<double> transferred_values(fine_values.size());
-          mat.vmult(transferred_values, coarse_values);
+            Vector<double> transferred_values(fine_values.size());
+            mat.vmult(transferred_values, coarse_values);
 
-          transferred_values -= fine_values;
-          const double l2_error = transferred_values.l2_norm();
+            transferred_values -= fine_values;
+            const double l2_error = transferred_values.l2_norm();
 
-          AssertThrow(
-            l2_error < tolerance,
-            ExcMessage(
-              "Agglomerated transfer " + std::to_string(level) +
-              " (coarse->fine) failed linear test with error " +
-              std::to_string(l2_error)));
+            AssertThrow(l2_error < tolerance,
+                        ExcMessage(
+                          "Agglomerated transfer " + std::to_string(level) +
+                          " (coarse->fine) failed linear test with error " +
+                          std::to_string(l2_error)));
 
-          std::cout << "Level " << level << " (" << mat.m() << " x " << mat.n()
-                    << "): L2 error = " << l2_error << std::endl;
-        }
-      else
-        {
-          AssertThrow(mat.m() == support_points_vector.size(),
-                      ExcDimensionMismatch(mat.m(),
-                                           support_points_vector.size()));
+            std::cout << "Level " << level << " (" << mat.m() << " x "
+                      << mat.n() << "): L2 error = " << l2_error << std::endl;
+          }
+        else
+          {
+            AssertThrow(mat.m() == support_points_vector.size(),
+                        ExcDimensionMismatch(mat.m(),
+                                             support_points_vector.size()));
 
-          Vector<double> fine_values(support_points_vector.size());
-          for (unsigned int i = 0; i < fine_values.size(); ++i)
-            fine_values[i] =
-              support_points_vector[i][0] + support_points_vector[i][1];
+            Vector<double> fine_values(support_points_vector.size());
+            for (unsigned int i = 0; i < fine_values.size(); ++i)
+              fine_values[i] =
+                support_points_vector[i][0] + support_points_vector[i][1];
 
-          Vector<double> transferred_values(fine_values.size());
-          mat.vmult(transferred_values, coarse_values);
+            Vector<double> transferred_values(fine_values.size());
+            mat.vmult(transferred_values, coarse_values);
 
-          transferred_values -= fine_values;
-          const double l2_error = transferred_values.l2_norm();
+            transferred_values -= fine_values;
+            const double l2_error = transferred_values.l2_norm();
 
-          AssertThrow(
-            l2_error < tolerance,
-            ExcMessage(
-              "Final transfer (agglo->original) failed linear test with error " +
-              std::to_string(l2_error)));
+            AssertThrow(
+              l2_error < tolerance,
+              ExcMessage(
+                "Final transfer (agglo->original) failed linear test with error " +
+                std::to_string(l2_error)));
 
-          std::cout << "Level " << level << " (" << mat.m() << " x " << mat.n()
-                    << "): L2 error = " << l2_error << " (agglo->original)"
-                    << std::endl;
-        }
-    }
+            std::cout << "Level " << level << " (" << mat.m() << " x "
+                      << mat.n() << "): L2 error = " << l2_error
+                      << " (agglo->original)" << std::endl;
+          }
+      }
 
-  std::cout << "All continuous transfer tests: OK" << std::endl;
+    std::cout << "All point-agglo continuous transfer tests: OK" << std::endl;
+  }
+
+  // Cell agglo test
+  {
+    std::vector<SparseMatrix<double>> injection_matrices;
+    std::vector<SparsityPattern>      injection_sparsity_patterns;
+    std::vector<unsigned int>         coarse_space_degrees(mg_levels - 1, 1);
+    std::vector<std::unique_ptr<Triangulation<dim>>> triangulations;
+    std::vector<std::unique_ptr<DoFHandler<dim>>>    support_dof_handlers;
+
+    ContinuousAggloUtils::CellsAgglo::
+      agglomerate_and_compute_injection_matrices<dim,
+                                                 min_elem_per_node,
+                                                 max_elem_per_node>(
+        dof_handler,
+        mapping,
+        skip_leaves,
+        injection_matrices,
+        injection_sparsity_patterns,
+        mg_levels,
+        coarse_space_degrees,
+        triangulations,
+        support_dof_handlers);
+
+    std::cout << "Built " << injection_matrices.size() << " injection matrices"
+              << std::endl;
+
+    for (unsigned int level = 0; level < injection_matrices.size(); ++level)
+      {
+        const auto &mat = injection_matrices[level];
+
+        std::vector<Point<dim>> coarse_support_points(
+          support_dof_handlers[level]->n_dofs());
+        DoFTools::map_dofs_to_support_points(mapping,
+                                             *support_dof_handlers[level],
+                                             coarse_support_points);
+
+        AssertThrow(mat.n() == coarse_support_points.size(),
+                    ExcDimensionMismatch(mat.n(),
+                                         coarse_support_points.size()));
+
+        Vector<double> coarse_values(coarse_support_points.size());
+        for (unsigned int i = 0; i < coarse_values.size(); ++i)
+          coarse_values[i] =
+            coarse_support_points[i][0] + coarse_support_points[i][1];
+
+        if (level < mg_levels - 2)
+          {
+            std::vector<Point<dim>> fine_support_points(
+              support_dof_handlers[level + 1]->n_dofs());
+            DoFTools::map_dofs_to_support_points(
+              mapping, *support_dof_handlers[level + 1], fine_support_points);
+
+            AssertThrow(mat.m() == fine_support_points.size(),
+                        ExcDimensionMismatch(mat.m(),
+                                             fine_support_points.size()));
+
+            Vector<double> fine_values(fine_support_points.size());
+            for (unsigned int i = 0; i < fine_values.size(); ++i)
+              fine_values[i] =
+                fine_support_points[i][0] + fine_support_points[i][1];
+
+            Vector<double> transferred_values(fine_values.size());
+            mat.vmult(transferred_values, coarse_values);
+
+            transferred_values -= fine_values;
+            const double l2_error = transferred_values.l2_norm();
+
+            AssertThrow(l2_error < tolerance,
+                        ExcMessage(
+                          "Agglomerated transfer " + std::to_string(level) +
+                          " (coarse->fine) failed linear test with error " +
+                          std::to_string(l2_error)));
+
+            std::cout << "Level " << level << " (" << mat.m() << " x "
+                      << mat.n() << "): L2 error = " << l2_error << std::endl;
+          }
+        else
+          {
+            AssertThrow(mat.m() == support_points_vector.size(),
+                        ExcDimensionMismatch(mat.m(),
+                                             support_points_vector.size()));
+
+            Vector<double> fine_values(support_points_vector.size());
+            for (unsigned int i = 0; i < fine_values.size(); ++i)
+              fine_values[i] =
+                support_points_vector[i][0] + support_points_vector[i][1];
+
+            Vector<double> transferred_values(fine_values.size());
+            mat.vmult(transferred_values, coarse_values);
+
+            transferred_values -= fine_values;
+            const double l2_error = transferred_values.l2_norm();
+
+            AssertThrow(
+              l2_error < tolerance,
+              ExcMessage(
+                "Final transfer (agglo->original) failed linear test with error " +
+                std::to_string(l2_error)));
+
+            std::cout << "Level " << level << " (" << mat.m() << " x "
+                      << mat.n() << "): L2 error = " << l2_error
+                      << " (agglo->original)" << std::endl;
+          }
+      }
+
+    std::cout << "All cell-agglo continuous transfer tests: OK" << std::endl;
+  }
 }

@@ -798,7 +798,300 @@ namespace dealii::ContinuousAggloUtils
     }
   } // namespace PointsAgglo
   namespace CellsAgglo
-  {} // namespace CellsAgglo
+  {
+    template <int dim>
+    void
+    create_bounding_box_from_agglo_cells(
+      const std::vector<
+        std::vector<typename Triangulation<dim>::active_cell_iterator>>
+                                    &vec_agglomerates,
+      std::vector<BoundingBox<dim>> &agglomerate_boxes,
+      const Mapping<dim, dim>       &mapping)
+    {
+      agglomerate_boxes.reserve(vec_agglomerates.size());
+
+      for (const auto &agglo : vec_agglomerates)
+        {
+          bool       init = false;
+          Point<dim> p_min, p_max;
+
+          for (const auto &cell : agglo)
+            {
+              const auto &bb = mapping.get_bounding_box(cell);
+              const auto &bp = bb.get_boundary_points(); // {min,max}
+
+              if (!init)
+                {
+                  p_min = bp.first;
+                  p_max = bp.second;
+                  init  = true;
+                }
+              else
+                {
+                  for (unsigned int d = 0; d < dim; ++d)
+                    {
+                      p_min[d] = std::min(p_min[d], bp.first[d]);
+                      p_max[d] = std::max(p_max[d], bp.second[d]);
+                    }
+                }
+            }
+          agglomerate_boxes.emplace_back(std::make_pair(p_min, p_max));
+        }
+    }
+
+
+
+    template <int dim, unsigned int rtree_m, unsigned int rtree_M>
+    void
+    agglomerate_and_compute_injection_matrices(
+      const DoFHandler<dim>             &fine_dh,
+      const Mapping<dim, dim>           &mapping,
+      const bool                         skip_leaves,
+      std::vector<SparseMatrix<double>> &injection_matrices,
+      std::vector<SparsityPattern>      &injection_sparsity_patterns,
+      const unsigned int                 mg_levels,
+      const std::vector<unsigned int>   &coarse_space_degrees,
+      std::vector<std::unique_ptr<Triangulation<dim>>> &triangulations,
+      std::vector<std::unique_ptr<DoFHandler<dim>>>    &support_dof_handlers)
+    {
+      namespace bgi = boost::geometry::index;
+
+      Assert(mg_levels > 1,
+             ExcMessage("At least two levels are needed for agglomeration."));
+      Assert(coarse_space_degrees.size() == mg_levels - 1,
+             ExcMessage(
+               "The size of coarse_space_degrees should be mg_levels - 1."));
+
+      const Triangulation<dim> &fine_tria = fine_dh.get_triangulation();
+
+      std::vector<std::pair<BoundingBox<dim>,
+                            typename Triangulation<dim>::active_cell_iterator>>
+        boxes(fine_tria.n_active_cells());
+
+      unsigned int i = 0;
+      for (const auto &cell : fine_tria.active_cell_iterators())
+        boxes[i++] = std::make_pair(mapping.get_bounding_box(cell), cell);
+
+      auto tree = pack_rtree<bgi::rstar<rtree_M, rtree_m>>(boxes);
+
+      unsigned int tree_lvls = n_levels(tree);
+      if (skip_leaves)
+        tree_lvls = std::max<unsigned int>(tree_lvls - 1, 0);
+
+      Assert(
+        tree_lvls > 1,
+        ExcMessage(
+          "The tree should have at least two levels to perform agglomeration."));
+
+      Assert(mg_levels <= tree_lvls + 1,
+             ExcMessage("You are trying to use " + std::to_string(mg_levels) +
+                        " levels, but the hierarchy can only have " +
+                        std::to_string(tree_lvls + 1) + " levels."));
+
+      std::vector<std::vector<BoundingBox<dim>>> boxes_per_level(mg_levels - 1);
+      std::vector<
+        std::map<std::pair<types::global_cell_index, types::global_cell_index>,
+                 std::vector<types::global_cell_index>>>
+        hierarchies_per_level(mg_levels - 2);
+
+      unsigned int j = 0;
+      for (unsigned int i = tree_lvls - mg_levels + 1; i < tree_lvls; ++i)
+        {
+          CellsAgglomerator<dim, decltype(tree)> agglomerator{tree, i + 1};
+          const std::vector<
+            std::vector<typename Triangulation<dim>::active_cell_iterator>>
+            agglomerates = agglomerator.extract_agglomerates();
+          boxes_per_level[j].reserve(agglomerates.size());
+
+          // Store hierarchy for reuse later (not needed for last level)
+          if (j < mg_levels - 2)
+            hierarchies_per_level[j] = agglomerator.get_hierarchy();
+
+          create_bounding_box_from_agglo_cells(agglomerates,
+                                               boxes_per_level[j],
+                                               mapping);
+          j++;
+        }
+
+      triangulations.clear();
+      support_dof_handlers.clear();
+      triangulations.resize(mg_levels - 1);
+      support_dof_handlers.resize(mg_levels - 1);
+
+      for (unsigned int i = 0; i < mg_levels - 1; ++i)
+        {
+          triangulations[i] = std::make_unique<Triangulation<dim>>();
+          dealii::ContinuousAggloUtils::
+            create_triangulation_from_bounding_boxes(*triangulations[i],
+                                                     boxes_per_level[i]);
+          support_dof_handlers[i] =
+            std::make_unique<DoFHandler<dim>>(*triangulations[i]);
+
+          FE_DGQ<dim> fe_dgq(coarse_space_degrees[i]);
+          support_dof_handlers[i]->distribute_dofs(fe_dgq);
+        }
+
+      injection_matrices.clear();
+      injection_sparsity_patterns.clear();
+      injection_matrices.resize(mg_levels - 1);
+      injection_sparsity_patterns.resize(mg_levels - 1);
+
+      for (unsigned int j = 0; j < mg_levels - 2; ++j)
+        dealii::ContinuousAggloUtils::fill_injection_matrix(
+          *support_dof_handlers[j],
+          *support_dof_handlers[j + 1],
+          injection_sparsity_patterns[j],
+          injection_matrices[j],
+          hierarchies_per_level[j],
+          boxes_per_level[j],
+          boxes_per_level[j + 1],
+          tree_lvls - mg_levels + 1 + j);
+
+      {
+        CellsAgglomerator<dim, decltype(tree)> agglomerator{tree, tree_lvls};
+
+        std::vector<
+          std::vector<typename Triangulation<dim>::active_cell_iterator>>
+          agglomerates = agglomerator.extract_agglomerates();
+
+        FE_DGQ<dim> fe_dgq(coarse_space_degrees[mg_levels - 2]);
+
+        std::vector<types::global_dof_index> dof_indices_agglo_tria(
+          fe_dgq.n_dofs_per_cell());
+        std::vector<types::global_dof_index> fine_dof_indices(
+          fine_dh.get_fe().n_dofs_per_cell());
+
+        DynamicSparsityPattern dsp_agglo_to_original_tria;
+        dsp_agglo_to_original_tria.reinit(
+          fine_dh.n_dofs(), support_dof_handlers[mg_levels - 2]->n_dofs());
+
+        IndexSet assigned_dofs(fine_dh.n_dofs());
+
+        for (const auto &cell :
+             support_dof_handlers[mg_levels - 2]->active_cell_iterators())
+          {
+            cell->get_dof_indices(dof_indices_agglo_tria);
+
+            for (const auto &child_cell :
+                 agglomerates[cell->active_cell_index()])
+              {
+                const auto child_cell_dh =
+                  child_cell->as_dof_handler_iterator(fine_dh);
+
+                child_cell_dh->get_dof_indices(fine_dof_indices);
+
+                for (const auto &fine_dof_idx : fine_dof_indices)
+                  {
+                    if (assigned_dofs.is_element(fine_dof_idx))
+                      continue;
+                    else
+                      {
+                        dsp_agglo_to_original_tria.add_entries(
+                          fine_dof_idx,
+                          dof_indices_agglo_tria.begin(),
+                          dof_indices_agglo_tria.end());
+                        assigned_dofs.add_index(fine_dof_idx);
+                      }
+                  }
+              }
+          }
+        injection_sparsity_patterns[mg_levels - 2].copy_from(
+          dsp_agglo_to_original_tria);
+        injection_matrices[mg_levels - 2].reinit(
+          injection_sparsity_patterns[mg_levels - 2]);
+
+        AffineConstraints<double> dummy_constraints; // for loc2glob
+        assigned_dofs.clear();                       // reset for filling matrix
+
+        std::vector<Point<dim>> unit_support_points =
+          fine_dh.get_fe().get_unit_support_points();
+
+
+        for (const auto &cell :
+             support_dof_handlers[mg_levels - 2]->active_cell_iterators())
+          {
+            cell->get_dof_indices(dof_indices_agglo_tria);
+
+            const BoundingBox<dim> &coarse_box =
+              boxes_per_level[mg_levels - 2][cell->active_cell_index()];
+
+            std::vector<Point<dim>> fine_support_points;
+            fine_support_points.reserve(
+              unit_support_points.size() *
+              agglomerates[cell->active_cell_index()].size());
+
+            std::vector<types::global_dof_index> actual_fine_dof_indices;
+
+            actual_fine_dof_indices.reserve(
+              unit_support_points.size() *
+              agglomerates[cell->active_cell_index()].size());
+
+            for (const auto &child_cell :
+                 agglomerates[cell->active_cell_index()])
+              {
+                const auto child_cell_dh =
+                  child_cell->as_dof_handler_iterator(fine_dh);
+
+                child_cell_dh->get_dof_indices(fine_dof_indices);
+
+                unsigned int find_dof_counter = 0;
+                for (const auto &fine_dof_idx : fine_dof_indices)
+                  {
+                    if (!assigned_dofs.is_element(fine_dof_idx))
+                      {
+                        assigned_dofs.add_index(fine_dof_idx);
+                        actual_fine_dof_indices.push_back(fine_dof_idx);
+                        Point<dim> real_p = mapping.transform_unit_to_real_cell(
+                          child_cell, unit_support_points[find_dof_counter]);
+                        fine_support_points.push_back(real_p);
+                      }
+                    find_dof_counter++;
+                  }
+              }
+
+            FullMatrix<double> local_matrix(fine_support_points.size(),
+                                            fe_dgq.n_dofs_per_cell());
+
+            local_matrix = 0.0;
+
+            for (unsigned int i = 0; i < fine_support_points.size(); ++i)
+              {
+                const Point<dim> p =
+                  coarse_box.real_to_unit(fine_support_points[i]);
+                for (unsigned int j = 0; j < dof_indices_agglo_tria.size(); ++j)
+                  {
+                    local_matrix(i, j) = fe_dgq.shape_value(j, p);
+                  }
+              }
+
+            dummy_constraints.distribute_local_to_global(
+              local_matrix,
+              actual_fine_dof_indices,
+              dof_indices_agglo_tria,
+              injection_matrices[mg_levels - 2]);
+          }
+      }
+    }
+
+
+
+    template <int dim, unsigned int rtree_m, unsigned int rtree_M>
+    void
+    parallel_agglomerate_and_compute_injection_matrices(
+      const DoFHandler<dim>                       &fine_dh,
+      const Mapping<dim, dim>                     &mapping,
+      const bool                                   skip_leaves,
+      std::vector<TrilinosWrappers::SparseMatrix> &injection_matrices,
+      std::vector<TrilinosWrappers::SparsityPattern>
+                                      &injection_sparsity_patterns,
+      const unsigned int               mg_levels,
+      const std::vector<unsigned int> &coarse_space_degrees,
+      std::vector<
+        std::unique_ptr<parallel::fullydistributed::Triangulation<dim, dim>>>
+                                                    &triangulations,
+      std::vector<std::unique_ptr<DoFHandler<dim>>> &support_dof_handlers)
+    {}
+  } // namespace CellsAgglo
 } // namespace dealii::ContinuousAggloUtils
 
 #endif
