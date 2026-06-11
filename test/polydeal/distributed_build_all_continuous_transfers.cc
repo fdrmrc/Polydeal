@@ -44,8 +44,8 @@
 
 #include "continuous_agglo_utils.h"
 
-static constexpr double       tolerance  = 1e-12;
-static constexpr unsigned int dim        = 2;
+static constexpr double       tolerance = 1e-12;
+static constexpr unsigned int dim       = 2;
 using namespace dealii;
 
 namespace
@@ -103,95 +103,188 @@ main(int argc, char *argv[])
 
   MappingQ1<dim> mapping;
 
-  // Build injection matrices for all levels
-  std::vector<TrilinosWrappers::SparseMatrix>    injection_matrices;
-  std::vector<TrilinosWrappers::SparsityPattern> injection_sparsity_patterns;
-  std::vector<unsigned int> coarse_space_degrees(mg_levels - 1, 1);
-  std::vector<
-    std::unique_ptr<parallel::fullydistributed::Triangulation<dim, dim>>>
-                                              triangulations;
-  std::vector<std::unique_ptr<DoFHandler<dim>>> support_dof_handlers;
+  // Point agglo part
+  {
+    // Build injection matrices for all levels
+    std::vector<TrilinosWrappers::SparseMatrix>    injection_matrices;
+    std::vector<TrilinosWrappers::SparsityPattern> injection_sparsity_patterns;
+    std::vector<unsigned int> coarse_space_degrees(mg_levels - 1, 1);
+    std::vector<
+      std::unique_ptr<parallel::fullydistributed::Triangulation<dim, dim>>>
+                                                  triangulations;
+    std::vector<std::unique_ptr<DoFHandler<dim>>> support_dof_handlers;
 
-  ContinuousAggloUtils::PointsAgglo::
-    parallel_agglomerate_and_compute_injection_matrices<dim,
-                                                        min_elem_per_node,
-                                                        max_elem_per_node>(
-      dof_handler,
-      mapping,
-      skip_leaves,
-      injection_matrices,
-      injection_sparsity_patterns,
-      mg_levels,
-      coarse_space_degrees,
-      triangulations,
-      support_dof_handlers);
+    ContinuousAggloUtils::PointsAgglo::
+      parallel_agglomerate_and_compute_injection_matrices<dim,
+                                                          min_elem_per_node,
+                                                          max_elem_per_node>(
+        dof_handler,
+        mapping,
+        skip_leaves,
+        injection_matrices,
+        injection_sparsity_patterns,
+        mg_levels,
+        coarse_space_degrees,
+        triangulations,
+        support_dof_handlers);
 
-  if (my_rank == 0)
-    std::cout << "Built " << injection_matrices.size() << " injection matrices"
-              << std::endl;
+    if (my_rank == 0)
+      std::cout << "Built " << injection_matrices.size()
+                << " injection matrices" << std::endl;
 
-  LinearField<dim> linear_field;
+    LinearField<dim> linear_field;
 
-  for (unsigned int level = 0; level < injection_matrices.size(); ++level)
-    {
-      const auto &mat = injection_matrices[level];
+    for (unsigned int level = 0; level < injection_matrices.size(); ++level)
+      {
+        const auto &mat = injection_matrices[level];
 
-      TrilinosWrappers::MPI::Vector coarse_values(
-        mat.locally_owned_domain_indices());
-      TrilinosWrappers::MPI::Vector fine_values(
-        mat.locally_owned_range_indices());
-      TrilinosWrappers::MPI::Vector transferred_values(
-        mat.locally_owned_range_indices());
+        TrilinosWrappers::MPI::Vector coarse_values(
+          mat.locally_owned_domain_indices());
+        TrilinosWrappers::MPI::Vector fine_values(
+          mat.locally_owned_range_indices());
+        TrilinosWrappers::MPI::Vector transferred_values(
+          mat.locally_owned_range_indices());
 
-      if (level < mg_levels - 2)
-        {
-          VectorTools::interpolate(mapping,
-                                   *support_dof_handlers[level],
-                                   linear_field,
-                                   coarse_values);
-          VectorTools::interpolate(mapping,
-                                   *support_dof_handlers[level + 1],
-                                   linear_field,
-                                   fine_values);
-        }
-      else
-        {
-          VectorTools::interpolate(mapping,
-                                   *support_dof_handlers[level],
-                                   linear_field,
-                                   coarse_values);
-          VectorTools::interpolate(mapping,
-                                   dof_handler,
-                                   linear_field,
-                                   fine_values);
-        }
+        if (level < mg_levels - 2)
+          {
+            VectorTools::interpolate(mapping,
+                                     *support_dof_handlers[level],
+                                     linear_field,
+                                     coarse_values);
+            VectorTools::interpolate(mapping,
+                                     *support_dof_handlers[level + 1],
+                                     linear_field,
+                                     fine_values);
+          }
+        else
+          {
+            VectorTools::interpolate(mapping,
+                                     *support_dof_handlers[level],
+                                     linear_field,
+                                     coarse_values);
+            VectorTools::interpolate(mapping,
+                                     dof_handler,
+                                     linear_field,
+                                     fine_values);
+          }
 
-      mat.vmult(transferred_values, coarse_values);
+        mat.vmult(transferred_values, coarse_values);
 
-      transferred_values -= fine_values;
-      const double l2_error = transferred_values.l2_norm();
+        transferred_values -= fine_values;
+        const double l2_error = transferred_values.l2_norm();
 
-      AssertThrow(
-        l2_error < tolerance,
-        ExcMessage(
-          std::string("Injection matrix at level ") + std::to_string(level) +
-          " failed the linear field test with error " +
-          std::to_string(l2_error)));
+        AssertThrow(l2_error < tolerance,
+                    ExcMessage(std::string("Injection matrix at level ") +
+                               std::to_string(level) +
+                               " failed the linear field test with error " +
+                               std::to_string(l2_error)));
 
-      if (my_rank == 0)
-        {
-          if (level < mg_levels - 2)
-            std::cout << "Level " << level << " (" << mat.m() << " x "
-                      << mat.n() << "): L2 error = " << l2_error << std::endl;
-          else
-            std::cout << "Level " << level << " (" << mat.m() << " x "
-                      << mat.n() << "): L2 error = " << l2_error
-                      << " (agglo->original)" << std::endl;
-        }
-    }
+        if (my_rank == 0)
+          {
+            if (level < mg_levels - 2)
+              std::cout << "Level " << level << " (" << mat.m() << " x "
+                        << mat.n() << "): L2 error = " << l2_error << std::endl;
+            else
+              std::cout << "Level " << level << " (" << mat.m() << " x "
+                        << mat.n() << "): L2 error = " << l2_error
+                        << " (agglo->original)" << std::endl;
+          }
+      }
 
-  if (my_rank == 0)
-    std::cout << "All continuous transfer tests: OK" << std::endl;
+    if (my_rank == 0)
+      std::cout << "All point-agglo continuous transfer tests: OK" << std::endl;
+  }
 
+  // Cells agglo part
+  {
+    // Build injection matrices for all levels
+    std::vector<TrilinosWrappers::SparseMatrix>    injection_matrices;
+    std::vector<TrilinosWrappers::SparsityPattern> injection_sparsity_patterns;
+    std::vector<unsigned int> coarse_space_degrees(mg_levels - 1, 1);
+    std::vector<
+      std::unique_ptr<parallel::fullydistributed::Triangulation<dim, dim>>>
+                                                  triangulations;
+    std::vector<std::unique_ptr<DoFHandler<dim>>> support_dof_handlers;
+
+    ContinuousAggloUtils::CellsAgglo::
+      parallel_agglomerate_and_compute_injection_matrices<dim,
+                                                          min_elem_per_node,
+                                                          max_elem_per_node>(
+        dof_handler,
+        mapping,
+        skip_leaves,
+        injection_matrices,
+        injection_sparsity_patterns,
+        mg_levels,
+        coarse_space_degrees,
+        triangulations,
+        support_dof_handlers);
+
+    if (my_rank == 0)
+      std::cout << "Built " << injection_matrices.size()
+                << " injection matrices" << std::endl;
+
+    LinearField<dim> linear_field;
+
+    for (unsigned int level = 0; level < injection_matrices.size(); ++level)
+      {
+        const auto &mat = injection_matrices[level];
+
+        TrilinosWrappers::MPI::Vector coarse_values(
+          mat.locally_owned_domain_indices());
+        TrilinosWrappers::MPI::Vector fine_values(
+          mat.locally_owned_range_indices());
+        TrilinosWrappers::MPI::Vector transferred_values(
+          mat.locally_owned_range_indices());
+
+        if (level < mg_levels - 2)
+          {
+            VectorTools::interpolate(mapping,
+                                     *support_dof_handlers[level],
+                                     linear_field,
+                                     coarse_values);
+            VectorTools::interpolate(mapping,
+                                     *support_dof_handlers[level + 1],
+                                     linear_field,
+                                     fine_values);
+          }
+        else
+          {
+            VectorTools::interpolate(mapping,
+                                     *support_dof_handlers[level],
+                                     linear_field,
+                                     coarse_values);
+            VectorTools::interpolate(mapping,
+                                     dof_handler,
+                                     linear_field,
+                                     fine_values);
+          }
+
+        mat.vmult(transferred_values, coarse_values);
+
+        transferred_values -= fine_values;
+        const double l2_error = transferred_values.l2_norm();
+
+        AssertThrow(l2_error < tolerance,
+                    ExcMessage(std::string("Injection matrix at level ") +
+                               std::to_string(level) +
+                               " failed the linear field test with error " +
+                               std::to_string(l2_error)));
+
+        if (my_rank == 0)
+          {
+            if (level < mg_levels - 2)
+              std::cout << "Level " << level << " (" << mat.m() << " x "
+                        << mat.n() << "): L2 error = " << l2_error << std::endl;
+            else
+              std::cout << "Level " << level << " (" << mat.m() << " x "
+                        << mat.n() << "): L2 error = " << l2_error
+                        << " (agglo->original)" << std::endl;
+          }
+      }
+
+    if (my_rank == 0)
+      std::cout << "All cell-agglo continuous transfer tests: OK" << std::endl;
+  }
   return 0;
 }

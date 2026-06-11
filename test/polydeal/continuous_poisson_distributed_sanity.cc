@@ -108,237 +108,497 @@ main(int argc, char *argv[])
   FE_Q<dim>       fe(1);
   dof_handler.distribute_dofs(fe);
   MappingQ1<dim> mapping;
+  // Point agglo section
+  {
+    if (my_rank == 0)
+      std::cout << "Running point agglomeration test" << std::endl;
 
-  std::vector<TrilinosWrappers::SparseMatrix>    injection_matrices;
-  std::vector<TrilinosWrappers::SparsityPattern> injection_sparsity_patterns;
-  unsigned int                                   mg_levels            = 3;
-  std::vector<unsigned int>                      coarse_space_degrees = {1, 1};
+    std::vector<TrilinosWrappers::SparseMatrix>    injection_matrices;
+    std::vector<TrilinosWrappers::SparsityPattern> injection_sparsity_patterns;
+    unsigned int                                   mg_levels = 3;
+    std::vector<unsigned int> coarse_space_degrees           = {1, 1};
 
-  std::vector<
-    std::unique_ptr<parallel::fullydistributed::Triangulation<dim, dim>>>
-                                                triangulations(mg_levels - 1);
-  std::vector<std::unique_ptr<DoFHandler<dim>>> support_dof_handlers(mg_levels -
-                                                                     1);
+    std::vector<
+      std::unique_ptr<parallel::fullydistributed::Triangulation<dim, dim>>>
+                                                  triangulations(mg_levels - 1);
+    std::vector<std::unique_ptr<DoFHandler<dim>>> support_dof_handlers(
+      mg_levels - 1);
 
-  ContinuousAggloUtils::PointsAgglo::
-    parallel_agglomerate_and_compute_injection_matrices<dim,
-                                                        min_elem_per_node,
-                                                        max_elem_per_node>(
-      dof_handler,
-      mapping,
-      true,
-      injection_matrices,
-      injection_sparsity_patterns,
-      mg_levels,
-      coarse_space_degrees,
-      triangulations,
-      support_dof_handlers);
+    ContinuousAggloUtils::PointsAgglo::
+      parallel_agglomerate_and_compute_injection_matrices<dim,
+                                                          min_elem_per_node,
+                                                          max_elem_per_node>(
+        dof_handler,
+        mapping,
+        true,
+        injection_matrices,
+        injection_sparsity_patterns,
+        mg_levels,
+        coarse_space_degrees,
+        triangulations,
+        support_dof_handlers);
 
-  // Set up Dirichlet boundary conditions using AffineConstraints
-  const IndexSet locally_owned_dofs = dof_handler.locally_owned_dofs();
-  const IndexSet locally_relevant_dofs =
-    DoFTools::extract_locally_relevant_dofs(dof_handler);
+    // Set up Dirichlet boundary conditions using AffineConstraints
+    const IndexSet locally_owned_dofs = dof_handler.locally_owned_dofs();
+    const IndexSet locally_relevant_dofs =
+      DoFTools::extract_locally_relevant_dofs(dof_handler);
 
-  AffineConstraints<double> constraints;
-  constraints.clear();
-  constraints.reinit(locally_owned_dofs, locally_relevant_dofs);
-  LinearSumFunction linear_bc;
-  VectorTools::interpolate_boundary_values(
-    mapping, dof_handler, 0, linear_bc, constraints);
-  constraints.close();
+    AffineConstraints<double> constraints;
+    constraints.clear();
+    constraints.reinit(locally_owned_dofs, locally_relevant_dofs);
+    LinearSumFunction linear_bc;
+    VectorTools::interpolate_boundary_values(
+      mapping, dof_handler, 0, linear_bc, constraints);
+    constraints.close();
 
-  // Build distributed sparsity pattern and system matrix
-  TrilinosWrappers::SparsityPattern sparsity_pattern(locally_owned_dofs, comm);
-  DoFTools::make_sparsity_pattern(dof_handler,
-                                  sparsity_pattern,
-                                  constraints,
-                                  false);
-  sparsity_pattern.compress();
-  TrilinosWrappers::SparseMatrix system_matrix;
-  system_matrix.reinit(sparsity_pattern);
+    // Build distributed sparsity pattern and system matrix
+    TrilinosWrappers::SparsityPattern sparsity_pattern(locally_owned_dofs,
+                                                       comm);
+    DoFTools::make_sparsity_pattern(dof_handler,
+                                    sparsity_pattern,
+                                    constraints,
+                                    false);
+    sparsity_pattern.compress();
+    TrilinosWrappers::SparseMatrix system_matrix;
+    system_matrix.reinit(sparsity_pattern);
 
-  // Assemble Laplace matrix
-  FEValues<dim>             fe_values(mapping,
-                          fe,
-                          QGauss<dim>(fe.degree + 1),
-                          update_gradients | update_JxW_values |
-                            update_quadrature_points);
-  const unsigned int        dofs_per_cell = fe.n_dofs_per_cell();
-  FullMatrix<double>        cell_matrix(dofs_per_cell, dofs_per_cell);
-  Vector<double>            cell_rhs(dofs_per_cell);
-  std::vector<unsigned int> local_dof_indices(dofs_per_cell);
+    // Assemble Laplace matrix
+    FEValues<dim>             fe_values(mapping,
+                            fe,
+                            QGauss<dim>(fe.degree + 1),
+                            update_gradients | update_JxW_values |
+                              update_quadrature_points);
+    const unsigned int        dofs_per_cell = fe.n_dofs_per_cell();
+    FullMatrix<double>        cell_matrix(dofs_per_cell, dofs_per_cell);
+    Vector<double>            cell_rhs(dofs_per_cell);
+    std::vector<unsigned int> local_dof_indices(dofs_per_cell);
 
-  LinearAlgebra::distributed::Vector<double> system_rhs(locally_owned_dofs,
-                                                        locally_relevant_dofs,
-                                                        comm);
-  system_rhs = 0.0;
+    LinearAlgebra::distributed::Vector<double> system_rhs(locally_owned_dofs,
+                                                          locally_relevant_dofs,
+                                                          comm);
+    system_rhs = 0.0;
 
-  for (const auto &cell : dof_handler.active_cell_iterators())
-    if (cell->is_locally_owned())
+    for (const auto &cell : dof_handler.active_cell_iterators())
+      if (cell->is_locally_owned())
+        {
+          cell_matrix = 0.0;
+          cell_rhs    = 0.0;
+          fe_values.reinit(cell);
+
+          for (const unsigned int q : fe_values.quadrature_point_indices())
+            for (unsigned int i = 0; i < dofs_per_cell; ++i)
+              for (unsigned int j = 0; j < dofs_per_cell; ++j)
+                cell_matrix(i, j) += fe_values.shape_grad(i, q) *
+                                     fe_values.shape_grad(j, q) *
+                                     fe_values.JxW(q);
+
+          cell->get_dof_indices(local_dof_indices);
+          constraints.distribute_local_to_global(cell_matrix,
+                                                 cell_rhs,
+                                                 local_dof_indices,
+                                                 system_matrix,
+                                                 system_rhs);
+        }
+
+    system_matrix.compress(VectorOperation::add);
+    system_rhs.compress(VectorOperation::add);
+
+    // Set up level matrices via AmgProjector
+    AmgProjector<dim, TrilinosWrappers::SparseMatrix, double> amg_projector(
+      injection_matrices);
+
+    MGLevelObject<std::unique_ptr<TrilinosWrappers::SparseMatrix>>
+      multigrid_matrices(0, mg_levels - 1);
+
+    multigrid_matrices[multigrid_matrices.max_level()] =
+      std::make_unique<TrilinosWrappers::SparseMatrix>();
+    multigrid_matrices[multigrid_matrices.max_level()]->reinit(system_matrix);
+    multigrid_matrices[multigrid_matrices.max_level()]->copy_from(
+      system_matrix);
+
+    amg_projector.compute_level_matrices(multigrid_matrices);
+
+    // Set up multigrid solver
+    using LevelMatrixType = TrilinosWrappers::SparseMatrix;
+    using VectorType      = LinearAlgebra::distributed::Vector<double>;
+    mg::Matrix<VectorType> mg_matrix(multigrid_matrices);
+
+    using SmootherType = PreconditionChebyshev<LevelMatrixType, VectorType>;
+    mg::SmootherRelaxation<SmootherType, VectorType>     mg_smoother;
+    MGLevelObject<typename SmootherType::AdditionalData> smoother_data;
+    smoother_data.resize(0, mg_levels - 1);
+
+    VectorType diag_inverse(system_matrix.locally_owned_range_indices(), comm);
+    for (unsigned int row = system_matrix.local_range().first;
+         row < system_matrix.local_range().second;
+         ++row)
+      diag_inverse[row] = 1. / system_matrix.diag_element(row);
+    diag_inverse.compress(VectorOperation::insert);
+
+    std::vector<VectorType> diag_inverses(mg_levels);
+    diag_inverses[mg_levels - 1] = diag_inverse;
+
+    smoother_data[mg_levels - 1].preconditioner =
+      std::make_shared<DiagonalMatrix<VectorType>>(
+        diag_inverses[mg_levels - 1]);
+
+    for (unsigned int level = 0; level < mg_levels - 1; ++level)
       {
-        cell_matrix = 0.0;
-        cell_rhs    = 0.0;
-        fe_values.reinit(cell);
+        smoother_data[level].smoothing_range = 8;
+        diag_inverses[level].reinit(
+          multigrid_matrices[level]->locally_owned_range_indices(), comm);
+        for (unsigned int row = multigrid_matrices[level]->local_range().first;
+             row < multigrid_matrices[level]->local_range().second;
+             ++row)
+          diag_inverses[level][row] =
+            1. / multigrid_matrices[level]->diag_element(row);
+        diag_inverses[level].compress(VectorOperation::insert);
 
-        for (const unsigned int q : fe_values.quadrature_point_indices())
-          for (unsigned int i = 0; i < dofs_per_cell; ++i)
-            for (unsigned int j = 0; j < dofs_per_cell; ++j)
-              cell_matrix(i, j) += fe_values.shape_grad(i, q) *
-                                   fe_values.shape_grad(j, q) *
-                                   fe_values.JxW(q);
-
-        cell->get_dof_indices(local_dof_indices);
-        constraints.distribute_local_to_global(
-          cell_matrix, cell_rhs, local_dof_indices, system_matrix, system_rhs);
+        smoother_data[level].preconditioner =
+          std::make_shared<DiagonalMatrix<VectorType>>(diag_inverses[level]);
       }
 
-  system_matrix.compress(VectorOperation::add);
-  system_rhs.compress(VectorOperation::add);
+    for (unsigned int level = 0; level < mg_levels; ++level)
+      {
+        if (level > 0)
+          {
+            smoother_data[level].smoothing_range     = 20.;
+            smoother_data[level].degree              = 3;
+            smoother_data[level].eig_cg_n_iterations = 20;
+          }
+        else
+          {
+            smoother_data[0].smoothing_range     = 1e-3;
+            smoother_data[0].degree              = 3;
+            smoother_data[0].eig_cg_n_iterations = 20;
+          }
+      }
 
-  // Set up level matrices via AmgProjector
-  AmgProjector<dim, TrilinosWrappers::SparseMatrix, double> amg_projector(
-    injection_matrices);
+    mg_smoother.set_steps(2);
+    mg_smoother.initialize(multigrid_matrices, smoother_data);
 
-  MGLevelObject<std::unique_ptr<TrilinosWrappers::SparseMatrix>>
-    multigrid_matrices(0, mg_levels - 1);
+    Utils::MGCoarseDirect<VectorType,
+                          TrilinosWrappers::SparseMatrix,
+                          TrilinosWrappers::SolverDirect>
+      mg_coarse(*multigrid_matrices[0]);
 
-  multigrid_matrices[multigrid_matrices.max_level()] =
-    std::make_unique<TrilinosWrappers::SparseMatrix>();
-  multigrid_matrices[multigrid_matrices.max_level()]->reinit(system_matrix);
-  multigrid_matrices[multigrid_matrices.max_level()]->copy_from(system_matrix);
+    MGLevelObject<TrilinosWrappers::SparseMatrix *> mg_level_transfers(
+      0, mg_levels - 1);
+    for (unsigned int l = 0; l < mg_levels - 1; ++l)
+      mg_level_transfers[l] = &injection_matrices[l];
 
-  amg_projector.compute_level_matrices(multigrid_matrices);
+    std::vector<DoFHandler<dim> *> dof_handlers(support_dof_handlers.size() +
+                                                1);
+    for (unsigned int i = 0; i < support_dof_handlers.size(); ++i)
+      dof_handlers[i] = support_dof_handlers[i].get();
+    dof_handlers[support_dof_handlers.size()] = &dof_handler;
 
-  // Set up multigrid solver
-  using LevelMatrixType = TrilinosWrappers::SparseMatrix;
-  using VectorType      = LinearAlgebra::distributed::Vector<double>;
-  mg::Matrix<VectorType> mg_matrix(multigrid_matrices);
+    MGTransferAgglomeration<dim, VectorType> mg_transfer(mg_level_transfers,
+                                                         dof_handlers);
 
-  using SmootherType = PreconditionChebyshev<LevelMatrixType, VectorType>;
-  mg::SmootherRelaxation<SmootherType, VectorType>     mg_smoother;
-  MGLevelObject<typename SmootherType::AdditionalData> smoother_data;
-  smoother_data.resize(0, mg_levels - 1);
+    Multigrid<VectorType> mg(mg_matrix,
+                             mg_coarse,
+                             mg_transfer,
+                             mg_smoother,
+                             mg_smoother,
+                             0,
+                             numbers::invalid_unsigned_int,
+                             Multigrid<VectorType>::v_cycle);
 
-  VectorType diag_inverse(system_matrix.locally_owned_range_indices(), comm);
-  for (unsigned int row = system_matrix.local_range().first;
-       row < system_matrix.local_range().second;
-       ++row)
-    diag_inverse[row] = 1. / system_matrix.diag_element(row);
-  diag_inverse.compress(VectorOperation::insert);
+    PreconditionMG<dim, VectorType, MGTransferAgglomeration<dim, VectorType>>
+      preconditioner(dof_handler, mg, mg_transfer);
 
-  std::vector<VectorType> diag_inverses(mg_levels);
-  diag_inverses[mg_levels - 1] = diag_inverse;
+    // Solve with CG
+    VectorType dist_solution(locally_owned_dofs, comm);
+    dist_solution = 0.0;
 
-  smoother_data[mg_levels - 1].preconditioner =
-    std::make_shared<DiagonalMatrix<VectorType>>(diag_inverses[mg_levels - 1]);
+    ReductionControl     solver_control(1000, 1e-12, 1e-9);
+    SolverCG<VectorType> cg(solver_control);
+    cg.solve(system_matrix, dist_solution, system_rhs, preconditioner);
+    if (my_rank == 0)
+      std::cout << "CG converged in " << solver_control.last_step()
+                << " steps, final residual = " << solver_control.last_value()
+                << std::endl;
 
-  for (unsigned int level = 0; level < mg_levels - 1; ++level)
-    {
-      smoother_data[level].smoothing_range = 8;
-      diag_inverses[level].reinit(
-        multigrid_matrices[level]->locally_owned_range_indices(), comm);
-      for (unsigned int row = multigrid_matrices[level]->local_range().first;
-           row < multigrid_matrices[level]->local_range().second;
-           ++row)
-        diag_inverses[level][row] =
-          1. / multigrid_matrices[level]->diag_element(row);
-      diag_inverses[level].compress(VectorOperation::insert);
+    constraints.distribute(dist_solution);
 
-      smoother_data[level].preconditioner =
-        std::make_shared<DiagonalMatrix<VectorType>>(diag_inverses[level]);
-    }
+    const double rhs_norm      = system_rhs.l2_norm();
+    const double solution_norm = dist_solution.l2_norm();
 
-  for (unsigned int level = 0; level < mg_levels; ++level)
-    {
-      if (level > 0)
+    if (my_rank == 0)
+      std::cout << "RHS norm = " << rhs_norm
+                << ", solution norm = " << solution_norm << std::endl;
+
+    // Compute L2 error against exact solution u(x,y) = x + y
+    VectorType solution_ghosted(locally_owned_dofs,
+                                locally_relevant_dofs,
+                                comm);
+    solution_ghosted = dist_solution;
+    solution_ghosted.update_ghost_values();
+
+    Vector<double> error_per_cell(starting_tria_pft.n_active_cells());
+    VectorTools::integrate_difference(mapping,
+                                      dof_handler,
+                                      solution_ghosted,
+                                      linear_bc,
+                                      error_per_cell,
+                                      QGauss<dim>(fe.degree + 2),
+                                      VectorTools::L2_norm);
+
+    double l2_error =
+      std::sqrt(Utilities::MPI::sum(error_per_cell.norm_sqr(), comm));
+
+    if (my_rank == 0)
+      std::cout << "L2 error: " << l2_error << std::endl;
+
+    Assert(l2_error < tolerance,
+           ExcMessage("L2 error too large: " + std::to_string(l2_error)));
+  }
+
+  // Cell agglo section
+  {
+    if (my_rank == 0)
+      std::cout << "Running cell agglomeration test" << std::endl;
+
+    std::vector<TrilinosWrappers::SparseMatrix>    injection_matrices;
+    std::vector<TrilinosWrappers::SparsityPattern> injection_sparsity_patterns;
+    unsigned int                                   mg_levels = 3;
+    std::vector<unsigned int> coarse_space_degrees           = {1, 1};
+
+    std::vector<
+      std::unique_ptr<parallel::fullydistributed::Triangulation<dim, dim>>>
+                                                  triangulations(mg_levels - 1);
+    std::vector<std::unique_ptr<DoFHandler<dim>>> support_dof_handlers(
+      mg_levels - 1);
+
+    ContinuousAggloUtils::CellsAgglo::
+      parallel_agglomerate_and_compute_injection_matrices<dim,
+                                                          min_elem_per_node,
+                                                          max_elem_per_node>(
+        dof_handler,
+        mapping,
+        true,
+        injection_matrices,
+        injection_sparsity_patterns,
+        mg_levels,
+        coarse_space_degrees,
+        triangulations,
+        support_dof_handlers);
+
+    // Set up Dirichlet boundary conditions using AffineConstraints
+    const IndexSet locally_owned_dofs = dof_handler.locally_owned_dofs();
+    const IndexSet locally_relevant_dofs =
+      DoFTools::extract_locally_relevant_dofs(dof_handler);
+
+    AffineConstraints<double> constraints;
+    constraints.clear();
+    constraints.reinit(locally_owned_dofs, locally_relevant_dofs);
+    LinearSumFunction linear_bc;
+    VectorTools::interpolate_boundary_values(
+      mapping, dof_handler, 0, linear_bc, constraints);
+    constraints.close();
+
+    // Build distributed sparsity pattern and system matrix
+    TrilinosWrappers::SparsityPattern sparsity_pattern(locally_owned_dofs,
+                                                       comm);
+    DoFTools::make_sparsity_pattern(dof_handler,
+                                    sparsity_pattern,
+                                    constraints,
+                                    false);
+    sparsity_pattern.compress();
+    TrilinosWrappers::SparseMatrix system_matrix;
+    system_matrix.reinit(sparsity_pattern);
+
+    // Assemble Laplace matrix
+    FEValues<dim>             fe_values(mapping,
+                            fe,
+                            QGauss<dim>(fe.degree + 1),
+                            update_gradients | update_JxW_values |
+                              update_quadrature_points);
+    const unsigned int        dofs_per_cell = fe.n_dofs_per_cell();
+    FullMatrix<double>        cell_matrix(dofs_per_cell, dofs_per_cell);
+    Vector<double>            cell_rhs(dofs_per_cell);
+    std::vector<unsigned int> local_dof_indices(dofs_per_cell);
+
+    LinearAlgebra::distributed::Vector<double> system_rhs(locally_owned_dofs,
+                                                          locally_relevant_dofs,
+                                                          comm);
+    system_rhs = 0.0;
+
+    for (const auto &cell : dof_handler.active_cell_iterators())
+      if (cell->is_locally_owned())
         {
-          smoother_data[level].smoothing_range     = 20.;
-          smoother_data[level].degree              = 3;
-          smoother_data[level].eig_cg_n_iterations = 20;
+          cell_matrix = 0.0;
+          cell_rhs    = 0.0;
+          fe_values.reinit(cell);
+
+          for (const unsigned int q : fe_values.quadrature_point_indices())
+            for (unsigned int i = 0; i < dofs_per_cell; ++i)
+              for (unsigned int j = 0; j < dofs_per_cell; ++j)
+                cell_matrix(i, j) += fe_values.shape_grad(i, q) *
+                                     fe_values.shape_grad(j, q) *
+                                     fe_values.JxW(q);
+
+          cell->get_dof_indices(local_dof_indices);
+          constraints.distribute_local_to_global(cell_matrix,
+                                                 cell_rhs,
+                                                 local_dof_indices,
+                                                 system_matrix,
+                                                 system_rhs);
         }
-      else
-        {
-          smoother_data[0].smoothing_range     = 1e-3;
-          smoother_data[0].degree              = 3;
-          smoother_data[0].eig_cg_n_iterations = 20;
-        }
-    }
 
-  mg_smoother.set_steps(2);
-  mg_smoother.initialize(multigrid_matrices, smoother_data);
+    system_matrix.compress(VectorOperation::add);
+    system_rhs.compress(VectorOperation::add);
 
-  Utils::MGCoarseDirect<VectorType,
-                        TrilinosWrappers::SparseMatrix,
-                        TrilinosWrappers::SolverDirect>
-    mg_coarse(*multigrid_matrices[0]);
+    // Set up level matrices via AmgProjector
+    AmgProjector<dim, TrilinosWrappers::SparseMatrix, double> amg_projector(
+      injection_matrices);
 
-  MGLevelObject<TrilinosWrappers::SparseMatrix *> mg_level_transfers(0,
-                                                                     mg_levels -
-                                                                       1);
-  for (unsigned int l = 0; l < mg_levels - 1; ++l)
-    mg_level_transfers[l] = &injection_matrices[l];
+    MGLevelObject<std::unique_ptr<TrilinosWrappers::SparseMatrix>>
+      multigrid_matrices(0, mg_levels - 1);
 
-  std::vector<DoFHandler<dim> *> dof_handlers(support_dof_handlers.size() + 1);
-  for (unsigned int i = 0; i < support_dof_handlers.size(); ++i)
-    dof_handlers[i] = support_dof_handlers[i].get();
-  dof_handlers[support_dof_handlers.size()] = &dof_handler;
+    multigrid_matrices[multigrid_matrices.max_level()] =
+      std::make_unique<TrilinosWrappers::SparseMatrix>();
+    multigrid_matrices[multigrid_matrices.max_level()]->reinit(system_matrix);
+    multigrid_matrices[multigrid_matrices.max_level()]->copy_from(
+      system_matrix);
 
-  MGTransferAgglomeration<dim, VectorType> mg_transfer(mg_level_transfers,
-                                                       dof_handlers);
+    amg_projector.compute_level_matrices(multigrid_matrices);
 
-  Multigrid<VectorType> mg(mg_matrix,
-                           mg_coarse,
-                           mg_transfer,
-                           mg_smoother,
-                           mg_smoother,
-                           0,
-                           numbers::invalid_unsigned_int,
-                           Multigrid<VectorType>::v_cycle);
+    // Set up multigrid solver
+    using LevelMatrixType = TrilinosWrappers::SparseMatrix;
+    using VectorType      = LinearAlgebra::distributed::Vector<double>;
+    mg::Matrix<VectorType> mg_matrix(multigrid_matrices);
 
-  PreconditionMG<dim, VectorType, MGTransferAgglomeration<dim, VectorType>>
-    preconditioner(dof_handler, mg, mg_transfer);
+    using SmootherType = PreconditionChebyshev<LevelMatrixType, VectorType>;
+    mg::SmootherRelaxation<SmootherType, VectorType>     mg_smoother;
+    MGLevelObject<typename SmootherType::AdditionalData> smoother_data;
+    smoother_data.resize(0, mg_levels - 1);
 
-  // Solve with CG
-  VectorType dist_solution(locally_owned_dofs, comm);
-  dist_solution = 0.0;
+    VectorType diag_inverse(system_matrix.locally_owned_range_indices(), comm);
+    for (unsigned int row = system_matrix.local_range().first;
+         row < system_matrix.local_range().second;
+         ++row)
+      diag_inverse[row] = 1. / system_matrix.diag_element(row);
+    diag_inverse.compress(VectorOperation::insert);
 
-  ReductionControl     solver_control(1000, 1e-12, 1e-9);
-  SolverCG<VectorType> cg(solver_control);
-  cg.solve(system_matrix, dist_solution, system_rhs, preconditioner);
-  if (my_rank == 0)
-    std::cout << "CG converged in " << solver_control.last_step()
-              << " steps, final residual = " << solver_control.last_value()
-              << std::endl;
+    std::vector<VectorType> diag_inverses(mg_levels);
+    diag_inverses[mg_levels - 1] = diag_inverse;
 
-  constraints.distribute(dist_solution);
+    smoother_data[mg_levels - 1].preconditioner =
+      std::make_shared<DiagonalMatrix<VectorType>>(
+        diag_inverses[mg_levels - 1]);
 
-  const double rhs_norm      = system_rhs.l2_norm();
-  const double solution_norm = dist_solution.l2_norm();
+    for (unsigned int level = 0; level < mg_levels - 1; ++level)
+      {
+        smoother_data[level].smoothing_range = 8;
+        diag_inverses[level].reinit(
+          multigrid_matrices[level]->locally_owned_range_indices(), comm);
+        for (unsigned int row = multigrid_matrices[level]->local_range().first;
+             row < multigrid_matrices[level]->local_range().second;
+             ++row)
+          diag_inverses[level][row] =
+            1. / multigrid_matrices[level]->diag_element(row);
+        diag_inverses[level].compress(VectorOperation::insert);
 
-  if (my_rank == 0)
-    std::cout << "RHS norm = " << rhs_norm
-              << ", solution norm = " << solution_norm << std::endl;
+        smoother_data[level].preconditioner =
+          std::make_shared<DiagonalMatrix<VectorType>>(diag_inverses[level]);
+      }
 
-  // Compute L2 error against exact solution u(x,y) = x + y
-  VectorType solution_ghosted(locally_owned_dofs, locally_relevant_dofs, comm);
-  solution_ghosted = dist_solution;
-  solution_ghosted.update_ghost_values();
+    for (unsigned int level = 0; level < mg_levels; ++level)
+      {
+        if (level > 0)
+          {
+            smoother_data[level].smoothing_range     = 20.;
+            smoother_data[level].degree              = 3;
+            smoother_data[level].eig_cg_n_iterations = 20;
+          }
+        else
+          {
+            smoother_data[0].smoothing_range     = 1e-3;
+            smoother_data[0].degree              = 3;
+            smoother_data[0].eig_cg_n_iterations = 20;
+          }
+      }
 
-  Vector<double> error_per_cell(starting_tria_pft.n_active_cells());
-  VectorTools::integrate_difference(mapping,
-                                    dof_handler,
-                                    solution_ghosted,
-                                    linear_bc,
-                                    error_per_cell,
-                                    QGauss<dim>(fe.degree + 2),
-                                    VectorTools::L2_norm);
+    mg_smoother.set_steps(2);
+    mg_smoother.initialize(multigrid_matrices, smoother_data);
 
-  double l2_error =
-    std::sqrt(Utilities::MPI::sum(error_per_cell.norm_sqr(), comm));
+    Utils::MGCoarseDirect<VectorType,
+                          TrilinosWrappers::SparseMatrix,
+                          TrilinosWrappers::SolverDirect>
+      mg_coarse(*multigrid_matrices[0]);
 
-  if (my_rank == 0)
-    std::cout << "L2 error: " << l2_error << std::endl;
+    MGLevelObject<TrilinosWrappers::SparseMatrix *> mg_level_transfers(
+      0, mg_levels - 1);
+    for (unsigned int l = 0; l < mg_levels - 1; ++l)
+      mg_level_transfers[l] = &injection_matrices[l];
 
-  Assert(l2_error < tolerance,
-         ExcMessage("L2 error too large: " + std::to_string(l2_error)));
+    std::vector<DoFHandler<dim> *> dof_handlers(support_dof_handlers.size() +
+                                                1);
+    for (unsigned int i = 0; i < support_dof_handlers.size(); ++i)
+      dof_handlers[i] = support_dof_handlers[i].get();
+    dof_handlers[support_dof_handlers.size()] = &dof_handler;
+
+    MGTransferAgglomeration<dim, VectorType> mg_transfer(mg_level_transfers,
+                                                         dof_handlers);
+
+    Multigrid<VectorType> mg(mg_matrix,
+                             mg_coarse,
+                             mg_transfer,
+                             mg_smoother,
+                             mg_smoother,
+                             0,
+                             numbers::invalid_unsigned_int,
+                             Multigrid<VectorType>::v_cycle);
+
+    PreconditionMG<dim, VectorType, MGTransferAgglomeration<dim, VectorType>>
+      preconditioner(dof_handler, mg, mg_transfer);
+
+    // Solve with CG
+    VectorType dist_solution(locally_owned_dofs, comm);
+    dist_solution = 0.0;
+
+    ReductionControl     solver_control(1000, 1e-12, 1e-9);
+    SolverCG<VectorType> cg(solver_control);
+    cg.solve(system_matrix, dist_solution, system_rhs, preconditioner);
+    if (my_rank == 0)
+      std::cout << "CG converged in " << solver_control.last_step()
+                << " steps, final residual = " << solver_control.last_value()
+                << std::endl;
+
+    constraints.distribute(dist_solution);
+
+    const double rhs_norm      = system_rhs.l2_norm();
+    const double solution_norm = dist_solution.l2_norm();
+
+    if (my_rank == 0)
+      std::cout << "RHS norm = " << rhs_norm
+                << ", solution norm = " << solution_norm << std::endl;
+
+    // Compute L2 error against exact solution u(x,y) = x + y
+    VectorType solution_ghosted(locally_owned_dofs,
+                                locally_relevant_dofs,
+                                comm);
+    solution_ghosted = dist_solution;
+    solution_ghosted.update_ghost_values();
+
+    Vector<double> error_per_cell(starting_tria_pft.n_active_cells());
+    VectorTools::integrate_difference(mapping,
+                                      dof_handler,
+                                      solution_ghosted,
+                                      linear_bc,
+                                      error_per_cell,
+                                      QGauss<dim>(fe.degree + 2),
+                                      VectorTools::L2_norm);
+
+    double l2_error =
+      std::sqrt(Utilities::MPI::sum(error_per_cell.norm_sqr(), comm));
+
+    if (my_rank == 0)
+      std::cout << "L2 error: " << l2_error << std::endl;
+
+    Assert(l2_error < tolerance,
+           ExcMessage("L2 error too large: " + std::to_string(l2_error)));
+  }
 }

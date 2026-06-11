@@ -1211,14 +1211,12 @@ namespace dealii::ContinuousAggloUtils
 
         std::vector<types::global_dof_index> dof_indices_agglo_tria(
           fe_dgq.n_dofs_per_cell());
-        std::vector<types::global_dof_index> local_dof_indices_agglo_tria;
-        local_dof_indices_agglo_tria.reserve(fe_dgq.n_dofs_per_cell());
 
         std::vector<types::global_dof_index> fine_dof_indices(
           fine_dh.get_fe().n_dofs_per_cell());
         std::vector<types::global_dof_index>
           local_fine_dof_indices; // i need the local to filter out the ghost
-                                  // dofs
+                                  // dofs, not needed for the DG ones
         local_fine_dof_indices.reserve(fine_dof_indices.size());
 
         const IndexSet &locally_owned_dofs_coarse =
@@ -1233,17 +1231,11 @@ namespace dealii::ContinuousAggloUtils
         assigned_dofs
           .clear(); // to track which fine dofs have been assigned to an agglo
 
-        // I am not 100% sure this is ok, but since active_cell_index() is local
-        // this should be ok for the agglomerates
         for (const auto &cell :
              support_dof_handlers[mg_levels - 2]->active_cell_iterators())
           if (cell->is_locally_owned())
             {
               cell->get_dof_indices(dof_indices_agglo_tria);
-              local_dof_indices_agglo_tria.clear();
-              for (const auto &idx : dof_indices_agglo_tria)
-                if (locally_owned_dofs_coarse.is_element(idx))
-                  local_dof_indices_agglo_tria.push_back(idx);
 
               for (const auto &child_cell :
                    agglomerates[cell->active_cell_index()])
@@ -1265,8 +1257,8 @@ namespace dealii::ContinuousAggloUtils
                         {
                           injection_sparsity_patterns[mg_levels - 2]
                             .add_entries(fine_dof_idx,
-                                         local_dof_indices_agglo_tria.begin(),
-                                         local_dof_indices_agglo_tria.end());
+                                         dof_indices_agglo_tria.begin(),
+                                         dof_indices_agglo_tria.end());
                           assigned_dofs.add_index(fine_dof_idx);
                         }
                     }
@@ -1288,10 +1280,6 @@ namespace dealii::ContinuousAggloUtils
           if (cell->is_locally_owned())
             {
               cell->get_dof_indices(dof_indices_agglo_tria);
-              local_dof_indices_agglo_tria.clear();
-              for (const auto &idx : dof_indices_agglo_tria)
-                if (locally_owned_dofs_coarse.is_element(idx))
-                  local_dof_indices_agglo_tria.push_back(idx);
 
               const BoundingBox<dim> &coarse_box =
                 local_boxes_per_level[mg_levels - 2][cell->active_cell_index()];
@@ -1344,9 +1332,8 @@ namespace dealii::ContinuousAggloUtils
                       find_dof_counter++;
                     }
                 }
-              FullMatrix<double> local_matrix(
-                fine_support_points.size(),
-                local_dof_indices_agglo_tria.size());
+              FullMatrix<double> local_matrix(fine_support_points.size(),
+                                              dof_indices_agglo_tria.size());
 
               local_matrix = 0.0;
 
@@ -1354,8 +1341,7 @@ namespace dealii::ContinuousAggloUtils
                 {
                   const Point<dim> p =
                     coarse_box.real_to_unit(fine_support_points[i]);
-                  for (unsigned int j = 0;
-                       j < local_dof_indices_agglo_tria.size();
+                  for (unsigned int j = 0; j < dof_indices_agglo_tria.size();
                        ++j)
                     {
                       local_matrix(i, j) = fe_dgq.shape_value(j, p);
@@ -1365,7 +1351,7 @@ namespace dealii::ContinuousAggloUtils
               dummy_constraints.distribute_local_to_global(
                 local_matrix,
                 actual_fine_dof_indices,
-                local_dof_indices_agglo_tria,
+                dof_indices_agglo_tria,
                 injection_matrices[mg_levels - 2]);
             }
         injection_matrices[mg_levels - 2].compress(VectorOperation::add);
