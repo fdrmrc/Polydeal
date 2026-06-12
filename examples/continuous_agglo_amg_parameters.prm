@@ -9,13 +9,13 @@ subsection R-tree based MG
 
   subsection Grid generation
     # Type of grid to use. Options are 'grid_generator' and 'unstructured'.
-    set Grid type             = unstructured
+    set Grid type             = grid_generator
 
     # Number of global refinements to perform on the initial mesh.
-    set Number of initial refinements = 0
+    set Number of initial refinements = 5
     set Number of refinements cycles = 1
     set Use piston mesh       = false
-    set Use real lv mesh      = true
+    set Use real lv mesh      = false
   end
 
   subsection R3MG
@@ -26,6 +26,7 @@ subsection R-tree based MG
     set Do point agglomeration = true
     set Do cell agglomeration = true
     set Do Trilinos AMG = true
+    set Skip leaves level = true
   end
 
   subsection Reduction control

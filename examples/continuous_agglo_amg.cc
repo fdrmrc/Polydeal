@@ -458,8 +458,9 @@ public:
   unsigned int n_ref_cycles        = 1;
   bool         keep_ratio_constant = false; // try to keep H/h fixed
   bool         do_cells_agglo      = true; // test also cell-based agglomeration
-  bool         do_points_agglo = true; // test also point-based agglomeration
-  bool         do_trilinos_amg = true;
+  bool         do_points_agglo   = true; // test also point-based agglomeration
+  bool         do_trilinos_amg   = true;
+  bool         skip_leaves_level = true;
 
   mutable ParameterAcceptorProxy<ReductionControl> outer_solver_control;
 };
@@ -504,6 +505,7 @@ ProblemParameters<dim>::ProblemParameters()
     add_parameter("Do point agglomeration", do_points_agglo);
     add_parameter("Do cell agglomeration", do_cells_agglo);
     add_parameter("Do Trilinos AMG", do_trilinos_amg);
+    add_parameter("Skip leaves level", skip_leaves_level);
   }
   leave_subsection();
 
@@ -888,7 +890,7 @@ Poisson<dim, rtree_m_points, rtree_m_cells>::solve_with_point_agglo_amg()
                                                         rtree_M_points>(
       original_dof_handler,
       mapping,
-      true,
+      parameters.skip_leaves_level,
       injection_matrices,
       injection_sparsity_patterns,
       mg_levels,
@@ -1081,7 +1083,7 @@ Poisson<dim, rtree_m_points, rtree_m_cells>::solve_with_cell_agglo_amg()
                                                         rtree_M_cells>(
       original_dof_handler,
       mapping,
-      true,
+      parameters.skip_leaves_level,
       injection_matrices,
       injection_sparsity_patterns,
       mg_levels,
@@ -1320,6 +1322,9 @@ Poisson<dim, rtree_m_points, rtree_m_cells>::run()
                 << (parameters.keep_ratio_constant ? "true" : "false")
                 << std::endl;
       std::cout << "Number of refinements: " << parameters.n_refinements
+                << std::endl;
+      std::cout << "Skip leaves level: "
+                << (parameters.skip_leaves_level ? "true" : "false")
                 << std::endl;
       std::cout << std::string(80, '=') << std::endl;
     }
