@@ -1,0 +1,39 @@
+# Listing of Parameters
+# ---------------------
+subsection R-tree based MG
+  set Finite element degree = 1
+  set Output directory      = .
+  set Solution type         = product_sine
+  set Coarse Finite element degree = 1 
+
+
+  subsection Grid generation
+    # Type of grid to use. Options are 'grid_generator' and 'unstructured'.
+    set Grid type             = unstructured
+
+    # Number of global refinements to perform on the initial mesh.
+    set Number of initial refinements = 0
+    set Number of refinements cycles = 1
+    set Use piston mesh       = false
+    set Use real lv mesh      = true
+  end
+
+  subsection R3MG
+    set MG Levels = 4
+    set Partitioner type  = rtree
+    set Smoother steps    = 2
+    set Keep ratio constant = true
+    set Do point agglomeration = true
+    set Do cell agglomeration = true
+    set Do Trilinos AMG = true
+  end
+
+  subsection Reduction control
+    set Log history   = true
+    set Log result    = true
+    set Max steps     = 100
+    set Tolerance     = 1.e-9
+    set Reduction     = 1.e-6
+  end
+
+end
