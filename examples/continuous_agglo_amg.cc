@@ -72,6 +72,14 @@ using namespace dealii;
 #include "multigrid_amg.h"
 #include "utils.h"
 
+#ifndef DEAL_II_WITH_MUMPS
+namespace dealii
+{
+  class SparseDirectMUMPS
+  {};
+} // namespace dealii
+#endif
+
 namespace Utils
 {
 
