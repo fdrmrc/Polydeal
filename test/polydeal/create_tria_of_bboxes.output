@@ -1,0 +1,10 @@
+Running tests for create_triangulation_from_bounding_boxes...
+2D single box test passed!
+2D multiple boxes test passed!
+2D overlapping boxes test passed!
+2D vertex positions test passed!
+3D single box test passed!
+3D multiple boxes test passed!
+3D rectangular boxes test passed!
+
+All tests passed!

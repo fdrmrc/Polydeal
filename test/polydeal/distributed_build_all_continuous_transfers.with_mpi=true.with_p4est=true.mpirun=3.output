@@ -1,0 +1,8 @@
+Built 2 injection matrices
+Level 0 (80 x 24): L2 error = 1.8411e-16
+Level 1 (289 x 80): L2 error = 9.01949e-16 (agglo->original)
+All point-agglo continuous transfer tests: OK
+Built 2 injection matrices
+Level 0 (72 x 24): L2 error = 2.54384e-16
+Level 1 (289 x 72): L2 error = 6.63817e-16 (agglo->original)
+All cell-agglo continuous transfer tests: OK

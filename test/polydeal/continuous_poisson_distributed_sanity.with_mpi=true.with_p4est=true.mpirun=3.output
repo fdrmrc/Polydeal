@@ -1,0 +1,9 @@
+Running distributed continuous transfer test with 3 MPI ranks.
+Running point agglomeration test
+CG converged in 5 steps, final residual = 6.25928e-09
+RHS norm = 9.14923, solution norm = 18.5253
+L2 error: 1.86636e-10
+Running cell agglomeration test
+CG converged in 5 steps, final residual = 6.30976e-09
+RHS norm = 9.14923, solution norm = 18.5253
+L2 error: 1.62005e-10

@@ -1,0 +1,6 @@
+Running distributed continuous transfer test with 3 MPI ranks.
+Coarse DoFs: 80
+Fine DoFs: 296
+Transfer matrix: 296 x 80
+Linear transfer L2 error: 7.92858e-16
+Distributed continuous transfer matrix test: OK
