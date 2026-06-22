@@ -17,6 +17,7 @@
 #include <deal.II/base/parameter_handler.h>
 #include <deal.II/base/parsed_function.h>
 #include <deal.II/base/point.h>
+#include <deal.II/base/quadrature_lib.h>
 #include <deal.II/base/utilities.h>
 
 #include <deal.II/distributed/fully_distributed_tria.h>
@@ -25,6 +26,7 @@
 #include <deal.II/dofs/dof_tools.h>
 
 #include <deal.II/fe/fe_q.h>
+#include <deal.II/fe/fe_simplex_p.h>
 #include <deal.II/fe/fe_values.h>
 #include <deal.II/fe/mapping_fe.h>
 #include <deal.II/fe/mapping_q1.h>
@@ -71,6 +73,9 @@ using namespace dealii;
 #include "continuous_agglo_utils.h"
 #include "multigrid_amg.h"
 #include "utils.h"
+
+// Uncomment if you want to use simplexes
+// #define SIMPLEX TRUE
 
 #ifndef DEAL_II_WITH_MUMPS
 namespace dealii
@@ -542,19 +547,24 @@ private:
   solve_with_trilinos_amg();
 
   const ProblemParameters<dim>                       &parameters;
-  MappingQ1<dim>                                      mapping;
   MPI_Comm                                            comm;
   unsigned int                                        my_rank;
   unsigned int                                        n_mpi_processes;
   parallel::fullydistributed::Triangulation<dim, dim> distributed_tria;
-  FE_Q<dim>                                           fe_q;
-  AffineConstraints<double>                           constraints;
-  TrilinosWrappers::SparsityPattern                   sparsity;
-  TrilinosWrappers::SparseMatrix                      system_matrix;
-  LinearAlgebra::distributed::Vector<double>          locally_relevant_solution;
-  LinearAlgebra::distributed::Vector<double>          system_rhs;
-  std::unique_ptr<const Function<dim>>                rhs_function;
-  std::unique_ptr<const Function<dim>>                analytical_solution;
+#ifdef SIMPLEX
+  MappingFE<dim>   mapping;
+  FE_SimplexP<dim> fe_q;
+#else
+  MappingQ1<dim> mapping;
+  FE_Q<dim>      fe_q;
+#endif
+  AffineConstraints<double>                  constraints;
+  TrilinosWrappers::SparsityPattern          sparsity;
+  TrilinosWrappers::SparseMatrix             system_matrix;
+  LinearAlgebra::distributed::Vector<double> locally_relevant_solution;
+  LinearAlgebra::distributed::Vector<double> system_rhs;
+  std::unique_ptr<const Function<dim>>       rhs_function;
+  std::unique_ptr<const Function<dim>>       analytical_solution;
 
 
   static constexpr unsigned int rtree_M_points = 2 * rtree_m_points;
@@ -565,15 +575,12 @@ public:
   void
   run();
 
-  std::string grid_type;
-  std::string partitioner_type;
-  std::string solution_type;
-  // std::string  output_info_filename;
+  std::string  grid_type;
+  std::string  partitioner_type;
+  std::string  solution_type;
   unsigned int mg_levels;
 
-  DoFHandler<dim> original_dof_handler;
-  // std::vector<TrilinosWrappers::SparseMatrix>    injection_matrices;
-  // std::vector<TrilinosWrappers::SparsityPattern> injection_sparsity_patterns;
+  DoFHandler<dim>  original_dof_handler;
   ReductionControl solver_control;
 };
 
@@ -581,25 +588,20 @@ template <int dim, unsigned int rtree_m_points, unsigned int rtree_m_cells>
 Poisson<dim, rtree_m_points, rtree_m_cells>::Poisson(
   const ProblemParameters<dim> &problem_parameters)
   : parameters(problem_parameters)
-  , mapping()
   , comm(MPI_COMM_WORLD)
   , my_rank(Utilities::MPI::this_mpi_process(comm))
   , n_mpi_processes(Utilities::MPI::n_mpi_processes(comm))
   , distributed_tria(comm)
+#ifdef SIMPLEX
+  , mapping(FE_SimplexP<dim>{1})
+#else
+  , mapping()
+#endif
   , fe_q(parameters.fe_degree)
   , grid_type(parameters.grid_type)
   , partitioner_type(parameters.partitioner_type)
   , solution_type(parameters.solution_type)
   , mg_levels(parameters.mg_levels)
-  // , output_info_filename(
-  //     parameters.output_directory + "/output_info_" +
-  //     sanitize_for_filename(parameters.grid_type) + "_p" +
-  //     std::to_string(parameters.fe_degree) + "_cp" +
-  //     std::to_string(parameters.coarse_fe_degree) + "_ref" +
-  //     (parameters.keep_ratio_constant ? "_fixed_ratio" : "_variable_ratio") +
-  //     (parameters.do_points_agglo ? "_point_agglo" : "") +
-  //     (parameters.do_cells_agglo ? "_cell_agglo" : "") +
-  //     std::to_string(parameters.n_refinements) + ".txt")
   , original_dof_handler(distributed_tria)
   , solver_control(parameters.outer_solver_control)
 {
@@ -645,7 +647,14 @@ Poisson<dim, rtree_m_points, rtree_m_cells>::make_grid()
       if constexpr (dim == 2)
         {
           grid_in.attach_triangulation(tria);
+#ifdef SIMPLEX
+          std::ifstream gmsh_file(
+            "../../meshes/square_simplex_coarser.msh"); // unstructured
+                                                        // square made by
+                                                        // triangles
+#else
           std::ifstream gmsh_file("../../meshes/t3.msh"); // unstructured square
+#endif
           grid_in.read_msh(gmsh_file);
           tria.refine_global(parameters.n_refinements);
           GridTools::partition_triangulation(n_mpi_processes, tria);
@@ -656,16 +665,20 @@ Poisson<dim, rtree_m_points, rtree_m_cells>::make_grid()
       else if constexpr (dim == 3)
         {
           grid_in.attach_triangulation(tria);
+#ifdef SIMPLEX
+          std::ifstream filename(
+            "../../meshes/gray_level_image1.vtk"); // liver or brain domain
+          grid_in.read_vtk(filename);
+          GridTools::scale(1e-2, tria);
+          tria.set_all_manifold_ids(numbers::flat_manifold_id);
+          tria.refine_global(parameters.n_refinements);
+#else
           if (parameters.use_piston)
             {
               std::ifstream filename(
                 "../../meshes/piston_3.inp"); // piston mesh
               grid_in.read_abaqus(filename);
               tria.refine_global(parameters.n_refinements);
-              GridTools::partition_triangulation(n_mpi_processes, tria);
-              auto description = TriangulationDescription::Utilities::
-                create_description_from_triangulation(tria, comm);
-              distributed_tria.create_triangulation(description);
             }
           else if (parameters.use_real_lv_mesh)
             {
@@ -673,10 +686,6 @@ Poisson<dim, rtree_m_points, rtree_m_cells>::make_grid()
               grid_in.read_msh(filename);
               tria.refine_global(parameters.n_refinements);
               GridTools::scale(1e-2, tria);
-              GridTools::partition_triangulation(n_mpi_processes, tria);
-              auto description = TriangulationDescription::Utilities::
-                create_description_from_triangulation(tria, comm);
-              distributed_tria.create_triangulation(description);
             }
           else
             {
@@ -684,31 +693,31 @@ Poisson<dim, rtree_m_points, rtree_m_cells>::make_grid()
               grid_in.read_msh(filename);
               tria.refine_global(parameters.n_refinements);
               GridTools::scale(1e-2, tria);
-              GridTools::partition_triangulation(n_mpi_processes, tria);
-              auto description = TriangulationDescription::Utilities::
-                create_description_from_triangulation(tria, comm);
-              distributed_tria.create_triangulation(description);
             }
+#endif
+          GridTools::partition_triangulation(n_mpi_processes, tria);
+          auto description = TriangulationDescription::Utilities::
+            create_description_from_triangulation(tria, comm);
+          distributed_tria.create_triangulation(description);
 
+#ifdef SIMPLEX
+#else
           AssertThrow(tria.all_reference_cells_are_hyper_cube(),
                       ExcMessage("Mixed mesh. Bailing out"));
+#endif
         }
     }
   else
-    {
-      // Grids generated through using GridGenerator
-      if constexpr (dim == 2)
-        GridGenerator::hyper_cube(tria, 0., 1.);
-      // GridGenerator::hyper_ball(tria, Point<dim>(), 1.);
-      else if constexpr (dim == 3)
-        GridGenerator::hyper_cube(tria, 0., 1.);
-      // GridGenerator::eccentric_hyper_shell(tria,
-      //                                      Point<dim>(1., 1., 1.),
-      //                                      Point<dim>(0.7, 0.7, 0.7),
-      //                                      0.2,
-      //                                      1.,
-      //                                      12 /*cells along circumference*/);
+    { // Grids generated through using GridGenerator
+#ifdef SIMPLEX
+      Triangulation<dim> tria_hex;
+      GridGenerator::hyper_cube(tria_hex, 0., 1.);
+      tria_hex.refine_global(parameters.n_refinements);
+      GridGenerator::convert_hypercube_to_simplex_mesh(tria_hex, tria);
+#else
+      GridGenerator::hyper_cube(tria, 0., 1.);
       tria.refine_global(parameters.n_refinements);
+#endif
       GridTools::partition_triangulation(n_mpi_processes, tria);
       auto description = TriangulationDescription::Utilities::
         create_description_from_triangulation(tria, comm);
@@ -754,6 +763,12 @@ Poisson<dim, rtree_m_points, rtree_m_cells>::assemble_system()
 
   if (grid_type == "unstructured" && dim == 3)
     {
+#ifdef SIMPLEX
+      VectorTools::interpolate_boundary_values(original_dof_handler,
+                                               types::boundary_id(0),
+                                               *analytical_solution,
+                                               constraints);
+#else
       if (parameters.use_piston)
         {
           VectorTools::interpolate_boundary_values(original_dof_handler,
@@ -784,29 +799,33 @@ Poisson<dim, rtree_m_points, rtree_m_cells>::assemble_system()
                                                    *analytical_solution,
                                                    constraints);
         }
+#endif
     }
   else
     {
+#ifdef SIMPLEX
+      if (grid_type == "unstructured")
+        {
+          for (unsigned int i = 0; i < 4; ++i)
+            VectorTools::interpolate_boundary_values(original_dof_handler,
+                                                     types::boundary_id(i),
+                                                     *analytical_solution,
+                                                     constraints);
+        }
+      else
+        VectorTools::interpolate_boundary_values(original_dof_handler,
+                                                 types::boundary_id(0),
+                                                 *analytical_solution,
+                                                 constraints);
+#else
       VectorTools::interpolate_boundary_values(original_dof_handler,
                                                types::boundary_id(0),
                                                *analytical_solution,
                                                constraints);
+#endif
     }
 
   constraints.close();
-
-  // DynamicSparsityPattern dsp(locally_relevant_dofs);
-
-  // DoFTools::make_sparsity_pattern(original_dof_handler,
-  //                                 dsp,
-  //                                 constraints,
-  //                                 false);
-  // SparsityTools::distribute_sparsity_pattern(dsp,
-  //                                            locally_owned_dofs,
-  //                                            comm,
-  //                                            locally_relevant_dofs);
-
-  // system_matrix.reinit(locally_owned_dofs, locally_owned_dofs, dsp, comm);
 
   TrilinosWrappers::SparsityPattern sparsity_pattern(locally_owned_dofs, comm);
   DoFTools::make_sparsity_pattern(original_dof_handler,
@@ -816,8 +835,12 @@ Poisson<dim, rtree_m_points, rtree_m_cells>::assemble_system()
   sparsity_pattern.compress();
   system_matrix.reinit(sparsity_pattern);
 
+#ifdef SIMPLEX
+  const QGaussSimplex<dim> quadrature_formula(fe_q.get_degree() + 1);
+#else
   const QGauss<dim> quadrature_formula(fe_q.get_degree() + 1);
-  FEValues<dim>     fe_values(mapping,
+#endif
+  FEValues<dim> fe_values(mapping,
                           fe_q,
                           quadrature_formula,
                           update_values | update_gradients |
@@ -905,6 +928,15 @@ Poisson<dim, rtree_m_points, rtree_m_cells>::solve_with_point_agglo_amg()
       coarse_space_degrees,
       triangulations,
       support_dof_handlers);
+
+  if (my_rank == 0)
+    {
+      std::cout << "H/h ratio for point agglomeration: "
+                << GridTools::maximal_cell_diameter(*triangulations[0],
+                                                    mapping) /
+                     GridTools::maximal_cell_diameter(distributed_tria, mapping)
+                << std::endl;
+    }
 
   AmgProjector<dim, TrilinosWrappers::SparseMatrix, double> amg_projector(
     injection_matrices);
@@ -1048,7 +1080,11 @@ Poisson<dim, rtree_m_points, rtree_m_cells>::solve_with_point_agglo_amg()
                                     locally_relevant_solution,
                                     *analytical_solution,
                                     error_per_cell,
+#ifdef SIMPLEX
+                                    QGaussSimplex<dim>(fe_q.get_degree() + 2),
+#else
                                     QGauss<dim>(fe_q.get_degree() + 2),
+#endif
                                     VectorTools::L2_norm);
 
   double l2_error =
@@ -1098,6 +1134,16 @@ Poisson<dim, rtree_m_points, rtree_m_cells>::solve_with_cell_agglo_amg()
       coarse_space_degrees,
       triangulations,
       support_dof_handlers);
+
+  if (my_rank == 0)
+    {
+      std::cout << "H/h ratio for cell agglomeration: "
+                << GridTools::maximal_cell_diameter(*triangulations[0],
+                                                    mapping) /
+                     GridTools::maximal_cell_diameter(distributed_tria, mapping)
+                << std::endl;
+    }
+
 
   AmgProjector<dim, TrilinosWrappers::SparseMatrix, double> amg_projector(
     injection_matrices);
@@ -1241,7 +1287,11 @@ Poisson<dim, rtree_m_points, rtree_m_cells>::solve_with_cell_agglo_amg()
                                     locally_relevant_solution,
                                     *analytical_solution,
                                     error_per_cell,
+#ifdef SIMPLEX
+                                    QGaussSimplex<dim>(fe_q.get_degree() + 2),
+#else
                                     QGauss<dim>(fe_q.get_degree() + 2),
+#endif
                                     VectorTools::L2_norm);
 
   double l2_error =
@@ -1300,7 +1350,11 @@ Poisson<dim, rtree_m_points, rtree_m_cells>::solve_with_trilinos_amg()
                                     locally_relevant_solution,
                                     *analytical_solution,
                                     error_per_cell,
+#ifdef SIMPLEX
+                                    QGaussSimplex<dim>(fe_q.get_degree() + 2),
+#else
                                     QGauss<dim>(fe_q.get_degree() + 2),
+#endif
                                     VectorTools::L2_norm);
 
   double l2_error =
@@ -1334,6 +1388,12 @@ Poisson<dim, rtree_m_points, rtree_m_cells>::run()
       std::cout << "Skip leaves level: "
                 << (parameters.skip_leaves_level ? "true" : "false")
                 << std::endl;
+      std::cout << "Use simplex mesh: "
+#ifdef SIMPLEX
+                << "true" << std::endl;
+#else
+                << "false" << std::endl;
+#endif
       std::cout << std::string(80, '=') << std::endl;
     }
   make_grid();
@@ -1367,7 +1427,7 @@ main(int argc, char *argv[])
   if (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
     dealii::deallog.depth_console(10);
 
-  static constexpr unsigned int dim = 3;
+  static constexpr unsigned int dim = 2;
   ProblemParameters<dim>        parameters;
   std::string                   parameter_file;
   static constexpr unsigned int rtree_m_points = 4;
