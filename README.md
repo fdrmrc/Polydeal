@@ -69,6 +69,16 @@ make -j<N>
 ```
 being ```N``` is the number of jobs you want to use to compile.
 
+To run the regression tests against a particular deal.II installation:
+
+```bash
+cd build
+ctest --output-on-failure
+```
+
+The regression tests require `numdiff` on `PATH`, or its installation prefix
+passed to CMake as `-DNUMDIFF_DIR=/path/to/numdiff`.
+
 
 ## About grids and post-processing
 Polygonal or polyhedral grids are generated through agglomeration. To give an easy example in 2D, here's a polygonal grid associated to the unit ball on which you can define a Discontinous Galerkin space. The 3D case is completely analougous.
