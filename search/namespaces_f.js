@@ -15,7 +15,8 @@ var searchData=
   ['std_5fcxx17_12',['std_cxx17',['http://www.dealii.org/developer/doxygen/deal.II/namespacestd__cxx17.html',1,'']]],
   ['std_5fcxx20_13',['std_cxx20',['http://www.dealii.org/developer/doxygen/deal.II/namespacestd__cxx20.html',1,'']]],
   ['std_5fcxx20_3a_3aranges_14',['ranges',['http://www.dealii.org/developer/doxygen/deal.II/namespacestd__cxx20_1_1ranges.html',1,'std_cxx20']]],
-  ['sundials_15',['SUNDIALS',['http://www.dealii.org/developer/doxygen/deal.II/namespaceSUNDIALS.html',1,'']]],
-  ['sundials_3a_3ainternal_16',['internal',['http://www.dealii.org/developer/doxygen/deal.II/namespaceSUNDIALS_1_1internal.html',1,'SUNDIALS']]],
-  ['sundials_3a_3autilities_17',['Utilities',['http://www.dealii.org/developer/doxygen/deal.II/namespaceSUNDIALS_1_1Utilities.html',1,'SUNDIALS']]]
+  ['std_5fcxx26_15',['std_cxx26',['http://www.dealii.org/developer/doxygen/deal.II/namespacestd__cxx26.html',1,'']]],
+  ['sundials_16',['SUNDIALS',['http://www.dealii.org/developer/doxygen/deal.II/namespaceSUNDIALS.html',1,'']]],
+  ['sundials_3a_3ainternal_17',['internal',['http://www.dealii.org/developer/doxygen/deal.II/namespaceSUNDIALS_1_1internal.html',1,'SUNDIALS']]],
+  ['sundials_3a_3autilities_18',['Utilities',['http://www.dealii.org/developer/doxygen/deal.II/namespaceSUNDIALS_1_1Utilities.html',1,'SUNDIALS']]]
 ];

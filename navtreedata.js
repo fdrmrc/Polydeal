@@ -63,18 +63,18 @@ var NAVTREEINDEX =
 "agglomeration__accessor_8h.html",
 "class_poisson.html#a1f739fa9b5f46090ae42ba4d3e349c93",
 "classdealii_1_1_m_g_transfer_agglomeration.html#abccbd5d12072fb5a1e112e1d9a6bd6d0",
-"group__Exceptions.html#gad3f263e91e9c9a44c78dc4aa13e74a60",
-"namespaceDataOutBase.html#ab084a6b0325950209baa9b219eda168e",
-"namespaceFEValuesViews.html#af2099b26234f5816729f7f6dc523dc0f",
-"namespaceGridTools_1_1internal.html#af1ec304316d38ced6f97db3958ccca67",
-"namespaceNonMatching.html",
-"namespacePortable_1_1internal.html#a7604bec8c2aec67585933482c58cba8d",
-"namespaceUtilities_1_1MPI.html#a75b878e30e761361eeac9ad494cb9f2e",
-"namespaceWorkStream.html#a598d8f6defb0b141efa685b38fc800a6",
-"namespaceinternal_1_1DataOutRotationImplementation.html#ad148136c236f89348962324fc3ed0cf3",
-"namespaceinternal_1_1p4est.html#a830c208d0f9d9c992953dcd9e130a9f5"
+"group__Exceptions.html#gad1403265fad9de5cb981cfdf341b2525",
+"namespaceDataOutBase.html#aa3cbced9f1d4ae661f13018f4c980aa1ad512d1f704c4b56b7bf99e3f81ebc06f",
+"namespaceFETools_1_1Compositing.html#afbf9cdd980c5a2870217d75ea44cf977",
+"namespaceGridTools_1_1internal.html#a62913b6866784319011d10c195cf6c5f",
+"namespaceMeshWorker.html#ac7a9db8b34d398d7d398d1e8809874aaaf53835f3f0c49e6ba2c01e76b8d2612e",
+"namespacePortable_1_1internal.html#a18af8f0da5da0e786795993251f514e8",
+"namespaceUtilities_1_1MPI.html#a2617e0d772c769d161643114ed61cced",
+"namespaceVectorTools.html#add3084213ae20d864cfc32cfcebc7870",
+"namespaceinternal.html#afa406ddb485a71816344a33e5efcbcce",
+"namespaceinternal_1_1VectorOperations.html#ac2e25741e27b3997e36df5781bd3f8c5"
 ];
 
-var SYNCONMSG = 'click to disable panel synchronization';
-var SYNCOFFMSG = 'click to enable panel synchronization';
-var LISTOFALLMEMBERS = 'List of all members';
+const SYNCONMSG = 'click to disable panel synchronization';
+const SYNCOFFMSG = 'click to enable panel synchronization';
+const LISTOFALLMEMBERS = 'List of all members';

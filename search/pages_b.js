@@ -51,5 +51,6 @@ var searchData=
   ['between_20version_209_205_202_20and_209_206_200_48',['Changes between Version 9.5.2 and 9.6.0',['http://www.dealii.org/developer/doxygen/deal.II/changes_between_9_5_2_and_9_6_0.html',1,'']]],
   ['between_20version_209_206_200_20and_209_207_200_49',['Changes between Version 9.6.0 and 9.7.0',['http://www.dealii.org/developer/doxygen/deal.II/changes_between_9_6_0_and_9_7_0.html',1,'']]],
   ['between_20version_209_207_200_20and_209_207_201_50',['Changes between Version 9.7.0 and 9.7.1',['http://www.dealii.org/developer/doxygen/deal.II/changes_between_9_7_0_and_9_7_1.html',1,'']]],
-  ['bfgs_20phasefield_20solver_20code_20gallery_20program_51',['The &apos;L-BFGS phasefield solver &apos; code gallery program',['http://www.dealii.org/developer/doxygen/deal.II/code_gallery_L_BFGS_phasefield_solver.html',1,'']]]
+  ['between_20version_209_207_201_20and_209_208_200_51',['Changes between Version 9.7.1 and 9.8.0',['http://www.dealii.org/developer/doxygen/deal.II/changes_between_9_7_1_and_9_8_0.html',1,'']]],
+  ['bfgs_20phasefield_20solver_20code_20gallery_20program_52',['The &apos;L-BFGS phasefield solver &apos; code gallery program',['http://www.dealii.org/developer/doxygen/deal.II/code_gallery_L_BFGS_phasefield_solver.html',1,'']]]
 ];

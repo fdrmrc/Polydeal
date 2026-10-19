@@ -37,5 +37,6 @@ var searchData=
   ['polynomials_3a_3ainternal_34',['internal',['http://www.dealii.org/developer/doxygen/deal.II/namespacePolynomials_1_1internal.html',1,'Polynomials']]],
   ['polynomials_3a_3ainternal_3a_3alagrangeequidistantimplementation_35',['LagrangeEquidistantImplementation',['http://www.dealii.org/developer/doxygen/deal.II/namespacePolynomials_1_1internal_1_1LagrangeEquidistantImplementation.html',1,'Polynomials::internal']]],
   ['portable_36',['Portable',['http://www.dealii.org/developer/doxygen/deal.II/namespacePortable.html',1,'']]],
-  ['portable_3a_3ainternal_37',['internal',['http://www.dealii.org/developer/doxygen/deal.II/namespacePortable_1_1internal.html',1,'Portable']]]
+  ['portable_3a_3ainternal_37',['internal',['http://www.dealii.org/developer/doxygen/deal.II/namespacePortable_1_1internal.html',1,'Portable']]],
+  ['portable_3a_3ainternal_3a_3abatched_38',['batched',['http://www.dealii.org/developer/doxygen/deal.II/namespacePortable_1_1internal_1_1batched.html',1,'Portable::internal']]]
 ];

@@ -9,9 +9,9 @@ var annotated_dup =
       [ "PolyUtils", "namespacedealii_1_1_poly_utils.html", [
         [ "Rtree_visitor", "structdealii_1_1_poly_utils_1_1_rtree__visitor.html", "structdealii_1_1_poly_utils_1_1_rtree__visitor" ]
       ] ],
+      [ "AmgProjector", "classdealii_1_1_amg_projector.html", "classdealii_1_1_amg_projector" ],
       [ "CellsAgglomerator", "classdealii_1_1_cells_agglomerator.html", "classdealii_1_1_cells_agglomerator" ],
       [ "MatrixFreeProjector", "classdealii_1_1_matrix_free_projector.html", "classdealii_1_1_matrix_free_projector" ],
-      [ "AmgProjector", "classdealii_1_1_amg_projector.html", "classdealii_1_1_amg_projector" ],
       [ "MGTransferAgglomeration", "classdealii_1_1_m_g_transfer_agglomeration.html", "classdealii_1_1_m_g_transfer_agglomeration" ]
     ] ],
     [ "internal", null, [

@@ -60,5 +60,6 @@ var searchData=
   ['and_209_206_200_57',['Changes between Version 9.5.2 and 9.6.0',['http://www.dealii.org/developer/doxygen/deal.II/changes_between_9_5_2_and_9_6_0.html',1,'']]],
   ['and_209_207_200_58',['Changes between Version 9.6.0 and 9.7.0',['http://www.dealii.org/developer/doxygen/deal.II/changes_between_9_6_0_and_9_7_0.html',1,'']]],
   ['and_209_207_201_59',['Changes between Version 9.7.0 and 9.7.1',['http://www.dealii.org/developer/doxygen/deal.II/changes_between_9_7_0_and_9_7_1.html',1,'']]],
-  ['approach_20for_20large_20deformation_20thermoplasticity_20code_20gallery_20program_60',['The &apos;An ALE approach for large-deformation thermoplasticity&apos; code gallery program',['http://www.dealii.org/developer/doxygen/deal.II/code_gallery_ALE_Finite_Strain_Plasticity.html',1,'']]]
+  ['and_209_208_200_60',['Changes between Version 9.7.1 and 9.8.0',['http://www.dealii.org/developer/doxygen/deal.II/changes_between_9_7_1_and_9_8_0.html',1,'']]],
+  ['approach_20for_20large_20deformation_20thermoplasticity_20code_20gallery_20program_61',['The &apos;An ALE approach for large-deformation thermoplasticity&apos; code gallery program',['http://www.dealii.org/developer/doxygen/deal.II/code_gallery_ALE_Finite_Strain_Plasticity.html',1,'']]]
 ];
