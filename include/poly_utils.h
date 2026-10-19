@@ -20,6 +20,7 @@
 #include <deal.II/base/conditional_ostream.h>
 #include <deal.II/base/point.h>
 #include <deal.II/base/quadrature.h>
+#include <deal.II/base/quadrature_lib.h>
 #include <deal.II/base/std_cxx20/iota_view.h>
 
 #include <deal.II/boost_adaptors/bounding_box.h>

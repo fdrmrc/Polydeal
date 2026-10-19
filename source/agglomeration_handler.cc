@@ -12,6 +12,8 @@
 
 
 
+#include <deal.II/base/quadrature_lib.h>
+
 #include <deal.II/lac/sparsity_tools.h>
 
 #include <agglomeration_handler.h>
