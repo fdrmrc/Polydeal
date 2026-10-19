@@ -15,6 +15,7 @@
 #include <deal.II/base/mpi.h>
 #include <deal.II/base/observer_pointer.h>
 #include <deal.II/base/quadrature.h>
+#include <deal.II/base/quadrature_lib.h>
 #include <deal.II/base/subscriptor.h>
 
 #include <deal.II/distributed/shared_tria.h>
